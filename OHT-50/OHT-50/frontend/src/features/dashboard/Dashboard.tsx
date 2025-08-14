@@ -1,14 +1,12 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Fe06Chart from '../Fe06Chart'
-import { clearToken, getCurrentUser } from '../auth/auth'
 import ConfigForm from './ConfigForm'
 import { sendControlCommand } from '../../services/control'
 import { useToast } from '../../components/Toast'
+import AppShell from '../../components/AppShell'
 
 export default function Dashboard(){
-  const nav = useNavigate()
-  const user = getCurrentUser() || 'user'
   const { push } = useToast()
   const [status, setStatus] = React.useState<'Idle'|'Move'|'Dock'|'Fault'|'E-Stop'>('Idle')
   const [wsState, setWsState] = React.useState('connecting')
@@ -53,18 +51,7 @@ export default function Dashboard(){
     else push(`Lỗi gửi lệnh ${cmd}${res.status ? ` (HTTP ${res.status})` : ''}`)
   }
   return (
-    <div className="p-4 space-y-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">OHT-50 Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <nav className="flex items-center gap-3 text-[var(--primary)] underline">
-            <Link to="/fe06">v‑a‑x</Link>
-            <Link to="/logs">Logs</Link>
-          </nav>
-          <div className="text-sm">{user}</div>
-          <button className="btn btn-ghost" onClick={()=>{ clearToken(); nav('/login') }}>Logout</button>
-        </div>
-      </header>
+    <AppShell>
       <section>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           <div className={`card p-3 border ${status==='Idle'?'':'opacity-60'}`} style={{borderColor:'var(--border)'}}>
@@ -99,12 +86,19 @@ export default function Dashboard(){
             <button className="btn" onClick={()=>confirmAndSend('manual')}>Manual</button>
           </div>
         </div>
-        <Fe06Chart/>
+        <Fe06Chart onSample={(s)=>{
+          const vEl = document.getElementById('metric-v')
+          const aEl = document.getElementById('metric-a')
+          const xEl = document.getElementById('metric-x')
+          if (vEl) vEl.textContent = s.v.toFixed(3)
+          if (aEl) aEl.textContent = s.a.toFixed(3)
+          if (xEl) xEl.textContent = s.x.toFixed(3)
+        }}/>
       </section>
       <section>
         <ConfigForm/>
       </section>
-    </div>
+    </AppShell>
   )
 }
 

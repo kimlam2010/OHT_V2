@@ -11,7 +11,7 @@ import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 
 function Home() { return (<div className="p-6"><Link className="text-[var(--primary)] underline" to="/login">Đi đến đăng nhập</Link></div>) }
-function Fe06Demo() { return (<div className="p-6"><Fe06Chart/></div>) }
+function Fe06Demo() { return (<div className="p-0"><Fe06Chart/></div>) }
 
 function Guard({ children }: { children: JSX.Element }){
   const token = getToken()

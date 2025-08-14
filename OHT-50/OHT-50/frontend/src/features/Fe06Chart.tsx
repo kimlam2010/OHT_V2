@@ -1,15 +1,15 @@
 import React from 'react'
 
-type Sample = { v: number; a: number; x: number }
+export type RealtimeSample = { v: number; a: number; x: number }
 
-export default function Fe06Chart() {
+export default function Fe06Chart({ onSample }: { onSample?: (s: RealtimeSample) => void }) {
   const WIDTH = 800, HEIGHT = 256, N = 600
   const [bufV] = React.useState<number[]>(Array(N).fill(0))
   const [bufA] = React.useState<number[]>(Array(N).fill(0))
   const [bufX] = React.useState<number[]>(Array(N).fill(0))
   const [wsState, setWsState] = React.useState('connecting')
 
-  function pushSample(s: Sample){
+  function pushSample(s: RealtimeSample){
     bufV.push(s.v); bufV.shift()
     bufA.push(s.a); bufA.shift()
     bufX.push(s.x); bufX.shift()
@@ -34,12 +34,13 @@ export default function Fe06Chart() {
         ws.onmessage = (ev)=>{
           try {
             const msg = JSON.parse(ev.data)
-            const s: Sample = {
+            const s: RealtimeSample = {
               v: (msg.status?.vel_mms ?? 0) / 1000.0,
               a: (msg.status?.acc_mms2 ?? 0) / 1000.0,
               x: (msg.status?.pos_mm ?? 0) / 1000.0,
             }
             pushSample(s)
+            onSample?.(s)
             setTick(t=>t+1)
           } catch {}
         }

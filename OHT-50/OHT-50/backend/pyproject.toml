@@ -41,14 +41,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-org/oht-50"
-Repository = "https://github.com/your-org/oht-50"
-Documentation = "https://github.com/your-org/oht-50/docs"
+Homepage = "https://github.com/kimlam2010/OHT-50"
+Repository = "https://github.com/kimlam2010/OHT-50"
+Documentation = "https://github.com/kimlam2010/OHT-50/tree/main/OHT-50/docs"
 
 [tool.black]
 line-length = 88
 target-version = ['py311']
-include = '\.pyi?$'
+include = '\\.pyi?$'
 extend-exclude = '''
 /(
   # directories

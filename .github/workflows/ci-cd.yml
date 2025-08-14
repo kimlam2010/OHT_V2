@@ -1,0 +1,171 @@
+name: OHT-50 Backend CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'OHT-50/OHT-50/backend/**'
+      - '.github/workflows/ci-cd.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'OHT-50/OHT-50/backend/**'
+      - '.github/workflows/ci-cd.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: oht-50-backend
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  lint-and-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 black isort bandit safety
+
+      - name: Lint with flake8
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 app --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+
+      - name: Format check with black
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          black --check --diff app
+
+      - name: Import sorting check with isort
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          isort --check-only --diff app
+
+      - name: Security scan with bandit
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          bandit -r app -f json -o bandit-report.json || true
+          bandit -r app
+
+      - name: Dependency vulnerability scan
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint-and-security
+    strategy:
+      matrix:
+        python-version: ['3.11']
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio httpx coverage codecov
+
+      - name: Run tests with coverage
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./OHT-50/OHT-50/backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Check coverage threshold
+        working-directory: ./OHT-50/OHT-50/backend
+        run: |
+          coverage report --fail-under=80
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: [lint-and-security, test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./OHT-50/OHT-50/backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/develop'
+    environment: development
+    steps:
+      - name: Deploy to development environment
+        run: |
+          echo "Deploying to development environment..."
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Deploy to production environment
+        run: |
+          echo "Deploying to production environment..."
