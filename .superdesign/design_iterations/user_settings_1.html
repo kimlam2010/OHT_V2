@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OHT-50 • User Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./oht50_vintage_1.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    body[data-theme='dark']{
+      --background: oklch(0.18 0.03 50);
+      --foreground: oklch(0.92 0.02 85);
+      --card: oklch(0.22 0.03 50);
+      --card-foreground: oklch(0.96 0.01 85);
+      --border: oklch(0.30 0.02 50);
+      --muted: oklch(0.26 0.02 50);
+      --muted-foreground: oklch(0.80 0.02 85);
+      --primary: oklch(0.72 0.16 45);
+      --secondary: oklch(0.65 0.06 115);
+      --accent: oklch(0.70 0.12 35);
+      --destructive: oklch(0.62 0.20 28);
+      --ring: oklch(0.72 0.16 45);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="w-full sticky top-0 z-40 border-b" style="border-color: var(--border)">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <h1 class="text-xl font-bold" style="font-family: var(--font-serif)">Cấu hình người dùng</h1>
+      <div class="flex items-center gap-2">
+        <a href="./oht50_overview_1.html" class="btn btn-ghost"><i data-lucide="arrow-left"></i> <span class="ml-1">Tổng quan</span></a>
+        <a href="./fe06_vax_1.html" class="btn btn-ghost hidden sm:inline">Đồ thị v‑a‑x</a>
+        <a href="./center_config_1.html" class="btn btn-ghost hidden sm:inline">Cấu hình Center</a>
+        <a href="./jobs_monitor_1.html" class="btn btn-ghost hidden sm:inline">Job Monitor</a>
+        <a id="adminTab" href="#admin" class="btn btn-secondary hidden sm:inline">Quản trị</a>
+        <button id="btnDark" class="btn btn-ghost" type="button" title="Dark/Light"><i data-lucide="moon"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card p-4">
+        <h2 class="text-lg font-semibold mb-3">Hồ sơ</h2>
+        <div class="flex items-center gap-3">
+          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop" alt="avatar" class="w-16 h-16 rounded-full border" style="border-color: var(--border)"/>
+          <div>
+            <div class="font-semibold">operator</div>
+            <div class="muted text-sm">operator@example.com</div>
+          </div>
+        </div>
+        <div class="mt-4 grid gap-3">
+          <label class="text-sm">Tên hiển thị<input class="w-full px-3 py-2 rounded border" style="border-color: var(--input)" value="Operator"/></label>
+          <label class="text-sm">Email<input class="w-full px-3 py-2 rounded border" style="border-color: var(--input)" value="operator@example.com"/></label>
+          <div class="flex justify-end"><button class="btn btn-primary" type="button">Lưu</button></div>
+        </div>
+      </div>
+
+      <div class="card p-4" id="adminCard" hidden>
+        <h2 class="text-lg font-semibold mb-3">Quản trị</h2>
+        <p class="muted text-sm mb-3">Hiển thị với Admin.</p>
+        <a href="./admin_management_1.html" class="btn btn-secondary"><i data-lucide="users"></i> <span class="ml-1">Quản trị người dùng</span></a>
+      </div>
+    </section>
+
+    <section class="card p-4">
+      <h2 class="text-lg font-semibold mb-3">Bảo mật</h2>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn btn-ghost" data-modal-target="modal-password" data-modal-toggle="modal-password" type="button"><i data-lucide="lock"></i> <span class="ml-1">Đổi mật khẩu</span></button>
+        <button id="btnDarkInline" class="btn btn-ghost" type="button"><i data-lucide="moon"></i> <span class="ml-1">Bật/Tắt Dark mode</span></button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modals -->
+  <div id="modal-password" class="hidden fixed inset-0 z-50 justify-center items-center w-full h-full">
+    <div class="relative p-4 w-full max-w-md">
+      <div class="card p-5">
+        <h3 class="text-lg font-semibold mb-2">Đổi mật khẩu</h3>
+        <div class="grid gap-3">
+          <label class="text-sm">Mật khẩu hiện tại<input type="password" class="w-full px-3 py-2 rounded border" style="border-color: var(--input)"/></label>
+          <label class="text-sm">Mật khẩu mới<input type="password" class="w-full px-3 py-2 rounded border" style="border-color: var(--input)"/></label>
+        </div>
+        <div class="flex justify-end gap-2 mt-4"><button data-modal-hide="modal-password" class="btn btn-ghost">Hủy</button><button data-modal-hide="modal-password" class="btn btn-primary">Xác nhận</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.lucide && window.lucide.createIcons();
+    const toggleDark = ()=>{
+      const cur = document.body.getAttribute('data-theme');
+      document.body.setAttribute('data-theme', cur==='dark'?'light':'dark');
+    };
+    document.getElementById('btnDark').addEventListener('click', toggleDark);
+    document.getElementById('btnDarkInline').addEventListener('click', toggleDark);
+
+    // Show admin card if role=admin
+    const role = new URLSearchParams(location.search).get('role');
+    if (role === 'admin') {
+      const adminCard = document.getElementById('adminCard');
+      if (adminCard) adminCard.hidden = false;
+    }
+  </script>
+</body>
+</html>
+
+

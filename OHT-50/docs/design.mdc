@@ -1,0 +1,68 @@
+# Vai trò SuperDesign/UI – OHT-50 (Đề xuất cập nhật v1.1)
+
+Phiên bản đề xuất: v1.1  
+Phạm vi: Dashboard chẩn đoán và cấu hình OHT-50
+
+Mục tiêu: Chuẩn hóa vai trò thiết kế giao diện chẩn đoán, đảm bảo quy trình 4 bước (Layout → Theme → Animation → HTML), đầu ra có thể mở trực tiếp, tuân thủ thư mục `.superdesign/design_iterations`.
+
+---
+
+## 1) Trách nhiệm & phạm vi
+- Thu thập yêu cầu màn hình: trạng thái Idle/Move/Dock/Fault/E‑Stop, đồ thị v‑a‑x, nhật ký, cấu hình an toàn.
+- Thiết kế từng màn hình theo quy trình 4 bước; xác nhận người dùng giữa các bước.
+- Lưu file theo chuẩn: `.superdesign/design_iterations/{design_name}_{n}.html`.
+- Ưu tiên thư viện: TailwindCDN + Flowbite; phông chữ Google; tránh màu xanh bootstrap mặc định.
+
+## 2) Quy trình 4 bước (bắt buộc)
+1. Layout (text + ASCII wireframe).  
+2. Theme (tool generateTheme → lưu css).  
+3. Animation (text micro‑syntax).  
+4. Generate HTML (tool write → 1 file HTML dùng theme đã tạo).
+
+## 3) Chuẩn kỹ thuật
+- Responsive, tối ưu đọc; không chặn điều khiển; có xác nhận khi thao tác nguy hiểm.
+- Tối thiểu 1 trang tổng quan: thẻ trạng thái, điều khiển cơ bản (giả lập), biểu đồ placeholder, log bảng.
+- Tên file và cấu trúc thư mục đúng quy ước; không ghi ra thư mục khác.
+
+## 4) Kiểm soát chất lượng
+- Mỗi lần tạo/đổi theme phải cập nhật tham chiếu trong HTML.  
+- Đảm bảo không dùng biểu tượng/emoji ngoài hướng dẫn; font từ Google; icon từ Lucide/Flowbite.
+- Review: kiểm tra hiển thị trên màn hình nhỏ (≤ 375px) và lớn (≥ 1440px).
+
+## 5) Sơ đồ quy trình
+```mermaid
+graph TD
+  A[Layout] --> B[Theme]
+  B --> C[Animation]
+  C --> D[Generate HTML]
+  D --> E[User Review]
+  E -- adjust --> A
+```
+
+## 6) Ma trận bàn giao
+- Input: yêu cầu UI, API mock.
+- Output: file HTML + CSS theme + ghi chú tương thích Flowbite.
+
+---
+
+## 7) Quy ước file & import (bổ sung)
+- Tên file: `{design_name}_{n}.html`, tăng `n` theo lần duyệt (ví dụ: `dashboard_1.html`, `dashboard_2.html`).
+- Lưu tại: `.superdesign/design_iterations/` bắt buộc.
+- Tailwind: `<script src="https://cdn.tailwindcss.com"></script>` (không dùng link css build sẵn).
+- Flowbite: `<script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>`.
+- Font: Google Fonts (ví dụ: Inter/DM Sans/Geist/Roboto); tránh font lạ không ổn định.
+
+## 8) Review checklist trước khi gửi
+- [ ] File nằm đúng thư mục `.superdesign/design_iterations/`
+- [ ] Tham chiếu CSS theme từ bước 2 đúng đường dẫn
+- [ ] Giao diện co giãn đẹp ở 375px/768px/1440px
+- [ ] Không dùng màu xanh bootstrap mặc định; tuân thủ palette theme
+- [ ] Nút/điều khiển nguy hiểm có confirm rõ
+
+## 9) Definition of Done (UI)
+- Layout/Theme/Animation đã được người dùng xác nhận từng bước
+- HTML một trang chạy độc lập, mở trực tiếp trên trình duyệt
+- Tích hợp icon (Lucide) và fonts theo quy ước; không lỗi console cơ bản
+- Ghi chú tương thích Flowbite (nếu dùng component nâng cao)
+
+Changelog (v1.1 đề xuất): bổ sung quy ước import Tailwind/Flowbite, đặt tên file, checklist review, và DoD UI.

@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "hardware": {
+    "motor": {
+      "interface": "rs485",
+      "r": 0.05,
+      "vmax_mms": 500.0,
+      "amax_mms2": 300.0,
+      "jmax_mms3": 5000.0
+    },
+    "encoder": {
+      "type": "incremental",
+      "resolution_ppr": 2048,
+      "invert": false
+    }
+  },
+  "safety": {
+    "zones": [
+      {
+        "start_mm": 0,
+        "end_mm": 200,
+        "vmax_mms": 200
+      }
+    ],
+    "estop_reset_policy": "manual"
+  },
+  "telemetry": {
+    "ws_hz": 10
+  },
+  "comm": {
+    "rs485": {
+      "device": "/dev/ttyOHT485",
+      "baud": 115200
+    },
+    "can": {
+      "iface": "can0"
+    }
+  },
+  "created_at": null,
+  "updated_at": null,
+  "description": null
+}

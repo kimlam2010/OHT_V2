@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: oht50-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=true
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DATABASE_URL=sqlite:///./oht50.db
+      - TELEMETRY_WS_RATE=10
+      - TELEMETRY_HISTORY_SIZE=1000
+      - CENTER_WS_URL=ws://localhost:8080/ws
+      - CENTER_HEARTBEAT_INTERVAL=2
+      - RS485_DEVICE=/dev/ttyOHT485
+      - RS485_BAUD=115200
+      - MOTOR_VMAX_MMS=500.0
+      - MOTOR_AMAX_MMS2=300.0
+      - MOTOR_JMAX_MMS3=5000.0
+      - ESTOP_RESET_POLICY=manual
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - oht50-network
+
+  # Mock Center service for development
+  mock-center:
+    image: python:3.11-slim
+    container_name: oht50-mock-center
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mock:/app/mock
+    working_dir: /app/mock
+    command: >
+      sh -c "pip install fastapi uvicorn websockets &&
+             python -m uvicorn mock_center:app --host 0.0.0.0 --port 8080"
+    networks:
+      - oht50-network
+
+networks:
+  oht50-network:
+    driver: bridge
+
+volumes:
+  data:
+  logs:

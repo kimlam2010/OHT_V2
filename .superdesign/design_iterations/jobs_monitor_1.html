@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OHT-50 • Job Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./oht50_vintage_1.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <header class="w-full sticky top-0 z-40 border-b" style="border-color: var(--border)">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <h1 class="text-xl font-bold" style="font-family: var(--font-serif)">Job Monitor</h1>
+      <div class="flex items-center gap-2">
+        <a class="btn btn-ghost" href="./oht50_overview_1.html"><i data-lucide="arrow-left"></i> <span class="ml-1">Tổng quan</span></a>
+        <a href="./fe06_vax_1.html" class="btn btn-ghost hidden sm:inline">Đồ thị v‑a‑x</a>
+        <a href="./center_config_1.html" class="btn btn-ghost hidden sm:inline">Cấu hình Center</a>
+        <a href="./user_settings_1.html" class="btn btn-ghost hidden sm:inline">User</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <section class="card p-4">
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="px-2 py-1 rounded border" style="border-color: var(--input)"><option>All status</option><option>Queued</option><option>Running</option><option>Done</option><option>Failed</option></select>
+        <input type="datetime-local" class="px-2 py-1 rounded border" style="border-color: var(--input)"/>
+        <input type="text" placeholder="Thiết bị..." class="px-2 py-1 rounded border" style="border-color: var(--input)"/>
+        <button id="btnNewJob" class="btn btn-secondary ml-auto" type="button"><i data-lucide="plus"></i> <span class="ml-1">New Job</span></button>
+      </div>
+    </section>
+
+    <section class="card p-4">
+      <div class="overflow-x-auto">
+        <table>
+          <thead><tr><th class="py-2 pr-4">ID</th><th class="py-2 pr-4">Name</th><th class="py-2 pr-4">Status</th><th class="py-2 pr-4">Progress</th><th class="py-2 pr-4">Started</th><th class="py-2">Actions</th></tr></thead>
+          <tbody id="jobsBody">
+            <!-- rows injected -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside id="drawer" class="hidden fixed top-0 right-0 h-full w-full sm:w-[28rem] card p-4 z-50 overflow-y-auto">
+      <div class="flex items-center justify-between mb-3"><h3 class="text-lg font-semibold">Job Details</h3><button id="btnCloseDrawer" class="btn btn-ghost"><i data-lucide="x"></i></button></div>
+      <div class="space-y-3 text-sm">
+        <div class="rounded ring p-3"><div class="muted">Steps</div><ul id="steps" class="list-disc pl-6"></ul></div>
+        <div class="rounded ring p-3"><div class="muted">Logs</div><div id="logs" class="h-40 overflow-y-auto"></div></div>
+        <div class="rounded ring p-3"><div class="muted">Timeline</div><div id="timeline" class="h-16"></div></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Modal New Job -->
+  <div id="modal-new" class="hidden fixed inset-0 z-50 justify-center items-center w-full h-full">
+    <div class="relative p-4 w-full max-w-md">
+      <div class="card p-5">
+        <h3 class="text-lg font-semibold mb-2">Tạo Job</h3>
+        <div class="grid gap-3">
+          <label class="text-sm">Tên job<input id="jobName" class="w-full px-3 py-2 rounded border" style="border-color: var(--input)" placeholder="Dock to P1"/></label>
+          <label class="text-sm">Thiết bị<input id="jobDevice" class="w-full px-3 py-2 rounded border" style="border-color: var(--input)" placeholder="OHT-50-01"/></label>
+        </div>
+        <div class="flex justify-end gap-2 mt-4"><button data-modal-hide="modal-new" class="btn btn-ghost">Hủy</button><button id="createJob" data-modal-hide="modal-new" class="btn btn-primary">Tạo</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.lucide && window.lucide.createIcons();
+    const jobsBody = document.getElementById('jobsBody');
+    const drawer = document.getElementById('drawer');
+    const btnCloseDrawer = document.getElementById('btnCloseDrawer');
+    const steps = document.getElementById('steps');
+    const logs = document.getElementById('logs');
+
+    function addJobRow(job){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="py-2 pr-4">${job.id}</td>
+        <td class="py-2 pr-4">${job.name}</td>
+        <td class="py-2 pr-4"><span class="badge">${job.status}</span></td>
+        <td class="py-2 pr-4"><div class="w-40 h-2 rounded" style="background: var(--muted)"><div style="width:${job.progress}%; height:100%; background: var(--primary)"></div></div></td>
+        <td class="py-2 pr-4">${job.started}</td>
+        <td class="py-2"><button class="btn btn-ghost" data-action="open" data-id="${job.id}">Open</button> <button class="btn btn-ghost" data-action="cancel" data-id="${job.id}">Cancel</button></td>`;
+      jobsBody.appendChild(tr);
+    }
+
+    // Dummy data
+    const demo = [
+      {id:'J-1001', name:'Dock to P1', status:'Running', progress:65, started:'10:00'},
+      {id:'J-1002', name:'Move to Aisle 3', status:'Queued', progress:0, started:'—'},
+      {id:'J-1000', name:'Self-check', status:'Done', progress:100, started:'09:40'}
+    ];
+    demo.forEach(addJobRow);
+
+    jobsBody.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      if(action==='open'){
+        drawer.classList.remove('hidden');
+        steps.innerHTML = '<li>Start</li><li>Navigate</li><li>Dock</li>';
+        logs.textContent = 'Log lines...';
+      }
+      if(action==='cancel'){
+        alert('Confirm cancel ' + id);
+      }
+    });
+    btnCloseDrawer.addEventListener('click', ()=> drawer.classList.add('hidden'));
+  </script>
+</body>
+</html>
+
+

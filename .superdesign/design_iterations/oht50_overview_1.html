@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OHT-50 • Local Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="./oht50_vintage_1.css" />
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Flowbite -->
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <!-- Header -->
+  <header class="w-full sticky top-0 z-40 border-b" style="border-color: var(--border)">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button id="btnSidebar" class="md:hidden btn btn-ghost" aria-label="Toggle menu">
+          <i data-lucide="menu"></i>
+        </button>
+        <h1 class="text-xl font-bold" style="font-family: var(--font-serif)">OHT-50 Dashboard</h1>
+        <span class="badge" title="Kết nối Center">
+          <span class="inline-block w-2 h-2 rounded-full" style="background: color-mix(in oklab, var(--chart-4) 80%, black);"></span>
+          Conn: Online
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnMock" class="btn btn-secondary" type="button">
+          <i data-lucide="cpu"></i>
+          <span class="ml-1">Mock: On</span>
+        </button>
+        <button id="btnTheme" class="btn btn-ghost" type="button" title="Theme">
+          <i data-lucide="sun"></i>
+        </button>
+        <div class="relative">
+          <button id="userMenuButton" data-dropdown-toggle="userDropdown" class="btn btn-ghost flex items-center gap-2" type="button" aria-haspopup="menu" aria-expanded="false">
+            <i data-lucide="user"></i>
+            <span class="hidden sm:inline">operator</span>
+          </button>
+          <div id="userDropdown" class="z-50 hidden absolute right-0 mt-2 w-48 card p-1 border" style="border-color: var(--border)" role="menu" aria-labelledby="userMenuButton">
+            <a href="./user_settings_1.html" class="block px-3 py-2 rounded hover:bg-[var(--muted)]" role="menuitem">Hồ sơ</a>
+            <a href="#audit" class="block px-3 py-2 rounded hover:bg-[var(--muted)]" role="menuitem">Audit Trail</a>
+            <div class="my-1" style="border-top: 1px solid var(--border)"></div>
+            <a href="#" class="block px-3 py-2 rounded hover:bg-[var(--muted)]" role="menuitem">Đăng xuất</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="w-full max-w-screen-2xl mx-auto">
+    <div class="flex">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="sidebar w-64 min-h-[calc(100vh-57px)] -translate-x-full md:translate-x-0 transition-transform duration-300 ease-out fixed md:static z-30 md:z-auto">
+        <nav class="p-4 space-y-1">
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item active" href="#overview">Tổng quan</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./fe06_vax_1.html">Đồ thị v‑a‑x</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./logs_1.html">Nhật ký</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./audit_trail_1.html">Audit Trail</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./center_config_1.html">Cấu hình Center</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./safety_config_1.html">Cấu hình an toàn</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./jobs_monitor_1.html">Job Monitor</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./diagnostics_1.html">Chẩn đoán</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./rs485_addresses_1.html">RS485 Addresses</a>
+          <a class="block px-3 py-2 rounded hover:bg-[var(--muted)] nav-item" href="./user_settings_1.html">User Settings</a>
+        </nav>
+      </aside>
+
+      <!-- Content -->
+      <main class="flex-1">
+        <section id="overview" class="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          <!-- Status badges -->
+          <div class="card p-4">
+            <div class="flex flex-wrap gap-2 items-center">
+              <span class="badge badge-idle">Idle</span>
+              <span class="badge badge-move">Move</span>
+              <span class="badge badge-dock">Dock</span>
+              <span class="badge badge-fault">Fault</span>
+              <span class="badge badge-estop">E‑Stop</span>
+              <span class="muted text-sm ml-auto">Trạng thái hiện tại: <strong>Idle</strong></span>
+            </div>
+          </div>
+
+          <!-- Controls & Quick Metrics -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card p-4">
+              <h2 class="text-lg font-semibold mb-3">Điều khiển</h2>
+              <div class="flex flex-wrap items-center gap-2">
+                <button class="btn btn-primary" data-modal-target="modal-start" data-modal-toggle="modal-start" type="button">
+                  <i data-lucide="play"></i> <span class="ml-1">Start</span>
+                </button>
+                <button class="btn btn-ghost" data-modal-target="modal-stop" data-modal-toggle="modal-stop" type="button">
+                  <i data-lucide="square"></i> <span class="ml-1">Stop</span>
+                </button>
+                <button class="btn btn-danger" data-modal-target="modal-estop" data-modal-toggle="modal-estop" type="button">
+                  <i data-lucide="power"></i> <span class="ml-1">E‑Stop</span>
+                </button>
+                <button class="btn btn-ghost" data-modal-target="modal-reset" data-modal-toggle="modal-reset" type="button">
+                  <i data-lucide="rotate-ccw"></i> <span class="ml-1">Reset Fault</span>
+                </button>
+                <div class="w-px h-6" style="background: var(--border)"></div>
+                <select id="dockPoint" class="px-2 py-1 rounded border" style="border-color: var(--input)">
+                  <option value="P1">Dock P1</option>
+                  <option value="P2">Dock P2</option>
+                  <option value="P3">Dock P3</option>
+                </select>
+                <button class="btn btn-ghost" data-modal-target="modal-dock" data-modal-toggle="modal-dock" type="button">
+                  <i data-lucide="arrow-down"></i> <span class="ml-1">Dock</span>
+                </button>
+                <button class="btn btn-ghost" data-modal-target="modal-undock" data-modal-toggle="modal-undock" type="button">
+                  <i data-lucide="arrow-up"></i> <span class="ml-1">Undock</span>
+                </button>
+                <div class="w-px h-6" style="background: var(--border)"></div>
+                <button id="btnPause" class="btn btn-ghost" type="button">
+                  <i data-lucide="pause"></i> <span class="ml-1">Pause</span>
+                </button>
+                <button id="btnMode" class="btn btn-secondary" type="button" data-mode="auto">
+                  <i data-lucide="workflow"></i> <span class="ml-1">Mode: Auto</span>
+                </button>
+                <button id="btnJogMinus" class="btn btn-ghost opacity-50 pointer-events-none" type="button" title="Jog lùi (Manual)">
+                  <i data-lucide="chevron-left"></i> <span class="ml-1">Jog −</span>
+                </button>
+                <button id="btnJogPlus" class="btn btn-ghost opacity-50 pointer-events-none" type="button" title="Jog tiến (Manual)">
+                  <span class="mr-1">Jog +</span> <i data-lucide="chevron-right"></i>
+                </button>
+                <span class="muted text-sm">Interlock: bật • Jog chỉ khả dụng ở Manual</span>
+              </div>
+            </div>
+            <div class="card p-4">
+              <h2 class="text-lg font-semibold mb-3">Thông số nhanh</h2>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div class="rounded ring p-3">
+                  <div class="text-sm muted">v (m/s)</div>
+                  <div class="text-xl font-semibold"><span id="valV">0.00</span></div>
+                </div>
+                <div class="rounded ring p-3">
+                  <div class="text-sm muted">a (m/s²)</div>
+                  <div class="text-xl font-semibold"><span id="valA">0.00</span></div>
+                </div>
+                <div class="rounded ring p-3">
+                  <div class="text-sm muted">x (m)</div>
+                  <div class="text-xl font-semibold"><span id="valX">0.00</span></div>
+                </div>
+                <div class="rounded ring p-3 col-span-2 sm:col-span-1">
+                  <div class="text-sm muted">Liên kết</div>
+                  <div class="text-base">RS485: OK • Center: OK</div>
+                </div>
+                <div class="rounded ring p-3 col-span-2 sm:col-span-2">
+                  <div class="text-sm muted">Nguồn/Pin</div>
+                  <div class="text-base">100%</div>
+                </div>
+                <div class="rounded ring p-3 col-span-2 sm:col-span-1">
+                  <div class="text-sm muted">Giới hạn tốc độ theo vùng</div>
+                  <div class="text-base">1.2 m/s</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Realtime Chart placeholder -->
+          <div id="chart" class="card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-lg font-semibold">Đồ thị v‑a‑x (realtime)</h2>
+              <div class="flex items-center gap-2">
+                <button class="btn btn-ghost" type="button"><i data-lucide="pause"></i> <span class="ml-1">Pause</span></button>
+                <button class="btn btn-ghost" type="button"><i data-lucide="zoom-in"></i></button>
+                <button class="btn btn-ghost" type="button"><i data-lucide="zoom-out"></i></button>
+              </div>
+            </div>
+            <div class="w-full h-56 rounded border" style="border-color: var(--border); background: var(--card)">
+              <!-- Simple inline SVG placeholder -->
+              <svg viewBox="0 0 600 200" class="w-full h-full">
+                <rect x="0" y="0" width="600" height="200" fill="transparent" />
+                <polyline points="0,120 60,110 120,130 180,90 240,100 300,80 360,100 420,70 480,85 540,60 600,70" fill="none" stroke="currentColor" class="chart-color-1" stroke-width="2" />
+                <polyline points="0,150 60,140 120,145 180,120 240,130 300,110 360,120 420,100 480,105 540,90 600,95" fill="none" stroke="currentColor" class="chart-color-3" stroke-width="2" />
+                <polyline points="0,180 60,170 120,160 180,150 240,140 300,130 360,120 420,110 480,100 540,90 600,80" fill="none" stroke="currentColor" class="chart-color-4" stroke-width="2" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Log table -->
+          <div id="log" class="card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-lg font-semibold">Nhật ký</h2>
+              <div class="flex items-center gap-2">
+                <select class="px-2 py-1 rounded border" style="border-color: var(--input)">
+                  <option>All levels</option>
+                  <option>INFO</option>
+                  <option>WARN</option>
+                  <option>ERROR</option>
+                </select>
+                <input type="text" placeholder="Tìm kiếm..." class="px-2 py-1 rounded border" style="border-color: var(--input)" />
+                <button class="btn btn-ghost" type="button"><i data-lucide="file-down"></i> <span class="ml-1">Export CSV</span></button>
+                <button class="btn btn-ghost" type="button"><i data-lucide="file-code"></i> <span class="ml-1">Export JSON</span></button>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="py-2 pr-4">Time</th>
+                    <th class="py-2 pr-4">Level</th>
+                    <th class="py-2 pr-4">Source</th>
+                    <th class="py-2">Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="py-2 pr-4">10:00:12.123</td>
+                    <td class="py-2 pr-4">INFO</td>
+                    <td class="py-2 pr-4">FW</td>
+                    <td class="py-2">Encoder OK</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">10:00:13.007</td>
+                    <td class="py-2 pr-4">ERROR</td>
+                    <td class="py-2 pr-4">Driver</td>
+                    <td class="py-2">Overcurrent warning</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">10:00:15.842</td>
+                    <td class="py-2 pr-4">WARN</td>
+                    <td class="py-2 pr-4">Center</td>
+                    <td class="py-2">SSE reconnect</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-3 flex items-center gap-2 justify-end">
+              <button class="btn btn-ghost" type="button">Prev</button>
+              <button class="btn btn-ghost" type="button">1</button>
+              <button class="btn btn-ghost" type="button">2</button>
+              <button class="btn btn-ghost" type="button">Next</button>
+            </div>
+          </div>
+
+          <!-- Maintenance alerts -->
+          <div class="card p-4">
+            <h2 class="text-lg font-semibold mb-3">Cảnh báo bảo trì</h2>
+            <ul class="list-disc pl-6 space-y-1">
+              <li>Runtime: 1,245 giờ — đề xuất kiểm tra cơ khí.</li>
+              <li>Nhiệt độ driver: 72°C — trong giới hạn, theo dõi thêm.</li>
+              <li>Dòng tức thời đỉnh: 18 A — gần ngưỡng.</li>
+            </ul>
+          </div>
+
+          <!-- Audit trail -->
+          <div id="audit" class="card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-lg font-semibold">Audit Trail</h2>
+              <div class="flex flex-wrap items-center gap-2">
+                <select class="px-2 py-1 rounded border" style="border-color: var(--input)">
+                  <option>All users</option>
+                  <option>operator</option>
+                  <option>maintainer</option>
+                </select>
+                <select class="px-2 py-1 rounded border" style="border-color: var(--input)">
+                  <option>All actions</option>
+                  <option>LOGIN</option>
+                  <option>START</option>
+                  <option>STOP</option>
+                  <option>E‑STOP</option>
+                  <option>APPLY_CONFIG</option>
+                </select>
+                <input type="datetime-local" class="px-2 py-1 rounded border" style="border-color: var(--input)" />
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="py-2 pr-4">Time</th>
+                    <th class="py-2 pr-4">User</th>
+                    <th class="py-2 pr-4">Role</th>
+                    <th class="py-2 pr-4">Action</th>
+                    <th class="py-2 pr-4">Target</th>
+                    <th class="py-2 pr-4">Result</th>
+                    <th class="py-2">IP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="py-2 pr-4">10:01:00.001</td>
+                    <td class="py-2 pr-4">alice</td>
+                    <td class="py-2 pr-4">operator</td>
+                    <td class="py-2 pr-4">LOGIN</td>
+                    <td class="py-2 pr-4">—</td>
+                    <td class="py-2 pr-4">OK</td>
+                    <td class="py-2">10.0.0.2</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">10:02:12.222</td>
+                    <td class="py-2 pr-4">alice</td>
+                    <td class="py-2 pr-4">operator</td>
+                    <td class="py-2 pr-4">START</td>
+                    <td class="py-2 pr-4">motion: Move</td>
+                    <td class="py-2 pr-4">ACCEPTED</td>
+                    <td class="py-2">10.0.0.2</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">10:03:45.010</td>
+                    <td class="py-2 pr-4">bob</td>
+                    <td class="py-2 pr-4">maintainer</td>
+                    <td class="py-2 pr-4">APPLY_CONFIG</td>
+                    <td class="py-2 pr-4">safety.limits</td>
+                    <td class="py-2 pr-4">OK</td>
+                    <td class="py-2">10.0.0.3</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="px-4 sm:px-6 lg:px-8 py-6 text-sm muted">
+          v1.0 • Build demo • Aligned specs: center_comm, telemetry_schema, config
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modals: Start / Stop / E-Stop -->
+  <div id="modal-start" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+      <div class="relative card p-5">
+        <h3 class="text-lg font-semibold mb-2">Xác nhận Start</h3>
+        <p class="mb-4">Bắt đầu di chuyển? Kiểm tra an toàn trước khi thực hiện.</p>
+        <div class="flex justify-end gap-2">
+          <button data-modal-hide="modal-start" type="button" class="btn btn-ghost">Hủy</button>
+          <button data-modal-hide="modal-start" type="button" class="btn btn-primary">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Reset Fault -->
+  <div id="modal-reset" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+      <div class="relative card p-5">
+        <h3 class="text-lg font-semibold mb-2">Reset Fault</h3>
+        <p class="mb-4">Xóa lỗi hiện tại và trở về trạng thái an toàn?</p>
+        <div class="flex justify-end gap-2">
+          <button data-modal-hide="modal-reset" type="button" class="btn btn-ghost">Hủy</button>
+          <button data-modal-hide="modal-reset" type="button" class="btn btn-primary">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Dock -->
+  <div id="modal-dock" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+      <div class="relative card p-5">
+        <h3 class="text-lg font-semibold mb-2">Xác nhận Dock</h3>
+        <p class="mb-4">Tiến hành Dock tới điểm đã chọn?</p>
+        <div class="flex justify-end gap-2">
+          <button data-modal-hide="modal-dock" type="button" class="btn btn-ghost">Hủy</button>
+          <button data-modal-hide="modal-dock" type="button" class="btn btn-primary">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Undock -->
+  <div id="modal-undock" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+      <div class="relative card p-5">
+        <h3 class="text-lg font-semibold mb-2">Xác nhận Undock</h3>
+        <p class="mb-4">Rời khỏi vị trí Dock hiện tại?</p>
+        <div class="flex justify-end gap-2">
+          <button data-modal-hide="modal-undock" type="button" class="btn btn-ghost">Hủy</button>
+          <button data-modal-hide="modal-undock" type="button" class="btn btn-primary">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-stop" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+      <div class="relative card p-5">
+        <h3 class="text-lg font-semibold mb-2">Xác nhận Stop</h3>
+        <p class="mb-4">Dừng chuyển động? Hệ thống sẽ về trạng thái an toàn.</p>
+        <div class="flex justify-end gap-2">
+          <button data-modal-hide="modal-stop" type="button" class="btn btn-ghost">Hủy</button>
+          <button data-modal-hide="modal-stop" type="button" class="btn btn-primary">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-estop" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+      <div class="relative card p-5">
+        <h3 class="text-lg font-semibold mb-2">Xác nhận E‑Stop</h3>
+        <p class="mb-4">Dừng khẩn cấp ngay lập tức. Hãy chắc chắn bạn muốn thực hiện.</p>
+        <div class="flex justify-end gap-2">
+          <button data-modal-hide="modal-estop" type="button" class="btn btn-ghost">Hủy</button>
+          <button data-modal-hide="modal-estop" type="button" class="btn btn-danger">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Init icons
+    window.lucide && window.lucide.createIcons();
+
+    // Sidebar toggle for mobile
+    const btnSidebar = document.getElementById('btnSidebar');
+    const sidebar = document.getElementById('sidebar');
+    if (btnSidebar && sidebar) {
+      btnSidebar.addEventListener('click', () => {
+        sidebar.classList.toggle('-translate-x-full');
+      });
+    }
+
+    // Mock toggle
+    const btnMock = document.getElementById('btnMock');
+    if (btnMock) {
+      btnMock.addEventListener('click', () => {
+        const span = btnMock.querySelector('span');
+        if (span) {
+          span.textContent = span.textContent.includes('On') ? 'Mock: Off' : 'Mock: On';
+        }
+      });
+    }
+
+    // Pause/Resume toggle
+    const btnPause = document.getElementById('btnPause');
+    if (btnPause) {
+      btnPause.addEventListener('click', () => {
+        const span = btnPause.querySelector('span');
+        const icon = btnPause.querySelector('i');
+        if (span && icon) {
+          if (span.textContent.includes('Pause')) {
+            span.textContent = 'Resume';
+            icon.setAttribute('data-lucide', 'play');
+          } else {
+            span.textContent = 'Pause';
+            icon.setAttribute('data-lucide', 'pause');
+          }
+          window.lucide && window.lucide.createIcons();
+        }
+      });
+    }
+
+    // Mode Auto/Manual toggle + Jog enable
+    const btnMode = document.getElementById('btnMode');
+    const btnJogMinus = document.getElementById('btnJogMinus');
+    const btnJogPlus = document.getElementById('btnJogPlus');
+    function setJogEnabled(enabled) {
+      [btnJogMinus, btnJogPlus].forEach(b => {
+        if (!b) return;
+        if (enabled) {
+          b.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+          b.classList.add('opacity-50', 'pointer-events-none');
+        }
+      });
+    }
+    if (btnMode) {
+      btnMode.addEventListener('click', () => {
+        const span = btnMode.querySelector('span');
+        const current = btnMode.getAttribute('data-mode') || 'auto';
+        if (current === 'auto') {
+          btnMode.setAttribute('data-mode', 'manual');
+          if (span) span.textContent = 'Mode: Manual';
+          setJogEnabled(true);
+        } else {
+          btnMode.setAttribute('data-mode', 'auto');
+          if (span) span.textContent = 'Mode: Auto';
+          setJogEnabled(false);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+
+

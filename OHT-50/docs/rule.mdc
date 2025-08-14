@@ -1,0 +1,218 @@
+---
+alwaysApply: true
+---
+## 4) Vai trò & phạm vi chi tiết (v1.1)
+Mỗi vai trò gồm: Mục tiêu, Nhiệm vụ chi tiết, Đầu vào, Đầu ra bắt buộc, Tiêu chí chấp nhận, Rủi ro thường gặp, KPI.
+
+### 4.1 Kiến trúc sư hệ thống
+- Mục tiêu: kiến trúc tổng thể ổn định, tách lớp rõ, dễ mở rộng/kiểm thử.
+- Nhiệm vụ chi tiết:
+	- Định nghĩa boundary module, interface chuẩn (driver, control, services, UI, sim/tests).
+	- Thiết kế trạng thái hệ thống & chế độ an toàn (E‑Stop, Fault).
+	- Chuẩn cấu hình/nhật ký/OTA.
+- Đầu vào: yêu cầu hệ thống, thông số an toàn, khả năng thiết bị.
+- Đầu ra bắt buộc (trong `docs/`):
+	- `specs/architecture.md`, `specs/state_machine.md`, `specs/interfaces.md`, sơ đồ Mermaid.
+- Tiêu chí chấp nhận: interface ổn định; kịch bản lỗi/khôi phục định nghĩa rõ; mapping module ↔ trách nhiệm.
+- Rủi ro: rò rỉ trách nhiệm giữa lớp, thiếu kênh an toàn; giải pháp: review RACI + gate kiến trúc.
+- KPI: số thay đổi phá vỡ interface (breakage) = 0 sau khi baseline; MTTR khi đổi kiến trúc < 1 ngày.
+
+### 4.2 Kỹ sư điều khiển chuyển động
+- Mục tiêu: profile chuyển động không vi phạm v/a/j; dừng đúng trong ±1–2 mm.
+- Nhiệm vụ chi tiết: planner S‑curve/Trapezoid, bám vị trí/vận tốc 1D, vùng giảm tốc, bù dốc.
+- Đầu vào: m_total, v_max, a_max, j_max, chiều dài ray, dung sai dừng.
+- Đầu ra bắt buộc (`control/`, `sim/`, `tests/`):
+	- `control/profiles/*.py`, `control/controller.py`, test biên; notebook/plot kiểm chứng.
+- Tiêu chí chấp nhận: không vượt giới hạn; biểu đồ v‑a‑x hợp lệ; test biên pass ≥ 95%.
+- Rủi ro: sai đơn vị, bão hòa actuator; giải pháp: guard/limit + test biên + assert runtime.
+- KPI: RMSE bám vị trí; tỷ lệ kế hoạch hoàn tất đúng hạn; thời gian dừng đo được.
+
+### 4.3 Kỹ sư an toàn chức năng
+- Mục tiêu: đạt trạng thái an toàn có kiểm chứng.
+- Nhiệm vụ chi tiết: hazard + FMEA cô đọng; kênh E‑Stop HW; interlock; giám sát vùng tốc độ/cấm; watchdog; kiểm tra chéo encoder.
+- Đầu vào: kiến trúc, thông số dừng, thiết bị an toàn.
+- Đầu ra bắt buộc (`docs/specs/safety.md`, `tests/`):
+	- Sơ đồ trình tự E‑Stop (Mermaid), danh mục test an toàn, log sự kiện an toàn.
+- Tiêu chí chấp nhận: chứng minh khoảng cách dừng; test tình huống khẩn pass 100%.
+- Rủi ro: single‑point failure; giải pháp: kênh kép + chẩn đoán định kỳ.
+- KPI: MTTD/MTTR sự cố an toàn; độ phủ test an toàn ≥ 90%.
+
+### 4.4 Firmware/Driver thiết bị
+- Mục tiêu: giao tiếp xác định, API ổn định, lỗi được phát hiện/khôi phục rõ ràng.
+- Nhiệm vụ chi tiết: CAN/RS485/Ethernet, HAL, retry/timeout/fault detection, driver giả lập.
+- Đầu vào: spec thiết bị, timing vòng điều khiển.
+- Đầu ra bắt buộc (`drivers/` + test): `motor.py`, `encoder.py`, `io.py`, `hal.py` + mock.
+- Tiêu chí chấp nhận: latency vòng điều khiển xác định; bao lỗi rõ; log chuẩn.
+- Rủi ro: deadlock, drift thời gian; giải pháp: deadline monitor + watchdog SW.
+- KPI: jitter vòng lặp; tỷ lệ gói lỗi/timeout < ngưỡng.
+
+### 4.5 Backend/API & Telemetry
+- Mục tiêu: API giám sát/cấu hình/chẩn đoán ổn định; telemetry thời gian thực.
+- Nhiệm vụ chi tiết: HTTP/WS, cấu hình/OTA an toàn (rollback), thử lỗi mạng, xác thực tối thiểu.
+- Đầu vào: kiến trúc, yêu cầu quan trắc, giao tiếp thiết bị.
+- Đầu ra bắt buộc (`services/`, mô tả endpoint, test tích hợp).
+- Tiêu chí chấp nhận: schema thông điệp nhất quán; resilience trước lỗi mạng.
+- Rủi ro: mất đồng bộ trạng thái; giải pháp: event‑sourcing nhẹ + idempotency.
+- KPI: độ trễ telemetry p95; tỉ lệ lỗi 5xx; độ sẵn sàng.
+
+### 4.6 UI/Diagnostics
+- Mục tiêu: dashboard đúng trạng thái Idle/Move/Dock/Fault/E‑Stop; đồ thị v‑a‑x; nhật ký; cấu hình an toàn.
+- Nhiệm vụ chi tiết: UI không chặn điều khiển; kiểm tra đầu vào; test với API giả lập.
+- Đầu vào: API dịch vụ, event telemetry.
+- Đầu ra bắt buộc (`ui/` + hướng dẫn chạy + test).
+- Tiêu chí chấp nhận: hiển thị đúng; không gây block; khả năng truy vết log.
+- Rủi ro: thao tác nguy hiểm; giải pháp: confirm + interlock UI.
+- KPI: thời gian render; số lỗi UI blocking = 0.
+
+### 4.7 Mô phỏng & Kiểm thử
+- Mục tiêu: mô phỏng 1D theo ray; unit/integration/scenario tests.
+- Nhiệm vụ chi tiết: tiêm nhiễu/hỏng hóc; tiêu chí đạt cho kịch bản chính.
+- Đầu vào: model động học, giới hạn v/a/j, bản đồ ray.
+- Đầu ra bắt buộc (`sim/`, `tests/`, báo cáo tiêu chí đạt).
+- Tiêu chí chấp nhận: đạt dừng, thời gian chu trình, không vi phạm an toàn.
+- Rủi ro: mô hình quá lý tưởng; giải pháp: tham số hóa + nhiễu thực tế.
+- KPI: độ phủ test; tỉ lệ phát hiện lỗi trước triển khai.
+
+### 4.8 DevOps/CI/CD (mới)
+- Mục tiêu: build/test tự động, phát hành có kiểm soát, artefact truy vết.
+- Nhiệm vụ: pipeline lint+test+pack; versioning; SBOM; security scan nhẹ.
+- Đầu ra: cấu hình CI, báo cáo build, hướng dẫn release.
+- Tiêu chí chấp nhận: pipeline xanh; artefact định danh (semver+commit).
+- KPI: thời gian build; tỉ lệ thất bại không do code < 1%.
+
+### 4.9 QA/Verification & Validation (mới)
+- Mục tiêu: xác minh (verify) đúng spec và thẩm định (validate) đúng nhu cầu.
+- Nhiệm vụ: kế hoạch V&V; ma trận truy vết Yêu cầu↔Test; audit định kỳ.
+- Đầu ra: `docs/tests_plan.md`, báo cáo V&V.
+- Tiêu chí chấp nhận: mỗi yêu cầu có ít nhất 1 test; tỉ lệ pass theo cổng.
+- KPI: defect leakage; thời gian vòng phản hồi lỗi.
+
+### 4.10 Technical Writing/Docs (mới)
+- Mục tiêu: tài liệu ngắn gọn, cập nhật; sơ đồ khi phù hợp.
+- Nhiệm vụ: chuẩn hoá mẫu tài liệu; cập nhật sơ đồ Mermaid khi đổi kiến trúc.
+- Đầu ra: tài liệu trong `docs/` theo cấu trúc; changelog.
+- KPI: thời gian cập nhật tài liệu ≤ 1 ngày sau thay đổi.
+
+### 4.11 Configuration & Release Management (mới)
+- Mục tiêu: kiểm soát phiên bản cấu hình/firmware; rollback an toàn.
+- Nhiệm vụ: baseline cấu hình; ký/kiểm toàn vẹn; kế hoạch rollback.
+- Đầu ra: ma trận version phần mềm↔phần cứng; nhật ký phát hành.
+- KPI: thời gian rollback; số sự cố do cấu hình = 0.
+
+---
+
+## 5) Luồng công việc & Cổng kiểm soát (Stage‑Gate)
+- Gate A (Kiến trúc): artefact kiến trúc + sơ đồ; interface ổn định.
+- Gate B (Control & Safety): profile + safety plan; test biên thông qua.
+- Gate C (Drivers & Services): HAL + API ổn định + resilience test.
+- Gate D (UI/Diagnostics): dashboard + guard; test với API giả lập.
+- Gate E (Sim & V&V): scenario pass; báo cáo tiêu chí đạt.
+- Gate R (Release): build xanh; artefact ký; tài liệu cập nhật.
+
+```mermaid
+graph TD
+  A[Gate A: Architecture] --> B[Gate B: Control & Safety]
+  B --> C[Gate C: Drivers & Services]
+  C --> D[Gate D: UI/Diagnostics]
+  D --> E[Gate E: Sim & V&V]
+  E --> R[Gate R: Release]
+```
+
+## 6) Checklist thông số bắt buộc (mở rộng)
+- m_total; r (bánh/đai/puly); ma sát/hiệu suất; dốc tối đa.
+- v_max, a_max, j_max; chiều dài ray; điểm dừng & dung sai (mặc định ±1–2 mm).
+- Điện áp bus/nguồn; driver/motor; tỉ số truyền.
+- Encoder (loại, độ phân giải, tần suất); chu kỳ điều khiển.
+- Cảm biến chướng ngại (loại, phạm vi, logic phản ứng).
+- Giao tiếp thiết bị (CAN/RS485/Ethernet); API (HTTP/WS).
+- Telemetry: tần suất; schema; lưu trữ/giới hạn.
+
+## 7) RACI (ví dụ rút gọn theo giai đoạn)
+```mermaid
+graph LR
+  subgraph Roles
+    ARC[Architect]
+    CTRL[Control]
+    SAFE[Safety]
+    DRV[Drivers]
+    SVC[Services]
+    UI[UI]
+    SIM[Sim/Test]
+    DEVOPS[DevOps]
+    QA[QA/V&V]
+  end
+  A[Gate A]:::g -->|R| ARC
+  B[Gate B]:::g -->|R| CTRL
+  B -->|C| SAFE
+  C[Gate C]:::g -->|R| DRV
+  C -->|A| SVC
+  D[Gate D]:::g -->|R| UI
+  E[Gate E]:::g -->|R| SIM
+  R[Release]:::g -->|R| DEVOPS
+  QA -->|A| A & B & C & D & E & R
+  classDef g fill:#eee,stroke:#999,stroke-width:1px
+```
+
+## 8) Rủi ro & biện pháp
+- Thiếu thông số/đặc tính tải thực: dùng giả định tạm + log TODO thay bằng số đo; cập nhật khi có dữ liệu.
+- Sai khác giữa mô phỏng và thực tế: thêm tham số nhiễu, xác nhận hiện trường, tinh chỉnh.
+- Vượt giới hạn an toàn do lỗi phần mềm: guard cứng ở nhiều lớp, interlock, E‑Stop phần cứng.
+
+## 9) Tiêu chí hoàn thành
+- Tài liệu ngắn gọn + sơ đồ khi phù hợp, cập nhật kịp thời.
+- Code chạy ngay; test tối thiểu; không lỗi linter.
+- Telemetry đủ chẩn đoán; artefact build/release truy vết được.
+
+---
+
+## 10) Sơ đồ tương tác vai trò (tổng quan)
+```mermaid
+graph TD
+  subgraph Plan
+    A1[Architect] --> A2[Safety]
+    A2 --> A3[Control]
+  end
+  subgraph Build
+    B1[Drivers] --> B2[Services]
+    B2 --> B3[UI]
+  end
+  subgraph Assure
+    C1[Sim/Test] --> C2[QA/V&V]
+    C2 --> C3[DevOps]
+  end
+  Plan --> Build --> Assure -->|Feedback| Plan
+```
+
+Changelog (v1.1 đề xuất): bổ sung 4 vai trò mới (DevOps, QA/V&V, Docs, Config & Release), thêm Gate kiểm soát, RACI, và tiêu chí/KPI cho từng vai trò.
+
+---
+
+## 11) Chuẩn thư mục & quản trị tài liệu (bổ sung)
+- Thư mục tài liệu chuẩn: `OHT-50/docs/`. Cấm tạo/cập nhật tại `OHT-50/OHT-50/docs/`.
+- Mỗi tài liệu có tiêu đề Phiên bản (semver) và mục Changelog cuối file.
+- Sơ đồ Mermaid phải đặt trong khối code ```mermaid để hiển thị đúng.
+- Đường dẫn tham chiếu nội bộ dùng relative path trong `docs/`.
+
+## 12) Gate inputs/outputs checklist (ràng buộc kiểm soát)
+- Gate A: có `specs/architecture.md`, `specs/state_machine.md`, interface chính và sơ đồ kiến trúc.
+- Gate B: `control_spec.md`, kế hoạch an toàn và `specs/safety.md`, mô tả E‑Stop, interlock.
+- Gate C: khung `drivers/`, `hal.py`/mock, `bus_rs485` test CRC/timeout, tài liệu `bus_rs485.md`.
+- Gate D: API cục bộ hoạt động (`GET /status`, `POST /command`, `WS /telemetry`), UI wireframe.
+- Gate E: `tests/` gồm unit/integration/sim, kế hoạch HIL, báo cáo pass/fail.
+- Release: hướng dẫn deploy + OTA, chữ ký/kiểm toàn vẹn, changelog.
+
+## 13) Definition of Done (mỗi sprint)
+- Code + test xanh + không lỗi linter.
+- Tài liệu `docs/` cập nhật; sơ đồ Mermaid sửa tương ứng.
+- Cấu hình mẫu cập nhật; telemetry/log phản ánh thay đổi.
+
+## 14) Quy ước đặt tên & đường dẫn
+- Tài liệu: `kebab-case.md`; sơ đồ Mermaid đặt ngay trong tài liệu liên quan.
+- API/Config: đặt trong `docs/specs/`; Dev Radxa đặt trong `docs/dev_radxa/`.
+
+## 15) Review checklist trước merge
+- [ ] Không có file mới ngoài `OHT-50/docs/`
+- [ ] Có cập nhật Changelog/phiên bản
+- [ ] Sơ đồ chạy được trong Markdown preview
+- [ ] Liên kết nội bộ không gãy
+- [ ] Quy ước ngôn ngữ/định dạng đúng (tiếng Việt + Mermaid)

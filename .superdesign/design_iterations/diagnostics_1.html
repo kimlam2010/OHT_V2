@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OHT-50 • Chẩn đoán</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./oht50_vintage_1.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <header class="w-full sticky top-0 z-40 border-b" style="border-color: var(--border)">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <h1 class="text-xl font-bold" style="font-family: var(--font-serif)">Chẩn đoán</h1>
+      <div class="flex items-center gap-2">
+        <a href="./oht50_overview_1.html" class="btn btn-ghost"><i data-lucide="arrow-left"></i> <span class="ml-1">Tổng quan</span></a>
+        <a href="./fe06_vax_1.html" class="btn btn-ghost hidden sm:inline">Đồ thị v‑a‑x</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="card p-4"><h2 class="text-lg font-semibold mb-3">Encoder</h2><div class="text-sm">health: ok • count: 123456</div></div>
+      <div class="card p-4"><h2 class="text-lg font-semibold mb-3">Driver</h2><div class="text-sm">temp: 72°C • current: 3.2A</div></div>
+      <div class="card p-4"><h2 class="text-lg font-semibold mb-3">RS485</h2><div class="text-sm">BER: 0.00% • CRC err: 0</div></div>
+    </section>
+    <section class="card p-4">
+      <h2 class="text-lg font-semibold mb-3">Developer console (guarded)</h2>
+      <div class="flex items-center gap-2"><input class="flex-1 px-3 py-2 rounded border" style="border-color: var(--input)" placeholder="ping"/><button class="btn btn-ghost" type="button">Send</button></div>
+      <p class="muted text-sm mt-2">Cảnh báo: dành cho bảo trì; log sẽ ghi lại tất cả lệnh.</p>
+    </section>
+  </main>
+</body>
+</html>
+
+
