@@ -53,50 +53,86 @@ export default function Dashboard(){
   return (
     <AppShell>
       <section>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className={`card p-3 border ${status==='Idle'?'':'opacity-60'}`} style={{borderColor:'var(--border)'}}>
-            <div className="text-xs text-muted">Trạng thái</div>
-            <div className="text-lg font-semibold">{status}</div>
-            <div className="text-xs">WS: {wsState}</div>
-          </div>
-          <div className="card p-3 border" style={{borderColor:'var(--border)'}}>
-            <div className="text-xs text-muted">v (m/s)</div>
-            <div id="metric-v" className="text-lg font-semibold">—</div>
-          </div>
-          <div className="card p-3 border" style={{borderColor:'var(--border)'}}>
-            <div className="text-xs text-muted">a (m/s²)</div>
-            <div id="metric-a" className="text-lg font-semibold">—</div>
-          </div>
-          <div className="card p-3 border" style={{borderColor:'var(--border)'}}>
-            <div className="text-xs text-muted">x (m)</div>
-            <div id="metric-x" className="text-lg font-semibold">—</div>
+        {/* Status + Controls & Quick Metrics (side-by-side) */}
+        <div className="card p-4 border mb-6" style={{borderColor:'var(--border)'}}>
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="badge badge-idle">Idle</span>
+            <span className="badge badge-move">Move</span>
+            <span className="badge badge-dock">Dock</span>
+            <span className="badge badge-fault">Fault</span>
+            <span className="badge badge-estop">E‑Stop</span>
+            <span className="muted text-sm ml-auto">Trạng thái hiện tại: <strong>{status}</strong> • WS: {wsState}</span>
           </div>
         </div>
-        <div className="card p-3 border" style={{borderColor:'var(--border)'}}>
-          <div className="flex flex-wrap gap-2">
-            <button className="btn" onClick={()=>confirmAndSend('start')}>Start</button>
-            <button className="btn" onClick={()=>confirmAndSend('stop')}>Stop</button>
-            <button className="btn btn-danger" onClick={()=>confirmAndSend('estop', true)}>E‑Stop</button>
-            <button className="btn" onClick={()=>confirmAndSend('reset_fault')}>Reset Fault</button>
-            <button className="btn" onClick={()=>confirmAndSend('dock')}>Dock</button>
-            <button className="btn" onClick={()=>confirmAndSend('undock')}>Undock</button>
-            <button className="btn" onClick={()=>confirmAndSend('pause')}>Pause</button>
-            <button className="btn" onClick={()=>confirmAndSend('resume')}>Resume</button>
-            <button className="btn" onClick={()=>confirmAndSend('auto')}>Auto</button>
-            <button className="btn" onClick={()=>confirmAndSend('manual')}>Manual</button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Controls */}
+          <div className="card p-4 border" style={{borderColor:'var(--border)'}}>
+            <h2 className="text-lg font-semibold mb-3">Điều khiển</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <button className="btn btn-primary" onClick={()=>confirmAndSend('start')}>Start</button>
+              <button className="btn" onClick={()=>confirmAndSend('stop')}>Stop</button>
+              <button className="btn btn-danger" onClick={()=>confirmAndSend('estop', true)}>E‑Stop</button>
+              <button className="btn" onClick={()=>confirmAndSend('reset_fault')}>Reset Fault</button>
+              <div className="w-px h-6" style={{background:'var(--border)'}}></div>
+              <button className="btn" onClick={()=>confirmAndSend('dock')}>Dock</button>
+              <button className="btn" onClick={()=>confirmAndSend('undock')}>Undock</button>
+              <div className="w-px h-6" style={{background:'var(--border)'}}></div>
+              <button className="btn" onClick={()=>confirmAndSend('pause')}>Pause</button>
+              <button className="btn" onClick={()=>confirmAndSend('resume')}>Resume</button>
+              <button className="btn" onClick={()=>confirmAndSend('auto')}>Auto</button>
+              <button className="btn" onClick={()=>confirmAndSend('manual')}>Manual</button>
+            </div>
+          </div>
+
+          {/* Quick Metrics */}
+          <div className="card p-4 border" style={{borderColor:'var(--border)'}}>
+            <h2 className="text-lg font-semibold mb-3">Thông số nhanh</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="rounded ring p-3">
+                <div className="text-sm muted">v (m/s)</div>
+                <div className="text-xl font-semibold"><span id="valV">0.00</span></div>
+              </div>
+              <div className="rounded ring p-3">
+                <div className="text-sm muted">a (m/s²)</div>
+                <div className="text-xl font-semibold"><span id="valA">0.00</span></div>
+              </div>
+              <div className="rounded ring p-3">
+                <div className="text-sm muted">x (m)</div>
+                <div className="text-xl font-semibold"><span id="valX">0.00</span></div>
+              </div>
+              <div className="rounded ring p-3 col-span-2 sm:col-span-1">
+                <div className="text-sm muted">Liên kết</div>
+                <div className="text-base">RS485: OK • Center: OK</div>
+              </div>
+            </div>
           </div>
         </div>
-        <Fe06Chart onSample={(s)=>{
-          const vEl = document.getElementById('metric-v')
-          const aEl = document.getElementById('metric-a')
-          const xEl = document.getElementById('metric-x')
-          if (vEl) vEl.textContent = s.v.toFixed(3)
-          if (aEl) aEl.textContent = s.a.toFixed(3)
-          if (xEl) xEl.textContent = s.x.toFixed(3)
-        }}/>
-      </section>
-      <section>
-        <ConfigForm/>
+
+        {/* Chart */}
+        <div className="mb-6">
+          <Fe06Chart onSample={(s)=>{
+            const vEl = document.getElementById('metric-v')
+            const aEl = document.getElementById('metric-a')
+            const xEl = document.getElementById('metric-x')
+            if (vEl) vEl.textContent = s.v.toFixed(3)
+            if (aEl) aEl.textContent = s.a.toFixed(3)
+            if (xEl) xEl.textContent = s.x.toFixed(3)
+            // Update quick metrics per SuperDesign IDs
+            const v2 = document.getElementById('valV')
+            const a2 = document.getElementById('valA')
+            const x2 = document.getElementById('valX')
+            if (v2) v2.textContent = s.v.toFixed(2)
+            if (a2) a2.textContent = s.a.toFixed(2)
+            if (x2) x2.textContent = s.x.toFixed(2)
+          }}/>
+        </div>
+
+        {/* Quick Config */}
+        <div className="card p-4 border" style={{borderColor:'var(--border)'}}>
+          <h2 className="text-lg font-semibold mb-3">Cấu hình nhanh</h2>
+          <ConfigForm/>
+        </div>
       </section>
     </AppShell>
   )
