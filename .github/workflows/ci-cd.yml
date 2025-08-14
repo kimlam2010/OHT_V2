@@ -129,6 +129,10 @@ jobs:
         working-directory: ./OHT-50/OHT-50/frontend
         run: npm run build
 
+      - name: Test
+        working-directory: ./OHT-50/OHT-50/frontend
+        run: npm test -- --run
+
   build-and-push:
     name: Backend Docker Build & Push
     runs-on: ubuntu-latest
