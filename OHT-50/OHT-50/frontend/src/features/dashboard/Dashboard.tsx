@@ -1,7 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import Fe06Chart from '../Fe06Chart'
-import ConfigForm from './ConfigForm'
 import { sendControlCommand } from '../../services/control'
 import { useToast } from '../../components/Toast'
 import AppShell from '../../components/AppShell'
@@ -109,30 +108,49 @@ export default function Dashboard(){
           </div>
         </div>
 
-        {/* Chart */}
-        <div className="mb-6">
-          <Fe06Chart onSample={(s)=>{
-            const vEl = document.getElementById('metric-v')
-            const aEl = document.getElementById('metric-a')
-            const xEl = document.getElementById('metric-x')
-            if (vEl) vEl.textContent = s.v.toFixed(3)
-            if (aEl) aEl.textContent = s.a.toFixed(3)
-            if (xEl) xEl.textContent = s.x.toFixed(3)
-            // Update quick metrics per SuperDesign IDs
-            const v2 = document.getElementById('valV')
-            const a2 = document.getElementById('valA')
-            const x2 = document.getElementById('valX')
-            if (v2) v2.textContent = s.v.toFixed(2)
-            if (a2) a2.textContent = s.a.toFixed(2)
-            if (x2) x2.textContent = s.x.toFixed(2)
-          }}/>
+        {/* bỏ 2 card thống kê/định vị theo yêu cầu */}
+
+        {/* Biểu đồ VAX (trái) + Thông tin định vị (phải) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Left: Chart */}
+          <div>
+            <Fe06Chart onSample={(s)=>{
+              const vEl = document.getElementById('metric-v')
+              const aEl = document.getElementById('metric-a')
+              const xEl = document.getElementById('metric-x')
+              if (vEl) vEl.textContent = s.v.toFixed(3)
+              if (aEl) aEl.textContent = s.a.toFixed(3)
+              if (xEl) xEl.textContent = s.x.toFixed(3)
+            }}/>
+          </div>
+          {/* Right: Location info */}
+          <div className="card p-4">
+            <h3 className="text-lg font-semibold mb-3">Thông tin định vị</h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded ring p-3 col-span-2">
+                <div className="muted">Heading</div>
+                <div><span id="heading">72</span>°</div>
+              </div>
+              <div className="rounded ring p-3">
+                <div className="muted">RFID gần nhất</div>
+                <div><span id="rfid">A12</span> @ <span id="rfidTime">--:--:--</span></div>
+              </div>
+              <div className="rounded ring p-3">
+                <div className="muted">Vị trí x (encoder sau reset)</div>
+                <div><span id="posX">0.00</span> m</div>
+              </div>
+              <div className="rounded ring p-3 col-span-2">
+                <div className="muted">Mini‑map LiDAR (OP)</div>
+                <div className="h-28 border rounded" style={{borderColor: 'var(--border)', background: 'var(--card)'}}></div>
+              </div>
+              <div className="rounded ring p-3 col-span-2">
+                <div className="muted">Kết nối</div>
+                <div>Center: OK • RS485: OK</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Quick Config */}
-        <div className="card p-4 border" style={{borderColor:'var(--border)'}}>
-          <h2 className="text-lg font-semibold mb-3">Cấu hình nhanh</h2>
-          <ConfigForm/>
-        </div>
       </section>
     </AppShell>
   )

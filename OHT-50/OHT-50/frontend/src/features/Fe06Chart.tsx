@@ -1,8 +1,8 @@
 import React from 'react'
 
-export type RealtimeSample = { v: number; a: number; x: number }
+export type RealtimeSample = { v: number; a: number; x: number; tagId?: string | number; state?: string }
 
-export default function Fe06Chart({ onSample }: { onSample?: (s: RealtimeSample) => void }) {
+export default function Fe06Chart({ onSample, showStats=true }: { onSample?: (s: RealtimeSample) => void; showStats?: boolean }) {
   const WIDTH = 800, HEIGHT = 256, N = 600, HZ = 10
   const [bufV] = React.useState<number[]>(Array(N).fill(0))
   const [bufA] = React.useState<number[]>(Array(N).fill(0))
@@ -49,6 +49,8 @@ export default function Fe06Chart({ onSample }: { onSample?: (s: RealtimeSample)
               v: (msg.status?.vel_mms ?? 0) / 1000.0,
               a: (msg.status?.acc_mms2 ?? 0) / 1000.0,
               x: (msg.status?.pos_mm ?? 0) / 1000.0,
+              tagId: msg.location?.tag_id,
+              state: msg.status?.state,
             }
             pushSample(s)
             // Detect overlays
@@ -196,12 +198,13 @@ export default function Fe06Chart({ onSample }: { onSample?: (s: RealtimeSample)
           return <g>{elems}</g>
         })()}
       </svg>
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 text-sm mt-3">
-        <div className="rounded ring p-2"><div className="muted">v (m/s)</div><div>min: {stats.v.min.toFixed(2)} • avg: {stats.v.avg.toFixed(2)} • max: {stats.v.max.toFixed(2)}</div></div>
-        <div className="rounded ring p-2"><div className="muted">a (m/s²)</div><div>min: {stats.a.min.toFixed(2)} • avg: {stats.a.avg.toFixed(2)} • max: {stats.a.max.toFixed(2)}</div></div>
-        <div className="rounded ring p-2"><div className="muted">x (m)</div><div>min: {stats.x.min.toFixed(2)} • avg: {stats.x.avg.toFixed(2)} • max: {stats.x.max.toFixed(2)}</div></div>
-      </div>
+      {showStats && (
+        <div className="grid grid-cols-3 gap-3 text-sm mt-3">
+          <div className="rounded ring p-2"><div className="muted">v (m/s)</div><div>min: {stats.v.min.toFixed(2)} • avg: {stats.v.avg.toFixed(2)} • max: {stats.v.max.toFixed(2)}</div></div>
+          <div className="rounded ring p-2"><div className="muted">a (m/s²)</div><div>min: {stats.a.min.toFixed(2)} • avg: {stats.a.avg.toFixed(2)} • max: {stats.a.max.toFixed(2)}</div></div>
+          <div className="rounded ring p-2"><div className="muted">x (m)</div><div>min: {stats.x.min.toFixed(2)} • avg: {stats.x.avg.toFixed(2)} • max: {stats.x.max.toFixed(2)}</div></div>
+        </div>
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import './styles.css'
 import Fe06Chart from './features/Fe06Chart'
+import Fe06Page from './features/fe06/Fe06Page'
 import LogsPage from './features/LogsPage'
 import LoginPage from './features/auth/LoginPage'
 import Dashboard from './features/dashboard/Dashboard'
@@ -38,7 +39,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/dashboard" element={<Guard><Dashboard /></Guard>} />
-            <Route path="/fe06" element={<Fe06Demo />} />
+            <Route path="/fe06" element={<Guard><Fe06Page/></Guard>} />
             <Route path="/logs" element={<LogsPage />} />
             <Route path="/user" element={<Guard><UserSettingsPage/></Guard>} />
             <Route path="/admin" element={<Guard><AdminPage/></Guard>} />

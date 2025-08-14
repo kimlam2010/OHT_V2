@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.v1 import center, config, health, telemetry, rs485
+from app.api.v1 import center, config, health, telemetry, rs485, user, auth
 from app.config import get_settings
 from app.core.exceptions import OHT50Exception
 from app.core.logging import CorrelationIdMiddleware, get_logger
@@ -214,6 +214,10 @@ app.include_router(
     center.router, prefix="/api/v1/center", tags=["Center Communication"]
 )
 app.include_router(rs485.router, prefix="/api/v1/rs485", tags=["RS485"])
+app.include_router(user.router, prefix="/api/v1/user", tags=["User"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
+# Alias admin routes to auth router for user management endpoints
+app.include_router(auth.router, prefix="/api/v1/admin", tags=["Admin"])
 
 
 @app.get("/", tags=["Root"])
@@ -242,6 +246,9 @@ async def info() -> Dict[str, Any]:
             "telemetry": "/api/v1/telemetry",
             "center": "/api/v1/center",
             "rs485": "/api/v1/rs485",
+            "user": "/api/v1/user",
+            "auth": "/api/v1/auth",
+            "admin": "/api/v1/admin",
             "docs": "/docs",
         },
         "settings": {

@@ -33,7 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }){
       </header>
 
       <div className="w-full max-w-screen-2xl mx-auto flex">
-        <aside className={`${sidebarOpen ? '' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-out fixed md:static z-30 md:z-auto w-64 min-h-[calc(100vh-57px)] border-r`} style={{background: 'var(--card)', borderColor: 'var(--border)'}}>
+        <aside className={`${sidebarOpen ? '' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-out fixed md:static top-[57px] left-0 md:top-auto md:left-auto z-30 md:z-auto w-64 min-h-[calc(100vh-57px)] sidebar`}>
           <nav className="p-4 space-y-1">
             <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/dashboard">Tổng quan</Link>
             <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/fe06">Đồ thị v‑a‑x</Link>
