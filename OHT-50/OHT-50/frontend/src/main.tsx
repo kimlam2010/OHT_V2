@@ -6,6 +6,14 @@ import Fe06Chart from './features/Fe06Chart'
 import LogsPage from './features/LogsPage'
 import LoginPage from './features/auth/LoginPage'
 import Dashboard from './features/dashboard/Dashboard'
+import UserSettingsPage from './features/user/UserSettingsPage'
+import AdminPage from './features/admin/AdminPage'
+import CenterConfigPage from './features/center/CenterConfigPage'
+import JobsPage from './features/jobs/JobsPage'
+import DiagnosticsPage from './features/diagnostics/DiagnosticsPage'
+import Rs485AddressesPage from './features/rs485/Rs485AddressesPage'
+import SafetyConfigPage from './features/safety/SafetyConfigPage'
+import AuditTrailPage from './features/audit/AuditTrailPage'
 import { getToken } from './features/auth/auth'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -32,6 +40,14 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/dashboard" element={<Guard><Dashboard /></Guard>} />
             <Route path="/fe06" element={<Fe06Demo />} />
             <Route path="/logs" element={<LogsPage />} />
+            <Route path="/user" element={<Guard><UserSettingsPage/></Guard>} />
+            <Route path="/admin" element={<Guard><AdminPage/></Guard>} />
+            <Route path="/center" element={<Guard><CenterConfigPage/></Guard>} />
+            <Route path="/jobs" element={<Guard><JobsPage/></Guard>} />
+            <Route path="/diag" element={<Guard><DiagnosticsPage/></Guard>} />
+            <Route path="/rs485" element={<Guard><Rs485AddressesPage/></Guard>} />
+            <Route path="/safety" element={<Guard><SafetyConfigPage/></Guard>} />
+            <Route path="/audit" element={<Guard><AuditTrailPage/></Guard>} />
           </Routes>
         </BrowserRouter>
       </ToastProvider>

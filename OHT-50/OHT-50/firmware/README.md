@@ -18,14 +18,19 @@ File: `firmware/examples/rs485_loopback.c`
 
 Chạy thử trên môi trường dev (skeleton, giả lập loopback bằng `uart_sim_rx_feed()`):
 
-1) Biên dịch nhanh bằng gcc (máy phát triển):
+1) Biên dịch nhanh bằng Makefile (máy phát triển):
 ```
-gcc -Ihal examples/rs485_loopback.c hal/hal_rs485.c hal/hal_uart_dma.c -o rs485_loopback
+make all
 ```
+
+Sinh ra 3 binary:
+- `test_sm`: unit test máy trạng thái Idle/Move/Dock/Fault/E‑Stop
+- `test_safety`: unit test safety (E‑Stop input + watchdog)
+- `loopback`: mô phỏng loopback RS485
 
 2) Chạy:
 ```
-./rs485_loopback
+./test_sm && ./test_safety && ./loopback
 ```
 
 Tham số có thể thay qua macro:

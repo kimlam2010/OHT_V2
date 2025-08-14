@@ -38,6 +38,13 @@ export default function AppShell({ children }: { children: React.ReactNode }){
             <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/dashboard">Tổng quan</Link>
             <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/fe06">Đồ thị v‑a‑x</Link>
             <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/logs">Nhật ký</Link>
+            <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/audit">Audit Trail</Link>
+            <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/center">Cấu hình Center</Link>
+            <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/safety">Cấu hình an toàn</Link>
+            <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/jobs">Job Monitor</Link>
+            <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/diag">Chẩn đoán</Link>
+            <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/rs485">RS485 Addresses</Link>
+            <Link className="block px-3 py-2 rounded hover:bg-[var(--muted)]" to="/user">User Settings</Link>
           </nav>
         </aside>
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
