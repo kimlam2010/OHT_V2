@@ -1,25 +1,35 @@
 import React from 'react'
 import AppShell from '../../components/AppShell'
 
-type Row = { t: string; u: string; a: string; tgt: string; r: string; ip: string; sid: string; dev: string; corr: string; sig: string }
+type Row = { time: string; user: string; action: string; target: string; result: string; ip: string; session: string; device: string; correlation_id: string; signature: string }
 
 export default function AuditTrailPage(){
-  const data: Row[] = [
-    {t:'10:01:00.001', u:'alice', a:'LOGIN', tgt:'—', r:'OK', ip:'10.0.0.2', sid:'S-1', dev:'OHT-50-01', corr:'c-1c8f', sig:'sha256:abcd…'},
-    {t:'10:02:12.222', u:'alice', a:'START', tgt:'Move', r:'ACCEPTED', ip:'10.0.0.2', sid:'S-1', dev:'OHT-50-01', corr:'c-1c8f', sig:'sha256:bcde…'},
-    {t:'10:03:45.010', u:'bob', a:'APPLY_CONFIG', tgt:'safety.limits', r:'OK', ip:'10.0.0.3', sid:'S-2', dev:'OHT-50-02', corr:'c-9aa2', sig:'sha256:ef12…'}
-  ]
-  const [rows, setRows] = React.useState<Row[]>(data)
+  const [rows, setRows] = React.useState<Row[]>([])
   const [uq, setUq] = React.useState('')
   const [aq, setAq] = React.useState('')
   const [sq, setSq] = React.useState('')
   const [dq, setDq] = React.useState('')
-  function filter(){
-    setRows(data.filter(d => (!uq || d.u.toLowerCase().includes(uq.toLowerCase())) && (!aq || d.a===aq) && (!sq || d.sid.toLowerCase().includes(sq.toLowerCase())) && (!dq || d.dev.toLowerCase().includes(dq.toLowerCase()))))
+  const [loading, setLoading] = React.useState(false)
+  const [err, setErr] = React.useState(false)
+
+  async function load(){
+    setLoading(true); setErr(false)
+    try{
+      const params = new URLSearchParams()
+      if (uq) params.set('user', uq)
+      if (aq) params.set('action', aq)
+      const res = await fetch('/api/v1/telemetry/audit?'+params.toString())
+      if (!res.ok) throw new Error('bad')
+      const data = await res.json()
+      setRows(data.data || [])
+    } catch { setErr(true) } finally { setLoading(false) }
   }
+  React.useEffect(()=>{ load(); const t = setInterval(load, 4000); return ()=> clearInterval(t) }, [])
+
+  function filter(){ load() }
   function exportCsv(){
     const header = ['time','user','action','target','result','ip','session','device','correlation_id','signature']
-    const lines = rows.map(d => [d.t,d.u,d.a,d.tgt,d.r,d.ip,d.sid,d.dev,d.corr,d.sig].join(','))
+    const lines = rows.map(d => [d.time,d.user,d.action,d.target,d.result,d.ip,d.session,d.device,d.correlation_id,d.signature].join(','))
     const csv = [header.join(',')].concat(lines).join('\n')
     const a = document.createElement('a'); a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(csv); a.download='audit.csv'; a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a)
   }
@@ -66,16 +76,16 @@ export default function AuditTrailPage(){
               <tbody>
                 {rows.map((d,i)=> (
                   <tr key={i}>
-                    <td className="py-2 pr-4">{d.t}</td>
-                    <td className="py-2 pr-4">{d.u}</td>
-                    <td className="py-2 pr-4">{d.a}</td>
-                    <td className="py-2 pr-4">{d.tgt}</td>
-                    <td className="py-2 pr-4">{d.r}</td>
+                    <td className="py-2 pr-4">{d.time}</td>
+                    <td className="py-2 pr-4">{d.user}</td>
+                    <td className="py-2 pr-4">{d.action}</td>
+                    <td className="py-2 pr-4">{d.target}</td>
+                    <td className="py-2 pr-4">{d.result}</td>
                     <td className="py-2 pr-4">{d.ip}</td>
-                    <td className="py-2 pr-4">{d.sid}</td>
-                    <td className="py-2 pr-4">{d.dev}</td>
-                    <td className="py-2 pr-4">{d.corr}</td>
-                    <td className="py-2">{d.sig}</td>
+                    <td className="py-2 pr-4">{d.session}</td>
+                    <td className="py-2 pr-4">{d.device}</td>
+                    <td className="py-2 pr-4">{d.correlation_id}</td>
+                    <td className="py-2">{d.signature}</td>
                   </tr>
                 ))}
               </tbody>

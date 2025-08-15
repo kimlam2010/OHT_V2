@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import React from 'react'
 
 export type RealtimeSample = { v: number; a: number; x: number; tagId?: string | number; state?: string }
@@ -9,6 +10,7 @@ export default function Fe06Chart({ onSample, showStats=true }: { onSample?: (s:
   const [bufX] = React.useState<number[]>(Array(N).fill(0))
   const [wsState, setWsState] = React.useState('connecting')
   const [paused, setPaused] = React.useState(false)
+  const pausedRef = React.useRef(false)
   const [series, setSeries] = React.useState({ v: true, a: true, x: true })
   const [range, setRange] = React.useState<'10'|'30'|'60'|'live'>('30')
   const [ov, setOv] = React.useState({ rfid: true, enc: true, state: true })
@@ -19,8 +21,11 @@ export default function Fe06Chart({ onSample, showStats=true }: { onSample?: (s:
   const sampleIdxRef = React.useRef(0)
   const prevStateRef = React.useRef<string | undefined>(undefined)
 
+  // Keep a stopped flag to prevent reconnect after unmount
+  const stoppedRef = React.useRef(false)
+
   function pushSample(s: RealtimeSample){
-    if (paused) return
+    if (pausedRef.current) return
     bufV.push(s.v); bufV.shift()
     bufA.push(s.a); bufA.shift()
     bufX.push(s.x); bufX.shift()
@@ -34,9 +39,27 @@ export default function Fe06Chart({ onSample, showStats=true }: { onSample?: (s:
   React.useEffect(()=>{
     let ws: WebSocket | null = null
     let attempts = 0
-    let timer: any
-    const url = (import.meta.env.VITE_WS_URL as string) || 'ws://localhost:8000/api/v1/telemetry/ws'
+    let timer: ReturnType<typeof setTimeout> | null = null
+    stoppedRef.current = false
+    const envUrl = (import.meta.env.VITE_WS_URL as string | undefined)
+    const url = envUrl && envUrl.length > 0 ? envUrl : 'ws://localhost:8000/api/v1/telemetry/ws'
+
+    function pruneMarkers(){
+      const minIdx = Math.max(0, sampleIdxRef.current - N)
+      if (markersRef.current.length > N * 4){
+        markersRef.current = markersRef.current.filter(m => m.idx >= minIdx)
+      }
+    }
+
+    function scheduleReconnect(){
+      if (stoppedRef.current) return
+      const backoff = Math.min(5000, 500 * Math.pow(2, attempts++))
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(connect, backoff)
+    }
+
     function connect(){
+      if (stoppedRef.current) return
       try {
         ws = new WebSocket(url)
         ws.onopen = ()=>{ setWsState('connected'); attempts = 0 }
@@ -44,6 +67,7 @@ export default function Fe06Chart({ onSample, showStats=true }: { onSample?: (s:
         ws.onerror = ()=>{ setWsState('error'); scheduleReconnect() }
         ws.onmessage = (ev)=>{
           try {
+            if (pausedRef.current) return
             const msg = JSON.parse(ev.data)
             const s: RealtimeSample = {
               v: (msg.status?.vel_mms ?? 0) / 1000.0,
@@ -62,20 +86,33 @@ export default function Fe06Chart({ onSample, showStats=true }: { onSample?: (s:
               markersRef.current.push({ idx: sampleIdxRef.current, type: 'state', label: curState })
               prevStateRef.current = curState
             }
+            pruneMarkers()
             onSample?.(s)
             setTick(t=>t+1)
           } catch {}
         }
       } catch { scheduleReconnect() }
     }
-    function scheduleReconnect(){
-      const backoff = Math.min(5000, 500 * Math.pow(2, attempts++))
-      clearTimeout(timer)
-      timer = setTimeout(connect, backoff)
-    }
+
     connect()
-    return ()=>{ clearTimeout(timer); ws?.close() }
-  }, [paused])
+    return ()=>{
+      stoppedRef.current = true
+      if (timer) clearTimeout(timer)
+      if (ws){
+        try {
+          ws.onopen = null as any
+          ws.onclose = null as any
+          ws.onerror = null as any
+          ws.onmessage = null as any
+        } catch {}
+        try { ws.close() } catch {}
+        ws = null
+      }
+    }
+  }, [])
+
+  // Sync paused state into ref so WS handler can read without re-subscribing
+  React.useEffect(()=>{ pausedRef.current = paused }, [paused])
 
   // Determine window length from range selection
   const win = range === 'live' ? N : Math.min(N, parseInt(range,10) * HZ)

@@ -4,14 +4,15 @@ RS485 Management API: cấu hình, registry module, giám sát điểm đo
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 
 from app.core.logging import get_logger
 from app.models.rs485 import BusConfig, ModuleInfo, PointsSnapshot
+from app.core.security import verify_token
 from app.services.rs485_bus import RS485Bus, RS485Settings
 
 logger = get_logger(__name__)
-router = APIRouter(tags=["RS485"])
+router = APIRouter(tags=["RS485"]) 
 
 
 # In-memory mock registry & config (placeholder, sẽ nối với service thật)
@@ -20,7 +21,7 @@ _registry: Dict[int, ModuleInfo] = {}
 _bus: Optional[RS485Bus] = None
 
 
-@router.get("/config", response_model=BusConfig, summary="Lấy cấu hình RS485")
+@router.get("/config", response_model=BusConfig, summary="Lấy cấu hình RS485", dependencies=[Depends(verify_token)])
 async def get_bus_config():
     global _bus_config
     if _bus_config is None:
@@ -28,7 +29,7 @@ async def get_bus_config():
     return _bus_config
 
 
-@router.put("/config", response_model=BusConfig, summary="Cập nhật cấu hình RS485")
+@router.put("/config", response_model=BusConfig, summary="Cập nhật cấu hình RS485", dependencies=[Depends(verify_token)])
 async def update_bus_config(cfg: BusConfig):
     global _bus_config
     global _bus
@@ -39,12 +40,12 @@ async def update_bus_config(cfg: BusConfig):
     return cfg
 
 
-@router.get("/modules", response_model=List[ModuleInfo], summary="Danh sách module trên bus")
+@router.get("/modules", response_model=List[ModuleInfo], summary="Danh sách module trên bus", dependencies=[Depends(verify_token)])
 async def list_modules():
     return list(_registry.values())
 
 
-@router.post("/discover", response_model=List[ModuleInfo], summary="Quét auto-discovery")
+@router.post("/discover", response_model=List[ModuleInfo], summary="Quét auto-discovery", dependencies=[Depends(verify_token)])
 async def discover_modules(request: Request, start: int = Query(16, ge=1, le=247), end: int = Query(64, ge=1, le=247)):
     global _bus
     global _registry
@@ -65,7 +66,7 @@ async def discover_modules(request: Request, start: int = Query(16, ge=1, le=247
     return found
 
 
-@router.get("/points", response_model=PointsSnapshot, summary="Ảnh chụp điểm đo nhanh")
+@router.get("/points", response_model=PointsSnapshot, summary="Ảnh chụp điểm đo nhanh", dependencies=[Depends(verify_token)])
 async def get_points_snapshot(request: Request) -> PointsSnapshot:
     # Tối thiểu: đọc nhanh một số điểm nếu địa chỉ đã biết
     global _bus_config

@@ -9,12 +9,14 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.responses import Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1 import center, config, health, telemetry, rs485, user, auth
 from app.config import get_settings
 from app.core.exceptions import OHT50Exception
 from app.core.logging import CorrelationIdMiddleware, get_logger
+from app.core.security import verify_token
 
 # Global logger
 logger = get_logger(__name__)
@@ -57,10 +59,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add CORS middleware
+# Add CORS middleware (from env)
+origins = settings.cors_origins or ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure properly for production
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -258,6 +261,11 @@ async def info() -> Dict[str, Any]:
             "log_level": settings.log_level,
         },
     }
+
+
+@app.get("/favicon.ico")
+async def favicon() -> Response:
+    return Response(status_code=204)
 
 
 if __name__ == "__main__":

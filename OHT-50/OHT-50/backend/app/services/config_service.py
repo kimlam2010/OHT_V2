@@ -87,7 +87,7 @@ class ConfigService:
         if self.current_config:
             current_file = self.config_dir / "current.json"
             with open(current_file, 'w', encoding='utf-8') as f:
-                json.dump(self.current_config.dict(), f, indent=2, ensure_ascii=False)
+                json.dump(self.current_config.model_dump(), f, indent=2, ensure_ascii=False)
             logger.info("Saved current configuration", config_version=self.current_config.version)
     
     def _save_config_history(self, config: SystemConfig, action: str, user: str = "system") -> None:
@@ -97,13 +97,13 @@ class ConfigService:
             timestamp=datetime.now(),
             action=action,
             user=user,
-            config_data=config.dict()
+            config_data=config.model_dump()
         )
         
         # Lưu vào file history
         history_file = self.config_dir / f"history_v{config.version}.json"
         with open(history_file, 'w', encoding='utf-8') as f:
-            json.dump(history_entry.dict(), f, indent=2, ensure_ascii=False)
+            json.dump(history_entry.model_dump(), f, indent=2, ensure_ascii=False)
         
         # Thêm vào memory history (giữ 10 bản gần nhất)
         self.config_history.append(history_entry)
@@ -246,9 +246,9 @@ class ConfigService:
             raise ConfigurationError("No current configuration available")
         
         if format.lower() == "yaml":
-            return yaml.dump(self.current_config.dict(), default_flow_style=False, allow_unicode=True)
+            return yaml.dump(self.current_config.model_dump(), default_flow_style=False, allow_unicode=True)
         else:
-            return json.dumps(self.current_config.dict(), indent=2, ensure_ascii=False)
+            return json.dumps(self.current_config.model_dump(), indent=2, ensure_ascii=False)
     
     def import_config(self, config_content: str, format: str = "json", user: str = "system") -> ConfigResponse:
         """Import cấu hình từ string"""

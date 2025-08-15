@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import PlainTextResponse
 
 from app.core.logging import get_logger
+from app.core.security import verify_token
 from app.core.exceptions import ConfigurationError, ValidationError
 from app.models.config import SystemConfig, ConfigHistory, ConfigResponse
 from app.services.config_service import ConfigService
@@ -26,7 +27,7 @@ def get_config_service():
     return config_service
 
 
-@router.get("/", response_model=SystemConfig, summary="Lấy cấu hình hiện tại")
+@router.get("/", response_model=SystemConfig, summary="Lấy cấu hình hiện tại", dependencies=[Depends(verify_token)])
 async def get_current_config():
     """
     Lấy cấu hình hệ thống hiện tại
@@ -47,7 +48,7 @@ async def get_current_config():
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/history", response_model=List[ConfigHistory], summary="Lấy lịch sử cấu hình")
+@router.get("/history", response_model=List[ConfigHistory], summary="Lấy lịch sử cấu hình", dependencies=[Depends(verify_token)])
 async def get_config_history(limit: int = Query(10, ge=1, le=50, description="Số lượng bản ghi tối đa")):
     """
     Lấy lịch sử thay đổi cấu hình
@@ -68,7 +69,7 @@ async def get_config_history(limit: int = Query(10, ge=1, le=50, description="S�
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/version/{version}", response_model=SystemConfig, summary="Lấy cấu hình theo version")
+@router.get("/version/{version}", response_model=SystemConfig, summary="Lấy cấu hình theo version", dependencies=[Depends(verify_token)])
 async def get_config_by_version(version: int):
     """
     Lấy cấu hình theo version cụ thể
@@ -94,7 +95,7 @@ async def get_config_by_version(version: int):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.put("/", response_model=ConfigResponse, summary="Cập nhật cấu hình")
+@router.put("/", response_model=ConfigResponse, summary="Cập nhật cấu hình", dependencies=[Depends(verify_token)])
 async def update_config(config: SystemConfig, user: str = Query("system", description="Tên người dùng")):
     """
     Cập nhật cấu hình hệ thống
@@ -124,7 +125,7 @@ async def update_config(config: SystemConfig, user: str = Query("system", descri
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/rollback/{version}", response_model=ConfigResponse, summary="Rollback cấu hình")
+@router.post("/rollback/{version}", response_model=ConfigResponse, summary="Rollback cấu hình", dependencies=[Depends(verify_token)])
 async def rollback_config(version: int, user: str = Query("system", description="Tên người dùng")):
     """
     Rollback cấu hình về version cũ
@@ -153,7 +154,7 @@ async def rollback_config(version: int, user: str = Query("system", description=
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/export", response_class=PlainTextResponse, summary="Export cấu hình")
+@router.get("/export", response_class=PlainTextResponse, summary="Export cấu hình", dependencies=[Depends(verify_token)])
 async def export_config(format: str = Query("json", pattern="^(json|yaml)$", description="Định dạng export")):
     """
     Export cấu hình hiện tại
@@ -177,7 +178,7 @@ async def export_config(format: str = Query("json", pattern="^(json|yaml)$", des
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/import", response_model=ConfigResponse, summary="Import cấu hình")
+@router.post("/import", response_model=ConfigResponse, summary="Import cấu hình", dependencies=[Depends(verify_token)])
 async def import_config(
     content: str = Query(..., description="Nội dung cấu hình"),
     format: str = Query("json", pattern="^(json|yaml)$", description="Định dạng import"),
@@ -207,7 +208,7 @@ async def import_config(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/validate", summary="Validate cấu hình")
+@router.post("/validate", summary="Validate cấu hình", dependencies=[Depends(verify_token)])
 async def validate_config(config: SystemConfig):
     """
     Validate cấu hình mà không lưu
@@ -237,7 +238,7 @@ async def validate_config(config: SystemConfig):
         return {"valid": False, "message": f"Validation error: {str(e)}"}
 
 
-@router.get("/schema", summary="Lấy JSON schema")
+@router.get("/schema", summary="Lấy JSON schema", dependencies=[Depends(verify_token)])
 async def get_config_schema():
     """
     Lấy JSON schema cho cấu hình

@@ -94,3 +94,27 @@ class TelemetryFilter(BaseModel):
     has_errors: Optional[bool] = Field(default=None, description="Filter by errors")
     page: int = Field(default=1, description="Page number")
     page_size: int = Field(default=100, description="Page size")
+
+
+class LogRecord(BaseModel):
+    """Định dạng một bản ghi log đơn giản"""
+
+    time: str = Field(description="Timestamp ISO8601")
+    level: str = Field(description="Level")
+    source: str = Field(description="Source")
+    message: str = Field(description="Log message")
+
+
+class AuditRecord(BaseModel):
+    """Định dạng một bản ghi audit trail"""
+
+    time: str = Field(description="Timestamp ISO8601")
+    user: str = Field(description="Username")
+    action: str = Field(description="Action name")
+    target: str = Field(default="-", description="Target entity")
+    result: str = Field(default="OK", description="Result")
+    ip: str = Field(default="127.0.0.1", description="Client IP")
+    session: str = Field(default="S-1", description="Session ID")
+    device: str = Field(default="OHT-50-01", description="Device ID")
+    correlation_id: str = Field(default="c-0000", description="Correlation ID")
+    signature: str = Field(default="sha256:mock", description="Signature")

@@ -1,6 +1,7 @@
 import React from 'react'
 import AppShell from '../../components/AppShell'
 import { useToast } from '../../components/Toast'
+import { apiFetchJson } from '../../services/http'
 
 export default function AdminPage(){
   const { push } = useToast()
@@ -14,13 +15,11 @@ export default function AdminPage(){
 
   React.useEffect(()=>{
     (async()=>{
-      try{
-        const res = await fetch('/api/v1/admin/users')
-        if (res.ok){
-          const data = await res.json()
-          setUsers(data?.users || [])
-        }
-      } catch {}
+      const r = await apiFetchJson<any>('/api/v1/auth/users')
+      if (r.ok){
+        const data = r.data as any
+        setUsers(Array.isArray(data) ? data : (data?.users || []))
+      }
     })()
   },[])
 
@@ -31,17 +30,16 @@ export default function AdminPage(){
     }
     setBusy(true)
     try{
-      const res = await fetch('/api/v1/admin/users', {
+      const r = await apiFetchJson<any>('/api/v1/auth/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newUser)
       })
-      if (res.ok){
+      if (r.ok){
         push('Đã tạo tài khoản')
         setShowCreate(false)
         setNewUser({ username: '', password: '', role: 'operator' })
-        const data = await res.json()
-        setUsers(data.users)
+        const data = r.data as any
+        setUsers(Array.isArray(data) ? data : (data?.users || []))
       } else {
         push('Tạo tài khoản thất bại')
       }
@@ -92,15 +90,15 @@ export default function AdminPage(){
                       <button className="btn btn-ghost" onClick={async()=>{
                         const pwd = prompt(`Nhập mật khẩu mới cho ${u.username}`) || ''
                         if (!pwd) return
-                        const res = await fetch(`/api/v1/auth/users/${u.username}/password`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pwd}) })
-                        push(res.ok? 'Đã đặt lại mật khẩu' : 'Đặt lại mật khẩu thất bại')
+                        const r = await apiFetchJson(`/api/v1/auth/users/${u.username}/password`, { method:'POST', body: JSON.stringify({password: pwd}) })
+                        push(r.ok? 'Đã đặt lại mật khẩu' : 'Đặt lại mật khẩu thất bại')
                       }}>Reset mật khẩu</button>
                       <button className="btn btn-ghost" onClick={async()=>{
                         if (!confirm(`Xóa tài khoản ${u.username}?`)) return
-                        const res = await fetch(`/api/v1/auth/users/${u.username}`, { method:'DELETE' })
-                        if (res.ok){
-                          const data = await res.json()
-                          setUsers(data.users)
+                        const r = await apiFetchJson<any>(`/api/v1/auth/users/${u.username}`, { method:'DELETE' })
+                        if (r.ok){
+                          const data = r.data as any
+                          setUsers(Array.isArray(data) ? data : (data?.users || []))
                           push('Đã xóa tài khoản')
                         } else {
                           push('Xóa thất bại')

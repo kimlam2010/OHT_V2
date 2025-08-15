@@ -1,29 +1,36 @@
 import React from 'react'
 import AppShell from '../components/AppShell'
 
-type Row = { t:string; l:string; s:string; m:string }
+type Row = { time:string; level:string; source:string; message:string }
 
 export default function LogsPage() {
-  const demo: Row[] = [
-    {t:'10:00:12.123', l:'INFO', s:'FW', m:'Encoder OK'},
-    {t:'10:00:13.007', l:'ERROR', s:'Driver', m:'Overcurrent warning'},
-    {t:'10:00:15.842', l:'WARN', s:'Center', m:'SSE reconnect'},
-  ]
-  const [rows, setRows] = React.useState<Row[]>(demo)
+  const [rows, setRows] = React.useState<Row[]>([])
   const [q, setQ] = React.useState('')
   const [loading, setLoading] = React.useState(false)
   const [err, setErr] = React.useState(false)
 
   React.useEffect(()=>{
-    setLoading(true)
-    const t = setTimeout(()=>{ setLoading(false) }, 600)
-    return ()=> clearTimeout(t)
+    let stop = false
+    async function load(){
+      setLoading(true); setErr(false)
+      try{
+        const res = await fetch('/api/v1/telemetry/logs?limit=200')
+        if (!res.ok) throw new Error('bad')
+        const data = await res.json()
+        if (!stop) setRows(data.data || [])
+      } catch {
+        if (!stop) setErr(true)
+      } finally { if (!stop) setLoading(false) }
+    }
+    load()
+    const t = setInterval(load, 2000)
+    return ()=> { stop = true; clearInterval(t) }
   }, [])
 
   function onFilter(v:string){
     setQ(v)
     const qv = v.toLowerCase()
-    setRows(demo.filter(d => d.m.toLowerCase().includes(qv) || d.s.toLowerCase().includes(qv) || d.l.toLowerCase().includes(qv)))
+    setRows(prev => prev.filter(d => d.message.toLowerCase().includes(qv) || d.source.toLowerCase().includes(qv) || d.level.toLowerCase().includes(qv)))
   }
 
   return (
@@ -59,10 +66,10 @@ export default function LogsPage() {
               <tbody>
                 {rows.map((d, i) => (
                   <tr key={i}>
-                    <td className="py-2 pr-4">{d.t}</td>
-                    <td className="py-2 pr-4">{d.l}</td>
-                    <td className="py-2 pr-4">{d.s}</td>
-                    <td className="py-2">{d.m}</td>
+                    <td className="py-2 pr-4">{d.time}</td>
+                    <td className="py-2 pr-4">{d.level}</td>
+                    <td className="py-2 pr-4">{d.source}</td>
+                    <td className="py-2">{d.message}</td>
                   </tr>
                 ))}
                 {!rows.length && !loading && (
