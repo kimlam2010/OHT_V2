@@ -1,269 +1,194 @@
-# Ghi chú nền tảng Orange Pi 5B — UART/GPIO với opwiring (v2.0)
+# Ghi chú nền tảng Orange Pi 5B — UART/GPIO với Device Tree Overlay (v3.0)
 
-Mục tiêu: Chuẩn hóa bring‑up phần cứng cho OHT‑50 trên Orange Pi 5B (RK3588), sử dụng `opwiring` để kiểm tra và cấu hình UART/GPIO cho RS485.
+Mục tiêu: Chuẩn hóa bring‑up phần cứng cho OHT‑50 trên Orange Pi 5B (RK3588), sử dụng **Device Tree Overlay** để cấu hình UART1 cho RS485.
 
 > OS/KERNEL: linux 6.1.43-rk3588 (Orange Pi OS)
-> Công cụ chính: `opwiring` (Orange Pi Wiring Tool)
+> Phương pháp: Device Tree Overlay (khuyến nghị) + GPIO sysfs
 
-## 1) Cài đặt opwiring
+## 1) Cấu hình UART1 với Device Tree Overlay
 
+### Bước 1: Chỉnh sửa file cấu hình
 ```bash
-# Cài đặt opwiring
-sudo apt update
-sudo apt install opwiring
+# Backup file cấu hình
+sudo cp /boot/orangepiEnv.txt /boot/orangepiEnv.txt.backup
 
-# Kiểm tra phiên bản
-opwiring --version
+# Thêm overlay UART1
+echo "overlays=uart1-m1" | sudo tee -a /boot/orangepiEnv.txt
+
+# Kiểm tra cấu hình
+cat /boot/orangepiEnv.txt | grep overlays
 ```
 
-## 2) Kiểm tra UART với opwiring
-
-### Liệt kê tất cả UART
+### Bước 2: Reboot để load overlay
 ```bash
-opwiring uart list
+sudo reboot
 ```
 
-### Kiểm tra UART cụ thể
+### Bước 3: Kiểm tra UART1
 ```bash
-# Kiểm tra UART0 (console)
-opwiring uart info 0
+# Kiểm tra device node
+ls -la /dev/ttyS*
 
-# Kiểm tra UART1 (RS485)
-opwiring uart info 1
-
-# Kiểm tra UART2, UART3, etc.
-opwiring uart info 2
-opwiring uart info 3
+# Kết quả mong đợi:
+# crw-rw---- 1 root dialout 4, 65 /dev/ttyS1  # UART1
+# crw-rw---- 1 root dialout 4, 73 /dev/ttyS9  # UART debug
 ```
 
-### Bật UART1 cho RS485
-```bash
-# Bật UART1
-opwiring uart enable 1
+## 2) Pin Mapping UART1
 
-# Kiểm tra trạng thái
-opwiring uart status 1
-
-# Xem device node
-ls -l /dev/ttyS*
-```
-
-## 3) Kiểm tra GPIO với opwiring
-
-### Liệt kê GPIO
-```bash
-# Liệt kê tất cả GPIO
-opwiring gpio list
-
-# Kiệt kê theo bank
-opwiring gpio list --bank 1
-opwiring gpio list --bank 2
-```
-
-### Kiểm tra GPIO cụ thể
-```bash
-# Kiểm tra GPIO1_D3 (Relay1/DE-RE)
-opwiring gpio info 1 3
-
-# Kiểm tra GPIO1_D2 (Relay2/DE-RE)
-opwiring gpio info 1 2
-
-# Kiểm tra GPIO khác
-opwiring gpio info 1 0
-opwiring gpio info 1 1
-```
-
-### Test GPIO
-```bash
-# Test GPIO1_D3 (Relay1)
-opwiring gpio set 1 3 1
-sleep 1
-opwiring gpio set 1 3 0
-
-# Test GPIO1_D2 (Relay2)
-opwiring gpio set 1 2 1
-sleep 1
-opwiring gpio set 1 2 0
-```
-
-## 4) Mapping UART cho RS485
-
-### UART mapping Orange Pi 5B
-| Chức năng | UART# | TX Pin | RX Pin | Device | Ghi chú |
+### UART1 Mapping (uart1-m1 overlay)
+| Chức năng | UART# | TX Pin | RX Pin | GPIO | Device | Ghi chú |
 |---|---:|---|---|---|---|
-| Console | UART0 | GPIO0_A0 | GPIO0_A1 | /dev/ttyS0 | Debug console |
-| **RS485** | **UART1** | **GPIO0_A2** | **GPIO0_A3** | **/dev/ttyS1** | **RS485 bus** |
-| Motor | UART2 | GPIO0_A4 | GPIO0_A5 | /dev/ttyS2 | Motor driver |
-| CAN | UART3 | GPIO0_A6 | GPIO0_A7 | /dev/ttyS3 | CAN bus |
+| **RS485** | **UART1** | **Pin 5** | **Pin 3** | **GPIO0_A2/A3** | **/dev/ttyS1** | **RS485 bus** |
 
-### Kiểm tra pin mapping
-```bash
-# Kiểm tra pin UART1
-opwiring pin info GPIO0_A2  # TX
-opwiring pin info GPIO0_A3  # RX
-
-# Kiểm tra pin GPIO1_D3/D2
-opwiring pin info GPIO1_D3  # Relay1/DE-RE
-opwiring pin info GPIO1_D2  # Relay2/DE-RE
+### 26-pin Header Mapping
+```
+ +------+-----+----------+--------+---+   PI5B   +---+--------+----------+-----+------+
+ | GPIO | wPi |   Name   |  Mode  | V | Physical | V |  Mode  | Name     | wPi | GPIO |
+ +------+-----+----------+--------+---+----++----+---+--------+----------+-----+------+
+ |      |     |     3.3V |        |   |  1 || 2  |   |        | 5V       |     |      |
+ |   47 |   0 |    SDA.5 |    OUT | 0 |  3 || 4  |   |        | 5V       |     |      |
+ |   46 |   1 |    SCL.5 |     IN | 1 |  5 || 6  |   |        | GND      |     |      |
+ |   54 |   2 |    PWM15 |     IN | 1 |  7 || 8  | 1 | IN     | RXD.0    | 3   | 131  |
+ |      |     |      GND |        |   |  9 || 10 | 1 | IN     | TXD.0    | 4   | 132  |
 ```
 
-## 5) Wiring RS485 với UART1
+### UART1 Pin Assignment
+- **UART1_TX_M1**: Pin 5 (26-pin header) - GPIO0_A2
+- **UART1_RX_M1**: Pin 3 (26-pin header) - GPIO0_A3
 
-### Kết nối phần cứng
+## 3) Test UART1
+
+### Test cơ bản
+```bash
+# Test mở UART1
+sudo python3 -c "
+import serial
+with serial.Serial('/dev/ttyS1', 115200) as ser:
+    ser.write(b'OHT50_TEST\\r\\n')
+    print('✓ UART1 hoạt động')
+"
+```
+
+### Test TX liên tục
+```bash
+# Chạy script test TX liên tục
+sudo python3 continuous_tx_test.py
+
+# Chọn pattern:
+# 1. Text đơn giản (1s interval)
+# 2. RS485 Protocol (0.5s interval)
+# 3. Binary data (0.2s interval)
+# 4. Text dài (2s interval)
+```
+
+## 4) GPIO Control cho RS485
+
+### GPIO1_D3 (Relay1/DE-RE Control)
+```bash
+# Sử dụng gpio command
+gpio mode 0 out    # GPIO 47 (wPi 0)
+gpio write 0 1     # HIGH
+gpio write 0 0     # LOW
+
+# Sử dụng sysfs
+echo 35 | sudo tee /sys/class/gpio/export
+echo out | sudo tee /sys/class/gpio/gpio35/direction
+echo 1 | sudo tee /sys/class/gpio/gpio35/value
+echo 0 | sudo tee /sys/class/gpio/gpio35/value
+```
+
+### GPIO1_D2 (Relay2/DE-RE Control)
+```bash
+# Sử dụng gpio command
+gpio mode 1 out    # GPIO 46 (wPi 1)
+gpio write 1 1     # HIGH
+gpio write 1 0     # LOW
+```
+
+## 5) Scripts Test
+
+### quick_test.py
+```bash
+# Test nhanh UART1/GPIO/RS485
+sudo python3 quick_test.py
+```
+
+### continuous_tx_test.py
+```bash
+# TX liên tục với nhiều patterns
+sudo python3 continuous_tx_test.py
+```
+
+### hardware_test.py
+```bash
+# Test comprehensive
+sudo python3 hardware_test.py
+```
+
+## 6) Troubleshooting
+
+### UART1 không xuất hiện
+```bash
+# Kiểm tra overlay
+cat /boot/orangepiEnv.txt | grep overlays
+
+# Kiểm tra dmesg
+dmesg | grep -i uart
+
+# Reboot nếu cần
+sudo reboot
+```
+
+### Permission denied
+```bash
+# Thêm user vào group dialout
+sudo usermod -a -G dialout $USER
+
+# Logout và login lại
+```
+
+### GPIO không hoạt động
+```bash
+# Kiểm tra GPIO mapping
+gpio readall
+
+# Kiểm tra sysfs
+ls -la /sys/class/gpio/
+```
+
+## 7) Production Setup
+
+### RS485 Wiring
 ```
 Orange Pi 5B UART1:
-- TX (GPIO0_A2) → RS485 Transceiver TX
-- RX (GPIO0_A3) → RS485 Transceiver RX
+- Pin 5 (TX) → RS485 Transceiver TX
+- Pin 3 (RX) → RS485 Transceiver RX
 - GND → RS485 Transceiver GND
 
 RS485 Transceiver:
 - A → Module RS485 A
 - B → Module RS485 B
-- DE/RE → RTS (auto-direction) hoặc GPIO1_D3 (manual)
+- DE/RE → GPIO1_D3 (manual control)
 ```
 
-### Test wiring cơ bản
+### Termination
+- **Termination**: 120Ω resistors hai đầu
+- **Bias**: 680Ω-10kΩ resistors (nếu cần)
+
+### Test Production
 ```bash
-# Test UART1 loopback (nối TX→RX)
-opwiring uart test 1
-
-# Test với RS485 transceiver
-echo "test" | opwiring uart write 1
-opwiring uart read 1
+# BER test (15 phút)
+# Latency test
+# EMI/ESD test
 ```
 
-## 6) Cấu hình RS485 với opwiring
+---
 
-### Cấu hình UART1 cho RS485
-```bash
-# Cấu hình baud rate
-opwiring uart config 1 --baud 115200
-
-# Cấu hình RS485 mode
-opwiring uart config 1 --rs485
-
-# Cấu hình auto-RTS (DE/RE control)
-opwiring uart config 1 --rs485-auto-rts
-
-# Xem cấu hình hiện tại
-opwiring uart config 1 --show
-```
-
-### Test RS485 protocol
-```bash
-# Test PING command (0x01)
-opwiring uart write 1 --hex "AA 01 01 00 00 00"
-
-# Đọc response
-opwiring uart read 1 --hex
-
-# Test GET_INFO command (0x02)
-opwiring uart write 1 --hex "AA 01 02 00 00 00"
-opwiring uart read 1 --hex
-```
-
-## 7) Script test tự động
-
-### Tạo script test RS485
-```bash
-#!/bin/bash
-# test_rs485.sh
-
-echo "=== RS485 Test Script ==="
-
-# Kiểm tra UART1
-echo "1. Kiểm tra UART1..."
-opwiring uart status 1
-
-# Test GPIO DE/RE
-echo "2. Test GPIO DE/RE..."
-opwiring gpio set 1 3 1
-sleep 0.1
-opwiring gpio set 1 3 0
-
-# Test RS485 loopback
-echo "3. Test RS485 loopback..."
-opwiring uart test 1
-
-# Test protocol
-echo "4. Test RS485 protocol..."
-opwiring uart write 1 --hex "AA 01 01 00 00 00"
-sleep 0.1
-opwiring uart read 1 --hex
-
-echo "=== Test hoàn thành ==="
-```
-
-## 8) Checklist bring‑up với opwiring
-
-### Đã hoàn thành:
-- ✅ Cài đặt `opwiring`
-- ✅ Kiểm tra UART mapping
-- ✅ Kiểm tra GPIO mapping
-- ✅ Tạo script test
-
-### Cần wiring để test:
-- ⏳ Kết nối UART1 → RS485 transceiver
-- ⏳ Kết nối RS485 transceiver → module
-- ⏳ Termination 120Ω hai đầu
-- ⏳ Bias resistor (680Ω-10kΩ)
-- ⏳ Test loopback thật
-
-### Hướng dẫn wiring:
-1. **UART1 TX (GPIO0_A2)** → RS485 Transceiver TX
-2. **UART1 RX (GPIO0_A3)** → RS485 Transceiver RX
-3. **GND** → RS485 Transceiver GND
-4. **RS485 A/B** → Module RS485 A/B
-5. **DE/RE** → RTS (auto) hoặc GPIO1_D3 (manual)
-
-### Test sau wiring:
-```bash
-# Test cơ bản
-./test_rs485.sh
-
-# Test với module thật
-opwiring uart write 1 --hex "AA 01 01 00 00 00"  # PING
-opwiring uart read 1 --hex
-
-opwiring uart write 1 --hex "AA 01 02 00 00 00"  # GET_INFO
-opwiring uart read 1 --hex
-```
-
-## 9) Troubleshooting
-
-### UART1 không hoạt động
-```bash
-# Kiểm tra device tree
-opwiring dt info uart1
-
-# Kiểm tra overlay
-opwiring overlay list
-opwiring overlay info rk3588-uart1-m1
-
-# Bật overlay
-opwiring overlay enable rk3588-uart1-m1
-```
-
-### GPIO không hoạt động
-```bash
-# Kiểm tra GPIO bank
-opwiring gpio bank info 1
-
-# Kiểm tra pin conflict
-opwiring pin conflict GPIO1_D3
-```
-
-### RS485 không nhận được data
-```bash
-# Kiểm tra wiring
-opwiring uart test 1
-
-# Kiểm tra baud rate
-opwiring uart config 1 --show
-
-# Test với scope/logic analyzer
-```
-
-Tham chiếu: `docs/specs/hardware.md`, `docs/dev_radxa/pinout_radxa.md`, `docs/specs/bus_rs485.md`.
+**Changelog v3.0:**
+- Thêm Device Tree Overlay method
+- Cập nhật pin mapping chính xác
+- Thêm scripts test
+- Cải thiện troubleshooting
 
 

@@ -400,7 +400,7 @@ Lưu ý:
 | FW-11 | FW Engineer (Comms) | Triển khai khung lệnh RS485 theo `bus_rs485.md` (PING/GET_INFO/READ_FB/SET_POS...) | Gửi/nhận ổn định; CRC/timeout/retry đạt; thống kê lỗi | EM-02 | 5 | |
 | FW-12 | FW Engineer (Sensors) | Location fusion cơ bản (RFID + encoder) → `s_on_rail` | Sai số trong ngưỡng; log/telemetry có `tag_id`, `enc.count` | FW-05 | 4 | |
 | FW-13 | FW Engineer (Comms) | Expose API/Center messages cho BE: module registry, points snapshot | BE truy vấn qua HTTP/WS hoặc Center; tài liệu thông điệp | FW-07 | 3 | |
-| FW-14 | FW Engineer (HAL) | API điều khiển rơ-le `relay_set(channel, on)` map tới GPIO1_D3/D2 (Orange Pi 5B) | CLI demo bật/tắt; unit test; tài liệu tham chiếu `platform_orangepi_5b.md` | EM-03 | 2 | Người A | 2025-08-22 |
+
 | FW-15 | FW Engineer (Comms) | Cấu hình thiết bị RS485 qua env/config: ưu tiên `/dev/ttyOHT485` (udev), fallback `/dev/ttyS1` | Service khởi chạy ổn định; log cảnh báo khi fallback; README hướng dẫn | DOC-04 | 1 | Người A | 2025-08-20 |
 
 #### EMBED (Nhúng/Phần cứng)
@@ -416,7 +416,7 @@ Lưu ý:
 | EM-07 | Embedded QA | Bench HIL: fixture encoder/motor ảo | Bench hoạt động; script điều khiển | EM-02, EM-03 | 3 | |
 | EM-08 | Embedded QA | Checklist test sản xuất cơ bản | Checklist versioned; có mẫu biểu ghi nhận | EM-06 | 2 | |
 | EM-09 | Embedded HW | Xác nhận wiring RS485 (termination/bias), udev rules `/dev/ttyOHT485` | Ảnh chụp/biên bản kiểm tra; rules áp dụng ổn định | EM-01 | 2 | ⏳ To do |
-| EM-10 | Embedded Driver | Xác nhận offset GPIO cho `GPIO1_D3` và `GPIO1_D2` (libgpiod), ghi vào `platform_orangepi_5b.md` | Bảng `gpiochip:line` điền đủ; script `gpioset` minh hoạ | EM-01 | 1 | Người B | 2025-08-18 |
+
 | EM-11 | Embedded Driver | Enable UART1 trong DT/overlay; xác nhận `/dev/ttyS1` hoạt động | Loopback OK; thông số stty chuẩn; ảnh log `dmesg` | EM-01 | 1 | Người B | 2025-08-18 |
 
 #### QA/HIL & Vận hành
@@ -435,7 +435,7 @@ Lưu ý:
 | DOC-01 | PM/Tech Writer | Bổ sung `comm.rs485.addresses`, cập nhật checklist PM | `config_spec.md` & `PM_CHECKLIST_RS485_MODULES.md` cập nhật | — | 1 | ✅ Hoàn thành |
 | DOC-02 | PM/Tech Writer | Viết đặc tả LiDAR (nếu dùng) | `module_spec.md` có mục LiDAR; tham chiếu wiring/giao tiếp | ARCH | 2 | |
 | DOC-03 | PM/Tech Writer | Cập nhật interfaces: RS485 thuộc FW; BE tích hợp qua FW/Center | `docs/specs/interfaces.md` cập nhật lưu đồ & vai trò | ARCH | 1 | |
-| DOC-04 | PM/Tech Writer | Tạo `docs/dev_radxa/platform_orangepi_5b.md` + `docs/dev_radxa/udev_rules_orangepi5b.md` | Tài liệu có hướng dẫn UART1, GPIO1_D3/D2, udev; liên kết từ `hardware.md` | ARCH | 1 | ✅ Hoàn thành |
+| DOC-04 | PM/Tech Writer | Tạo `docs/dev_radxa/platform_orangepi_5b.md` + `docs/dev_radxa/udev_rules_orangepi5b.md` | Tài liệu có hướng dẫn UART1, udev; liên kết từ `hardware.md` | ARCH | 1 | ✅ Hoàn thành |
 
 #### Ghi chú chuyển đổi
 - Các endpoint RS485 trong BE (nếu có trong nhánh dev) chỉ dùng cho mock/dev; không dùng trong môi trường sản xuất theo quyết định mới.
@@ -558,4 +558,91 @@ Ghi chú: PM có thể nhân rộng bảng theo số tuần thực tế; mỗi t
 
 **Sẵn sàng cho:** Integration testing với Backend, demo end-to-end
 
+---
 
+## 📋 Prompt Templates cho EMBED & FW Teams
+
+### EMBED Team Prompts
+Đã tạo prompt templates chi tiết cho EMBED team trong `docs/tasks/EMBED_PROMPT_TEMPLATE.md`:
+
+**Template chung:**
+- Context: Hardware bring-up và low-level drivers cho OHT-50
+- Platform: Orange Pi 5B (RK3588)
+- Tech stack: C/C++, libgpiod, udev rules, device tree overlays
+- Rule: Hardware abstraction, EMI/ESD compliance, production ready
+
+**Prompts cụ thể:**
+- **EM-11**: UART1 Enable và Validation - Enable UART1 trong DT/overlay
+- **EM-02**: RS485/CAN Transceiver - Thiết kế và implement RS485 transceiver
+- **EM-03**: UART/CAN Init + DMA Ring Buffer - Implement UART với DMA ring buffer
+
+### FW Team Prompts  
+Đã tạo prompt templates chi tiết cho FW team trong `docs/tasks/FW_PROMPT_TEMPLATE.md`:
+
+**Template chung:**
+- Context: Firmware điều khiển thời gian thực cho OHT-50
+- Tech stack: C/C++ cho embedded, HAL layer
+- Rule: Real-time constraints, safety critical, deterministic behavior
+- Platform: Orange Pi 5B (RK3588) với HAL abstraction
+
+**Prompts cụ thể:**
+- **FW-01**: Khung FW, Scheduler, Ưu tiên ngắt - Thiết kế firmware architecture
+- **FW-02**: HAL - GPIO, PWM, ADC, UART/RS485, Timer - Implement HAL abstraction
+- **FW-07**: RS485 Protocol - Frame, CRC, Retry - Implement RS485 protocol
+- **FW-03**: State Machine - Idle/Move/Dock/Fault/E-Stop - Implement state machine
+- **FW-09**: E-Stop & Interlock - Implement safety mechanisms
+
+### Cách sử dụng Prompt Templates
+
+1. **Chọn template** phù hợp với task ID
+2. **Copy prompt** từ file template tương ứng
+3. **Điền thông tin task** cụ thể từ PM_TASKS_OHT-50.md
+4. **Customize** theo context và requirements
+5. **Execute** từng bước theo implementation steps
+6. **Validate** theo DOD checklist
+7. **Update** progress trong PM tracker
+
+### Ưu tiên triển khai EMBED & FW
+
+**Critical Path cho EMBED:**
+1. EM-01: Bring-up phần cứng, pinout (3 ngày)
+2. EM-02: RS485/CAN transceiver (3 ngày) - 🔄 Đang làm
+3. EM-03: UART/CAN init + DMA ring buffer (3 ngày) - 🔄 Đang làm
+4. EM-11: UART1 enable và validation (1 ngày) - Người B, due 2025-08-18
+
+**Critical Path cho FW:**
+1. FW-01: Khung FW + scheduler (3 ngày) - Phụ thuộc EM-01
+2. FW-02: HAL abstraction (4 ngày) - Phụ thuộc EM-02
+3. FW-03: State machine (3 ngày) - Phụ thuộc FW-01
+4. FW-07: RS485 protocol (3 ngày) - Phụ thuộc EM-02
+5. FW-09: E-Stop & interlock (4 ngày) - Phụ thuộc FW-03
+
+### Cập nhật trạng thái EMBED & FW
+
+**EMBED Team:**
+- EM-02: 🔄 Đang làm - RS485/CAN transceiver
+- EM-03: 🔄 Đang làm - UART/CAN init + DMA ring buffer
+- EM-11: ⏳ To do - UART1 enable và validation (Người B, due 2025-08-18)
+
+**FW Team:**
+- FW-01: ⏳ To do - Khung FW + scheduler (chờ EM-01)
+- FW-02: ⏳ To do - HAL abstraction (chờ EM-02)
+- FW-03: ⏳ To do - State machine (chờ FW-01)
+- FW-07: ⏳ To do - RS485 protocol (chờ EM-02)
+- FW-09: ⏳ To do - E-Stop & interlock (chờ FW-03)
+
+### Tài liệu tham chiếu
+
+- **EMBED Prompts:** `docs/tasks/EMBED_PROMPT_TEMPLATE.md`
+- **FW Prompts:** `docs/tasks/FW_PROMPT_TEMPLATE.md`
+- **Programming Prompts:** `docs/tasks/PROGRAMMING_PROMPT_OHT-50.md`
+- **Test Checklist:** `docs/specs/EMBED_TEST_CHECKLIST.md`
+- **Hardware Specs:** `docs/specs/hardware.md`, `docs/dev_radxa/pinout_radxa.md`
+
+### Ghi chú triển khai
+
+1. **EMBED team** cần hoàn thành EM-02 và EM-03 trước khi FW team có thể bắt đầu FW-02 và FW-07
+2. **EM-10 và EM-11** có deadline 2025-08-18, cần ưu tiên cao
+3. **FW team** có thể bắt đầu FW-01 song song với EM-02/EM-03
+4. **Safety mechanisms** (FW-09) cần được implement sau khi state machine (FW-03) hoàn thành
+5. **Integration testing** cần được thực hiện sau khi cả EMBED và FW đều hoàn thành các task cơ bản
