@@ -45,3 +45,17 @@ Lưu ý:
 - Map chân UART (TX/RX) và GPIO DE/RE theo `docs/dev_radxa/pinout_radxa.md`.
 - ISR tối thiểu; xử lý nền qua ring buffer.
 - Timeout mục tiêu: 50 ms; retry ở lớp trên.
+
+## HAL GPIO Relay (Orange Pi 5B)
+
+Mục tiêu FW-14: cung cấp API bật/tắt rơ‑le qua GPIO `GPIO1_D3` và `GPIO1_D2`.
+
+File đề xuất:
+- `hal/hal_gpio.h/.c` — wrapper libgpiod (hoặc sysfs nếu bắt buộc)
+- `hal/hal_relay.h/.c` — `void relay_set(int channel /*1|2*/, bool on)`
+
+Yêu cầu:
+- Đọc mapping `gpiochip:line` từ file cấu hình đơn giản `firmware/config/gpio_orangepi5b.json` (hoặc macro tạm thời, sẽ thay bằng config sau).
+- Kèm sample CLI `tools/relayctl.c`:
+  - `./relayctl 1 on` / `./relayctl 2 off`
+- Tham chiếu: `docs/dev_radxa/platform_orangepi_5b.md`.

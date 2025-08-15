@@ -400,6 +400,8 @@ Lưu ý:
 | FW-11 | FW Engineer (Comms) | Triển khai khung lệnh RS485 theo `bus_rs485.md` (PING/GET_INFO/READ_FB/SET_POS...) | Gửi/nhận ổn định; CRC/timeout/retry đạt; thống kê lỗi | EM-02 | 5 | |
 | FW-12 | FW Engineer (Sensors) | Location fusion cơ bản (RFID + encoder) → `s_on_rail` | Sai số trong ngưỡng; log/telemetry có `tag_id`, `enc.count` | FW-05 | 4 | |
 | FW-13 | FW Engineer (Comms) | Expose API/Center messages cho BE: module registry, points snapshot | BE truy vấn qua HTTP/WS hoặc Center; tài liệu thông điệp | FW-07 | 3 | |
+| FW-14 | FW Engineer (HAL) | API điều khiển rơ-le `relay_set(channel, on)` map tới GPIO1_D3/D2 (Orange Pi 5B) | CLI demo bật/tắt; unit test; tài liệu tham chiếu `platform_orangepi_5b.md` | EM-03 | 2 | Người A | 2025-08-22 |
+| FW-15 | FW Engineer (Comms) | Cấu hình thiết bị RS485 qua env/config: ưu tiên `/dev/ttyOHT485` (udev), fallback `/dev/ttyS1` | Service khởi chạy ổn định; log cảnh báo khi fallback; README hướng dẫn | DOC-04 | 1 | Người A | 2025-08-20 |
 
 #### EMBED (Nhúng/Phần cứng)
 
@@ -414,6 +416,8 @@ Lưu ý:
 | EM-07 | Embedded QA | Bench HIL: fixture encoder/motor ảo | Bench hoạt động; script điều khiển | EM-02, EM-03 | 3 | |
 | EM-08 | Embedded QA | Checklist test sản xuất cơ bản | Checklist versioned; có mẫu biểu ghi nhận | EM-06 | 2 | |
 | EM-09 | Embedded HW | Xác nhận wiring RS485 (termination/bias), udev rules `/dev/ttyOHT485` | Ảnh chụp/biên bản kiểm tra; rules áp dụng ổn định | EM-01 | 2 | ⏳ To do |
+| EM-10 | Embedded Driver | Xác nhận offset GPIO cho `GPIO1_D3` và `GPIO1_D2` (libgpiod), ghi vào `platform_orangepi_5b.md` | Bảng `gpiochip:line` điền đủ; script `gpioset` minh hoạ | EM-01 | 1 | Người B | 2025-08-18 |
+| EM-11 | Embedded Driver | Enable UART1 trong DT/overlay; xác nhận `/dev/ttyS1` hoạt động | Loopback OK; thông số stty chuẩn; ảnh log `dmesg` | EM-01 | 1 | Người B | 2025-08-18 |
 
 #### QA/HIL & Vận hành
 
@@ -431,6 +435,7 @@ Lưu ý:
 | DOC-01 | PM/Tech Writer | Bổ sung `comm.rs485.addresses`, cập nhật checklist PM | `config_spec.md` & `PM_CHECKLIST_RS485_MODULES.md` cập nhật | — | 1 | ✅ Hoàn thành |
 | DOC-02 | PM/Tech Writer | Viết đặc tả LiDAR (nếu dùng) | `module_spec.md` có mục LiDAR; tham chiếu wiring/giao tiếp | ARCH | 2 | |
 | DOC-03 | PM/Tech Writer | Cập nhật interfaces: RS485 thuộc FW; BE tích hợp qua FW/Center | `docs/specs/interfaces.md` cập nhật lưu đồ & vai trò | ARCH | 1 | |
+| DOC-04 | PM/Tech Writer | Tạo `docs/dev_radxa/platform_orangepi_5b.md` + `docs/dev_radxa/udev_rules_orangepi5b.md` | Tài liệu có hướng dẫn UART1, GPIO1_D3/D2, udev; liên kết từ `hardware.md` | ARCH | 1 | ✅ Hoàn thành |
 
 #### Ghi chú chuyển đổi
 - Các endpoint RS485 trong BE (nếu có trong nhánh dev) chỉ dùng cho mock/dev; không dùng trong môi trường sản xuất theo quyết định mới.

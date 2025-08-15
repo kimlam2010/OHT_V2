@@ -1,7 +1,9 @@
 # Phần cứng & kết nối
 
 ## CPU Master
-- Radxa S0 (TBD cấu hình RAM/flash/OS). Giao tiếp chính tới thiết bị: RS485 (half‑duplex, multi‑drop). Kết nối Center: Ethernet/Wi‑Fi (TBD).
+- Orange Pi 5B (RK3588, OS linux 6.1.43-rk3588). Giao tiếp chính tới thiết bị: RS485 qua **UART1** (half‑duplex, multi‑drop). Kết nối Center: Ethernet/Wi‑Fi (TBD).  
+  - GPIO dự phòng/điều khiển phụ: **GPIO1_D3** và **GPIO1_D2** (điều khiển rơ‑le cho các tác vụ khác – mục đích sẽ xác định sau).  
+  - Tham chiếu: `docs/dev_radxa/platform_orangepi_5b.md` (pinout, udev, kiểm tra bring‑up).
 
 ## Cấu trúc robot theo 2 phần
 - Thân trên (Upper body – di chuyển trên ray):
