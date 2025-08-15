@@ -37,14 +37,75 @@ Mỗi vai trò gồm: Mục tiêu, Nhiệm vụ chi tiết, Đầu vào, Đầu 
 - Rủi ro: single‑point failure; giải pháp: kênh kép + chẩn đoán định kỳ.
 - KPI: MTTD/MTTR sự cố an toàn; độ phủ test an toàn ≥ 90%.
 
-### 4.4 Firmware/Driver thiết bị
-- Mục tiêu: giao tiếp xác định, API ổn định, lỗi được phát hiện/khôi phục rõ ràng.
-- Nhiệm vụ chi tiết: CAN/RS485/Ethernet, HAL, retry/timeout/fault detection, driver giả lập.
-- Đầu vào: spec thiết bị, timing vòng điều khiển.
-- Đầu ra bắt buộc (`drivers/` + test): `motor.py`, `encoder.py`, `io.py`, `hal.py` + mock.
-- Tiêu chí chấp nhận: latency vòng điều khiển xác định; bao lỗi rõ; log chuẩn.
-- Rủi ro: deadlock, drift thời gian; giải pháp: deadline monitor + watchdog SW.
-- KPI: jitter vòng lặp; tỷ lệ gói lỗi/timeout < ngưỡng.
+### 4.4 EMBED (Nhúng/Phần cứng) & Firmware/Driver thiết bị
+- Mục tiêu chung: nền tảng phần cứng ổn định, giao tiếp xác định, HAL/API rõ ràng; lỗi được phát hiện và khôi phục minh bạch.
+
+- Chuẩn nền tảng (đã chốt cho OHT‑50): Orange Pi 5B (RK3588)
+  - Serial RS485: UART1 (`/dev/ttyS1` → udev symlink `/dev/ttyOHT485`)
+  - Relay điều khiển phụ: `GPIO1_D3` (Relay1), `GPIO1_D2` (Relay2)
+
+- Phạm vi EMBED (hardware bring‑up & low‑level):
+  - Bring‑up nguồn/clock/IO; xác nhận pinmux/pinctrl; enable UART1 trong DT/overlay.
+  - RS485/CAN transceiver: DE/RE, termination 120Ω, bias; EMI/ESD guideline cơ bản.
+  - Xác nhận `gpiochip:line` cho `GPIO1_D3/D2`; thử bằng libgpiod (`gpioinfo/gpioset`).
+  - udev rules tạo `/dev/ttyOHT485`; kiểm tra tồn tại sau reboot.
+  - HIL bench tối thiểu cho loopback/BER/latency (theo `specs/EMBED_TEST_CHECKLIST.md`).
+
+- Phạm vi FW (firmware/driver ở mức hệ):
+  - HAL UART/RS485: frame, CRC, retry/timeout, thống kê lỗi; backpressure.
+  - HAL GPIO/Relay: API `relay_set(channel:1|2, on:bool)` map `GPIO1_D3/D2`.
+  - Máy trạng thái, E‑Stop/Interlock hooks; logging/telemetry tối thiểu.
+  - Driver mô phỏng cho dev/test khi chưa có phần cứng.
+
+- Đầu vào: datasheet/thông số module, sơ đồ pinout, timing vòng điều khiển.
+
+- Đầu ra bắt buộc:
+  - Tài liệu (`docs/`): `dev_radxa/platform_orangepi_5b.md`, `dev_radxa/udev_rules_orangepi5b.md`, cập nhật `dev_radxa/pinout_radxa.md`; biên bản kiểm tra `specs/EMBED_TEST_CHECKLIST.md` (điền số đo BER/latency, ảnh wiring, offsets GPIO).
+  - Mã nguồn (`firmware/`): `hal/hal_uart_dma.*`, `hal/hal_rs485.*`, `hal/hal_relay.*`, tool mẫu `tools/relayctl.c`; unit test state machine/safety.
+
+- Tiêu chí chấp nhận:
+  - UART1 hoạt động; `/dev/ttyOHT485` tồn tại; loopback RS485 chạy ≥ 15 phút với BER trong ngưỡng; log thống kê CRC/timeout/retry.
+  - `relay_set(1|2, on)` bật/tắt ổn định theo offsets đã xác nhận; có CLI minh hoạ.
+  - Tài liệu platform/udev/pinout được cập nhật và tham chiếu chéo trong `hardware.md`, `config_spec.md`.
+
+- Rủi ro & biện pháp:
+  - Sai mux/offset GPIO → quy trình xác nhận bằng `gpioinfo`, lưu lại vào tài liệu; review chéo.
+  - Nhiễu bus/EMI → termination/bias chuẩn, routing hợp lý, backoff/CRC/retry ở RS485.
+  - Deadlock/độ trễ vòng lặp → watchdog SW, deadline monitor, thống kê latency.
+
+- KPI:
+  - BER RS485 trong loopback/field ≤ ngưỡng; tỷ lệ timeout/CRC fail giảm theo sprint.
+  - Jitter vòng lặp điều khiển trong giới hạn; thời gian đáp ứng `relay_set` đo được.
+
+#### Sơ đồ luồng EMBED ↔ FW ↔ BE (bổ sung)
+```mermaid
+sequenceDiagram
+  autonumber
+  participant EM as EMBED (HW/Drivers)
+  participant FW as FW (HAL/State/Comms)
+  participant BE as Backend/Center
+  participant FE as Frontend (Dashboard)
+
+  EM->>FW: RS485 frames (driver, DE/RE, DMA)
+  FW-->>EM: Retry/CRC/Timeout control
+  FW->>BE: API/Center: /modules, /points, /telemetry (WS)
+  BE-->>FW: Commands (move/dock/stop, config apply)
+  FE->>BE: UI actions (configure, monitor)
+  BE-->>FE: Telemetry/Logs/Status (WS/HTTP)
+```
+
+#### Sơ đồ pipeline cấu hình FE → BE → FW → EMBED
+```mermaid
+flowchart LR
+  FE[Frontend\n(UI Config Page)] -->|Submit config JSON/YAML| BE[Backend\n(Config Service)]
+  BE -->|Validate schema + version| BE
+  BE -->|Store version + audit| DB[(Config Store)]
+  BE -->|Apply via API/Center| FW[FW Service\n(HAL/State)]
+  FW -->|Safe-apply + rollback guard| EMBED[EMBED\n(HW/Drivers)]
+  EMBED -->|Ack/Status| FW
+  FW -->|Apply result/telemetry| BE
+  BE -->|Notify result| FE
+```
 
 ### 4.5 Backend/API & Telemetry
 - Mục tiêu: API giám sát/cấu hình/chẩn đoán ổn định; telemetry thời gian thực.

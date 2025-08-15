@@ -1,4 +1,4 @@
-# Tài liệu lập trình Radxa S0 (Dev Guide)
+# Tài liệu lập trình nền tảng nhúng (Radxa/Orange Pi) — Dev Guide
 
 Thư mục này chứa tài liệu dành cho dev, sắp xếp theo thứ tự ưu tiên đọc/hiểu để triển khai nhanh trên Radxa S0. Không thay đổi các tài liệu tổng quan trong `docs/`.
 
@@ -15,6 +15,7 @@ Thứ tự ưu tiên (đọc trước `00_cursor_rules_dev_radxa.md`):
 10. 10_deployment_ota.md — Triển khai dịch vụ & OTA
 11. 11_ui_local_dashboard.md — UI Local Dashboard (Thiết kế giao diện & tính năng)
 12. 12_figma_mcp_setup.md — Kết nối MCP với Figma (Cursor, Windows/PowerShell)
+13. platform_orangepi_5b.md — Ghi chú nền tảng Orange Pi 5B (UART1, GPIO1_D3/D2, udev)
 
 Yêu cầu chung:
 - Ngôn ngữ: tiếng Việt; sơ đồ dùng Mermaid.

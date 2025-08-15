@@ -24,7 +24,7 @@ telemetry:
   ws_hz: 10
 comm:
   rs485:
-    device: /dev/ttyOHT485
+    device: /dev/ttyOHT485   # Trên Orange Pi 5B: udev symlink → /dev/ttyS1 (UART1)
     baud: 115200
     addresses:               # ánh xạ địa chỉ RS485 theo module (tham chiếu module_map.md)
       safety: 0x10
@@ -55,3 +55,7 @@ comm:
 ## 4) Tải & áp dụng an toàn
 - Kiểm tra trên sandbox trước khi apply
 - Restart dịch vụ tối thiểu; không gây gián đoạn an toàn
+
+## 5) Tham chiếu sơ đồ quy trình cấu hình
+- Sơ đồ luồng EMBED ↔ FW ↔ BE: xem `docs/rule.mdc` (mục 4.4, sequenceDiagram)
+- Pipeline cấu hình FE → BE → FW → EMBED: xem `docs/rule.mdc` (flowchart kế tiếp)
