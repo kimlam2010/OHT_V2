@@ -1,225 +1,314 @@
-# Embedded Development Roadmap – OHT-50 (v1.0)
+# Embedded Development Roadmap – OHT-50 (v2.1)
 
 ## Tổng quan
 - **Platform**: Orange Pi 5B (RK3588)
-- **Tools**: opwiring, pyserial, FastAPI
-- **Goal**: HAL RS485 + Control Loop + Local API + Telemetry
+- **Tools**: opwiring, gcc, make
+- **Goal**: Hardware bring-up + RS485 communication + Plug-and-Play modules
+- **Timeline**: 4 phases, 2-3 weeks total
 
-## Phase 1: Hardware Bring-up (Ưu tiên 1)
+## Phase 1: Hardware Bring-up (Sprint 0) - 1 tuần
 
-### 1.1 Cài đặt và cấu hình cơ bản
-- [ ] **Cài đặt opwiring**: `sudo apt install opwiring`
-- [ ] **Test UART1**: `opwiring uart enable 1`, `opwiring uart status 1`
-- [ ] **Test GPIO**: `opwiring gpio set 1 3 1`, `opwiring gpio set 1 3 0`
-- [ ] **Cấu hình RS485**: baud 115200, auto-RTS mode
-- [ ] **Chạy test script**: `./test_rs485.sh`
+### Tasks
+- [x] Cài đặt opwiring: `sudo apt install opwiring`
+- [x] Test UART1: `opwiring uart enable 1`
+- [x] Wiring RS485: UART1 → RS485 transceiver → module
+- [x] Test protocol: PING, GET_INFO với module thật
+- [ ] **NEW**: Implement basic module discovery
+- [ ] **NEW**: Create initial modules.json config
 
-### 1.2 Wiring RS485
-- [ ] **Kết nối UART1**: TX (GPIO0_A2) → RS485 Transceiver TX
-- [ ] **Kết nối UART1**: RX (GPIO0_A3) → RS485 Transceiver RX
-- [ ] **Kết nối GND**: GND → RS485 Transceiver GND
-- [ ] **Kết nối module**: RS485 A/B → Module RS485 A/B
-- [ ] **Termination**: 120Ω hai đầu
-- [ ] **Bias resistor**: 680Ω-10kΩ
+### Success Criteria
+- ✅ UART1 hoạt động (115200 baud)
+- ✅ RS485 communication thành công
+- ✅ PING/GET_INFO response từ module
+- **NEW**: Auto-discovery phát hiện được module
+- **NEW**: Config file được tạo và load
 
-### 1.3 Test protocol RS485
-- [ ] **Test PING**: `opwiring uart write 1 --hex "AA 01 01 00 00 00"`
-- [ ] **Test GET_INFO**: `opwiring uart write 1 --hex "AA 01 02 00 00 00"`
-- [ ] **Test READ_DI**: `opwiring uart write 1 --hex "AA 01 10 00 00 00"`
-- [ ] **Test READ_AI**: `opwiring uart write 1 --hex "AA 01 11 00 00 00"`
-- [ ] **Response parsing**: `opwiring uart read 1 --hex`
-
-## Phase 2: Software Development (Ưu tiên 2)
-
-### 2.1 RS485 Bus Driver
-- [ ] **File**: `drivers/bus_rs485.py`
-- [ ] **Frame format**: `[0xAA][ADDR][CMD][LEN][PAYLOAD...][CRC16]`
-- [ ] **CRC16-CCITT**: implementation + test
-- [ ] **Timeout/Retry**: configurable parameters
-- [ ] **Test với opwiring**: integration test
-
-### 2.2 HAL Interfaces
-- [ ] **File**: `drivers/hal.py`
-- [ ] **MotorInterface**: enable, disable, set_velocity, set_position, read_feedback
-- [ ] **IOInterface**: read_di, write_do, read_ai, write_ao
-- [ ] **SafetyInterface**: read_status, latch_reset
-- [ ] **LocationInterface**: read_tag_event, read_encoder, reset_encoder
-- [ ] **Mock HAL**: `drivers/hal_mock.py` cho testing
-
-### 2.3 Control System
-- [ ] **File**: `control/profiles/`
-- [ ] **Trapezoid profile**: velocity planning
-- [ ] **S-curve profile**: smooth acceleration
-- [ ] **File**: `control/planner.py`
-- [ ] **Trajectory planning**: setpoint generation
-- [ ] **File**: `control/state_machine.py`
-- [ ] **States**: Idle, Move, Dock, Fault, E-Stop
-- [ ] **Transitions**: event-driven state changes
-
-### 2.4 Local API
-- [ ] **File**: `services/local_api/api.py`
-- [ ] **FastAPI**: health, status, command endpoints
-- [ ] **WebSocket**: telemetry stream
-- [ ] **Rate limiting**: 10-50 Hz telemetry
-- [ ] **Error handling**: proper HTTP status codes
-
-## Phase 3: Integration & Testing (Ưu tiên 3)
-
-### 3.1 Control Loop
-- [ ] **File**: `control/loop.py`
-- [ ] **20ms tick**: jitter < 2ms
-- [ ] **Async processing**: HAL + State Machine + Planner
-- [ ] **Telemetry**: real-time data streaming
-- [ ] **Logging**: JSON format, rotation
-
-### 3.2 Simulation
-- [ ] **File**: `sim/rail_1d.py`
-- [ ] **1D motion**: inertia + friction
-- [ ] **Position accuracy**: ±1-2mm
-- [ ] **Integration test**: HAL mock + simulation
-
-### 3.3 Center Client (Optional)
-- [ ] **File**: `services/center_client/ws_client.py`
-- [ ] **WebSocket client**: mission/permit reception
-- [ ] **Reconnection**: backoff strategy
-- [ ] **Message queue**: outbound events
-
-## Phase 4: Production Readiness (Ưu tiên 4)
-
-### 4.1 System Integration
-- [ ] **Systemd service**: `oht50.service`
-- [ ] **Configuration**: `config/system.yaml`
-- [ ] **Logging**: `/var/log/oht50/`
-- [ ] **User permissions**: `oht` user, dialout group
-
-### 4.2 Testing & Validation
-- [ ] **Unit tests**: pytest coverage > 80%
-- [ ] **Integration tests**: end-to-end scenarios
-- [ ] **Hardware tests**: real module communication
-- [ ] **Performance tests**: latency, throughput
-
-### 4.3 Documentation
-- [ ] **API docs**: OpenAPI/Swagger
-- [ ] **Architecture diagrams**: Mermaid
-- [ ] **Wiring diagrams**: hardware connections
-- [ ] **Troubleshooting guide**: common issues
-
-## Task Dependencies
-
-```
-Hardware Bring-up
-    ↓
-RS485 Bus Driver
-    ↓
-HAL Interfaces
-    ↓
-Control System
-    ↓
-Local API
-    ↓
-Integration & Testing
-    ↓
-Production Readiness
-```
-
-## Success Criteria
-
-### Sprint 0 (Hardware + Basic Software)
-- [ ] UART1 hoạt động với opwiring
-- [ ] GPIO DE/RE test OK
-- [ ] RS485 protocol test OK với module thật
-- [ ] Basic HAL mock hoạt động
-- [ ] Simple control loop chạy được
-
-### Sprint 1 (Control System)
-- [ ] State machine hoạt động
-- [ ] Trajectory planning hoạt động
-- [ ] Local API endpoints hoạt động
-- [ ] WebSocket telemetry stream hoạt động
-- [ ] Unit tests pass
-
-### Sprint 2 (Integration)
-- [ ] End-to-end control loop hoạt động
-- [ ] Real hardware integration
-- [ ] Performance metrics OK
-- [ ] Error handling robust
-- [ ] Documentation complete
-
-## Risk Mitigation
-
-### Hardware Risks
-- **UART1 không hoạt động**: Test với opwiring, check device tree overlay
-- **GPIO conflict**: Check pin mapping, resolve conflicts
-- **RS485 wiring sai**: Follow wiring diagram, test loopback
-- **Module không respond**: Check address mapping, protocol compliance
-
-### Software Risks
-- **CRC errors**: Implement proper CRC16, test thoroughly
-- **Timeout issues**: Tune timeout/retry parameters
-- **State machine bugs**: Comprehensive unit tests
-- **Performance issues**: Profile and optimize critical paths
-
-### Integration Risks
-- **Real-time constraints**: Monitor jitter, optimize async code
-- **Memory leaks**: Use proper resource management
-- **Network issues**: Implement robust reconnection
-- **Safety violations**: Comprehensive E-Stop testing
-
-## Tools & Commands Reference
-
-### opwiring Commands
-```bash
-# UART
-opwiring uart list
-opwiring uart enable 1
-opwiring uart status 1
-opwiring uart config 1 --baud 115200 --rs485 --rs485-auto-rts
-opwiring uart test 1
-opwiring uart write 1 --hex "AA 01 01 00 00 00"
-opwiring uart read 1 --hex
-
-# GPIO
-opwiring gpio list
-opwiring gpio info 1 3
-opwiring gpio set 1 3 1
-opwiring gpio set 1 3 0
-```
-
-### Test Commands
+### Commands
 ```bash
 # Hardware test
 ./test_rs485.sh
 
-# Software test
-pytest tests/
-pytest tests/ -v --cov=drivers --cov=control --cov=services
+# Module discovery
+./module_cli discover
 
-# Performance test
-python -m pytest tests/test_performance.py -v
+# Initial config
+./module_cli init-config
 ```
 
-### Debug Commands
-```bash
-# System status
-systemctl status oht50
-journalctl -u oht50 -f
+## Phase 2: Plug-and-Play System (Sprint 1) - 1 tuần
 
-# Hardware debug
-dmesg | grep -i uart
-dmesg | grep -i gpio
+### Tasks
+- [ ] **NEW**: Implement module manager (module_manager.h/.c)
+- [ ] **NEW**: Create CLI tool (module_cli)
+- [ ] **NEW**: JSON config parser
+- [ ] **NEW**: Auto-discovery engine
+- [ ] **NEW**: Dynamic module loading
+- [ ] **NEW**: Hot-plug support
+
+### Success Criteria
+- **NEW**: Thêm module mới chỉ cần edit JSON
+- **NEW**: CLI tool hoạt động đầy đủ
+- **NEW**: Auto-discovery phát hiện module mới
+- **NEW**: Hot-plug thêm/xóa module runtime
+
+### Commands
+```bash
+# Add new module
+./module_cli add --addr 0x08 --name "New DI/DO" --type 4
+
+# List modules
+./module_cli list
+
+# Test communication
+./module_cli ping --addr 0x08
+```
+
+## Phase 3: Module Integration (Sprint 2) - 1 tuần
+
+### Tasks
+- [ ] **NEW**: Implement module-specific operations
+- [ ] **NEW**: DI/DO module support (0x05)
+- [ ] **NEW**: Power module support (0x02)
+- [ ] **NEW**: Motor module support (0x03, 0x04)
+- [ ] **NEW**: AI module support (0x06)
+- [ ] **NEW**: Location module support (0x07)
+
+### Success Criteria
+- **NEW**: Tất cả module types được support
+- **NEW**: Module-specific commands hoạt động
+- **NEW**: Error handling và retry logic
+- **NEW**: Performance monitoring
+
+### Commands
+```bash
+# DI/DO operations
+./module_cli dio-read --addr 0x05
+./module_cli dio-write --addr 0x05 --channel 1 --value 1
+
+# Power operations
+./module_cli power-status --addr 0x02
+./module_cli battery-status --addr 0x02
+
+# Motor operations
+./module_cli motor-set-position --addr 0x03 --position 1000
+./module_cli motor-get-position --addr 0x03
+```
+
+## Phase 4: Production Readiness (Sprint 3) - 1 tuần
+
+### Tasks
+- [ ] **NEW**: Systemd service integration
+- [ ] **NEW**: Configuration management
+- [ ] **NEW**: Logging và monitoring
+- [ ] **NEW**: Performance optimization
+- [ ] **NEW**: Documentation và testing
+- [ ] **NEW**: Deployment scripts
+
+### Success Criteria
+- **NEW**: Systemd service tự động start
+- **NEW**: Config backup/restore
+- **NEW**: Comprehensive logging
+- **NEW**: Performance metrics
+- **NEW**: Complete documentation
+
+### Commands
+```bash
+# Service management
+sudo systemctl enable oht50-firmware
+sudo systemctl start oht50-firmware
+sudo systemctl status oht50-firmware
+
+# Config management
+./module_cli backup
+./module_cli restore --file backup.json
+
+# Monitoring
+./module_cli health --addr 0x05
+./module_cli stats --addr 0x05
+```
+
+## Plug-and-Play Architecture
+
+### Core Components
+```
+┌─────────────────────────────────────┐
+│           Module Manager            │
+│  ┌─────────────────────────────────┐ │
+│  │      Auto-Discovery Engine      │ │
+│  └─────────────────────────────────┘ │
+│  ┌─────────────────────────────────┐ │
+│  │     Configuration Parser        │ │
+│  └─────────────────────────────────┘ │
+│  ┌─────────────────────────────────┐ │
+│  │      Dynamic Loader             │ │
+│  └─────────────────────────────────┘ │
+└─────────────────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│         RS485 Bus Driver            │
+└─────────────────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│        Hardware Modules             │
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐   │
+│  │0x02 │ │0x03 │ │0x04 │ │0x05 │   │
+│  │Power│ │Step │ │DC   │ │DI/DO│   │
+│  └─────┘ └─────┘ └─────┘ └─────┘   │
+└─────────────────────────────────────┘
+```
+
+### Configuration Flow
+```
+1. System Boot
+   ↓
+2. Load modules.json
+   ↓
+3. Auto-discover modules
+   ↓
+4. Register modules
+   ↓
+5. Start communication
+   ↓
+6. Monitor health
+```
+
+### Hot-Plug Flow
+```
+1. New module connected
+   ↓
+2. Auto-discovery detects
+   ↓
+3. Add to modules.json
+   ↓
+4. Reload config
+   ↓
+5. Start communication
+   ↓
+6. Verify operation
+```
+
+## Risk Mitigation
+
+### Technical Risks
+- **RS485 communication issues**: Use opwiring for testing
+- **Module discovery failures**: Implement retry logic
+- **Config file corruption**: Backup/restore mechanism
+- **Performance degradation**: Monitor và optimize
+
+### Mitigation Strategies
+- **Hardware testing**: Comprehensive test_rs485.sh
+- **Error handling**: Graceful degradation
+- **Configuration validation**: JSON schema validation
+- **Performance monitoring**: Real-time metrics
+
+## Dependencies
+
+### Hardware
+- Orange Pi 5B với UART1 enabled
+- RS485 transceiver module
+- Module hardware (0x02-0x07)
+
+### Software
+- opwiring tool
+- gcc compiler
+- make build system
+- JSON parser library
+
+### Documentation
+- Platform setup guide
+- Wiring diagrams
+- Protocol specifications
+- CLI tool documentation
+
+## Success Metrics
+
+### Phase 1
+- ✅ UART1 communication: 100% success rate
+- ✅ RS485 protocol: PING/GET_INFO working
+- **NEW**: Module discovery: >90% success rate
+
+### Phase 2
+- **NEW**: Config-driven module loading: 100%
+- **NEW**: CLI tool functionality: All commands working
+- **NEW**: Hot-plug support: Add/remove modules runtime
+
+### Phase 3
+- **NEW**: Module-specific operations: All types supported
+- **NEW**: Error handling: Graceful degradation
+- **NEW**: Performance: <100ms response time
+
+### Phase 4
+- **NEW**: Production deployment: Systemd service
+- **NEW**: Monitoring: Real-time health checks
+- **NEW**: Documentation: Complete user guide
+
+## Reference Commands
+
+### Hardware Testing
+```bash
+# Check opwiring installation
+which opwiring
+
+# Test UART1
+opwiring uart enable 1
+opwiring uart status 1
+
+# Test RS485 communication
+./test_rs485.sh
+```
+
+### Module Management
+```bash
+# Initialize system
+./module_cli init
+
+# Discover modules
+./module_cli discover
+
+# List modules
+./module_cli list
+
+# Add module
+./module_cli add --addr 0x08 --name "New Module" --type 4
+
+# Test module
+./module_cli ping --addr 0x08
+```
+
+### Configuration
+```bash
+# Backup config
+./module_cli backup
+
+# Restore config
+./module_cli restore --file backup.json
+
+# Validate config
+./module_cli validate
+
+# Reload config
+./module_cli reload
+```
+
+### Monitoring
+```bash
+# Health check
+./module_cli health --addr 0x05
+
+# Performance stats
+./module_cli stats --addr 0x05
+
+# Error logs
+./module_cli errors --addr 0x05
 ```
 
 ## Next Steps
 
-1. **Immediate**: Complete hardware bring-up with opwiring
-2. **Short-term**: Implement RS485 bus driver with tests
-3. **Medium-term**: Build control system and local API
-4. **Long-term**: Production deployment and optimization
+1. **Immediate**: Complete hardware bring-up với opwiring
+2. **Short-term**: Implement plug-and-play system
+3. **Medium-term**: Module-specific operations
+4. **Long-term**: Production deployment và monitoring
 
-## Resources
-
-- **Hardware docs**: `docs/dev_radxa/platform_orangepi_5b.md`
-- **Protocol docs**: `docs/specs/rs485_opcode_payload_draft.md`
-- **Test checklist**: `docs/specs/EMBED_TEST_CHECKLIST.md`
-- **API specs**: `docs/specs/api_minimal.md`
-- **Architecture**: `docs/specs/architecture.md`
+Với plug-and-play system, việc thêm module mới sẽ trở nên **đơn giản** và **không cần sửa source code**!
