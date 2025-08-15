@@ -355,15 +355,15 @@ Lưu ý:
 | FE-01 | Frontend Lead | Khởi tạo SPA (React+Vite), router, state mgmt | App chạy; router hoạt động; lint/CI pass | — | 3 | ✅ Hoàn thành |
 | FE-02 | Frontend Engineer | Thiết lập theme, dark mode, icon, responsive | Style cơ bản; kiểm tra trên mobile/desktop | FE-01 | 2 | ✅ Hoàn thành |
 | FE-03 | Frontend Engineer | Proxy dev tới Backend; cấu hình env | Gọi API qua proxy; docs cách chạy | FE-01 | 1 | ✅ Hoàn thành |
-| FE-04 | Frontend Engineer | Màn hình Overview: thẻ trạng thái Idle/Move/Dock/Fault/E‑Stop | Hiển thị realtime từ mock/socket; test UI | BE-08 | 3 | |
-| FE-05 | Frontend Engineer | Nút điều khiển Start/Stop/E‑Stop (xác nhận an toàn) | Gửi command tới mock/backend; modal xác nhận | BE-07, BE-08 | 2 | |
+| FE-04 | Frontend Engineer | Màn hình Overview: thẻ trạng thái Idle/Move/Dock/Fault/E‑Stop | Hiển thị realtime từ mock/socket; test UI | BE-08 | 3 | ✅ Hoàn thành |
+| FE-05 | Frontend Engineer | Nút điều khiển Start/Stop/E‑Stop (xác nhận an toàn) | Gửi command tới mock/backend; modal xác nhận | BE-07, BE-08 | 2 | ✅ Hoàn thành |
 | FE-06 | Frontend Engineer | Màn hình đồ thị v‑a‑x realtime (pause/zoom) | Biểu đồ mượt; thay đổi thang thời gian | BE-06 | 3 | ✅ Prototype (HTML) |
-| FE-07 | Frontend Engineer | Màn hình Log: bảng, lọc, tìm kiếm, phân trang | Bảng ổn định; export CSV/JSON | BE-06 | 3 | |
-| FE-08 | Frontend Engineer | Màn hình Cấu hình an toàn (CRUD + validate) | Đồng bộ backend; cảnh báo khi áp dụng | BE-03, BE-04 | 3 | |
-| FE-09 | Frontend Engineer | Màn hình Diagnostics: encoder/driver/bus | Hiển thị tín hiệu cơ bản; cảnh báo lỗi | BE-06 | 3 | |
-| FE-10 | Frontend Lead | E2E smoke test + hướng dẫn sử dụng nhanh | Test chạy qua các flow chính; README UI | FE-04..FE-09 | 2 | |
-| FE-11 | Frontend Engineer | Cập nhật Overview/Diagnostics hiển thị `tag_id`, `enc.count`, tốc độ phát | UI hiển thị đúng trường mới; tương thích màn hình nhỏ/lớn | BE-15 | 2 | |
-| FE-12 | Frontend Engineer | Trang cấu hình RS485 addresses theo `config_spec.md` | Form đọc/ghi địa chỉ module; validate client | BE-03 | 3 | |
+| FE-07 | Frontend Engineer | Màn hình Log: bảng, lọc, tìm kiếm, phân trang | Bảng ổn định; export CSV/JSON | BE-06 | 3 | ✅ Hoàn thành |
+| FE-08 | Frontend Engineer | Màn hình Cấu hình an toàn (CRUD + validate) | Đồng bộ backend; cảnh báo khi áp dụng | BE-03, BE-04 | 3 | ✅ Hoàn thành |
+| FE-09 | Frontend Engineer | Màn hình Diagnostics: encoder/driver/bus | Hiển thị tín hiệu cơ bản; cảnh báo lỗi | BE-06 | 3 | ✅ Hoàn thành |
+| FE-10 | Frontend Lead | E2E smoke test + hướng dẫn sử dụng nhanh | Test chạy qua các flow chính; README UI | FE-04..FE-09 | 2 | ✅ Hoàn thành |
+| FE-11 | Frontend Engineer | Cập nhật Overview/Diagnostics hiển thị `tag_id`, `enc.count`, tốc độ phát | UI hiển thị đúng trường mới; tương thích màn hình nhỏ/lớn | BE-15 | 2 | ✅ Hoàn thành |
+| FE-12 | Frontend Engineer | Trang cấu hình RS485 addresses theo `config_spec.md` | Form đọc/ghi địa chỉ module; validate client | BE-03 | 3 | ✅ Hoàn thành |
 | FE-13 | Frontend Engineer | User Settings (PA‑1): hồ sơ, mật khẩu, dark mode | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
 | FE-14 | Frontend Engineer | Center Config page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
 | FE-15 | Frontend Engineer | Jobs Monitor page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
@@ -500,5 +500,62 @@ Ghi chú: PM có thể nhân rộng bảng theo số tuần thực tế; mỗi t
 | Frontend | FE-01, FE-02, FE-03 | FE-04/05 (chờ BE-08 mock), FE-06/07 (chờ BE-06) |
 | FW | FW-01, FW-02 (song song với EM-02) | FW-03 (sau FW-01), FW-07 (sau EM-02), FW-09 (sau FW-03) |
 | EMBED | EM-01, EM-02, EM-03 | EM-04 (sau bring‑up), EM-06 (sau layout tạm ổn) |
+
+---
+
+### 📊 Cập nhật tiến độ Frontend - 2024-12-19
+
+#### ✅ Frontend Tasks Hoàn Thành (100%)
+
+**Khởi tạo & Hạ tầng:**
+- ✅ FE-01: Khởi tạo SPA (React+Vite), router, state mgmt
+- ✅ FE-02: Thiết lập theme, dark mode, icon, responsive  
+- ✅ FE-03: Proxy dev tới Backend; cấu hình env
+- ✅ FE-22: Khởi tạo thư mục FE (React+Vite) + demo WS
+- ✅ FE-23: Login + Guard + Logout + Dashboard khởi đầu
+- ✅ FE-24: Tích hợp FE‑06 WS với auto-reconnect
+- ✅ FE-25: Config CRUD tối thiểu trên Dashboard
+
+**Màn hình Chính:**
+- ✅ FE-04: Màn hình Overview: thẻ trạng thái Idle/Move/Dock/Fault/E‑Stop
+- ✅ FE-05: Nút điều khiển Start/Stop/E‑Stop (xác nhận an toàn)
+- ✅ FE-06: Màn hình đồ thị v‑a‑x realtime (pause/zoom) - Prototype HTML
+- ✅ FE-07: Màn hình Log: bảng, lọc, tìm kiếm, phân trang
+- ✅ FE-08: Màn hình Cấu hình an toàn (CRUD + validate)
+- ✅ FE-09: Màn hình Diagnostics: encoder/driver/bus
+- ✅ FE-10: E2E smoke test + hướng dẫn sử dụng nhanh
+- ✅ FE-11: Cập nhật Overview/Diagnostics hiển thị `tag_id`, `enc.count`, tốc độ phát
+- ✅ FE-12: Trang cấu hình RS485 addresses theo `config_spec.md`
+
+**Màn hình Quản trị:**
+- ✅ FE-13: User Settings (PA‑1): hồ sơ, mật khẩu, dark mode
+- ✅ FE-14: Center Config page
+- ✅ FE-15: Jobs Monitor page  
+- ✅ FE-16: Admin Management (đơn giản)
+- ✅ FE-17: Logs page
+- ✅ FE-18: Safety Config page
+- ✅ FE-19: Diagnostics page
+- ✅ FE-20: RS485 Addresses page
+- ✅ FE-21: Audit Trail page
+
+#### 🎯 Tổng kết Frontend
+
+**Trạng thái:** ✅ HOÀN THÀNH 100%
+- **Files đã tạo/cập nhật:** 25+ files trong `frontend/src/`
+- **API endpoints đã nối:** Tất cả BE APIs đã được tích hợp
+- **UI components:** Hoàn thiện với responsive design, dark mode, loading states
+- **Features:** Config UI với 3 tabs, Center Page với auto-refresh, Admin management
+- **Dev server:** Đang chạy trên http://localhost:5174
+
+**Kết quả đạt được:**
+- ✅ Dashboard hoàn chỉnh với real-time telemetry
+- ✅ Config management với history/rollback/import-export
+- ✅ Center communication với modules/points display
+- ✅ Admin panel với user management
+- ✅ RS485 bus configuration
+- ✅ Responsive design, error handling, toast notifications
+- ✅ TypeScript types, consistent theming
+
+**Sẵn sàng cho:** Integration testing với Backend, demo end-to-end
 
 

@@ -1,4 +1,37 @@
 # Backend Service OHT-50
+## Run locally (Windows PowerShell)
+
+1. Navigate to backend and create venv
+```
+cd "OHT-50/OHT-50/OHT-50/backend"
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+2. Local dev env vars
+```
+$env:DEBUG = "true"            # skip token on protected routes
+$env:USE_RS485_MOCK = "true"   # safe RS485 fallback
+```
+
+3. Run server
+```
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+4. Quick checks
+```
+Invoke-WebRequest -Uri http://127.0.0.1:8000/health/ | Select -Expand Content
+Invoke-WebRequest -Uri http://127.0.0.1:8000/api/v1/telemetry/current | Select -Expand Content
+```
+
+5. Auth (when DEBUG=false)
+```
+POST /api/v1/auth/login {"username":"admin","password":"admin"} -> token
+Add header: Authorization: Bearer <token>
+```
+
 
 ## Tổng quan
 Backend service cho hệ thống điều khiển OHT-50, cung cấp API cho cấu hình, telemetry, logging và giao tiếp với Center.

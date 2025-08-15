@@ -1,0 +1,8 @@
+{
+  "operator": {
+    "username": "operator",
+    "display_name": "Operator",
+    "email": "op@example.com",
+    "theme": "dark"
+  }
+}

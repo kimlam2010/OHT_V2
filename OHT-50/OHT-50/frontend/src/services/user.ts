@@ -1,3 +1,5 @@
+import { apiFetchJson } from './http'
+
 export type UserSettings = {
 	username: string
 	display_name?: string
@@ -6,19 +8,16 @@ export type UserSettings = {
 }
 
 export async function getUserSettings(username: string): Promise<UserSettings|null>{
-	const res = await fetch(`/api/v1/user/settings/${encodeURIComponent(username)}`)
-	if (!res.ok) return null
-	return res.json()
+	const r = await apiFetchJson<UserSettings>(`/api/v1/user/settings/${encodeURIComponent(username)}`)
+	return r.ok ? r.data : null
 }
 
 export async function updateUserSettings(username: string, settings: UserSettings): Promise<UserSettings|null>{
-	const res = await fetch(`/api/v1/user/settings/${encodeURIComponent(username)}` ,{
+	const r = await apiFetchJson<UserSettings>(`/api/v1/user/settings/${encodeURIComponent(username)}` ,{
 		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(settings)
 	})
-	if (!res.ok) return null
-	return res.json()
+	return r.ok ? r.data : null
 }
 
 

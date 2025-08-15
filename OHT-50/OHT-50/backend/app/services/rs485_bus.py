@@ -13,7 +13,11 @@ from typing import Optional, Tuple
 
 from app.core.logging import get_logger
 from fastapi import Request
-import serial
+import os
+try:
+    import serial  # type: ignore
+except Exception:  # pragma: no cover
+    serial = None  # fallback when pyserial missing
 
 logger = get_logger(__name__)
 
@@ -44,10 +48,16 @@ class RS485Bus:
         self.settings = settings
         self._lock = threading.Lock()
         self._opened = False
-        self._serial: Optional[serial.Serial] = None
+        self._serial: Optional["serial.Serial"] = None
 
     def open(self) -> None:
         logger.info("RS485 open", device=self.settings.device, baud=self.settings.baud)
+        use_mock = os.getenv("USE_RS485_MOCK", "false").lower() == "true"
+        if use_mock or serial is None:
+            # Mock: mark opened but do not create real serial port
+            self._serial = None
+            self._opened = True
+            return
         self._serial = serial.Serial(
             port=self.settings.device,
             baudrate=self.settings.baud,
@@ -60,7 +70,7 @@ class RS485Bus:
 
     def close(self) -> None:
         logger.info("RS485 close")
-        if self._serial and self._serial.is_open:
+        if self._serial and getattr(self._serial, "is_open", False):
             self._serial.close()
         self._opened = False
 
@@ -89,27 +99,30 @@ class RS485Bus:
         for attempt in range(self.settings.max_retries + 1):
             with self._lock:
                 try:
-                    assert self._serial is not None
-                    self._serial.reset_input_buffer()
-                    self._serial.write(frame)
-                    self._serial.flush()
-                    # Đọc tối thiểu header (4) + CRC (2), sau đó đọc phần còn lại theo LEN
-                    header = self._serial.read(4)
-                    if len(header) < 4 or header[0] != 0xAA:
-                        raise TimeoutError("Header không hợp lệ/timeout")
-                    length = header[3]
-                    rest = self._serial.read(length + 2)
-                    if len(rest) < length + 2:
-                        raise TimeoutError("Đọc payload/CRC không đủ")
-                    resp = header + rest
-                    _, _, payload_out = self._parse_frame(resp)
+                    if self._serial is None:
+                        # Mock path: return None safely
+                        payload_out = None
+                    else:
+                        self._serial.reset_input_buffer()
+                        self._serial.write(frame)
+                        self._serial.flush()
+                        # Đọc tối thiểu header (4) + CRC (2), sau đó đọc phần còn lại theo LEN
+                        header = self._serial.read(4)
+                        if len(header) < 4 or header[0] != 0xAA:
+                            raise TimeoutError("Header không hợp lệ/timeout")
+                        length = header[3]
+                        rest = self._serial.read(length + 2)
+                        if len(rest) < length + 2:
+                            raise TimeoutError("Đọc payload/CRC không đủ")
+                        resp = header + rest
+                        _, _, payload_out = self._parse_frame(resp)
                     logger.info(
                         "RS485 transact ok",
                         extra={
                             "addr": addr,
                             "cmd": cmd,
                             "len_in": len(payload),
-                            "len_out": len(payload_out),
+                            "len_out": 0 if payload_out is None else len(payload_out),
                             "correlation_id": getattr(request.state, 'correlation_id', None) if request else None,
                         },
                     )

@@ -15,6 +15,7 @@ import DiagnosticsPage from './features/diagnostics/DiagnosticsPage'
 import Rs485AddressesPage from './features/rs485/Rs485AddressesPage'
 import SafetyConfigPage from './features/safety/SafetyConfigPage'
 import AuditTrailPage from './features/audit/AuditTrailPage'
+import ConfigPage from './features/config/ConfigPage'
 import { getToken } from './features/auth/auth'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/logs" element={<LogsPage />} />
             <Route path="/user" element={<Guard><UserSettingsPage/></Guard>} />
             <Route path="/admin" element={<Guard><AdminPage/></Guard>} />
+            <Route path="/config" element={<Guard><ConfigPage/></Guard>} />
             <Route path="/center" element={<Guard><CenterConfigPage/></Guard>} />
             <Route path="/jobs" element={<Guard><JobsPage/></Guard>} />
             <Route path="/diag" element={<Guard><DiagnosticsPage/></Guard>} />

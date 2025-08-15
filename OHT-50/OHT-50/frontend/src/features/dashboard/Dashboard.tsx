@@ -9,12 +9,14 @@ export default function Dashboard(){
   const { push } = useToast()
   const [status, setStatus] = React.useState<'Idle'|'Move'|'Dock'|'Fault'|'E-Stop'>('Idle')
   const [wsState, setWsState] = React.useState('connecting')
+  const [metric, setMetric] = React.useState({ v: 0, a: 0, x: 0 })
 
   React.useEffect(()=>{
     let ws: WebSocket | null = null
     let attempts = 0
     let timer: any
-    const url = (import.meta.env.VITE_WS_STATUS_URL as string) || 'ws://localhost:8000/api/v1/telemetry/ws'
+    const envUrl = (import.meta.env.VITE_WS_URL as string | undefined)
+    const url = envUrl && envUrl.length > 0 ? envUrl : 'ws://localhost:8000/api/v1/telemetry/ws'
     function connect(){
       try {
         ws = new WebSocket(url)
@@ -28,6 +30,10 @@ export default function Dashboard(){
             if (s) {
               if (['Idle','Move','Dock','Fault','E-Stop'].includes(s)) setStatus(s as any)
             }
+            const v = (msg.status?.vel_mms ?? 0) / 1000.0
+            const a = (msg.status?.acc_mms2 ?? 0) / 1000.0
+            const x = (msg.status?.pos_mm ?? 0) / 1000.0
+            setMetric({ v, a, x })
           } catch {}
         }
       } catch { scheduleReconnect() }
@@ -90,15 +96,15 @@ export default function Dashboard(){
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="rounded ring p-3">
                 <div className="text-sm muted">v (m/s)</div>
-                <div className="text-xl font-semibold"><span id="valV">0.00</span></div>
+                <div className="text-xl font-semibold"><span id="metric-v">{metric.v.toFixed(3)}</span></div>
               </div>
               <div className="rounded ring p-3">
                 <div className="text-sm muted">a (m/s²)</div>
-                <div className="text-xl font-semibold"><span id="valA">0.00</span></div>
+                <div className="text-xl font-semibold"><span id="metric-a">{metric.a.toFixed(3)}</span></div>
               </div>
               <div className="rounded ring p-3">
                 <div className="text-sm muted">x (m)</div>
-                <div className="text-xl font-semibold"><span id="valX">0.00</span></div>
+                <div className="text-xl font-semibold"><span id="metric-x">{metric.x.toFixed(3)}</span></div>
               </div>
               <div className="rounded ring p-3 col-span-2 sm:col-span-1">
                 <div className="text-sm muted">Liên kết</div>
@@ -114,14 +120,7 @@ export default function Dashboard(){
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Left: Chart */}
           <div>
-            <Fe06Chart onSample={(s)=>{
-              const vEl = document.getElementById('metric-v')
-              const aEl = document.getElementById('metric-a')
-              const xEl = document.getElementById('metric-x')
-              if (vEl) vEl.textContent = s.v.toFixed(3)
-              if (aEl) aEl.textContent = s.a.toFixed(3)
-              if (xEl) xEl.textContent = s.x.toFixed(3)
-            }}/>
+            <Fe06Chart onSample={(s)=>{ setMetric({ v: s.v, a: s.a, x: s.x }) }}/>
           </div>
           {/* Right: Location info */}
           <div className="card p-4">

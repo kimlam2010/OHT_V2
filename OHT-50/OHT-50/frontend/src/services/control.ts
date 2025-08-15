@@ -1,3 +1,4 @@
+import { apiFetchJson } from './http'
 export type ControlCommand =
   | 'start'
   | 'stop'
@@ -17,19 +18,14 @@ export type ControlResponse = {
 }
 
 export async function sendControlCommand(command: ControlCommand): Promise<ControlResponse> {
-  try {
-    const res = await fetch('/api/v1/control/command', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ command })
-    })
-    if (!res.ok) {
-      return { ok: false, status: res.status, message: `HTTP ${res.status}` }
-    }
-    return { ok: true, status: res.status }
-  } catch (err) {
-    return { ok: false, message: (err as Error)?.message }
+  const r = await apiFetchJson<any>('/api/v1/control/command', {
+    method: 'POST',
+    body: JSON.stringify({ command })
+  })
+  if (!r.ok) {
+    return { ok: false, status: r.status, message: r.error }
   }
+  return { ok: true, status: r.status }
 }
 
 

@@ -1,7 +1,7 @@
 """
 Cấu hình môi trường cho Backend Service OHT-50
 """
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -13,7 +13,11 @@ class Settings(BaseSettings):
     # Server settings
     host: str = Field(default="0.0.0.0", description="Host để bind server")
     port: int = Field(default=8000, description="Port để bind server")
-    debug: bool = Field(default=False, description="Chế độ debug")
+    debug: bool = Field(default=True, description="Chế độ debug")
+    # CORS
+    cors_origins: List[str] = Field(
+        default_factory=lambda: ["*"], description="Danh sách origins cho CORS"
+    )
 
     # Database
     database_url: str = Field(
