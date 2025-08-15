@@ -1,69 +1,144 @@
-# Ánh xạ module theo phần (Upper/Cargo) & địa chỉ RS485
+# Ánh xạ module theo địa chỉ RS485 - OHT-50
 
-Mục tiêu: liệt kê module sử dụng, vị trí lắp (Thân trên/Thùng cargo), địa chỉ RS485, kênh và chức năng.
+Mục tiêu: liệt kê module sử dụng, địa chỉ RS485, và chức năng theo thông tin thực tế từ hardware.
 
-## Quy ước địa chỉ (ví dụ, có thể sửa)
-- `0x10` Safety module
-- `0x11` DIO Upper (8In/8Out)
-- `0x12` AIO Upper
-- `0x13` DC Motor Driver #1 (axis_drive)
-- `0x14` Stepper Driver #1 (axis_drive alt)
-- `0x15` DC Motor Driver #2 (axis_lift)
-- `0x16` Stepper Driver #2 (axis_lift alt)
-- `0x17` DIO Cargo (8In/8Out)
-- `0x18` AIO Cargo
-- `0x19` DC Motor Driver #3 (axis_door)
-- `0x1A` Location Module (RFID + Encoder)
+## Quy ước địa chỉ (Cập nhật theo thực tế)
+- `0x02` **Module nguồn** - Quản lý pin, bộ charger, nguồn cấp động lực cho robot
+- `0x03` **Module motor di chuyển** - Quản lý động cơ stepper cho di chuyển
+- `0x04` **Module motor cargo** - Quản lý động cơ lister DC cho hạ lên xuống của cargo
+- `0x05` **Module DI/DO** - CTHT, đèn hiệu, relay chức năng (8 DI và 8 DO)
+- `0x06` **Module AI** - Cảm biến khoảng cách dạng analog an toàn
+- `0x07` **Module location** - Quản lý RFID location, encoder, Lidar
 
-## Thân trên (Upper Body)
-| Chức năng | Module | Địa chỉ | Kênh | Ghi chú |
-|---|---|---:|---:|---|
-| axis_drive | DC Motor Driver #1 hoặc Stepper Driver #1 | 0x13 / 0x14 | 1/2 | Chọn 1 loại; encoder: tích hợp/TBD |
-| axis_lift | DC Motor Driver #2 hoặc Stepper Driver #2 | 0x15 / 0x16 | 1/2 | Hành trình/giới hạn qua sensor |
-| Dock/Obstacle/Geofence | DIO Upper | 0x11 | 8In/8Out | Debounce, polarity cấu hình |
-| Load/Force/Align analog | AIO Upper | 0x12 | AI/AO | Dải đo 0–10V/4–20mA (TBD) |
-| E‑Stop/Interlock | Safety module | 0x10 | n/a | Kênh HW độc lập + RS485 giám sát |
-| Location (RFID+Encoder) | Location Module | 0x1A | n/a | Tag + encoder count, phục vụ định vị |
+## Chi tiết module
 
-## Thùng cargo (Lower Body)
-| Chức năng | Module | Địa chỉ | Kênh | Ghi chú |
-|---|---|---:|---:|---|
-| axis_door | DC Motor Driver #3 | 0x19 | 1/2 | Mở/đóng; xác nhận limit open/close |
-| Door limits/cargo_present | DIO Cargo | 0x17 | 8In/8Out | Door_open_sw, Door_close_sw, Lock_out |
-| Cargo analog (tùy chọn) | AIO Cargo | 0x18 | AI/AO | Nhiệt độ/khối lượng (load cell) |
+### 0x02 - Module nguồn (Power Management)
+| Chức năng | Chi tiết | Ghi chú |
+|---|---|---|
+| Pin management | Quản lý pin lithium | SOC, SOH, temperature monitoring |
+| Charger control | Bộ sạc pin | Charge current, voltage control |
+| Power distribution | Nguồn cấp động lực | 12V/24V/48V cho motor, 5V/3.3V cho logic |
+| Safety monitoring | Overcurrent, overvoltage protection | Emergency shutdown |
 
-## Sơ đồ kết nối (tổng quan)
+### 0x03 - Module motor di chuyển (Stepper Motor)
+| Chức năng | Chi tiết | Ghi chú |
+|---|---|---|
+| Stepper control | Động cơ stepper cho di chuyển | Position, velocity, acceleration control |
+| Encoder feedback | Position feedback | Absolute/relative position |
+| Limit switches | End-of-travel detection | Safety limits |
+| Current monitoring | Motor current sensing | Overcurrent protection |
+
+### 0x04 - Module motor cargo (DC Motor)
+| Chức năng | Chi tiết | Ghi chú |
+|---|---|---|
+| DC motor control | Động cơ lister DC | Lifting mechanism control |
+| Position control | Up/down positioning | Cargo height control |
+| Load sensing | Weight detection | Overload protection |
+| Safety interlocks | Mechanical safety | Emergency stop |
+
+### 0x05 - Module DI/DO (Digital I/O)
+| Chức năng | Chi tiết | Ghi chú |
+|---|---|---|
+| Digital Inputs | 8 DI channels | CTHT, limit switches, sensors |
+| Digital Outputs | 8 DO channels | Đèn hiệu, relay chức năng |
+| Status indicators | LED indicators | Module status, communication |
+| Emergency signals | E-stop, safety signals | High priority inputs |
+
+### 0x06 - Module AI (Analog Input)
+| Chức năng | Chi tiết | Ghi chú |
+|---|---|---|
+| Distance sensors | Cảm biến khoảng cách analog | Safety zone detection |
+| Analog inputs | Multiple AI channels | 0-10V, 4-20mA support |
+| Safety monitoring | Collision avoidance | Real-time distance monitoring |
+| Calibration | Sensor calibration | Offset, scale adjustment |
+
+### 0x07 - Module location (Location & Navigation)
+| Chức năng | Chi tiết | Ghi chú |
+|---|---|---|
+| RFID reader | Location tags | Position identification |
+| Encoder | Position tracking | Incremental/absolute encoder |
+| Lidar | Distance mapping | Obstacle detection, navigation |
+| Fusion algorithm | Position fusion | RFID + encoder + Lidar |
+
+## Sơ đồ kết nối (Cập nhật)
 ```mermaid
 flowchart LR
-  CPU["Radxa S0"]
-  BUS["RS485"]
-  U_DIO["DIO Upper 0x11"]
-  U_AIO["AIO Upper 0x12"]
-  DCM1["DC Driver 0x13"]
-  STM1["Stepper 0x14"]
-  DCM2["DC Driver 0x15"]
-  STM2["Stepper 0x16"]
-  C_DIO["DIO Cargo 0x17"]
-  C_AIO["AIO Cargo 0x18"]
-  DCM3["DC Driver 0x19"]
-  SAFE["Safety 0x10"]
-  LOC["Location 0x1A"]
+  MASTER["Orange Pi 5B Master"]
+  BUS["RS485 Bus"]
+  PWR["Power Module 0x02"]
+  STEP["Stepper Motor 0x03"]
+  DC["DC Motor Cargo 0x04"]
+  DIO["DI/DO Module 0x05"]
+  AI["Analog Input 0x06"]
+  LOC["Location Module 0x07"]
 
-  CPU <--> BUS
-  BUS <--> SAFE
-  BUS <--> U_DIO
-  BUS <--> U_AIO
-  BUS <--> DCM1
-  BUS <--> STM1
-  BUS <--> DCM2
-  BUS <--> STM2
-  BUS <--> C_DIO
-  BUS <--> C_AIO
-  BUS <--> DCM3
+  MASTER <--> BUS
+  BUS <--> PWR
+  BUS <--> STEP
+  BUS <--> DC
+  BUS <--> DIO
+  BUS <--> AI
   BUS <--> LOC
 ```
 
-## Ghi chú
-- Địa chỉ chỉ là ví dụ; thực tế cấu hình theo DIP/flash của module.
-- Nếu dùng Modbus RTU, địa chỉ có thể là `1..247` thay vì hex.
-- Số kênh thực tế và dải đo xem `module_spec.md`.
+## Protocol Commands (Cập nhật)
+
+### Module 0x02 - Power Management
+- `PING` - Health check
+- `GET_INFO` - Module information
+- `GET_BATTERY_STATUS` - Battery SOC, SOH, temperature
+- `GET_CHARGER_STATUS` - Charger status, current, voltage
+- `SET_CHARGE_MODE` - Enable/disable charging
+- `GET_POWER_STATUS` - Power distribution status
+
+### Module 0x03 - Stepper Motor
+- `PING` - Health check
+- `GET_INFO` - Module information
+- `SET_POSITION` - Set target position
+- `SET_VELOCITY` - Set velocity
+- `GET_POSITION` - Get current position
+- `GET_STATUS` - Motor status, error codes
+- `ENABLE/DISABLE` - Enable/disable motor
+- `STOP` - Emergency stop
+
+### Module 0x04 - DC Motor Cargo
+- `PING` - Health check
+- `GET_INFO` - Module information
+- `SET_POSITION` - Set lift position
+- `SET_VELOCITY` - Set lift velocity
+- `GET_POSITION` - Get current position
+- `GET_LOAD` - Get current load
+- `ENABLE/DISABLE` - Enable/disable motor
+- `STOP` - Emergency stop
+
+### Module 0x05 - DI/DO
+- `PING` - Health check
+- `GET_INFO` - Module information
+- `READ_DI` - Read digital inputs
+- `WRITE_DO` - Write digital outputs
+- `GET_DI_STATUS` - Get DI status with timestamp
+- `GET_DO_STATUS` - Get DO status
+- `SET_DO_PATTERN` - Set output pattern
+
+### Module 0x06 - Analog Input
+- `PING` - Health check
+- `GET_INFO` - Module information
+- `READ_AI` - Read analog inputs
+- `GET_AI_STATUS` - Get AI status with calibration
+- `SET_CALIBRATION` - Set calibration parameters
+- `GET_DISTANCE` - Get processed distance values
+
+### Module 0x07 - Location
+- `PING` - Health check
+- `GET_INFO` - Module information
+- `READ_TAG_ID` - Read RFID tag ID
+- `READ_ENCODER` - Read encoder count
+- `RESET_ENCODER` - Reset encoder counter
+- `GET_LIDAR_DATA` - Get Lidar distance data
+- `GET_POSITION` - Get fused position data
+
+## Ghi chú cập nhật
+- Địa chỉ module đã được cập nhật theo thông tin thực tế
+- Protocol commands cần được implement theo từng module
+- Cần test từng module riêng biệt trước khi tích hợp
+- Safety features cần được ưu tiên cao nhất
