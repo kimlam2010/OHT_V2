@@ -6,8 +6,8 @@
  GPIO1_D3 cho DE/RE control
 */
 
-// UART instance/port (Orange Pi 5B) – dùng UART1 cho RS485
-#define RS485_UART_INSTANCE   UART1
+// UART instance/port (Orange Pi 5B) – dùng UART1
+#define UART1_INSTANCE        UART1
 
 // GPIO definitions cho Orange Pi 5B
 #ifndef GPIO0_A2
@@ -24,8 +24,8 @@
 #endif
 
 // TX/RX pins theo sơ đồ Orange Pi 5B (UART1_TX_M1 / UART1_RX_M1)
-#define RS485_TX_PIN          GPIO0_A2
-#define RS485_RX_PIN          GPIO0_A3
+#define UART1_TX_PIN          GPIO1_B6  // GPIO 46 - Pin 5
+#define UART1_RX_PIN          GPIO1_B7  // GPIO 47 - Pin 3
 
 // DE/RE control pin (active-high) – dùng chung GPIO1_D3
 #define RS485_DE_PIN          GPIO1_D3
@@ -35,10 +35,10 @@
 #define RELAY1_PIN            GPIO1_D3
 #define RELAY2_PIN            GPIO1_D2
 
-// Cấu hình UART mặc định
-#define RS485_BAUD_DEFAULT    115200
-#define RS485_PARITY_DEFAULT  0       // 0=None, 1=Even, 2=Odd (tuỳ HAL)
-#define RS485_STOP_DEFAULT    1       // Stop bits
+// Cấu hình UART1 mặc định
+#define UART1_BAUD_DEFAULT    115200
+#define UART1_PARITY_DEFAULT  0       // 0=None, 1=Even, 2=Odd (tuỳ HAL)
+#define UART1_STOP_DEFAULT    1       // Stop bits
 
 // Thời gian chờ cho DE/RE (micro giây) – tinh chỉnh theo transceiver thực tế
 #ifndef RS485_DE_ASSERT_US
@@ -61,13 +61,13 @@
 #define GPIO1_D2_LINE         2  // gpiochip1:2
 
 // Timeout values
-#define RS485_TIMEOUT_MS      50
-#define RS485_RETRY_COUNT     2
-#define RS485_RETRY_DELAY_MS  10
+#define UART1_TIMEOUT_MS      50
+#define UART1_RETRY_COUNT     2
+#define UART1_RETRY_DELAY_MS  10
 
 // Buffer sizes
-#define RS485_RX_BUFFER_SIZE  1024
-#define RS485_TX_BUFFER_SIZE  512
+#define UART1_RX_BUFFER_SIZE  1024
+#define UART1_TX_BUFFER_SIZE  512
 #define UART_DMA_BUFFER_SIZE  2048
 
 // Safety timeouts
