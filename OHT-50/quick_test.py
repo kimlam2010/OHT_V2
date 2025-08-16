@@ -13,7 +13,7 @@ def test_uart1():
     if Path("/dev/ttyS1").exists():
         print("✓ /dev/ttyS1 exists")
         try:
-            with serial.Serial("/dev/ttyS1", 115200, timeout=1) as ser:
+            with serial.Serial("/dev/ttyS1", 9600, timeout=1) as ser:
                 print("✓ UART1 opened successfully")
                 ser.write(b"OHT50_TEST\r\n")
                 print("✓ Data written to UART1")
@@ -58,9 +58,9 @@ def test_gpio():
 def test_rs485():
     print("=== Test RS485 Protocol ===")
     try:
-        with serial.Serial("/dev/ttyS1", 115200, timeout=1) as ser:
+        with serial.Serial("/dev/ttyS1", 9600, timeout=1) as ser:
             # PING command
-            ping_cmd = bytes([0xAA, 0x01, 0x01, 0x00, 0x00, 0x00])
+            ping_cmd = bytes([0xAA, 0x02, 0x01, 0x00, 0x00, 0x00])
             ser.write(ping_cmd)
             print(f"✓ Sent PING: {ping_cmd.hex()}")
             

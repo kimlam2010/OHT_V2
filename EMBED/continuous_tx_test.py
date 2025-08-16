@@ -12,7 +12,7 @@ import sys
 class ContinuousTXTest:
     def __init__(self):
         self.uart_device = "/dev/ttyS1"
-        self.baudrate = 115200
+        self.baudrate = 9600
         self.running = True
         
     def signal_handler(self, signum, frame):
@@ -26,7 +26,7 @@ class ContinuousTXTest:
         
     def test_pattern_2(self):
         """Test pattern 2: RS485 protocol"""
-        pattern = bytes([0xAA, 0x01, 0x01, 0x00, 0x00, 0x00])  # PING
+        pattern = bytes([0xAA, 0x02, 0x01, 0x00, 0x00, 0x00])  # PING
         return pattern
         
     def test_pattern_3(self):

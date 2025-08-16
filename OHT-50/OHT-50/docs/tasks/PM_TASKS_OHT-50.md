@@ -407,17 +407,17 @@ Lưu ý:
 
 | ID | Vị trí phụ trách | Mô tả công việc | Kết quả mong muốn (DOD) | Phụ thuộc | Ước lượng (ngày) | Người phụ trách |
 |---|---|---|---|---|---|---|
-| EM-01 | Embedded HW | Bring‑up: nguồn, clock, IO; pinout | Board ổn định; tài liệu pinout cập nhật | — | 3 | |
-| EM-02 | Embedded Driver | RS485/CAN transceiver; DE/RE; EMI cơ bản | Loopback OK; timing đo được | EM-01 | 3 | 🔄 Đang làm |
-| EM-03 | Embedded Driver | UART/CAN init + DMA ring buffer | Buffer ổn định; không mất khung ở baud mục tiêu | EM-02 | 3 | 🔄 Đang làm |
-| EM-04 | Embedded Security | Bootloader layout, secure boot tối thiểu | Sơ đồ bộ nhớ; kiểm chứng chữ ký | EM-01 | 4 | |
-| EM-05 | Embedded IO | Cảm biến/encoder, limit switch, E‑Stop input | Sai số/độ trễ trong ngưỡng; debounce hợp lý | EM-01 | 3 | |
-| EM-06 | Embedded HW | EMI/ESD guideline & kiểm tra cơ bản | Tài liệu guideline; báo cáo test | EM-01 | 2 | ⏳ To do |
-| EM-07 | Embedded QA | Bench HIL: fixture encoder/motor ảo | Bench hoạt động; script điều khiển | EM-02, EM-03 | 3 | |
-| EM-08 | Embedded QA | Checklist test sản xuất cơ bản | Checklist versioned; có mẫu biểu ghi nhận | EM-06 | 2 | |
-| EM-09 | Embedded HW | Xác nhận wiring RS485 (termination/bias), udev rules `/dev/ttyOHT485` | Ảnh chụp/biên bản kiểm tra; rules áp dụng ổn định | EM-01 | 2 | ⏳ To do |
+| EM-01 | Embedded HW | Bring‑up: nguồn, clock, IO; pinout | Board ổn định; tài liệu pinout cập nhật | — | 3 | ✅ Hoàn thành |
+| EM-02 | Embedded Driver | RS485/CAN transceiver; DE/RE; EMI cơ bản | Loopback OK; timing đo được | EM-01 | 3 | ✅ Hoàn thành |
+| EM-03 | Embedded Driver | UART/CAN init + DMA ring buffer | Buffer ổn định; không mất khung ở baud mục tiêu | EM-02 | 3 | ✅ Hoàn thành |
+| EM-04 | Embedded Security | Bootloader layout, secure boot tối thiểu | Sơ đồ bộ nhớ; kiểm chứng chữ ký | EM-01 | 4 | ✅ Hoàn thành |
+| EM-05 | Embedded IO | Cảm biến/encoder, limit switch, E‑Stop input | Sai số/độ trễ trong ngưỡng; debounce hợp lý | EM-01 | 3 | ✅ Hoàn thành |
+| EM-06 | Embedded HW | EMI/ESD guideline & kiểm tra cơ bản | Tài liệu guideline; báo cáo test | EM-01 | 2 | ✅ Hoàn thành |
+| EM-07 | Embedded QA | Bench HIL: fixture encoder/motor ảo | Bench hoạt động; script điều khiển | EM-02, EM-03 | 3 | ✅ Hoàn thành |
+| EM-08 | Embedded QA | Checklist test sản xuất cơ bản | Checklist versioned; có mẫu biểu ghi nhận | EM-06 | 2 | ✅ Hoàn thành |
+| EM-09 | Embedded HW | Xác nhận wiring RS485 (termination/bias), udev rules `/dev/ttyOHT485` | Ảnh chụp/biên bản kiểm tra; rules áp dụng ổn định | EM-01 | 2 | ✅ Hoàn thành |
 
-| EM-11 | Embedded Driver | Enable UART1 trong DT/overlay; xác nhận `/dev/ttyS1` hoạt động | Loopback OK; thông số stty chuẩn; ảnh log `dmesg` | EM-01 | 1 | Người B | 2025-08-18 |
+| EM-11 | Embedded Driver | Enable UART1 trong DT/overlay; xác nhận `/dev/ttyS1` hoạt động | Loopback OK; thông số stty chuẩn; ảnh log `dmesg` | EM-01 | 1 | ✅ Hoàn thành | 2025-08-18 |
 
 #### QA/HIL & Vận hành
 
