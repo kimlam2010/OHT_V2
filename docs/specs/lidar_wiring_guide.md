@@ -1,6 +1,6 @@
 # 🔧 LiDAR Wiring Guide - OHT-50
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Date:** 2025-01-27  
 **Team:** EMBED  
 **Task:** EM-12 (LiDAR Driver & USB Integration)
@@ -15,11 +15,11 @@
 - Tích hợp với hệ thống E-Stop hiện có
 
 ### **Thiết bị được chọn:**
-- **LiDAR Model:** RPLIDAR A1M8 (USB interface)
-- **Khoảng cách:** 0.15m - 12m
+- **LiDAR Model:** RPLIDAR C1M1 360° Laser Range Scanner
+- **Khoảng cách:** 0.05m - 12m (white object), 0.05m - 6m (black object)
 - **Góc quét:** 360°
-- **Tần suất:** 8Hz
-- **Interface:** USB 2.0
+- **Tần suất:** 8-12Hz (typical 10Hz)
+- **Interface:** TTL UART (3.3V level) qua USB bridge
 
 ---
 
@@ -27,7 +27,7 @@
 
 ### **USB Connection:**
 ```
-RPLIDAR A1M8 ── USB Cable ── Orange Pi 5B USB Port
+RPLIDAR C1M1 ── USB Cable ── Orange Pi 5B USB Port
      │
      ├── VCC (5V)
      ├── GND
@@ -43,7 +43,7 @@ RPLIDAR A1M8 ── USB Cable ── Orange Pi 5B USB Port
 ### **USB Port Assignment:**
 - **Port:** USB 2.0 (bất kỳ port nào trên Orange Pi 5B)
 - **Device:** `/dev/ttyUSB0` (sau khi cài driver)
-- **Baud Rate:** 115200 (mặc định)
+- **Baud Rate:** 460800 (khác với A1M8: 115200)
 
 ---
 
@@ -67,7 +67,7 @@ OHT-50 Platform
 ### **2. Safety Considerations:**
 - **EMI Shielding:** USB cable có shield
 - **Strain Relief:** Cable tie để tránh kéo
-- **Water Protection:** IP65 enclosure cho LiDAR
+- **Water Protection:** IP54 protection (built-in)
 - **Vibration:** Mounting bracket chống rung
 
 ---
@@ -111,9 +111,9 @@ lsusb | grep 10c4
 
 ### **2. Serial Communication Test:**
 ```bash
-# Test serial communication
+# Test serial communication với baud rate đúng
 sudo chmod 666 /dev/ttyUSB0
-stty -F /dev/ttyUSB0 115200
+stty -F /dev/ttyUSB0 460800
 echo -e "\xA5\x25" > /dev/ttyUSB0  # Get device info command
 ```
 
@@ -129,10 +129,11 @@ cd rplidar_sdk/sdk/output/Linux/Release/
 ## 📊 **Performance Specifications**
 
 ### **Scanning Performance:**
-- **Scan Rate:** 8Hz (125ms per scan)
-- **Angular Resolution:** 0.9° (400 points per scan)
-- **Range Accuracy:** ±2cm
-- **Range Resolution:** 1cm
+- **Scan Rate:** 8-12Hz (typical 10Hz)
+- **Sample Rate:** 5KHz
+- **Angular Resolution:** 0.72° (typical)
+- **Range Accuracy:** ±30mm
+- **Range Resolution:** 15mm
 
 ### **Safety Thresholds:**
 - **Emergency Stop Distance:** 0.5m
@@ -194,7 +195,7 @@ LiDAR Detection ── Distance Check ── E-Stop Trigger
 ### **Common Issues:**
 1. **Device not detected:** Kiểm tra USB cable, power supply
 2. **Permission denied:** Kiểm tra udev rules, user permissions
-3. **No data:** Kiểm tra baud rate, cable connection
+3. **No data:** Kiểm tra baud rate (phải là 460800), cable connection
 4. **Inaccurate readings:** Kiểm tra mounting, calibration
 
 ### **Debug Commands:**
@@ -202,7 +203,7 @@ LiDAR Detection ── Distance Check ── E-Stop Trigger
 # Check USB devices
 lsusb -v | grep -A 10 "10c4:ea60"
 
-# Check serial port
+# Check serial port với baud rate đúng
 stty -F /dev/ttyUSB0 -a
 
 # Monitor serial data
