@@ -242,21 +242,26 @@ Mục tiêu: Khung FW real‑time, state machine, control loop, safety, telemetr
 
 Mục tiêu: Bring‑up phần cứng, driver tầng thấp, đảm bảo nền tảng ổn định cho FW.
 
+**Trạng thái tổng thể:** ✅ 90.9% COMPLETE (10/11 tasks) - Chỉ còn EM-12 (LiDAR) pending
+
 1) Bring‑up phần cứng (`13_os_image_and_drivers.md`, `hardware.md`)
 - Nhiệm vụ:
   - Kiểm tra nguồn, xung clock, chân IO; tài liệu pinout (`pinout_radxa.md`).
   - Khởi tạo hệ điều hành/RTOS/SDK tùy nền tảng; thiết lập công cụ debug.
 - DOD: Board khởi động ổn định, debug SWD/JTAG/serial hoạt động.
+- **Trạng thái:** ✅ COMPLETE
 
 2) Driver tầng thấp & bus (`03_rs485_bus_driver.md`, `14_rs485_can_transceiver.md`)
 - Nhiệm vụ:
   - RS485/CAN transceiver, điều khiển DE/RE, chống nhiễu EMI cơ bản.
   - UART/CAN init, DMA (nếu có), buffer vòng, xử lý lỗi frame.
 - DOD: Loopback test, throughput/BER trong ngưỡng.
+- **Trạng thái:** ✅ COMPLETE
 
 3) Cảm biến/encoder & IO
 - Nhiệm vụ: Driver đọc encoder, công tắc giới hạn, E‑Stop input, ADC cảm biến.
 - DOD: Sai số đo trong ngưỡng, debounce/ lọc phù hợp.
+- **Trạng thái:** ✅ COMPLETE
 
 4) LiDAR Driver & USB Integration (MỚI)
 - Nhiệm vụ: 
@@ -265,14 +270,17 @@ Mục tiêu: Bring‑up phần cứng, driver tầng thấp, đảm bảo nền 
   - LiDAR test scripts và wiring guide
   - Integration với navigation system
 - DOD: LiDAR driver hoạt động, test scripts pass, documentation complete.
+- **Trạng thái:** ❌ PENDING - Cần implement
 
 5) Bootloader & bảo mật (`15_ota_signing_integrity.md`)
 - Nhiệm vụ: Bootloader, layout bộ nhớ, secure boot tối thiểu, vùng lưu FW dự phòng.
 - DOD: Test cập nhật/rollback, kiểm chứng chữ ký.
+- **Trạng thái:** ✅ COMPLETE
 
 6) Kiểm thử HIL (`09_testing_sim_hil.md`)
 - Nhiệm vụ: Thiết lập bench HIL, fixture tín hiệu encoder/motor ảo, thiết bị đo.
 - DOD: Bộ test HIL chạy tự động/tái lập được, báo cáo kết quả.
+- **Trạng thái:** ✅ COMPLETE
 
 ---
 
@@ -438,42 +446,253 @@ Lưu ý:
 
 #### EMBED (Nhúng/Phần cứng)
 
+Mục tiêu: Bring‑up phần cứng, driver tầng thấp, đảm bảo nền tảng ổn định cho FW.
+
+**Trạng thái tổng thể:** ✅ 90.9% COMPLETE (10/11 tasks) - Chỉ còn EM-12 (LiDAR) pending
+
+1) Bring‑up phần cứng (`13_os_image_and_drivers.md`, `hardware.md`)
+- Nhiệm vụ:
+  - Kiểm tra nguồn, xung clock, chân IO; tài liệu pinout (`pinout_radxa.md`).
+  - Khởi tạo hệ điều hành/RTOS/SDK tùy nền tảng; thiết lập công cụ debug.
+- DOD: Board khởi động ổn định, debug SWD/JTAG/serial hoạt động.
+- **Trạng thái:** ✅ COMPLETE
+
+2) Driver tầng thấp & bus (`03_rs485_bus_driver.md`, `14_rs485_can_transceiver.md`)
+- Nhiệm vụ:
+  - RS485/CAN transceiver, điều khiển DE/RE, chống nhiễu EMI cơ bản.
+  - UART/CAN init, DMA (nếu có), buffer vòng, xử lý lỗi frame.
+- DOD: Loopback test, throughput/BER trong ngưỡng.
+- **Trạng thái:** ✅ COMPLETE
+
+3) Cảm biến/encoder & IO
+- Nhiệm vụ: Driver đọc encoder, công tắc giới hạn, E‑Stop input, ADC cảm biến.
+- DOD: Sai số đo trong ngưỡng, debounce/ lọc phù hợp.
+- **Trạng thái:** ✅ COMPLETE
+
+4) LiDAR Driver & USB Integration (MỚI)
+- Nhiệm vụ: 
+  - USB to LiDAR driver implementation
+  - LiDAR data processing và obstacle detection
+  - LiDAR test scripts và wiring guide
+  - Integration với navigation system
+- DOD: LiDAR driver hoạt động, test scripts pass, documentation complete.
+- **Trạng thái:** ❌ PENDING - Cần implement
+
+5) Bootloader & bảo mật (`15_ota_signing_integrity.md`)
+- Nhiệm vụ: Bootloader, layout bộ nhớ, secure boot tối thiểu, vùng lưu FW dự phòng.
+- DOD: Test cập nhật/rollback, kiểm chứng chữ ký.
+- **Trạng thái:** ✅ COMPLETE
+
+6) Kiểm thử HIL (`09_testing_sim_hil.md`)
+- Nhiệm vụ: Thiết lập bench HIL, fixture tín hiệu encoder/motor ảo, thiết bị đo.
+- DOD: Bộ test HIL chạy tự động/tái lập được, báo cáo kết quả.
+- **Trạng thái:** ✅ COMPLETE
+
+---
+
+### Giao diện & phụ thuộc giữa các nhóm
+
+- Thống nhất payload giao tiếp giữa FW ↔ Backend (qua Center/Gateway) theo `center_comm.md` và `telemetry_schema.md`.
+- Chuẩn hóa phiên bản cấu hình và quy trình áp dụng giữa Frontend ↔ Backend ↔ FW theo `config_spec.md`.
+- Lịch đồng bộ: họp kỹ thuật liên nhóm 2 lần/tuần; cập nhật thay đổi giao thức qua PRD/API doc.
+
+---
+
+### Quản lý chất lượng & rủi ro
+
+- Chỉ số: tỷ lệ lỗi khung RS485, độ trễ vòng lặp điều khiển, thời gian phản hồi E‑Stop, uptime dịch vụ Backend, FPS UI khi hiển thị biểu đồ.
+- Rủi ro chính: nhiễu bus, sai lệch encoder, quá tải telemetry, cập nhật OTA thất bại.
+- Biện pháp: buffer/CRC/retry, lọc tín hiệu, backpressure/giảm tần số, chiến lược rollback.
+
+---
+
+### Bàn giao
+
+- Demo end‑to‑end các kịch bản: Idle → Move → Dock; Fault; E‑Stop.
+- Tài liệu người dùng: hướng dẫn cấu hình, quy trình cập nhật, xử lý sự cố.
+- Tài liệu kỹ thuật: API, giao thức, sơ đồ trạng thái, thông số điều khiển.
+
+---
+
+### Yêu cầu khách hàng – RS485 Modules (cần PM cung cấp)
+
+Vui lòng điền đầy đủ vào biểu mẫu: `docs/specs/PM_CHECKLIST_RS485_MODULES.md`. Tóm tắt các nhóm thông tin cần có:
+
+1) Chung cho hệ thống bus
+- Topology & chiều dài bus; Cáp & đầu nối; Vị trí termination 120Ω; Bias (giá trị, vị trí)
+- Tham số UART RS485: Baud, Parity/Stop bits
+- Heartbeat/Keepalive (chu kỳ), Timeout (ms), Retry (số lần)
+
+2) Ánh xạ địa chỉ
+- Safety (0x10 đề xuất); DIO Upper (0x11); AIO Upper (0x12)
+- DC Driver #1 axis_drive (0x13) / Stepper #1 (0x14)
+- DC Driver #2 axis_lift (0x15) / Stepper #2 (0x16)
+- DIO Cargo (0x17); AIO Cargo (0x18); DC Driver #3 axis_door (0x19)
+- Location RFID+Encoder (0x1A); Khác (liệt kê thêm)
+
+3) DC Motor Driver / Stepper Driver
+- Hãng/Model; Giao thức (Modbus RTU/CANopen/khác)
+- Tham số setpoint (velocity/position/torque – đơn vị, giới hạn)
+- Feedback (pos/vel/current/temp/fault); Encoder tích hợp (loại, ppr)
+- Tần số cập nhật mong muốn (setpoint/feedback); Điều kiện an toàn & interlock
+
+4) Location Module (RFID + Encoder)
+- RFID: chuẩn tag, tần số, khoảng cách đọc, thời gian đáp ứng; có `rssi`?
+- Encoder: loại, ppr, có kênh Z; Timestamp (CPU hay tại module)
+- Yêu cầu Telemetry: `tag_id`, `enc.count`, `s_on_rail` (nếu cần)
+
+5) Safety Module
+- Kênh vào/ra an toàn (số lượng, loại); Latch/Reset; Thời gian đáp ứng
+
+6) DIO/AIO Modules
+- DIO: số kênh In/Out, loại NPN/PNP, debounce, polarity
+- AIO: dải 0–10V hoặc 4–20mA, độ phân giải, tần số mẫu; Hiệu chuẩn offset/scale
+
+7) LiDAR (nếu có)
+- Hãng/Model; Giao tiếp (RS485/UART/CAN/Ethernet)
+- Tốc độ quét, FOV, phạm vi đo; Định dạng dữ liệu; Tần số stream/giảm tần mong muốn
+
+8) Telemetry & Logging
+- Tần số WS (Hz); Trường telemetry bổ sung; Sự kiện quan trọng cần log
+
+9) Khác
+- Yêu cầu EMC/ESD/nguồn; Firmware version các module; Tài liệu/datasheet
+
+Hành động PM:
+- Phân công người liên hệ nhà cung cấp từng module, thu thập dữ liệu và điền biểu mẫu.
+- Hạn đề xuất: điền đủ 80% thông tin vào `PM_CHECKLIST_RS485_MODULES.md` trong 5 ngày làm việc.
+- Sau khi có dữ liệu: cập nhật `config_spec.md` (addresses thực tế) và mở PR xác nhận schema Telemetry cuối.
+
+Ghi chú: PM sẽ theo dõi tiến độ theo Sprint; mọi thay đổi giao diện/giao thức phải cập nhật tài liệu tương ứng trong `docs/specs` và ghi rõ phiên bản.
+
+---
+
+### Bảng công việc chi tiết theo từng vị trí (Tasks Matrix)
+
+Lưu ý:
+- Cột "Người phụ trách" để trống để PM phân công/điền tên; "Ước lượng" có thể điều chỉnh sau khi grooming.
+- Tất cả DOD phải có bằng chứng: code, test, tài liệu/README hoặc tài liệu API.
+
+#### Backend
+
 | ID | Vị trí phụ trách | Mô tả công việc | Kết quả mong muốn (DOD) | Phụ thuộc | Ước lượng (ngày) | Người phụ trách |
 |---|---|---|---|---|---|---|
-| EM-01 | Embedded HW | Bring‑up: nguồn, clock, IO; pinout | Board ổn định; tài liệu pinout cập nhật | — | 3 | ✅ Hoàn thành |
-| EM-02 | Embedded Driver | RS485/CAN transceiver; DE/RE; EMI cơ bản | Loopback OK; timing đo được | EM-01 | 3 | ✅ Hoàn thành |
-| EM-03 | Embedded Driver | UART/CAN init + DMA ring buffer | Buffer ổn định; không mất khung ở baud mục tiêu | EM-02 | 3 | ✅ Hoàn thành |
-| EM-04 | Embedded Security | Bootloader layout, secure boot tối thiểu | Sơ đồ bộ nhớ; kiểm chứng chữ ký | EM-01 | 4 | ✅ Hoàn thành |
-| EM-05 | Embedded IO | Cảm biến/encoder, limit switch, E‑Stop input | Sai số/độ trễ trong ngưỡng; debounce hợp lý | EM-01 | 3 | ✅ Hoàn thành |
-| EM-06 | Embedded HW | EMI/ESD guideline & kiểm tra cơ bản | Tài liệu guideline; báo cáo test | EM-01 | 2 | ✅ Hoàn thành |
-| EM-07 | Embedded QA | Bench HIL: fixture encoder/motor ảo | Bench hoạt động; script điều khiển | EM-02, EM-03 | 3 | ✅ Hoàn thành |
-| EM-08 | Embedded QA | Checklist test sản xuất cơ bản | Checklist versioned; có mẫu biểu ghi nhận | EM-06 | 2 | ✅ Hoàn thành |
-| EM-09 | Embedded HW | Xác nhận wiring RS485 (termination/bias), udev rules `/dev/ttyOHT485` | Ảnh chụp/biên bản kiểm tra; rules áp dụng ổn định | EM-01 | 2 | ✅ Hoàn thành |
+| BE-01 | Backend Lead, DevOps | Khởi tạo service (FastAPI/NestJS), cấu trúc repo, cấu hình ENV | Service chạy cục bộ + container; healthcheck; README khởi chạy | — | 3 | ✅ Hoàn thành |
+| BE-02 | DevOps | Thiết lập CI/CD (build, test, lint, image) | Pipeline xanh, artifact image tạo thành công | BE-01 | 2 | ✅ Hoàn thành |
+| BE-03 | Backend Engineer | API cấu hình: schema + CRUD theo `config_spec.md` | Endpoint CRUD hoạt động; validate schema; test tích hợp | BE-01 | 4 | 🔄 Đang làm (CRUD cơ bản) |
+| BE-04 | Backend Engineer | Phiên bản hóa cấu hình, import/export JSON/YAML | Lưu/khôi phục phiên bản; tài liệu API | BE-03 | 2 | |
+| BE-05 | Backend Engineer | Ingest telemetry (HTTP/WS/MQTT) theo `telemetry_schema.md` | Nhận/ghi dữ liệu ổn định; benchmark tối thiểu | BE-01 | 4 | 🔄 Đang làm (WS current/history) |
+| BE-06 | Backend Engineer | API truy vấn telemetry theo thời gian/kênh | Truy vấn động; phân trang; test hiệu năng cơ bản | BE-05 | 3 | |
+| BE-07 | Backend Lead | Giao tiếp Center: định nghĩa command + WS/SSE | Gửi/nhận lệnh với mock; tài liệu thông điệp | BE-01 | 3 | |
+| BE-08 | Backend Engineer | Mock device để dev song song FE/FW | Mock sinh trạng thái + telemetry; script chạy nhanh | BE-07 | 2 | 🔄 Đang làm (telemetry mock) |
+| BE-09 | Backend Lead, Security | Bảo mật: auth cơ bản, RBAC, rate limit, CORS | Bảo vệ endpoint; test bảo mật cơ bản | BE-01 | 3 | |
+| BE-10 | Backend Engineer | Logging/observability/metrics | Log cấu trúc; metrics /health; dashboard cơ bản | BE-01 | 2 | |
+| BE-11 | Backend Lead | OTA backend: kho bản phát hành, ký số, checksum | API upload/phát hành; lưu metadata; kiểm tra checksum | BE-01 | 4 | |
+| BE-12 | Backend Engineer | API kích hoạt OTA + theo dõi tiến độ, rollback | Job theo dõi; trạng thái; rollback an toàn (mô phỏng) | BE-11 | 3 | |
+| BE-13 | Backend Engineer | Mở rộng Telemetry API: `/current` JSON chuẩn, `/history?limit=`, WS theo `ws_hz`, `/rate`, `/reset`, `/stats` | API hoạt động; docs cập nhật; đồng bộ `telemetry_schema.md` | BE-05 | 3 | ✅ Hoàn thành |
+| BE-14 | Backend Engineer | Refactor DI `ConfigService` qua `Depends(get_config_service)` | Dễ mock/tiêm phụ thuộc; test đơn vị đơn giản hơn | BE-03 | 2 | |
+| BE-15 | Backend Engineer | Đồng bộ schema Telemetry: thêm `tag_id`, `enc.count` vào payload | `/current`, `/ws` phát đủ trường; tài liệu hóa | BE-05 | 2 | 🔄 Đang thực hiện |
+| BE-16 | Backend Engineer | Tích hợp với FW/Center thay vì RS485 trực tiếp | Backend lấy module registry/points qua FW/Center API; cập nhật docs | FW-11 | 3 | |
+| BE-17 | Backend Engineer | Loại bỏ phụ thuộc serial ở BE (sản xuất) + Feature flag cho chế độ mock | BE không mở cổng serial; chỉ dùng mock ở dev; tài liệu hoá cấu hình | ARCH | 1 | |
 
-| EM-11 | Embedded Driver | Enable UART1 trong DT/overlay; xác nhận `/dev/ttyS1` hoạt động | Loopback OK; thông số stty chuẩn; ảnh log `dmesg` | EM-01 | 1 | ✅ Hoàn thành | 2025-08-18 |
-
-#### QA/HIL & Vận hành
-
-| ID | Vị trí phụ trách | Mô tả công việc | Kết quả mong muốn (DOD) | Phụ thuộc | Ước lượng (ngày) | Người phụ trách |
-|---|---|---|---|---|---|---|
-| QA-01 | QA/HIL | Hoàn thiện `docs/tests/hil_plan.md` + script | Chạy tự động; báo cáo HTML/CSV | EM-07, FW-08 | 3 | |
-| QA-02 | QA/HIL | Fault injection (mất gói, lỗi encoder, quá tải) | Bảng tiêu chí vượt/không vượt; log minh chứng | FW-09, BE-10 | 3 | |
-| QA-03 | QA/HIL | Đo chỉ số: độ trễ control loop, E‑Stop, FPS UI | Báo cáo so sánh sprint; ngưỡng cảnh báo | FE-06, FW-04 | 3 | |
-| QA-04 | QA/HIL | Kịch bản lỗi RS485: mất gói/CRC/timeout, retry/backoff | Bảng tiêu chí vượt/không vượt; log minh chứng; tỷ lệ lỗi | FW-07, BE-05 | 3 | |
-
-#### Docs
+#### Frontend
 
 | ID | Vị trí phụ trách | Mô tả công việc | Kết quả mong muốn (DOD) | Phụ thuộc | Ước lượng (ngày) | Người phụ trách |
 |---|---|---|---|---|---|---|
-| DOC-01 | PM/Tech Writer | Bổ sung `comm.rs485.addresses`, cập nhật checklist PM | `config_spec.md` & `PM_CHECKLIST_RS485_MODULES.md` cập nhật | — | 1 | ✅ Hoàn thành |
-| DOC-02 | PM/Tech Writer | Viết đặc tả LiDAR (nếu dùng) | `module_spec.md` có mục LiDAR; tham chiếu wiring/giao tiếp | ARCH | 2 | |
-| DOC-03 | PM/Tech Writer | Cập nhật interfaces: RS485 thuộc FW; BE tích hợp qua FW/Center | `docs/specs/interfaces.md` cập nhật lưu đồ & vai trò | ARCH | 1 | |
-| DOC-04 | PM/Tech Writer | Tạo `docs/dev_radxa/platform_orangepi_5b.md` + `docs/dev_radxa/udev_rules_orangepi5b.md` | Tài liệu có hướng dẫn UART1, udev; liên kết từ `hardware.md` | ARCH | 1 | ✅ Hoàn thành |
+| FE-01 | Frontend Lead | Khởi tạo SPA (React+Vite), router, state mgmt | App chạy; router hoạt động; lint/CI pass | — | 3 | ✅ Hoàn thành |
+| FE-02 | Frontend Engineer | Thiết lập theme, dark mode, icon, responsive | Style cơ bản; kiểm tra trên mobile/desktop | FE-01 | 2 | ✅ Hoàn thành |
+| FE-03 | Frontend Engineer | Proxy dev tới Backend; cấu hình env | Gọi API qua proxy; docs cách chạy | FE-01 | 1 | ✅ Hoàn thành |
+| FE-04 | Frontend Engineer | Màn hình Overview: thẻ trạng thái Idle/Move/Dock/Fault/E‑Stop | Hiển thị realtime từ mock/socket; test UI | BE-08 | 3 | ✅ Hoàn thành |
+| FE-05 | Frontend Engineer | Nút điều khiển Start/Stop/E‑Stop (xác nhận an toàn) | Gửi command tới mock/backend; modal xác nhận | BE-07, BE-08 | 2 | ✅ Hoàn thành |
+| FE-06 | Frontend Engineer | Màn hình đồ thị v‑a‑x realtime (pause/zoom) | Biểu đồ mượt; thay đổi thang thời gian | BE-06 | 3 | ✅ Prototype (HTML) |
+| FE-07 | Frontend Engineer | Màn hình Log: bảng, lọc, tìm kiếm, phân trang | Bảng ổn định; export CSV/JSON | BE-06 | 3 | ✅ Hoàn thành |
+| FE-08 | Frontend Engineer | Màn hình Cấu hình an toàn (CRUD + validate) | Đồng bộ backend; cảnh báo khi áp dụng | BE-03, BE-04 | 3 | ✅ Hoàn thành |
+| FE-09 | Frontend Engineer | Màn hình Diagnostics: encoder/driver/bus | Hiển thị tín hiệu cơ bản; cảnh báo lỗi | BE-06 | 3 | ✅ Hoàn thành |
+| FE-10 | Frontend Lead | E2E smoke test + hướng dẫn sử dụng nhanh | Test chạy qua các flow chính; README UI | FE-04..FE-09 | 2 | ✅ Hoàn thành |
+| FE-11 | Frontend Engineer | Cập nhật Overview/Diagnostics hiển thị `tag_id`, `enc.count`, tốc độ phát | UI hiển thị đúng trường mới; tương thích màn hình nhỏ/lớn | BE-15 | 2 | ✅ Hoàn thành |
+| FE-12 | Frontend Engineer | Trang cấu hình RS485 addresses theo `config_spec.md` | Form đọc/ghi địa chỉ module; validate client | BE-03 | 3 | ✅ Hoàn thành |
+| FE-13 | Frontend Engineer | User Settings (PA‑1): hồ sơ, mật khẩu, dark mode | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-14 | Frontend Engineer | Center Config page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-15 | Frontend Engineer | Jobs Monitor page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-16 | Frontend Engineer | Admin Management (đơn giản) | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-17 | Frontend Engineer | Logs page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-18 | Frontend Engineer | Safety Config page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-19 | Frontend Engineer | Diagnostics page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-20 | Frontend Engineer | RS485 Addresses page | Prototype HTML hoàn chỉnh | BE-03 | 1 | ✅ Hoàn thành |
+| FE-21 | Frontend Engineer | Audit Trail page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-22 | Frontend Lead | Khởi tạo thư mục FE (React+Vite) + demo WS | `frontend/` chạy dev; route demo /fe06 kết nối WS | BE-05 | 1 | ✅ Hoàn thành |
+| FE-23 | Frontend Engineer | Login + Guard + Logout + Dashboard khởi đầu | Đăng nhập mock, chặn /dashboard khi chưa login, hiển thị user | FE-01 | 1 | ✅ Hoàn thành |
+| FE-24 | Frontend Engineer | Tích hợp FE‑06 WS với auto-reconnect | Chart cập nhật realtime, backoff khi mất kết nối | BE-05 | 1 | ✅ Hoàn thành |
+| FE-25 | Frontend Engineer | Config CRUD tối thiểu trên Dashboard | Đọc/ghi /api/v1/config/ | BE-03 | 1 | ✅ Hoàn thành |
 
-#### Ghi chú chuyển đổi
-- Các endpoint RS485 trong BE (nếu có trong nhánh dev) chỉ dùng cho mock/dev; không dùng trong môi trường sản xuất theo quyết định mới.
-- Khi FW sẵn sàng API/Center message, BE chuyển sang gọi FW/Center tương ứng và gỡ các codepath truy cập serial.
-| OPS-01 | DevOps | Môi trường dev/staging; quan sát; backup | Mô tả hạ tầng; playbook sự cố | BE-02, BE-10 | 3 | |
+| FE-13 | Frontend Engineer | User Settings (PA‑1): hồ sơ, mật khẩu, dark mode | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-14 | Frontend Engineer | Center Config page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-15 | Frontend Engineer | Jobs Monitor page | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+| FE-16 | Frontend Engineer | Admin Management (đơn giản) | Prototype HTML hoàn chỉnh | — | 1 | ✅ Hoàn thành |
+
+#### FW (Firmware)
+
+| ID | Vị trí phụ trách | Mô tả công việc | Kết quả mong muốn (DOD) | Phụ thuộc | Ước lượng (ngày) | Người phụ trách |
+|---|---|---|---|---|---|---|
+| FW-01 | FW Lead | Khung FW, scheduler, ưu tiên ngắt | Vòng lặp chính ổn định; đo latency cơ bản | EM-01 | 3 | |
+| FW-02 | FW Engineer (HAL) | HAL: GPIO, PWM, ADC, UART/RS485, timer | API HAL ổn định; unit test tối thiểu | EM-02 | 4 | |
+| FW-03 | FW Engineer (Control) | Máy trạng thái Idle/Move/Dock; Fault/E‑Stop override | Unit test logic trạng thái đạt yêu cầu | FW-01 | 3 | |
+| FW-04 | FW Engineer (Control) | Vòng điều khiển: v/a/x, giới hạn, anti‑windup | Đáp ứng ổn định trên mô phỏng | FW-03 | 4 | |
+| FW-05 | FW Engineer (Sensors) | Encoder: driver + lọc tín hiệu + hiệu chuẩn | Sai số trong ngưỡng; log thống kê | EM-03 | 3 | |
+| FW-06 | FW Engineer (Driver) | Driver motor: PWM/UART/CAN + bảo vệ | Ramping mượt; bảo vệ quá dòng/nhiệt | FW-02 | 4 | |
+| FW-07 | FW Engineer (Comms) | RS485 protocol: frame, CRC, retry | Tỉ lệ lỗi thấp; thống kê BER | EM-02 | 3 | |
+| FW-08 | FW Engineer (Comms) | Telemetry packaging theo `telemetry_schema.md` | Tốc độ gửi ổn định; backpressure khi quá tải | FW-07 | 3 | |
+| FW-09 | FW Engineer (Safety) | E‑Stop, watchdog, interlock cơ bản | Bài test fault injection đạt; log sự kiện | FW-03 | 3 | |
+| FW-10 | FW Lead | Bootloader/OTA tích hợp | Cập nhật/rollback mô phỏng; kiểm chứng checksum | EM-04, BE-11 | 4 | |
+| FW-11 | FW Engineer (Comms) | Triển khai khung lệnh RS485 theo `bus_rs485.md` (PING/GET_INFO/READ_FB/SET_POS...) | Gửi/nhận ổn định; CRC/timeout/retry đạt; thống kê lỗi | EM-02 | 5 | |
+| FW-12 | FW Engineer (Sensors) | Location fusion cơ bản (RFID + encoder) → `s_on_rail` | Sai số trong ngưỡng; log/telemetry có `tag_id`, `enc.count` | FW-05 | 4 | |
+| FW-13 | FW Engineer (Comms) | Expose API/Center messages cho BE: module registry, points snapshot | BE truy vấn qua HTTP/WS hoặc Center; tài liệu thông điệp | FW-07 | 3 | |
+
+| FW-15 | FW Engineer (Comms) | Cấu hình thiết bị RS485 qua env/config: ưu tiên `/dev/ttyOHT485` (udev), fallback `/dev/ttyS1` | Service khởi chạy ổn định; log cảnh báo khi fallback; README hướng dẫn | DOC-04 | 1 | Người A | 2025-08-20 |
+
+#### EMBED (Nhúng/Phần cứng)
+
+Mục tiêu: Bring‑up phần cứng, driver tầng thấp, đảm bảo nền tảng ổn định cho FW.
+
+**Trạng thái tổng thể:** ✅ 90.9% COMPLETE (10/11 tasks) - Chỉ còn EM-12 (LiDAR) pending
+
+1) Bring‑up phần cứng (`13_os_image_and_drivers.md`, `hardware.md`)
+- Nhiệm vụ:
+  - Kiểm tra nguồn, xung clock, chân IO; tài liệu pinout (`pinout_radxa.md`).
+  - Khởi tạo hệ điều hành/RTOS/SDK tùy nền tảng; thiết lập công cụ debug.
+- DOD: Board khởi động ổn định, debug SWD/JTAG/serial hoạt động.
+- **Trạng thái:** ✅ COMPLETE
+
+2) Driver tầng thấp & bus (`03_rs485_bus_driver.md`, `14_rs485_can_transceiver.md`)
+- Nhiệm vụ:
+  - RS485/CAN transceiver, điều khiển DE/RE, chống nhiễu EMI cơ bản.
+  - UART/CAN init, DMA (nếu có), buffer vòng, xử lý lỗi frame.
+- DOD: Loopback test, throughput/BER trong ngưỡng.
+- **Trạng thái:** ✅ COMPLETE
+
+3) Cảm biến/encoder & IO
+- Nhiệm vụ: Driver đọc encoder, công tắc giới hạn, E‑Stop input, ADC cảm biến.
+- DOD: Sai số đo trong ngưỡng, debounce/ lọc phù hợp.
+- **Trạng thái:** ✅ COMPLETE
+
+4) LiDAR Driver & USB Integration (MỚI)
+- Nhiệm vụ: 
+  - USB to LiDAR driver implementation
+  - LiDAR data processing và obstacle detection
+  - LiDAR test scripts và wiring guide
+  - Integration với navigation system
+- DOD: LiDAR driver hoạt động, test scripts pass, documentation complete.
+- **Trạng thái:** ❌ PENDING - Cần implement
+
+5) Bootloader & bảo mật (`15_ota_signing_integrity.md`)
+- Nhiệm vụ: Bootloader, layout bộ nhớ, secure boot tối thiểu, vùng lưu FW dự phòng.
+- DOD: Test cập nhật/rollback, kiểm chứng chữ ký.
+- **Trạng thái:** ✅ COMPLETE
+
+6) Kiểm thử HIL (`09_testing_sim_hil.md`)
+- Nhiệm vụ: Thiết lập bench HIL, fixture tín hiệu encoder/motor ảo, thiết bị đo.
+- DOD: Bộ test HIL chạy tự động/tái lập được, báo cáo kết quả.
+- **Trạng thái:** ✅ COMPLETE
 
 ---
 
@@ -485,21 +704,23 @@ Mục tiêu của phần này là chỉ rõ: làm phần nào trước, mốc b�
 
 | Thứ tự | ID | Công việc | Lý do ưu tiên | Phụ thuộc | Kết quả mong muốn |
 |---|---|---|---|---|---|
-| 1 | EM-01 | Bring‑up phần cứng, pinout | Nền tảng cho FW/HAL | — | Board ổn định, tài liệu pinout |
-| 2 | BE-01 | Khởi tạo Backend service | Nền tảng API/telemetry cho FE | — | Service chạy + healthcheck |
-| 3 | FE-01 | Khởi tạo SPA + router | Nền tảng UI, tích hợp sớm | — | App skeleton chạy, CI pass |
-| 4 | EM-02 | RS485/CAN transceiver | Giao tiếp nền cho FW | EM-01 | Loopback OK |
-| 5 | FW-01 | Khung FW + scheduler | Khởi tạo vòng lặp điều khiển | EM-01 | Vòng lặp ổn định |
-| 6 | BE-08 | Mock device | Cho FE/BE tích hợp sớm | BE-01 | Mock realtime hoạt động |
-| 7 | BE-03 | API cấu hình (CRUD) | FE cấu hình an toàn cần | BE-01 | CRUD + validate schema |
-| 8 | BE-05 | Ingest telemetry | Nguồn dữ liệu cho FE đồ thị | BE-01 | Ingest ổn định |
-| 9 | FE-04 | Overview + trạng thái hệ | Hiển thị realtime sớm | FE-01, BE-08 | Thẻ trạng thái hoạt động |
-| 10 | FW-03 | State machine | Điều khiển an toàn/đúng flow | FW-01 | Unit test đạt |
-| 11 | FW-07 | RS485 protocol | Liên lạc với Center | EM-02 | CRC/retry ổn định |
-| 12 | FE-06 | Đồ thị v‑a‑x realtime | Quan sát hệ thống | BE-06 | Biểu đồ mượt |
-| 13 | FW-09 | E‑Stop & interlock | An toàn ưu tiên | FW-03 | Fault injection đạt |
-| 14 | BE-11 | OTA backend | Chuẩn bị phát hành | BE-01 | Kho bản phát hành |
-| 15 | FW-10 | Bootloader/OTA | Cập nhật/rollback an toàn | EM-04, BE-11 | OTA mô phỏng OK |
+| 1 | EM-01 | Bring‑up phần cứng, pinout | Nền tảng cho FW/HAL | — | ✅ COMPLETE |
+| 2 | BE-01 | Khởi tạo Backend service | Nền tảng API/telemetry cho FE | — | ✅ COMPLETE |
+| 3 | FE-01 | Khởi tạo SPA + router | Nền tảng UI, tích hợp sớm | — | ✅ COMPLETE |
+| 4 | EM-02 | RS485/CAN transceiver | Giao tiếp nền cho FW | EM-01 | ✅ COMPLETE |
+| 5 | FW-01 | Khung FW + scheduler | Khởi tạo vòng lặp điều khiển | EM-01 | 🚀 READY TO START |
+| 6 | BE-08 | Mock device | Cho FE/BE tích hợp sớm | BE-01 | 🔄 Đang làm |
+| 7 | BE-03 | API cấu hình (CRUD) | FE cấu hình an toàn cần | BE-01 | 🔄 Đang làm |
+| 8 | BE-05 | Ingest telemetry | Nguồn dữ liệu cho FE đồ thị | BE-01 | 🔄 Đang làm |
+| 9 | FE-04 | Overview + trạng thái hệ | Hiển thị realtime sớm | FE-01, BE-08 | ✅ COMPLETE |
+| 10 | FW-03 | State machine | Điều khiển an toàn/đúng flow | FW-01 | 🚀 READY TO START |
+| 11 | FW-07 | RS485 protocol | Liên lạc với Center | EM-02 | 🚀 READY TO START |
+| 12 | FE-06 | Đồ thị v‑a‑x realtime | Quan sát hệ thống | BE-06 | ✅ Prototype (HTML) |
+| 13 | FW-09 | E‑Stop & interlock | An toàn ưu tiên | FW-03 | 🚀 READY TO START |
+| 14 | BE-11 | OTA backend | Chuẩn bị phát hành | BE-01 | 🚀 READY TO START |
+| 15 | FW-10 | Bootloader/OTA | Cập nhật/rollback an toàn | EM-04, BE-11 | 🚀 READY TO START |
+| **16** | **EM-12** | **LiDAR Driver & USB Integration** | **Navigation và safety cần** | **—** | **❌ PENDING** |
+| **17** | **FW-11** | **LiDAR Integration** | **Integration với navigation** | **EM-12** | **🚀 READY TO START** |
 
 Lưu ý: Các hạng mục khác có thể triển khai song song nếu không nằm trên critical path và không phá vỡ phụ thuộc.
 
@@ -619,7 +840,7 @@ Ghi chú: PM có thể nhân rộng bảng theo số tuần thực tế; mỗi t
 - Platform: Orange Pi 5B (RK3588) với HAL abstraction
 
 **Prompts cụ thể:**
-- **FW-01**: Khung FW, Scheduler, Ưu tiên ngắt - Thiết kế firmware architecture
+- **FW-01**: Khung FW, Scheduler, ưu tiên ngắt - Thiết kế firmware architecture
 - **FW-02**: HAL - GPIO, PWM, ADC, UART/RS485, Timer - Implement HAL abstraction
 - **FW-07**: RS485 Protocol - Frame, CRC, Retry - Implement RS485 protocol
 - **FW-03**: State Machine - Idle/Move/Dock/Fault/E-Stop - Implement state machine
@@ -675,7 +896,4 @@ Ghi chú: PM có thể nhân rộng bảng theo số tuần thực tế; mỗi t
 ### Ghi chú triển khai
 
 1. **EMBED team** cần hoàn thành EM-02 và EM-03 trước khi FW team có thể bắt đầu FW-02 và FW-07
-2. **EM-10 và EM-11** có deadline 2025-08-18, cần ưu tiên cao
-3. **FW team** có thể bắt đầu FW-01 song song với EM-02/EM-03
-4. **Safety mechanisms** (FW-09) cần được implement sau khi state machine (FW-03) hoàn thành
-5. **Integration testing** cần được thực hiện sau khi cả EMBED và FW đều hoàn thành các task cơ bản
+2. **EM-10 và EM-11** có deadline 2025-0
