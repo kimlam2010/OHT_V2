@@ -346,3 +346,102 @@ SPECIFIC REQUIREMENTS:
 - Unit tests: safety functions
 - Integration: end-to-end testing
 ```
+
+## FW-11: LiDAR Integration
+
+### **Mục tiêu**
+Integrate LiDAR với FW framework, implement obstacle detection, navigation integration, và safety system integration.
+
+### **Yêu cầu kỹ thuật**
+- **LiDAR Driver Integration**: Integration với FW framework
+- **Obstacle Detection**: Real-time obstacle detection algorithm
+- **Navigation Integration**: Path planning với obstacle avoidance
+- **Safety Integration**: E-Stop và speed control dựa trên LiDAR data
+- **Real-time Processing**: < 100ms response time
+
+### **Deliverables**
+1. **LiDAR Driver Integration**: Integration với FW framework
+2. **Obstacle Detection Algorithm**: Real-time obstacle detection
+3. **Navigation Integration**: Path planning và collision avoidance
+4. **Safety Integration**: E-Stop và speed control
+5. **Test Scripts**: Integration test scripts
+6. **Documentation**: Integration documentation
+
+### **SPECIFIC REQUIREMENTS**
+- LiDAR driver integration với FW framework
+- Real-time obstacle detection algorithm
+- Navigation system integration với path planning
+- Safety system integration với E-Stop và speed control
+- Performance optimization cho real-time processing
+- Comprehensive test coverage
+- Integration documentation
+
+### **Prompt Template**
+```
+Bạn là FW team member của dự án OHT-50, chịu trách nhiệm LiDAR integration.
+
+## TASK: FW-11 - LiDAR Integration
+
+### Mục tiêu
+Integrate LiDAR với FW framework, implement obstacle detection, navigation integration, và safety system integration.
+
+### Yêu cầu kỹ thuật
+- LiDAR Driver Integration: Integration với FW framework
+- Obstacle Detection: Real-time obstacle detection algorithm
+- Navigation Integration: Path planning với obstacle avoidance
+- Safety Integration: E-Stop và speed control dựa trên LiDAR data
+- Real-time Processing: < 100ms response time
+
+### Deliverables cần tạo
+1. LiDAR Driver Integration: Integration với FW framework
+2. Obstacle Detection Algorithm: Real-time obstacle detection
+3. Navigation Integration: Path planning và collision avoidance
+4. Safety Integration: E-Stop và speed control
+5. Test Scripts: Integration test scripts
+6. Documentation: Integration documentation
+
+### SPECIFIC REQUIREMENTS
+- LiDAR driver integration với FW framework
+- Real-time obstacle detection algorithm
+- Navigation system integration với path planning
+- Safety system integration với E-Stop và speed control
+- Performance optimization cho real-time processing
+- Comprehensive test coverage
+- Integration documentation
+
+### Hardware Platform
+- Orange Pi 5B (RK3588)
+- USB LiDAR sensor (RPLIDAR A1/A2)
+- Real-time Linux kernel
+
+### Software Stack
+- C/C++ cho real-time processing
+- Python cho LiDAR driver
+- Threading cho concurrent operations
+- Real-time scheduling
+
+### Integration Requirements
+- Integration với existing FW framework
+- Real-time data processing
+- Obstacle detection algorithm
+- Navigation system integration
+- Safety system integration
+- Performance optimization
+
+### Testing Requirements
+- Integration test với FW framework
+- Obstacle detection validation
+- Navigation integration test
+- Safety system test
+- Performance benchmarking
+- Real-time response test
+
+### Documentation Requirements
+- Integration guide
+- API documentation
+- Test procedures
+- Performance metrics
+- Troubleshooting guide
+
+Hãy implement LiDAR integration theo yêu cầu trên và tạo đầy đủ deliverables.
+```

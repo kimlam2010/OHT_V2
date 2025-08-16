@@ -169,47 +169,72 @@ Mục tiêu: Dashboard chẩn đoán/giám sát/điều khiển cục bộ, tr�
 
 ### FW (Firmware)
 
-Mục tiêu: Điều khiển thời gian thực, vòng lặp điều khiển, đọc encoder, điều khiển driver motor, quản lý trạng thái theo `state_machine.md`, bảo vệ an toàn.
+Mục tiêu: Khung FW real‑time, state machine, control loop, safety, telemetry, cấu hình, OTA.
 
-1) Khung FW & HAL (`04_hal_interfaces.md`, `06_control_loop_state_machine.md`)
-- Nhiệm vụ:
-  - Dựng khung FW: vòng lặp chính, lịch tác vụ (scheduler), ưu tiên ngắt.
-  - Lớp HAL: GPIO, PWM, ADC, UART/RS485, CAN (nếu dùng), timer.
-- DOD: Chạy được trên board dev, đo latency cơ bản.
+1) Khung FW + scheduler (`01_firmware_framework.md`)
+- Nhiệm vụ: Khung FW, scheduler, ưu tiên ngắt, HAL abstraction.
+- DOD: Vòng lặp FW chạy ổn định, scheduler hoạt động, HAL interface.
 
-2) Trạng thái & điều khiển (`state_machine.md`, `control_spec.md`)
-- Nhiệm vụ:
-  - Máy trạng thái: Idle → Move → Dock; Fault & E‑Stop override.
-  - Vòng điều khiển: cập nhật tốc độ, gia tốc, vị trí; giới hạn/saturation; anti‑windup.
-- DOD: Unit test logic trạng thái, thông số điều khiển ổn định trên mô phỏng.
+2) HAL abstraction (`02_hal_abstraction.md`)
+- Nhiệm vụ: HAL cho GPIO, PWM, ADC, UART/RS485, Timer, LiDAR integration.
+- DOD: HAL interface hoàn chỉnh, test coverage > 90%, documentation.
 
-3) Encoder & phản hồi (`encoder_feedback.md`)
-- Nhiệm vụ:
-  - Trình điều khiển/đọc encoder, lọc tín hiệu, hiệu chuẩn.
-  - Hợp nhất vị trí/tốc độ (location fusion cơ bản nếu cần).
-- DOD: Độ chính xác trong giới hạn cho phép, log/telemetry đầy đủ.
+3) State machine (`03_state_machine.md`)
+- Nhiệm vụ: State machine Idle/Move/Dock/Fault/E‑Stop, transition logic.
+- DOD: State machine hoạt động, test cases pass, documentation.
 
-4) Driver motor (`driver_motor.md`)
-- Nhiệm vụ:
-  - Giao tiếp driver (PWM/UART/CAN), bảo vệ quá dòng/nhiệt.
-  - Ramping tốc độ/gia tốc, jerk limit nếu cần.
-- DOD: Test tải giả, đáp ứng mượt, bảo vệ hoạt động.
+4) Control loop (`04_control_loop.md`)
+- Nhiệm vụ: Control loop real‑time, PID controller, motion control.
+- DOD: Control loop ổn định, response time < 1ms, test validation.
 
-5) Giao tiếp & Telemetry (`bus_rs485.md`, `center_comm.md`, `08_logging_telemetry.md`)
-- Nhiệm vụ:
-  - Giao thức RS485 (frame, CRC, retry), tối ưu thời gian thực.
-  - Gói telemetry theo `telemetry_schema.md`, giảm tần số khi quá tải.
+5) Telemetry (`05_telemetry.md`)
+- Nhiệm vụ: Telemetry collection, data processing, transmission.
+- DOD: Telemetry hoạt động, data accuracy, transmission reliable.
+
+6) Configuration (`06_configuration.md`)
+- Nhiệm vụ: Configuration management, parameter storage, validation.
+- DOD: Configuration system hoạt động, validation strict, storage reliable.
+
+7) RS485 protocol (`07_rs485_protocol.md`)
+- Nhiệm vụ: Giao thức RS485 (frame, CRC, retry), tối ưu thời gian thực.
 - DOD: Thông lượng ổn định, tỉ lệ lỗi khung thấp, log thống kê.
 
-6) An toàn & interlock (`safety.md`, `safety_estop_interlock.md`, `safety_metrics.md`)
-- Nhiệm vụ:
-  - Xử lý E‑Stop phần mềm/hardware, time‑guard/ watchdog.
-  - Interlock: vùng cấm, giới hạn tốc độ theo vùng (nếu áp dụng), safe defaults.
-- DOD: Bài test Fault injection, chứng cứ log đáp ứng đúng thời hạn.
+8) Error handling (`08_error_handling.md`)
+- Nhiệm vụ: Error handling, logging, recovery mechanisms.
+- DOD: Error handling comprehensive, logging detailed, recovery reliable.
 
-7) OTA/Bootloader (phối hợp EMBED, `10_deployment_ota.md`, `15_ota_signing_integrity.md`)
-- Nhiệm vụ: Tích hợp cơ chế update, xác thực bản FW, rollback an toàn.
-- DOD: Demo cập nhật giả lập + kiểm chứng checksum/ký số.
+9) Safety & interlock (`09_safety_interlock.md`)
+- Nhiệm vụ: E‑Stop, interlock, safety mechanisms, LiDAR safety integration.
+- DOD: Safety system reliable, response time < 100ms, test validation.
+
+10) OTA/Bootloader (`10_ota_bootloader.md`)
+- Nhiệm vụ: OTA update, bootloader, firmware validation.
+- DOD: OTA reliable, rollback mechanism, validation strict.
+
+11) LiDAR Integration (MỚI)
+- Nhiệm vụ: 
+  - LiDAR driver integration với FW framework
+  - Obstacle detection algorithm implementation
+  - Navigation system integration
+  - Safety system integration với LiDAR data
+  - Real-time LiDAR data processing
+- DOD: LiDAR integration complete, obstacle detection functional, safety integration working.
+
+12) HIL testing (`11_hil_testing.md`)
+- Nhiệm vụ: Hardware-in-the-loop testing, simulation, validation.
+- DOD: HIL tests comprehensive, simulation accurate, validation complete.
+
+13) Performance optimization (`12_performance.md`)
+- Nhiệm vụ: Performance optimization, real-time constraints, resource management.
+- DOD: Performance targets met, real-time constraints satisfied, resource efficient.
+
+14) Documentation (`13_documentation.md`)
+- Nhiệm vụ: FW documentation, API documentation, user guides.
+- DOD: Documentation complete, API documented, user guides clear.
+
+15) Final integration (`14_final_integration.md`)
+- Nhiệm vụ: Final system integration, end-to-end testing, deployment.
+- DOD: System integration complete, end-to-end tests pass, deployment ready.
 
 ---
 
