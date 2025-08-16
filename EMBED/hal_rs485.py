@@ -26,17 +26,17 @@ class RS485Error(Exception):
 @dataclass
 class RS485Config:
     """RS485 configuration parameters"""
-    device: str = "/dev/ttyS1"
-    baudrate: int = 115200
+    device: str = "/dev/ttyOHT485"  # Use udev symlink
+    baudrate: int = 9600
     bytesize: int = serial.EIGHTBITS
     parity: str = serial.PARITY_NONE
     stopbits: int = serial.STOPBITS_ONE
     timeout: float = 1.0
     write_timeout: float = 1.0
     
-    # GPIO control
-    de_pin: int = 47  # GPIO1_D3 (wPi 0)
-    re_pin: int = 46  # GPIO1_D2 (wPi 1)
+    # GPIO control (CORRECTED)
+    tx_pin: int = 46  # GPIO46 (wPi 1) - TX Output
+    rx_pin: int = 47  # GPIO47 (wPi 0) - RX Input
     
     # RS485 specific
     rtscts: bool = False
@@ -76,19 +76,18 @@ class HAL_RS485:
         self._setup_gpio()
     
     def _setup_gpio(self):
-        """Setup GPIO cho DE/RE control"""
+        """Setup GPIO cho TX/RX control (CORRECTED)"""
         try:
             # Export GPIO pins
-            self._export_gpio(self.config.de_pin)
-            self._export_gpio(self.config.re_pin)
+            self._export_gpio(self.config.tx_pin)
+            self._export_gpio(self.config.rx_pin)
             
             # Set direction
-            self._set_gpio_direction(self.config.de_pin, "out")
-            self._set_gpio_direction(self.config.re_pin, "out")
+            self._set_gpio_direction(self.config.tx_pin, "out")  # GPIO46 as output
+            self._set_gpio_direction(self.config.rx_pin, "in")   # GPIO47 as input
             
-            # Set initial state (receive mode)
-            self._set_gpio_value(self.config.de_pin, 0)
-            self._set_gpio_value(self.config.re_pin, 0)
+            # Set initial state
+            self._set_gpio_value(self.config.tx_pin, 0)  # TX low initially
             
         except Exception as e:
             raise RS485Error(f"GPIO setup failed: {e}")
@@ -126,6 +125,21 @@ class HAL_RS485:
                 return int(f.read().strip())
         except Exception as e:
             raise RS485Error(f"Failed to get GPIO{pin} value: {e}")
+    
+    def _cleanup_gpio(self):
+        """Cleanup GPIO pins"""
+        try:
+            # Unexport GPIO pins
+            with open(f"/sys/class/gpio/unexport", "w") as f:
+                f.write(str(self.config.tx_pin))
+        except Exception:
+            pass  # Ignore errors during cleanup
+        
+        try:
+            with open(f"/sys/class/gpio/unexport", "w") as f:
+                f.write(str(self.config.rx_pin))
+        except Exception:
+            pass  # Ignore errors during cleanup
     
     def open(self) -> bool:
         """Open RS485 connection"""
@@ -174,25 +188,9 @@ class HAL_RS485:
             raise RS485Error(f"Failed to close RS485: {e}")
     
     def set_mode(self, mode: RS485Mode):
-        """Set RS485 mode (receive/transmit)"""
-        try:
-            if mode == RS485Mode.RECEIVE:
-                # Enable receiver, disable transmitter
-                self._set_gpio_value(self.config.de_pin, 0)
-                self._set_gpio_value(self.config.re_pin, 0)
-                
-            elif mode == RS485Mode.TRANSMIT:
-                # Disable receiver, enable transmitter
-                self._set_gpio_value(self.config.de_pin, 1)
-                self._set_gpio_value(self.config.re_pin, 1)
-                
-            elif mode == RS485Mode.BIDIRECTIONAL:
-                # Enable both receiver and transmitter
-                self._set_gpio_value(self.config.de_pin, 1)
-                self._set_gpio_value(self.config.re_pin, 0)
-                
-        except Exception as e:
-            raise RS485Error(f"Failed to set RS485 mode: {e}")
+        """Set RS485 mode (receive/transmit) - DISABLED for manual control"""
+        # Manual GPIO control - no RS485 mode needed
+        pass
     
     def send(self, data: bytes) -> int:
         """Send data over RS485"""
@@ -346,7 +344,7 @@ if __name__ == "__main__":
     # Create configuration
     config = RS485Config(
         device="/dev/ttyS1",
-        baudrate=115200,
+        baudrate=9600,
         de_pin=47,  # GPIO1_D3
         re_pin=46   # GPIO1_D2
     )

@@ -48,21 +48,21 @@ Orange Pi 5B (26-pin header)     RS485 Transceiver     Module OHT-50
                                    └─────────┘
 ```
 
-## 🔧 **Chi tiết kết nối**
+## 🔧 **Chi tiết kết nối (CORRECTED)**
 
-### 1. **UART1 Connections**
+### 1. **UART1 Connections (NOT USED)**
 ```
 Orange Pi 5B Pin → RS485 Transceiver
-├─ Pin 5 (TX) ────→ TX (Pin 4)
-├─ Pin 3 (RX) ────→ RX (Pin 1)
+├─ Pin 5 (TX) ────→ NOT USED
+├─ Pin 3 (RX) ────→ NOT USED
 └─ GND ───────────→ GND (Pin 5)
 ```
 
-### 2. **DE/RE Control**
+### 2. **GPIO Control (Manual Communication)**
 ```
 Orange Pi 5B Pin → RS485 Transceiver
-├─ Pin 3 (GPIO47) ─→ DE (Pin 3)
-└─ Pin 3 (GPIO47) ─→ RE (Pin 2)  # Thường nối chung với DE
+├─ GPIO 46 (wPi 1) ─→ TX (Pin 4)  # Output - Send data
+└─ GPIO 47 (wPi 0) ─→ RX (Pin 1)  # Input - Read data
 ```
 
 ### 3. **Power Supply**
@@ -99,30 +99,33 @@ RS485 Bus
     └─ B ────[680Ω]─── GND
 ```
 
-## 🧪 **Test Setup**
+## 🧪 **Test Setup (CORRECTED)**
 
-### 1. **Loopback Test**
+### 1. **Manual Communication Test**
 ```
-Orange Pi 5B UART1 ──→ RS485 Transceiver ──→ Loopback (A→B)
+Orange Pi 5B GPIO ──→ RS485 Transceiver ──→ Manual TX/RX
+├─ GPIO 46 (TX) ──→ TX (Pin 4)
+└─ GPIO 47 (RX) ──→ RX (Pin 1)
 ```
 
 ### 2. **Module Test**
 ```
-Orange Pi 5B UART1 ──→ RS485 Transceiver ──→ Module OHT-50
+Orange Pi 5B GPIO ──→ RS485 Transceiver ──→ Module OHT-50
+├─ GPIO 47 (TX) ──→ TX (Pin 4) ──→ Module
+└─ GPIO 46 (RX) ──→ RX (Pin 1) ──→ Module
 ```
 
 ## 📏 **Physical Layout**
 
-### 1. **Breadboard Setup**
+### 1. **Breadboard Setup (CORRECTED)**
 ```
 ┌─────────────────────────────────────────┐
 │                                         │
 │  Orange Pi 5B    RS485 Transceiver      │
 │  ┌─────────┐     ┌─────────────┐        │
-│  │ Pin 5   │─────│ TX (Pin 4)  │        │
-│  │ Pin 3   │─────│ RX (Pin 1)  │        │
+│  │ GPIO46  │─────│ TX (Pin 4)  │        │
+│  │ GPIO47  │─────│ RX (Pin 1)  │        │
 │  │ GND     │─────│ GND (Pin 5) │        │
-│  │ Pin 3   │─────│ DE (Pin 3)  │        │
 │  │ 3.3V    │─────│ VCC (Pin 8) │        │
 │  └─────────┘     └─────────────┘        │
 │                    │     │              │
