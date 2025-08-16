@@ -217,3 +217,93 @@ SPECIFIC REQUIREMENTS:
 - Performance benchmarking
 - Production test checklist
 ```
+
+## EM-12: LiDAR Driver & USB Integration
+
+### **Mục tiêu**
+Implement USB to LiDAR driver cho OHT-50 với obstacle detection và navigation support.
+
+### **Yêu cầu kỹ thuật**
+- **LiDAR Model**: USB LiDAR (specific model TBD)
+- **Interface**: USB 2.0/3.0
+- **Data Rate**: Real-time distance measurements
+- **Range**: 0.1m - 12m (typical LiDAR range)
+- **Accuracy**: ±2cm
+- **Update Rate**: 10-20Hz minimum
+
+### **Deliverables**
+1. **LiDAR Driver**: Python/C++ driver cho USB LiDAR
+2. **Test Scripts**: LiDAR functionality tests
+3. **Wiring Guide**: USB connection và setup
+4. **Integration Guide**: Integration với navigation system
+5. **Documentation**: Complete LiDAR documentation
+
+### **SPECIFIC REQUIREMENTS**
+- USB to LiDAR driver implementation
+- Real-time distance data processing
+- Obstacle detection algorithm
+- Integration với navigation system
+- Test scripts cho LiDAR functionality
+- Wiring guide cho USB connection
+- Performance metrics và validation
+
+### **Prompt Template**
+```
+Bạn là EMBED team member của dự án OHT-50, chịu trách nhiệm implement LiDAR driver.
+
+## TASK: EM-12 - LiDAR Driver & USB Integration
+
+### Mục tiêu
+Implement USB to LiDAR driver cho OHT-50 với obstacle detection và navigation support.
+
+### Yêu cầu kỹ thuật
+- LiDAR Model: USB LiDAR (specific model TBD)
+- Interface: USB 2.0/3.0
+- Data Rate: Real-time distance measurements
+- Range: 0.1m - 12m (typical LiDAR range)
+- Accuracy: ±2cm
+- Update Rate: 10-20Hz minimum
+
+### Deliverables cần tạo
+1. **LiDAR Driver**: Python/C++ driver cho USB LiDAR
+2. **Test Scripts**: LiDAR functionality tests
+3. **Wiring Guide**: USB connection và setup
+4. **Integration Guide**: Integration với navigation system
+5. **Documentation**: Complete LiDAR documentation
+
+### SPECIFIC REQUIREMENTS
+- USB to LiDAR driver implementation
+- Real-time distance data processing
+- Obstacle detection algorithm
+- Integration với navigation system
+- Test scripts cho LiDAR functionality
+- Wiring guide cho USB connection
+- Performance metrics và validation
+
+### Hardware Platform
+- Orange Pi 5B (RK3588)
+- USB 2.0/3.0 ports available
+- Linux kernel 6.1.43-rockchip-rk3588
+
+### Software Stack
+- Python 3.10+ hoặc C/C++
+- USB libraries (pyusb, libusb)
+- Real-time data processing
+- Threading cho concurrent operations
+
+### Testing Requirements
+- LiDAR connection test
+- Distance measurement accuracy
+- Obstacle detection validation
+- Performance benchmarking
+- Integration test với navigation
+
+### Documentation Requirements
+- LiDAR setup guide
+- API documentation
+- Test procedures
+- Performance metrics
+- Troubleshooting guide
+
+Hãy implement LiDAR driver theo yêu cầu trên và tạo đầy đủ deliverables.
+```

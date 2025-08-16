@@ -233,11 +233,19 @@ Mục tiêu: Bring‑up phần cứng, driver tầng thấp, đảm bảo nền 
 - Nhiệm vụ: Driver đọc encoder, công tắc giới hạn, E‑Stop input, ADC cảm biến.
 - DOD: Sai số đo trong ngưỡng, debounce/ lọc phù hợp.
 
-4) Bootloader & bảo mật (`15_ota_signing_integrity.md`)
+4) LiDAR Driver & USB Integration (MỚI)
+- Nhiệm vụ: 
+  - USB to LiDAR driver implementation
+  - LiDAR data processing và obstacle detection
+  - LiDAR test scripts và wiring guide
+  - Integration với navigation system
+- DOD: LiDAR driver hoạt động, test scripts pass, documentation complete.
+
+5) Bootloader & bảo mật (`15_ota_signing_integrity.md`)
 - Nhiệm vụ: Bootloader, layout bộ nhớ, secure boot tối thiểu, vùng lưu FW dự phòng.
 - DOD: Test cập nhật/rollback, kiểm chứng chữ ký.
 
-5) Kiểm thử HIL (`09_testing_sim_hil.md`)
+6) Kiểm thử HIL (`09_testing_sim_hil.md`)
 - Nhiệm vụ: Thiết lập bench HIL, fixture tín hiệu encoder/motor ảo, thiết bị đo.
 - DOD: Bộ test HIL chạy tự động/tái lập được, báo cáo kết quả.
 
