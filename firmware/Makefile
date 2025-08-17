@@ -15,10 +15,12 @@ TEST_DIR = tests
 
 # Source files
 HAL_SOURCES = $(wildcard $(SRC_DIR)/hal/*.c)
+APP_SOURCES = $(wildcard $(SRC_DIR)/app/*.c)
 TEST_SOURCES = $(wildcard $(TEST_DIR)/*.c)
 
 # Object files
 HAL_OBJECTS = $(HAL_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+APP_OBJECTS = $(APP_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 TEST_OBJECTS = $(TEST_SOURCES:$(TEST_DIR)/%.c=$(OBJ_DIR)/tests/%.o)
 
 # Target executables
@@ -30,18 +32,26 @@ TEST_ESTOP_EXEC = $(BUILD_DIR)/test_estop
 TEST_RELAY_EXEC = $(BUILD_DIR)/test_relay
 TEST_NETWORK_EXEC = $(BUILD_DIR)/test_network
 TEST_WIFI_SCAN_EXEC = $(BUILD_DIR)/test_wifi_scan
+TEST_SYSTEM_STATE_MACHINE_EXEC = $(BUILD_DIR)/test_system_state_machine
+TEST_SAFETY_MANAGER_EXEC = $(BUILD_DIR)/test_safety_manager
 
 # Default target
-all: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC) $(TEST_WIFI_SCAN_EXEC)
+all: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC) $(TEST_WIFI_SCAN_EXEC) $(TEST_SYSTEM_STATE_MACHINE_EXEC) $(TEST_SAFETY_MANAGER_EXEC)
 
 # Create build directories
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(OBJ_DIR)/hal
+	@mkdir -p $(OBJ_DIR)/app
 	@mkdir -p $(OBJ_DIR)/tests
 
 # Build HAL object files
 $(OBJ_DIR)/hal/%.o: $(SRC_DIR)/hal/%.c | $(BUILD_DIR)
+	@echo "Compiling $<..."
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
+
+# Build APP object files
+$(OBJ_DIR)/app/%.o: $(SRC_DIR)/app/%.c | $(BUILD_DIR)
 	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
@@ -83,8 +93,16 @@ $(TEST_WIFI_SCAN_EXEC): $(OBJ_DIR)/hal/hal_network.o $(OBJ_DIR)/tests/test_wifi_
 	@echo "Linking $@..."
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
+$(TEST_SYSTEM_STATE_MACHINE_EXEC): $(OBJ_DIR)/app/system_state_machine.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/tests/test_system_state_machine.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+$(TEST_SAFETY_MANAGER_EXEC): $(OBJ_DIR)/app/safety_manager.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/tests/test_safety_manager.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
 # Test targets
-test: test-lidar test-rs485 test-gpio test-led test-estop test-relay test-network
+test: test-lidar test-rs485 test-gpio test-led test-estop test-relay test-network test-system-state-machine test-safety-manager
 
 test-lidar: $(TEST_LIDAR_EXEC)
 	@echo "Running LiDAR tests..."
@@ -117,6 +135,14 @@ test-network: $(TEST_NETWORK_EXEC)
 test-wifi-scan: $(TEST_WIFI_SCAN_EXEC)
 	@echo "Running WiFi scan..."
 	@./$(TEST_WIFI_SCAN_EXEC)
+
+test-system-state-machine: $(TEST_SYSTEM_STATE_MACHINE_EXEC)
+	@echo "Running System State Machine tests..."
+	@./$(TEST_SYSTEM_STATE_MACHINE_EXEC)
+
+test-safety-manager: $(TEST_SAFETY_MANAGER_EXEC)
+	@echo "Running Safety Manager tests..."
+	@./$(TEST_SAFETY_MANAGER_EXEC)
 
 # Clean target
 clean:
@@ -152,4 +178,4 @@ help:
 	@echo "  make test-led      # Run LED tests only"
 	@echo "  make clean         # Clean build files"
 
-.PHONY: all test test-lidar test-rs485 test-gpio test-led test-estop test-relay test-network test-wifi-scan clean install uninstall help
+.PHONY: all test test-lidar test-rs485 test-gpio test-led test-estop test-relay test-network test-wifi-scan test-system-state-machine test-safety-manager clean install uninstall help
