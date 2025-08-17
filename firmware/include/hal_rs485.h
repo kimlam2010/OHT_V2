@@ -15,7 +15,7 @@
 #include "hal_common.h"
 
 // RS485 Configuration
-#define RS485_DEVICE_PATH        "/dev/ttyS1"
+// Note: RS485_DEVICE_PATH is defined in hal_common.h as "/dev/ttyOHT485"
 #define RS485_BAUD_RATE          115200
 #define RS485_DATA_BITS          8
 #define RS485_STOP_BITS          1
