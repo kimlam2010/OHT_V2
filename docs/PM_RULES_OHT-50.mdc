@@ -1,0 +1,252 @@
+# PM Rules - OHT-50 Master Module Project
+
+## 📋 **Tổng quan**
+Quy tắc quản lý dự án OHT-50 Master Module, bao gồm vai trò PM và các team members.
+
+**Phiên bản:** v2.0  
+**Ngày cập nhật:** 2025-01-27  
+**Trạng thái:** 🔄 Updated - Master Module Specification
+
+---
+
+## 🎯 **Vai trò PM - Master Module**
+
+### **Mục tiêu chính:**
+- Quản lý dự án OHT-50 Master Module development
+- Đảm bảo tuân thủ quy trình 4 bước: **Layout → Theme → Animation → HTML**
+- Kiểm soát chất lượng đầu ra theo chuẩn `.superdesign/design_iterations/`
+- Quản lý các vai trò kỹ thuật và cổng kiểm soát (Stage-Gate)
+
+### **Trách nhiệm chính:**
+
+#### **1. Quy trình thiết kế UI (SuperDesign):**
+- Xác nhận từng bước với user trước khi chuyển sang bước tiếp theo
+- Đảm bảo tuân thủ quy ước đặt tên file: `{design_name}_{n}.html`
+- Kiểm tra responsive design và tương thích Flowbite
+- **NEW:** Master Module dashboard design
+
+#### **2. Quản lý vai trò kỹ thuật:**
+- **EMBED:** Hardware bring-up, UART1, Ethernet, WiFi, GPIO, Safety circuits
+- **Firmware:** HAL drivers, LED control, E-Stop, relay, network protocols
+- **Backend:** API services, module management, telemetry, security
+- **Frontend:** Dashboard UI, real-time monitoring, configuration interface
+- **System:** Integration testing, deployment, documentation
+
+#### **3. Cổng kiểm soát (Stage-Gate):**
+- **Gate A:** Master Module Architecture
+- **Gate B:** Hardware & Safety Integration
+- **Gate C:** Firmware & Communication
+- **Gate D:** Backend & Frontend Integration
+- **Gate E:** System Testing & Validation
+- **Gate R:** Production Release
+
+---
+
+## 🔧 **Master Module Specification**
+
+### **Hardware Requirements:**
+- **USB Debug (1x):** USB 2.0 Type-C, debug console, firmware update
+- **RS485 (1x):** Modbus RTU, slave modules communication
+- **LAN (1x):** Ethernet 10/100/1000 Mbps, Center connection
+- **Wireless 5G/2.4G:** WiFi 6, backup connection, mobile app
+- **LED Status (5x):** Power, System, Communication, Network, Error
+- **Emergency Stop (E-Stop):** Dual-channel safety, SIL2 compliance
+- **Relay Output (1x):** 24V DC, 2A, external device control
+
+### **Software Requirements:**
+- **Multi-protocol communication:** RS485, Ethernet, WiFi, USB
+- **Safety system:** E-Stop handling, emergency procedures
+- **Status monitoring:** LED indicators, system health
+- **Network redundancy:** Ethernet → WiFi failover
+- **Security:** SSL/TLS, authentication, authorization
+
+---
+
+## 📋 **Quy tắc PM**
+
+### **1. Review Process:**
+- **Khi user yêu cầu review** → Chỉ review, không sửa code
+- **Khi user yêu cầu update** → Cập nhật tài liệu và code
+- **Khi user yêu cầu design** → Tuân thủ quy trình 4 bước
+
+### **2. Documentation Management:**
+- **Update documentation** trước khi update code
+- **Clear navigation** cho teams
+- **Updated information** và status
+- **Professional presentation**
+
+### **3. Communication Guidelines:**
+- **Professional tone:** Respectful và constructive
+- **Clear** và concise communication
+- **Escalation process:** Identify issues → Confirm scope → Propose solutions
+
+---
+
+## 👥 **Team Roles & Responsibilities**
+
+### **4.1 EMBED (Hardware & Low-Level)**
+- **Mục tiêu:** Master Module hardware bring-up và driver development
+- **Nhiệm vụ chi tiết:**
+  - UART1 RS485 configuration và testing
+  - Ethernet/WiFi network setup
+  - GPIO LED control (5 LEDs)
+  - E-Stop dual-channel safety implementation
+  - Relay output control
+  - USB debug interface setup
+- **Đầu ra bắt buộc:**
+  - Hardware validation tests
+  - HAL drivers (GPIO, RS485, Network)
+  - Device tree overlays
+  - Safety system validation
+- **KPI:** Hardware tests pass 100%, safety compliance
+
+### **4.2 Firmware (System & Communication)**
+- **Mục tiêu:** Master Module firmware và communication protocols
+- **Nhiệm vụ chi tiết:**
+  - LED status management system
+  - E-Stop safety handling
+  - Multi-protocol communication (RS485, Ethernet, WiFi)
+  - Module auto-discovery và management
+  - Network redundancy và failover
+- **Đầu ra bắt buộc:**
+  - Firmware với LED/E-Stop/Relay support
+  - Communication protocol stack
+  - Module management system
+  - Network redundancy implementation
+- **KPI:** Communication reliability, safety response time < 100ms
+
+### **4.3 Backend (Services & API)**
+- **Mục tiêu:** Master Module backend services và API
+- **Nhiệm vụ chi tiết:**
+  - REST API cho configuration
+  - WebSocket cho real-time communication
+  - Module management service
+  - Telemetry và logging system
+  - Security và authentication
+- **Đầu ra bắt buộc:**
+  - REST API endpoints
+  - WebSocket server
+  - Configuration management
+  - Security implementation
+- **KPI:** API response time, security compliance
+
+### **4.4 Frontend (UI & Dashboard)**
+- **Mục tiêu:** Master Module dashboard và user interface
+- **Nhiệm vụ chi tiết:**
+  - Real-time status dashboard
+  - LED status visualization
+  - E-Stop status monitoring
+  - Network status display
+  - Configuration interface
+- **Đầu ra bắt buộc:**
+  - Responsive dashboard UI
+  - Real-time status updates
+  - Configuration forms
+  - Mobile-friendly interface
+- **KPI:** UI responsiveness, user experience
+
+### **4.5 System (Integration & Testing)**
+- **Mục tiêu:** System integration và testing
+- **Nhiệm vụ chi tiết:**
+  - End-to-end testing
+  - Safety system validation
+  - Performance testing
+  - Deployment automation
+- **Đầu ra bắt buộc:**
+  - Integration test suite
+  - Safety validation reports
+  - Deployment scripts
+  - Documentation
+- **KPI:** System reliability, deployment success rate
+
+---
+
+## 🔄 **Workflow & Stage-Gate**
+
+### **Gate A: Master Module Architecture**
+- ✅ Hardware specification approved
+- ✅ Software architecture defined
+- ✅ Safety requirements identified
+- ✅ Team roles assigned
+
+### **Gate B: Hardware & Safety Integration**
+- ✅ UART1 RS485 working
+- ✅ Network interfaces configured
+- ✅ LED control implemented
+- ✅ E-Stop safety system working
+- ✅ Relay control implemented
+
+### **Gate C: Firmware & Communication**
+- ✅ HAL drivers completed
+- ✅ Multi-protocol communication working
+- ✅ Module auto-discovery implemented
+- ✅ Network redundancy tested
+- ✅ Safety system integrated
+
+### **Gate D: Backend & Frontend Integration**
+- ✅ API services implemented
+- ✅ Dashboard UI completed
+- ✅ Real-time communication working
+- ✅ Configuration interface ready
+- ✅ Security implemented
+
+### **Gate E: System Testing & Validation**
+- ✅ End-to-end testing completed
+- ✅ Safety validation passed
+- ✅ Performance requirements met
+- ✅ Documentation updated
+- ✅ User acceptance testing
+
+### **Gate R: Production Release**
+- ✅ Production deployment ready
+- ✅ Monitoring configured
+- ✅ Backup procedures in place
+- ✅ Training completed
+- ✅ Go-live checklist completed
+
+---
+
+## 📊 **Success Metrics**
+
+### **Technical Metrics:**
+- ✅ **Hardware reliability:** 99.9% uptime
+- ✅ **Safety compliance:** SIL2 standards met
+- ✅ **Communication reliability:** < 1% packet loss
+- ✅ **Response time:** E-Stop < 100ms
+- ✅ **UI responsiveness:** < 200ms
+
+### **Project Metrics:**
+- ✅ **Documentation:** 100% updated
+- ✅ **Communication:** Clear và effective
+- ✅ **User satisfaction:** High satisfaction scores
+- ✅ **System issues:** No critical issues
+- ✅ **Timeline adherence:** On schedule
+
+---
+
+## 🛠️ **Tools & Resources**
+
+### **Development Tools:**
+- **Git commands** cho PR creation
+- **Documentation tools** cho docs management
+- **Testing frameworks** cho validation
+- **CI/CD pipelines** cho deployment
+
+### **Communication Tools:**
+- **Project management** cho task tracking
+- **Issue tracking** cho bug management
+- **Documentation** cho knowledge sharing
+- **Review process** cho quality control
+
+---
+
+**Changelog v2.0:**
+- ✅ Added Master Module specification
+- ✅ Updated team roles for Master Module
+- ✅ Added safety system requirements
+- ✅ Updated stage-gate process
+- ✅ Added success metrics
+- ✅ Enhanced communication guidelines
+
+
+**🚨 Lưu ý:** Luôn tuân thủ rules này để tránh can thiệp không cần thiết và bảo vệ hệ thống.
