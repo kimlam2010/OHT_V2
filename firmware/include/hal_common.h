@@ -14,24 +14,53 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// HAL status codes
+// Common status codes
 typedef enum {
-    HAL_STATUS_OK = 0,                    // Success
-    HAL_STATUS_ERROR = -1,                // General error
-    HAL_STATUS_INVALID_PARAMETER = -2,    // Invalid parameter
-    HAL_STATUS_NOT_INITIALIZED = -3,      // Not initialized
-    HAL_STATUS_ALREADY_INITIALIZED = -4,  // Already initialized
-    HAL_STATUS_ALREADY_ACTIVE = -5,       // Already active
-    HAL_STATUS_TIMEOUT = -6,              // Operation timeout
-    HAL_STATUS_BUSY = -7,                 // Device busy
-    HAL_STATUS_NOT_SUPPORTED = -8,        // Operation not supported
-    HAL_STATUS_NO_MEMORY = -9,            // Out of memory
-    HAL_STATUS_IO_ERROR = -10,            // I/O error
-    HAL_STATUS_HARDWARE_ERROR = -11,      // Hardware error
-    HAL_STATUS_COMMUNICATION_ERROR = -12, // Communication error
-    HAL_STATUS_CALIBRATION_ERROR = -13,   // Calibration error
-    HAL_STATUS_SAFETY_ERROR = -14         // Safety error
+    HAL_STATUS_OK = 0,
+    HAL_STATUS_ERROR = -1,
+    HAL_STATUS_INVALID_PARAMETER = -2,
+    HAL_STATUS_NOT_INITIALIZED = -3,
+    HAL_STATUS_TIMEOUT = -4,
+    HAL_STATUS_BUSY = -5,
+    HAL_STATUS_NOT_SUPPORTED = -6
 } hal_status_t;
+
+// GPIO Pin Definitions for Orange Pi 5B
+// Available pins: 54, 35, 28, 29, 58, 59, 131, 132
+
+// LED Status Indicators (5 LEDs)
+#define LED_POWER_PIN          54  // GPIO1_D6 - Power LED (Green)
+#define LED_SYSTEM_PIN         35  // GPIO1_A3 - System LED (Blue)
+#define LED_COMM_PIN           28  // GPIO0_D4 - Communication LED (Yellow)
+#define LED_NETWORK_PIN        29  // GPIO0_D5 - Network LED (Green)
+#define LED_ERROR_PIN          58  // GPIO1_D2 - Error LED (Red)
+
+// E-Stop Safety System (Dual-channel)
+#define ESTOP_CHANNEL1_PIN     59  // GPIO1_D3 - E-Stop Channel 1
+#define ESTOP_CHANNEL2_PIN     131 // GPIO4_A3 - E-Stop Channel 2
+
+// Relay Output
+#define RELAY_OUTPUT_PIN       132 // GPIO4_A4 - Relay Output (24V DC, 2A max)
+
+// Network Interfaces
+#define NETWORK_ETH_INTERFACE  "eth0"
+#define NETWORK_WIFI_INTERFACE "wlan0"
+
+// LiDAR Interface
+#define LIDAR_DEVICE_PATH      "/dev/ttyUSB0"
+#define LIDAR_BAUD_RATE        460800
+
+// RS485 Interface
+#define RS485_DEVICE_PATH      "/dev/ttyOHT485"
+#define RS485_BAUD_RATE        115200
+
+// Common timeouts
+#define HAL_TIMEOUT_MS         5000
+#define HAL_DEBOUNCE_MS        50
+
+// Common buffer sizes
+#define HAL_BUFFER_SIZE        1024
+#define HAL_STRING_SIZE        256
 
 // HAL device status
 typedef enum {
