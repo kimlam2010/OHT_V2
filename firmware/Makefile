@@ -34,9 +34,14 @@ TEST_NETWORK_EXEC = $(BUILD_DIR)/test_network
 TEST_WIFI_SCAN_EXEC = $(BUILD_DIR)/test_wifi_scan
 TEST_SYSTEM_STATE_MACHINE_EXEC = $(BUILD_DIR)/test_system_state_machine
 TEST_SAFETY_MANAGER_EXEC = $(BUILD_DIR)/test_safety_manager
+TEST_LED_MANAGER_EXEC = $(BUILD_DIR)/test_led_manager
+TEST_COMMUNICATION_MANAGER_EXEC = $(BUILD_DIR)/test_communication_manager
+TEST_MODULE_MANAGER_EXEC = $(BUILD_DIR)/test_module_manager
+TEST_NETWORK_MANAGER_EXEC = $(BUILD_DIR)/test_network_manager
+TEST_WEEK3_MODULES_EXEC = $(BUILD_DIR)/test_week3_modules
 
 # Default target
-all: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC) $(TEST_WIFI_SCAN_EXEC) $(TEST_SYSTEM_STATE_MACHINE_EXEC) $(TEST_SAFETY_MANAGER_EXEC)
+all: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC) $(TEST_WIFI_SCAN_EXEC) $(TEST_SYSTEM_STATE_MACHINE_EXEC) $(TEST_SAFETY_MANAGER_EXEC) $(TEST_LED_MANAGER_EXEC) $(TEST_COMMUNICATION_MANAGER_EXEC) $(TEST_MODULE_MANAGER_EXEC) $(TEST_NETWORK_MANAGER_EXEC) $(TEST_WEEK3_MODULES_EXEC)
 
 # Create build directories
 $(BUILD_DIR):
@@ -101,81 +106,60 @@ $(TEST_SAFETY_MANAGER_EXEC): $(OBJ_DIR)/app/safety_manager.o $(OBJ_DIR)/hal/hal_
 	@echo "Linking $@..."
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
+$(TEST_LED_MANAGER_EXEC): $(OBJ_DIR)/app/led_manager.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/tests/test_led_manager.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+$(TEST_COMMUNICATION_MANAGER_EXEC): $(OBJ_DIR)/app/communication_manager.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_rs485.o $(OBJ_DIR)/tests/test_communication_manager.o
+	$(CC) $(CFLAGS) $^ -o $@ -lpthread
+
+$(TEST_MODULE_MANAGER_EXEC): $(OBJ_DIR)/app/module_manager.o $(OBJ_DIR)/app/communication_manager.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_rs485.o $(OBJ_DIR)/tests/test_module_manager.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+$(TEST_NETWORK_MANAGER_EXEC): $(OBJ_DIR)/app/network_manager.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_network.o $(OBJ_DIR)/tests/test_network_manager.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+$(TEST_WEEK3_MODULES_EXEC): $(OBJ_DIR)/app/network_manager.o $(OBJ_DIR)/app/security_manager.o $(OBJ_DIR)/app/api_manager.o $(OBJ_DIR)/app/system_state_machine.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_network.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/tests/test_week3_modules.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+# Add Performance Manager and Diagnostics Manager to the build
+$(BUILD_DIR)/firmware: $(OBJ_DIR)/app/network_manager.o $(OBJ_DIR)/app/security_manager.o $(OBJ_DIR)/app/api_manager.o $(OBJ_DIR)/app/performance_manager.o $(OBJ_DIR)/app/diagnostics_manager.o $(OBJ_DIR)/app/system_state_machine.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_network.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/hal/hal_estop.o
+	@echo "Linking $@"
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+# Add Performance Manager object file
+$(OBJ_DIR)/app/performance_manager.o: src/app/performance_manager.c include/performance_manager.h include/hal_common.h
+	@echo "Compiling $<..."
+	@mkdir -p $(OBJ_DIR)/app
+	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
+
+# Add Diagnostics Manager object file
+$(OBJ_DIR)/app/diagnostics_manager.o: src/app/diagnostics_manager.c include/diagnostics_manager.h include/hal_common.h
+	@echo "Compiling $<..."
+	@mkdir -p $(OBJ_DIR)/app
+	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
+
 # Test targets
-test: test-lidar test-rs485 test-gpio test-led test-estop test-relay test-network test-system-state-machine test-safety-manager
+test: test-lidar test-rs485 test-gpio test-led test-estop test-relay test-network test-system-state-machine test-safety-manager test-led-manager test-communication-manager test-module-manager test-network-manager test-week3-modules test-week4-modules
 
-test-lidar: $(TEST_LIDAR_EXEC)
-	@echo "Running LiDAR tests..."
-	@./$(TEST_LIDAR_EXEC)
+# Week 4 modules test
+TEST_WEEK4_MODULES_EXEC = $(BUILD_DIR)/test_week4_modules
 
-test-rs485: $(TEST_RS485_EXEC)
-	@echo "Running RS485 tests..."
-	@./$(TEST_RS485_EXEC)
+$(OBJ_DIR)/tests/test_week4_modules.o: tests/test_week4_modules.c include/performance_manager.h include/diagnostics_manager.h include/hal_common.h
+	@echo "Compiling $<..."
+	@mkdir -p $(OBJ_DIR)/tests
+	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
 
-test-gpio: $(TEST_GPIO_EXEC)
-	@echo "Running GPIO tests..."
-	@./$(TEST_GPIO_EXEC)
+$(TEST_WEEK4_MODULES_EXEC): $(OBJ_DIR)/app/performance_manager.o $(OBJ_DIR)/app/diagnostics_manager.o $(OBJ_DIR)/app/system_state_machine.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_network.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/tests/test_week4_modules.o
+	@echo "Linking $@"
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
-test-led: $(TEST_LED_EXEC)
-	@echo "Running LED tests..."
-	@./$(TEST_LED_EXEC)
+test-week4-modules: $(TEST_WEEK4_MODULES_EXEC)
+	@echo "Running Week 4 Modules tests..."
+	@$(TEST_WEEK4_MODULES_EXEC)
 
-test-estop: $(TEST_ESTOP_EXEC)
-	@echo "Running E-Stop tests..."
-	@./$(TEST_ESTOP_EXEC)
-
-test-relay: $(TEST_RELAY_EXEC)
-	@echo "Running Relay tests..."
-	@./$(TEST_RELAY_EXEC)
-
-test-network: $(TEST_NETWORK_EXEC)
-	@echo "Running Network tests..."
-	@./$(TEST_NETWORK_EXEC)
-
-test-wifi-scan: $(TEST_WIFI_SCAN_EXEC)
-	@echo "Running WiFi scan..."
-	@./$(TEST_WIFI_SCAN_EXEC)
-
-test-system-state-machine: $(TEST_SYSTEM_STATE_MACHINE_EXEC)
-	@echo "Running System State Machine tests..."
-	@./$(TEST_SYSTEM_STATE_MACHINE_EXEC)
-
-test-safety-manager: $(TEST_SAFETY_MANAGER_EXEC)
-	@echo "Running Safety Manager tests..."
-	@./$(TEST_SAFETY_MANAGER_EXEC)
-
-# Clean target
-clean:
-	@echo "Cleaning build files..."
-	@rm -rf $(BUILD_DIR)
-
-# Install target (for system installation)
-install: all
-	@echo "Installing Master Module firmware..."
-	@sudo cp $(BUILD_DIR)/* /usr/local/bin/
-	@sudo chmod +x /usr/local/bin/test_*
-
-# Uninstall target
-uninstall:
-	@echo "Uninstalling Master Module firmware..."
-	@sudo rm -f /usr/local/bin/test_*
-
-# Help target
-help:
-	@echo "Master Module Firmware Makefile"
-	@echo ""
-	@echo "Targets:"
-	@echo "  all        - Build all test executables"
-	@echo "  test       - Run all tests"
-	@echo "  test-*     - Run specific test (lidar, rs485, gpio, led, estop, relay)"
-	@echo "  clean      - Clean build files"
-	@echo "  install    - Install firmware to system"
-	@echo "  uninstall  - Uninstall firmware from system"
-	@echo "  help       - Show this help message"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make all           # Build all executables"
-	@echo "  make test-led      # Run LED tests only"
-	@echo "  make clean         # Clean build files"
-
-.PHONY: all test test-lidar test-rs485 test-gpio test-led test-estop test-relay test-network test-wifi-scan test-system-state-machine test-safety-manager clean install uninstall help
+# Add test-week4-modules to .PHONY
+.PHONY: all clean test test-lidar test-rs485 test-gpio test-led test-estop test-relay test-network test-system-state-machine test-safety-manager test-led-manager test-communication-manager test-module-manager test-network-manager test-week3-modules test-week4-modules
