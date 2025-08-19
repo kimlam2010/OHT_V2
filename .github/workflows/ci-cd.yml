@@ -2,17 +2,24 @@ name: OHT-50 CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'feature/**' ]
     paths:
-      - 'OHT-50/OHT-50/backend/**'
-      - 'OHT-50/OHT-50/frontend/**'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'firmware/**'
+      - 'docs/**'
+      - 'scripts/**'
       - '.github/workflows/ci-cd.yml'
   pull_request:
     branches: [ main, develop ]
     paths:
-      - 'OHT-50/OHT-50/backend/**'
-      - 'OHT-50/OHT-50/frontend/**'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'firmware/**'
+      - 'docs/**'
+      - 'scripts/**'
       - '.github/workflows/ci-cd.yml'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -34,36 +41,36 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install flake8 black isort bandit safety
 
       - name: Lint with flake8
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 app --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
       - name: Format check with black
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           black --check --diff app
 
       - name: Import sorting check with isort
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           isort --check-only --diff app
 
       - name: Security scan with bandit
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           bandit -r app -f json -o bandit-report.json || true
           bandit -r app
 
       - name: Dependency vulnerability scan
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           safety check --json --output safety-report.json || true
           safety check
@@ -82,28 +89,28 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-asyncio httpx coverage codecov
 
       - name: Run tests with coverage
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./OHT-50/OHT-50/backend/coverage.xml
+          files: ./backend/coverage.xml
           flags: backend
           name: backend-coverage
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Check coverage threshold
-        working-directory: ./OHT-50/OHT-50/backend
+        working-directory: ./backend
         run: |
           coverage report --fail-under=80
 
@@ -119,19 +126,49 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: OHT-50/OHT-50/frontend/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./OHT-50/OHT-50/frontend
+        working-directory: ./frontend
         run: npm ci
 
       - name: Build
-        working-directory: ./OHT-50/OHT-50/frontend
+        working-directory: ./frontend
         run: npm run build
 
       - name: Test
-        working-directory: ./OHT-50/OHT-50/frontend
+        working-directory: ./frontend
         run: npm test -- --run
+
+  repo-guards:
+    name: Repo Guards (layout, anti-nginx)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate layout
+        run: bash scripts/validate_layout.sh
+
+      - name: Fail on nested OHT-50/OHT-50
+        run: |
+          if grep -R "OHT-50/OHT-50" . -n | grep -v "scripts/validate_layout.sh"; then
+            echo "Found forbidden nested path references" && exit 1
+          fi
+
+      - name: Ensure no nginx references in deploy/
+        run: |
+          if grep -R "nginx" deploy/ -n; then
+            echo "Nginx references detected in deploy/ (not allowed)" && exit 1
+          fi
+
+      - name: Ensure no references to removed FW tests/scripts
+        run: |
+          set -e
+          PATTERNS="test_week3_modules|test_week4_modules|test_gpio_pins\.sh|test_pins_simple\.sh|test_gpio_simple\.c|test_gpio_new_pins\.c|test_wifi_real_scan\.c"
+          if grep -R -n -E "$PATTERNS" . ; then
+            echo "Found references to removed FW tests/scripts. Please update docs/build scripts." && exit 1
+          fi
 
   build-and-push:
     name: Backend Docker Build & Push
@@ -170,7 +207,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./OHT-50/OHT-50/backend
+          context: ./backend
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

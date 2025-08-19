@@ -191,8 +191,7 @@ firmware/
 │   ├── test_rs485.c         # RS485 test program
 │   ├── test_gpio.c          # GPIO test program
 │   ├── test_lidar.c         # LiDAR test program
-│   ├── test_wifi_scan.c     # WiFi scan test
-│   └── test_pins_simple.sh  # GPIO pin validation script
+│   └── test_wifi_scan.c     # WiFi scan test
 └── Makefile                 # Build system
 ```
 
