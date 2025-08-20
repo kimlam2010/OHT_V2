@@ -62,11 +62,11 @@ Hướng dẫn hoàn chỉnh EMBED cho OHT-50 Master Module, bao gồm cấu hì
 ### **2. Status LEDs (5x)**
 
 #### **LED Configuration**
-- **Power LED:** GPIO1_A0 - Green (24V status)
-- **System LED:** GPIO1_A1 - Blue (system status)
-- **Comm LED:** GPIO1_A2 - Yellow (RS485 traffic)
-- **Network LED:** GPIO1_A3 - Green (LAN/WiFi status)
-- **Error LED:** GPIO1_A4 - Red (error status)
+- **Power LED:** GPIO 54 (GPIO1_D6) - Green (24V status)
+- **System LED:** GPIO 35 (GPIO1_A3) - Blue (system status)
+- **Comm LED:** GPIO 28 (GPIO0_D4) - Yellow (RS485 traffic)
+- **Network LED:** GPIO 29 (GPIO0_D5) - Green (LAN/WiFi status)
+- **Error LED:** GPIO 58 (GPIO1_D2) - Red (error status)
 
 #### **LED Control Functions**
 ```c
@@ -81,8 +81,8 @@ void led_error_set(bool state);      // Error LED
 ### **3. Emergency Stop (E-Stop)**
 
 #### **Hardware E-Stop**
-- **Type:** Dual-channel safety input
-- **GPIO:** GPIO1_B0 (Channel 1), GPIO1_B1 (Channel 2)
+- **Type:** Single-channel safety input
+- **GPIO:** GPIO 59 (GPIO1_D3)
 - **Voltage:** 24V DC safety circuit
 - **Safety Level:** SIL2
 - **Response Time:** < 100ms
@@ -95,21 +95,25 @@ void estop_handle_emergency(void);   // Handle emergency stop
 void estop_reset(void);              // Reset E-Stop
 ```
 
-### **4. Relay Output (1x)**
+### **4. Relay Output (2x)**
 
 #### **Relay Specifications**
-- **GPIO:** GPIO1_D3
+- **Relay 1 GPIO:** GPIO 131 (GPIO4_A3)
+- **Relay 2 GPIO:** GPIO 132 (GPIO4_A4)
 - **Type:** Solid-state relay
 - **Voltage:** 24V DC
-- **Current:** 2A
+- **Current:** 2A per relay
 - **Function:** External device control, safety circuit
 
 #### **Relay Control**
 ```c
 // Relay control functions
-void relay_set(bool state);          // Set relay state
-bool relay_get_status(void);         // Get relay status
-void relay_pulse(uint32_t ms);       // Pulse relay
+void relay1_set(bool state);         // Set relay 1 state
+void relay2_set(bool state);         // Set relay 2 state
+bool relay1_get_status(void);        // Get relay 1 status
+bool relay2_get_status(void);        // Get relay 2 status
+void relay1_pulse(uint32_t ms);      // Pulse relay 1
+void relay2_pulse(uint32_t ms);      // Pulse relay 2
 ```
 
 ---
@@ -146,12 +150,12 @@ sudo systemctl enable wpa_supplicant
 
 ### **Bước 3: Cấu hình GPIO LEDs**
 ```bash
-# Export GPIO pins for LEDs
-echo 32 | sudo tee /sys/class/gpio/export  # Power LED
-echo 33 | sudo tee /sys/class/gpio/export  # System LED
-echo 34 | sudo tee /sys/class/gpio/export  # Comm LED
-echo 35 | sudo tee /sys/class/gpio/export  # Network LED
-echo 36 | sudo tee /sys/class/gpio/export  # Error LED
+# Export GPIO pins for LEDs (Updated - EMBED Team Implementation)
+echo 54 | sudo tee /sys/class/gpio/export  # Power LED
+echo 35 | sudo tee /sys/class/gpio/export  # System LED
+echo 28 | sudo tee /sys/class/gpio/export  # Comm LED
+echo 29 | sudo tee /sys/class/gpio/export  # Network LED
+echo 58 | sudo tee /sys/class/gpio/export  # Error LED
 
 # Set direction
 echo out | sudo tee /sys/class/gpio/gpio32/direction

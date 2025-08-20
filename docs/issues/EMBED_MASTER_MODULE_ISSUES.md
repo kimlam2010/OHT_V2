@@ -70,11 +70,11 @@ Design và implement hardware cho Master Module với các interface mới.
 Implement LED hardware circuits cho 5 status LEDs.
 
 ### **Requirements (HARDWARE ONLY):**
-- [ ] Power LED circuit (Green, GPIO1_A0)
-- [ ] System LED circuit (Blue, GPIO1_A1)
-- [ ] Communication LED circuit (Yellow, GPIO1_A2)
-- [ ] Network LED circuit (Green, GPIO1_A3)
-- [ ] Error LED circuit (Red, GPIO1_A4)
+- [ ] Power LED circuit (Green, GPIO 54 - GPIO1_D6)
+- [ ] System LED circuit (Blue, GPIO 35 - GPIO1_A3)
+- [ ] Communication LED circuit (Yellow, GPIO 28 - GPIO0_D4)
+- [ ] Network LED circuit (Green, GPIO 29 - GPIO0_D5)
+- [ ] Error LED circuit (Red, GPIO 58 - GPIO1_D2)
 - [ ] Current limiting resistors
 - [ ] LED driver circuits (nếu cần)
 
@@ -118,9 +118,8 @@ Implement LED hardware circuits cho 5 status LEDs.
 Implement E-Stop hardware safety circuit theo chuẩn SIL2.
 
 ### **Requirements (HARDWARE ONLY):**
-- [ ] Dual-channel E-Stop input circuit
-- [ ] Channel 1: GPIO1_B0 (Pin 48)
-- [ ] Channel 2: GPIO1_B1 (Pin 49)
+- [ ] Single-channel E-Stop input circuit
+- [ ] E-Stop input: GPIO 59 (GPIO1_D3)
 - [ ] 24V DC safety circuit
 - [ ] Safety isolation circuits
 - [ ] Fault detection circuits
@@ -168,7 +167,8 @@ Implement relay hardware circuit cho external device control.
 
 ### **Requirements (HARDWARE ONLY):**
 - [ ] Solid-state relay circuit
-- [ ] GPIO1_D3 control (Pin 51)
+- [ ] Relay 1: GPIO 131 (GPIO4_A3) control
+- [ ] Relay 2: GPIO 132 (GPIO4_A4) control
 - [ ] 24V DC output circuit
 - [ ] 2A current capacity
 - [ ] Overcurrent protection

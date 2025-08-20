@@ -1,0 +1,21 @@
+[Unit]
+Description=OHT-50 Main Service (Firmware + Backend)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=oht
+Group=oht
+WorkingDirectory=/opt/oht50
+Environment="VIRTUAL_ENV=/opt/oht50/venv"
+Environment="PATH=/opt/oht50/venv/bin:/usr/bin"
+ExecStart=/opt/oht50/firmware/build/oht50_main --debug
+Restart=always
+RestartSec=3
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target
+
+

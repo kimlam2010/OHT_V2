@@ -49,12 +49,12 @@ Kế hoạch implement hardware cho OHT-50 Master Module theo specification mớ
 
 ### **2. Status LEDs (5x)**
 
-#### **LED Configuration**
-- **Power LED:** GPIO1_A0 (Pin 32) - Green (24V status)
-- **System LED:** GPIO1_A1 (Pin 33) - Blue (system status)
-- **Comm LED:** GPIO1_A2 (Pin 34) - Yellow (RS485 traffic)
-- **Network LED:** GPIO1_A3 (Pin 35) - Green (LAN/WiFi status)
-- **Error LED:** GPIO1_A4 (Pin 36) - Red (error status)
+#### **LED Configuration (Updated - EMBED Team Implementation)**
+- **Power LED:** GPIO 54 (GPIO1_D6) - Green (24V status)
+- **System LED:** GPIO 35 (GPIO1_A3) - Blue (system status)
+- **Comm LED:** GPIO 28 (GPIO0_D4) - Yellow (RS485 traffic)
+- **Network LED:** GPIO 29 (GPIO0_D5) - Green (LAN/WiFi status)
+- **Error LED:** GPIO 58 (GPIO1_D2) - Red (error status)
 
 #### **LED Hardware Requirements**
 - **Type:** 3mm LED indicators
@@ -66,8 +66,8 @@ Kế hoạch implement hardware cho OHT-50 Master Module theo specification mớ
 ### **3. Emergency Stop (E-Stop)**
 
 #### **Hardware E-Stop**
-- **Type:** Dual-channel safety input
-- **GPIO:** GPIO1_B0 (Pin 48), GPIO1_B1 (Pin 49)
+- **Type:** Single-channel safety input
+- **GPIO:** GPIO 59 (GPIO1_D3)
 - **Voltage:** 24V DC safety circuit
 - **Safety Level:** SIL2
 - **Response Time:** < 100ms
@@ -79,13 +79,14 @@ Kế hoạch implement hardware cho OHT-50 Master Module theo specification mớ
 - **Isolation:** Optocoupler for safety
 - **Dual Channel:** Redundant safety circuit
 
-### **4. Relay Output (1x)**
+### **4. Relay Output (2x)**
 
-#### **Relay Specifications**
-- **GPIO:** GPIO1_D3 (Pin 51)
+#### **Relay Specifications (2x)**
+- **Relay 1 GPIO:** GPIO 131 (GPIO4_A3)
+- **Relay 2 GPIO:** GPIO 132 (GPIO4_A4)
 - **Type:** Solid-state relay
 - **Voltage:** 24V DC
-- **Current:** 2A
+- **Current:** 2A per relay
 - **Function:** External device control, safety circuit
 - **Status:** 🔄 Need to implement
 

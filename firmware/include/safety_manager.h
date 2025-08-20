@@ -34,7 +34,9 @@ typedef enum {
     SAFETY_EVENT_SAFETY_CLEARED,     // Safety fault cleared
     SAFETY_EVENT_EMERGENCY_STOP,     // Emergency stop triggered
     SAFETY_EVENT_SAFETY_TIMEOUT,     // Safety timeout
-    SAFETY_EVENT_SYSTEM_FAULT        // System fault
+    SAFETY_EVENT_SYSTEM_FAULT,       // System fault
+    SAFETY_EVENT_INTERLOCK_TRIGGERED, // Interlock triggered
+    SAFETY_EVENT_INTERLOCK_RELEASED  // Interlock released
 } safety_event_t;
 
 // Safety Fault Types
@@ -57,6 +59,7 @@ typedef struct {
     safety_event_t last_event;
     safety_fault_t current_fault;
     bool estop_triggered;
+    bool interlock_triggered;
     bool safety_circuit_ok;
     bool sensors_ok;
     bool communication_ok;
@@ -64,6 +67,7 @@ typedef struct {
     uint64_t last_safety_check;
     uint32_t fault_count;
     uint32_t estop_count;
+    uint32_t interlock_count;
     uint64_t uptime_seconds;
 } safety_status_t;
 
@@ -172,6 +176,24 @@ hal_status_t safety_manager_get_config(safety_config_t *config);
  * @return HAL status
  */
 hal_status_t safety_manager_handle_estop_trigger(void);
+
+/**
+ * @brief Handle E-Stop reset
+ * @return HAL status
+ */
+hal_status_t safety_manager_handle_estop_reset(void);
+
+/**
+ * @brief Trigger interlock
+ * @return HAL status
+ */
+hal_status_t safety_manager_trigger_interlock(void);
+
+/**
+ * @brief Reset interlock
+ * @return HAL status
+ */
+hal_status_t safety_manager_reset_interlock(void);
 
 /**
  * @brief Handle E-Stop reset

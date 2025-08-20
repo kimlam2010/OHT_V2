@@ -175,3 +175,30 @@ security:
 - E-Stop dual-channel safety theo chuẩn SIL2
 - Network configuration hỗ trợ failover Ethernet → WiFi
 - Security configuration cho production deployment
+
+## Bổ sung khóa cấu hình (áp dụng thực tế hiện tại)
+
+```yaml
+device:
+  id: "OHT50-001"
+
+firmware:
+  heartbeat_interval: 30    # giây (client → Center)
+  telemetry_interval: 60    # giây (telemetry → Center)
+
+center:
+  host: "localhost"
+  port: 8080
+  path: "/ws/oht50"
+  enabled: false
+  reconnect_initial: 5      # giây
+  reconnect_max: 300        # giây (giới hạn backoff)
+
+safety:
+  estop_timeout: 100        # ms
+  max_voltage: 18.0         # V
+  max_current: 13.0         # A
+  max_temperature: 10.0     # °C
+```
+
+Ghi chú: các khóa này được `install.sh` tạo sẵn trong `/opt/oht50/config/system.yaml` và được `services/center_client/oht50_center_client.py` đọc để điều khiển nhịp heartbeat/telemetry và chính sách reconnect.

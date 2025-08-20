@@ -18,6 +18,9 @@ HAL_SOURCES = $(wildcard $(SRC_DIR)/hal/*.c)
 APP_SOURCES = $(wildcard $(SRC_DIR)/app/*.c)
 TEST_SOURCES = $(wildcard $(TEST_DIR)/*.c)
 
+# Add configuration system sources
+APP_SOURCES += $(SRC_DIR)/app/config_system.c
+
 # Object files
 HAL_OBJECTS = $(HAL_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 APP_OBJECTS = $(APP_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -40,12 +43,15 @@ TEST_MODULE_MANAGER_EXEC = $(BUILD_DIR)/test_module_manager
 TEST_NETWORK_MANAGER_EXEC = $(BUILD_DIR)/test_network_manager
 TEST_MODULE_REGISTRY_EXEC = $(BUILD_DIR)/test_module_registry
 TEST_POWER_MODULE_EXEC = $(BUILD_DIR)/test_power_module
+TEST_CONFIG_SYSTEM_EXEC = $(BUILD_DIR)/test_config_system
+TEST_INTERLOCK_EXEC = $(BUILD_DIR)/test_interlock
+TEST_SUITE_EXEC = $(BUILD_DIR)/test_suite
 
 # Main application
 MAIN_EXEC = $(BUILD_DIR)/oht50_main
 
 # Default target
-all: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC) $(TEST_WIFI_SCAN_EXEC) $(TEST_SYSTEM_STATE_MACHINE_EXEC) $(TEST_SAFETY_MANAGER_EXEC) $(TEST_LED_MANAGER_EXEC) $(TEST_COMMUNICATION_MANAGER_EXEC) $(TEST_MODULE_MANAGER_EXEC) $(TEST_NETWORK_MANAGER_EXEC) $(TEST_MODULE_REGISTRY_EXEC) $(TEST_POWER_MODULE_EXEC) $(MAIN_EXEC)
+all: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC) $(TEST_WIFI_SCAN_EXEC) $(TEST_SYSTEM_STATE_MACHINE_EXEC) $(TEST_SAFETY_MANAGER_EXEC) $(TEST_LED_MANAGER_EXEC) $(TEST_COMMUNICATION_MANAGER_EXEC) $(TEST_MODULE_MANAGER_EXEC) $(TEST_NETWORK_MANAGER_EXEC) $(TEST_MODULE_REGISTRY_EXEC) $(TEST_POWER_MODULE_EXEC) $(TEST_CONFIG_SYSTEM_EXEC) $(TEST_INTERLOCK_EXEC) $(TEST_SUITE_EXEC) $(MAIN_EXEC)
 
 # Create build directories
 $(BUILD_DIR):
@@ -139,6 +145,18 @@ $(TEST_MODULE_REGISTRY_EXEC): $(OBJ_DIR)/app/module_registry.o $(OBJ_DIR)/hal/ha
 
 	# Include safety_manager since power_module_handler triggers safety faults
 $(TEST_POWER_MODULE_EXEC): $(OBJ_DIR)/app/power_module_handler.o $(OBJ_DIR)/app/communication_manager.o $(OBJ_DIR)/app/module_registry.o $(OBJ_DIR)/app/safety_manager.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_rs485.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/tests/test_power_module.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+$(TEST_CONFIG_SYSTEM_EXEC): $(OBJ_DIR)/app/config_system.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/tests/test_config_system.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+$(TEST_INTERLOCK_EXEC): $(OBJ_DIR)/app/safety_manager.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/tests/test_interlock.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+$(TEST_SUITE_EXEC): $(OBJ_DIR)/app/safety_manager.o $(OBJ_DIR)/app/system_state_machine.o $(OBJ_DIR)/app/communication_manager.o $(OBJ_DIR)/app/module_registry.o $(OBJ_DIR)/app/config_system.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_rs485.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/hal/hal_relay.o $(OBJ_DIR)/tests/test_suite.o
 	@echo "Linking $@..."
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 

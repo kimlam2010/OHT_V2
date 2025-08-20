@@ -1,2 +1,6 @@
 wiringOP/
 wiringOP-Python/
+
+# Prevent nested repo copies (canonical layout enforced)
+/OHT-50/
+/OHT-50/**

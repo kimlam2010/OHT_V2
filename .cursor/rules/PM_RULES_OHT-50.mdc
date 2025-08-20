@@ -1,0 +1,326 @@
+---
+alwaysApply: true
+---
+## 🔧 **Master Module Specification**
+
+### **Hardware Requirements:**
+- **USB Debug (1x):** USB 2.0 Type-C, debug console, firmware update
+- **RS485 (1x):** Modbus RTU, slave modules communication
+- **LAN (1x):** Ethernet 10/100/1000 Mbps, Center connection
+- **Wireless 5G/2.4G:** WiFi 6, backup connection, mobile app
+- **LED Status (5x):** Power, System, Communication, Network, Error
+- **Emergency Stop (E-Stop):** Dual-channel safety, SIL2 compliance
+- **Relay Output (1x):** 24V DC, 2A, external device control
+
+### **Software Requirements:**
+- **Multi-protocol communication:** RS485, Ethernet, WiFi, USB
+- **Safety system:** E-Stop handling, emergency procedures
+- **Status monitoring:** LED indicators, system health
+- **Network redundancy:** Ethernet → WiFi failover
+- **Security:** SSL/TLS, authentication, authorization
+
+---
+
+## 📋 **Quy tắc PM**
+
+### **1. Review Process:**
+- **Khi user yêu cầu review** → Chỉ review, không sửa code
+- **Khi user yêu cầu update** → Cập nhật tài liệu và code
+- **Khi user yêu cầu design** → Tuân thủ quy trình 4 bước
+
+### **2. Documentation Management:**
+- **Update documentation** trước khi update code
+- **Clear navigation** cho teams
+- **Updated information** và status
+- **Professional presentation**
+
+### **3. Communication Guidelines:**
+- **Professional tone:** Respectful và constructive
+- **Clear** và concise communication
+- **Escalation process:** Identify issues → Confirm scope → Propose solutions
+
+---
+
+## 👥 **Team Roles & Responsibilities**
+
+### **4.1 EMBED (Hardware & Low-Level)**
+- **Mục tiêu:** Master Module hardware bring-up và driver development
+- **Nhiệm vụ chi tiết:**
+  - UART1 RS485 configuration và testing
+  - Ethernet/WiFi network setup
+  - GPIO LED control (5 LEDs)
+  - E-Stop dual-channel safety implementation
+  - Relay output control
+  - USB debug interface setup
+- **Đầu ra bắt buộc:**
+  - Hardware validation tests
+  - HAL drivers (GPIO, RS485, Network)
+  - Device tree overlays
+  - Safety system validation
+
+### **4.2 Firmware Team**
+- **Mục tiêu:** Low-level firmware và HAL implementation
+- **Nhiệm vụ chi tiết:**
+  - HAL drivers development
+  - Multi-protocol communication
+  - Safety system integration
+  - LED status management
+  - E-Stop handling
+- **Đầu ra bắt buộc:**
+  - HAL API documentation
+  - Communication protocols
+  - Safety system validation
+  - Unit tests
+
+### **4.3 Backend Team**
+- **Mục tiêu:** API services và system integration
+- **Nhiệm vụ chi tiết:**
+  - REST API development
+  - WebSocket real-time communication
+  - Database management
+  - Security implementation
+  - Module management
+- **Đầu ra bắt buộc:**
+  - API documentation
+  - Database schemas
+  - Security protocols
+  - Integration tests
+
+### **4.4 Frontend Team**
+- **Mục tiêu:** User interface và user experience
+- **Nhiệm vụ chi tiết:**
+  - Dashboard UI development
+  - Real-time monitoring interface
+  - Configuration management
+  - Mobile app development
+  - User experience optimization
+- **Đầu ra bắt buộc:**
+  - Responsive UI components
+  - User documentation
+  - Mobile app
+  - UI/UX guidelines
+
+### **4.5 System Integration Team**
+- **Mục tiêu:** End-to-end system integration và testing
+- **Nhiệm vụ chi tiết:**
+  - System integration testing
+  - Performance optimization
+  - Security validation
+  - Deployment automation
+- **Đầu ra bắt buộc:**
+  - Integration test suite
+  - Safety validation reports
+  - Deployment scripts
+  - Documentation
+- **KPI:** System reliability, deployment success rate
+
+---
+
+## 🏢 **VAI TRÒ CTO - CHIẾN LƯỢC KỸ THUẬT**
+
+### **Mục tiêu chính:**
+- Định hướng chiến lược kỹ thuật tổng thể cho OHT-50 Master Module
+- Đảm bảo kiến trúc hệ thống ổn định, mở rộng và bảo trì
+- Quản lý rủi ro kỹ thuật và đảm bảo tuân thủ tiêu chuẩn an toàn
+- Tối ưu hóa hiệu suất và độ tin cậy hệ thống
+
+### **Trách nhiệm chính:**
+
+#### **1. Kiến trúc hệ thống (System Architecture):**
+- **Thiết kế kiến trúc tổng thể:** Master Module ↔ Slave Modules ↔ Center
+- **Định nghĩa interface chuẩn:** API, protocol, data format
+- **Scalability planning:** Mở rộng từ 1 module lên nhiều module
+- **Technology stack decisions:** Hardware, firmware, software stack
+- **Performance optimization:** Latency, throughput, resource usage
+
+#### **2. Quản lý rủi ro kỹ thuật (Technical Risk Management):**
+- **Safety compliance:** SIL2, IEC 61508, functional safety
+- **Security assessment:** Network security, data protection
+- **Reliability engineering:** MTBF, MTTR, fault tolerance
+- **Compliance validation:** Industry standards, certifications
+- **Risk mitigation strategies:** Backup systems, failover mechanisms
+
+#### **3. Chiến lược phát triển (Development Strategy):**
+- **Technology roadmap:** Short-term và long-term planning
+- **Innovation management:** New technologies, improvements
+- **Quality assurance:** Testing strategies, validation methods
+- **Documentation standards:** Technical documentation, API docs
+- **Knowledge management:** Team training, best practices
+
+#### **4. Quản lý tài nguyên kỹ thuật (Technical Resource Management):**
+- **Team structure:** Skills assessment, role definition
+- **Tool selection:** Development tools, testing frameworks
+- **Infrastructure planning:** Development environment, CI/CD
+- **Budget optimization:** Cost-effective solutions
+- **Vendor management:** Hardware suppliers, software licenses
+
+### **Quy tắc CTO:**
+
+#### **1. Kiến trúc quyết định (Architecture Decisions):**
+- **Document all major decisions:** ADR (Architecture Decision Records)
+- **Review và approve:** All architectural changes
+- **Performance impact assessment:** Before implementation
+- **Security review:** All new features và integrations
+- **Compliance validation:** Industry standards adherence
+
+#### **2. Code Review Standards:**
+- **Critical path review:** Safety-critical code
+- **Performance review:** High-impact changes
+- **Security review:** All external integrations
+- **Architecture compliance:** Design pattern adherence
+- **Documentation review:** API documentation, technical specs
+
+#### **3. Release Management:**
+- **Release approval:** All production releases
+- **Rollback planning:** Emergency procedures
+- **Performance monitoring:** Post-release validation
+- **Security validation:** Vulnerability assessment
+- **Compliance verification:** Standards compliance
+
+#### **4. Team Leadership:**
+- **Technical mentoring:** Team skill development
+- **Best practices enforcement:** Coding standards, testing
+- **Innovation encouragement:** New ideas, improvements
+- **Problem escalation:** Technical issues resolution
+- **Knowledge sharing:** Technical presentations, workshops
+
+### **KPI cho CTO:**
+
+#### **Technical Metrics:**
+- **System reliability:** 99.9% uptime target
+- **Performance:** Response time < 100ms
+- **Security:** Zero critical vulnerabilities
+- **Compliance:** 100% standards adherence
+- **Code quality:** < 1% defect rate
+
+#### **Process Metrics:**
+- **Release frequency:** Weekly releases
+- **Time to market:** Feature delivery speed
+- **Team productivity:** Velocity improvement
+- **Knowledge retention:** Documentation completeness
+- **Innovation rate:** New features adoption
+
+### **Escalation Matrix:**
+
+#### **Level 1 - Team Lead:**
+- Technical issues resolution
+- Code review coordination
+- Performance optimization
+
+#### **Level 2 - CTO:**
+- Architecture decisions
+- Security incidents
+- Compliance violations
+- Major performance issues
+
+#### **Level 3 - Executive:**
+- Strategic technology decisions
+- Budget approval
+- Vendor selection
+- Risk assessment
+
+---
+
+## 🔄 **Workflow & Stage-Gate**
+
+### **Gate A: Master Module Architecture**
+- ✅ Hardware specification approved
+- ✅ Software architecture defined
+- ✅ Safety requirements identified
+- ✅ Team roles assigned
+
+### **Gate B: Hardware & Safety Integration**
+- ✅ UART1 RS485 working
+- ✅ Network interfaces configured
+- ✅ LED control implemented
+- ✅ E-Stop safety system working
+- ✅ Relay control implemented
+
+### **Gate C: Firmware & Communication**
+- ✅ HAL drivers completed
+- ✅ Multi-protocol communication working
+- ✅ Module auto-discovery implemented
+- ✅ Network redundancy tested
+- ✅ Safety system integrated
+
+### **Gate D: Backend & Frontend Integration**
+- ✅ API services implemented
+- ✅ Dashboard UI completed
+- ✅ Real-time communication working
+- ✅ Configuration interface ready
+- ✅ Security implemented
+
+### **Gate E: System Testing & Validation**
+- ✅ End-to-end testing completed
+- ✅ Safety validation passed
+- ✅ Performance requirements met
+- ✅ Documentation updated
+- ✅ User acceptance testing
+
+### **Gate R: Production Release**
+- ✅ Production deployment ready
+- ✅ Monitoring configured
+- ✅ Backup procedures in place
+- ✅ Training completed
+- ✅ Go-live checklist completed
+
+---
+
+## 📊 **Success Metrics**
+
+### **Technical Metrics:**
+- ✅ **Hardware reliability:** 99.9% uptime
+- ✅ **Safety compliance:** SIL2 standards met
+- ✅ **Communication reliability:** < 1% packet loss
+- ✅ **Response time:** E-Stop < 100ms
+- ✅ **UI responsiveness:** < 200ms
+
+### **Project Metrics:**
+- ✅ **Documentation:** 100% updated
+- ✅ **Communication:** Clear và effective
+- ✅ **User satisfaction:** High satisfaction scores
+- ✅ **System issues:** No critical issues
+- ✅ **Timeline adherence:** On schedule
+
+---
+
+## 🛠️ **Tools & Resources**
+
+### **Development Tools:**
+- **Git commands** cho PR creation
+- **Documentation tools** cho docs management
+- **Testing frameworks** cho validation
+- **CI/CD pipelines** cho deployment
+
+### **Communication Tools:**
+- **Project management** cho task tracking
+- **Issue tracking** cho bug management
+- **Documentation** cho knowledge sharing
+- **Review process** cho quality control
+
+---
+
+## 📚 **RELATED DOCUMENTS**
+
+### **CTO Rules:**
+- **File:** `docs/CTO_RULES_OHT-50.md`
+- **Purpose:** Chi tiết vai trò và trách nhiệm CTO
+- **Scope:** Technical strategy, architecture decisions, risk management
+
+### **Technical Documentation:**
+- **RS485 Integration:** `docs/technical/rs485-motor-control-integration.md`
+- **Embedded Guide:** `docs/EMBED_COMPLETE_GUIDE.md`
+- **Firmware Summary:** `docs/MASTER_MODULE_IMPLEMENTATION_SUMMARY.md`
+
+---
+
+**Changelog v2.1:**
+- ✅ Added CTO role và responsibilities
+- ✅ Added technical risk management
+- ✅ Added architecture decision framework
+- ✅ Added CTO KPI metrics
+- ✅ Added escalation matrix
+- ✅ Enhanced technical leadership guidelines
+- ✅ Added related documents section
+
+**🚨 Lưu ý:** Luôn tuân thủ rules này để tránh can thiệp không cần thiết và bảo vệ hệ thống.

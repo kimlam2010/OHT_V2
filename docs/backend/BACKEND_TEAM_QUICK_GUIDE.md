@@ -1,16 +1,17 @@
-# 🌐 Backend Team Quick Guide - UPDATED FOR CLEAN DOCS
+# 🌐 BACKEND TEAM QUICK GUIDE - UPDATED WITH MASTER SCHEDULER
 
 **Team:** Backend (API & Services)  
-**Status:** 🔄 IN PROGRESS  
-**Completed:** BE-01, BE-13
+**Status:** 🔄 ACTIVE (11.8% - 2/17 tasks completed)  
+**Version:** 3.0 - Updated with Master Scheduler
 
 ---
 
-## 📁 **Tài liệu của bạn (CẬP NHẬT CẤU TRÚC MỚI)**
+## 📁 **TÀI LIỆU CỦA BẠN**
 
 ### **📋 Task Management:**
 - **Main tasks:** `../tasks/PM_TASKS_OHT-50.md`
-- **Status tracking:** `../tasks/EMBED_FW_STATUS_SUMMARY.md`
+- **Master scheduler:** `../MASTER_SCHEDULER_OHT-50.md`
+- **Status tracking:** `../tasks/PM_TASKS_OHT-50.md`
 
 ### **🔧 Backend Documentation:**
 - **Deployment:** `DEPLOYMENT.md`
@@ -30,29 +31,36 @@
 
 ---
 
-## 🔄 **CURRENT STATUS**
+## 🔄 **CURRENT TASK STATUS:**
 
-### **✅ Completed Tasks:**
-- **BE-01:** Khởi tạo service (FastAPI/NestJS), cấu trúc repo, cấu hình ENV
-- **BE-13:** Mở rộng Telemetry API: `/current` JSON chuẩn, `/history?limit=`, WS theo `ws_hz`, `/rate`, `/reset`, `/stats`
+### **✅ Completed Tasks (2/17):**
+- **BE-01:** API framework - API framework ✅
+- **BE-02:** Device management - Device API ✅
 
-### **🔄 In Progress:**
-- **BE-03:** API cấu hình: schema + CRUD theo `config_spec.md`
-- **BE-05:** Ingest telemetry (HTTP/WS/MQTT) theo `telemetry_schema.md`
-- **BE-08:** Mock device để dev song song FE/FW
-- **BE-15:** Đồng bộ schema Telemetry: thêm `tag_id`, `enc.count` vào payload
+### **🔄 Active Tasks (4/17):**
+- **BE-03:** Configuration API - Config API 🔄 **ACTIVE**
+- **BE-05:** WebSocket server - WS server 🔄 **ACTIVE**
+- **BE-08:** Logging system - Log system 🔄 **ACTIVE**
+- **BE-13:** Telemetry expansion - Enhanced telemetry 🔄 **ACTIVE**
+- **BE-15:** Schema sync - Telemetry schema 🔄 **ACTIVE**
 
-### **📋 To Do:**
-- **BE-04:** Phiên bản hóa cấu hình, import/export JSON/YAML
-- **BE-06:** API truy vấn telemetry theo thời gian/kênh
-- **BE-07:** Giao tiếp Center: định nghĩa command + WS/SSE
-- **BE-09:** Bảo mật: auth cơ bản, RBAC, rate limit, CORS
-- **BE-10:** Logging/observability/metrics
-- **BE-11:** OTA backend: kho bản phát hành, ký số, checksum
-- **BE-12:** API kích hoạt OTA + theo dõi tiến độ, rollback
-- **BE-14:** Refactor DI `ConfigService` qua `Depends(get_config_service)`
-- **BE-16:** Tích hợp với FW/Center thay vì RS485 trực tiếp
-- **BE-17:** Loại bỏ phụ thuộc serial ở BE (sản xuất) + Feature flag cho chế độ mock
+### **📋 Pending Tasks (11/17):**
+- **BE-04:** Telemetry API - Telemetry API 📋 Pending
+- **BE-06:** Database integration - DB layer 📋 Pending
+- **BE-07:** Authentication - Auth system 📋 Pending
+- **BE-09:** Error handling - Error system 📋 Pending
+- **BE-10:** Testing - BE tests 📋 Pending
+- **BE-11:** Integration - BE release 📋 Pending
+- **BE-12:** OTA backend - OTA system 📋 Pending
+- **BE-14:** DI refactoring - Config service 📋 Pending
+- **BE-16:** FW/Center integration - Integration layer 📋 Pending
+- **BE-17:** Production cleanup - Production ready 📋 Pending
+
+### **🔥 Critical Path Priority:**
+1. **BE-03** (Configuration API) - 🔄 **ACTIVE** - 2 days
+2. **BE-04** (Telemetry API) - 📋 Pending - 3 days
+3. **BE-05** (WebSocket Server) - 🔄 **ACTIVE** - 2 days
+4. **BE-16** (FW/Center Integration) - 📋 Pending - 3 days
 
 ---
 
@@ -79,25 +87,53 @@ vim TELEMETRY_API.md
 
 ---
 
-## 🔗 **Dependencies & Integration**
+## 🔗 **DEPENDENCIES & INTEGRATION:**
 
 ### **✅ Dependencies Cleared:**
-- **EMBED Team:** Hardware bring-up complete
-- **FW Team:** Ready to start (dependencies cleared)
-- **Frontend Team:** 100% complete
+- **EMBED Team:** 100% complete - Hardware ready
+- **FE Team:** 100% complete - UI ready
+- **FW Team:** 20% complete - Framework foundation ready
 
 ### **🔄 Integration Points:**
-- **Frontend:** API endpoints cho UI
-- **FW Team:** Telemetry và configuration
+- **FE Team:** API endpoints cho UI
+- **FW Team:** Telemetry và configuration (waiting for FW-14)
 - **EMBED Team:** Hardware abstraction layer
+
+### **⚠️ Current Blockers:**
+- **BE-16:** Waiting for FW-15 (Firmware final integration)
+- **BE-04:** Waiting for FW-14 (Firmware release)
 
 ---
 
-## 🎯 **Recommended Next Steps:**
+## 🎯 **NEXT ACTIONS:**
 
 ### **Immediate (This Week):**
-1. **Complete BE-03:** API cấu hình CRUD
-2. **Complete BE-05:** Telemetry ingest
+1. **BE-03 completion** - Configuration API CRUD (2 days)
+2. **BE-05 completion** - WebSocket server (2 days)
+3. **BE-13 completion** - Telemetry expansion (2 days)
+
+### **Short-term (Next 2 weeks):**
+1. **BE-04, BE-06** - Telemetry API và database integration
+2. **BE-07, BE-09** - Authentication và error handling
+3. **BE-10, BE-11** - Testing và integration
+
+### **Long-term (Next month):**
+1. **BE-16** - FW/Center integration (after FW-15)
+2. **BE-17** - Production cleanup
+
+## 📈 **SUCCESS METRICS:**
+
+### **Technical Metrics:**
+- **API performance:** < 100ms response time
+- **System scalability:** 1000+ concurrent users
+- **Security compliance:** Zero vulnerabilities
+- **Data integrity:** 99.99% accuracy
+
+### **Process Metrics:**
+- **Task completion:** 100% on schedule
+- **Code quality:** > 90% test coverage
+- **Documentation:** 100% complete
+- **Integration:** Seamless với all teams
 3. **Complete BE-08:** Mock device
 
 ### **Next Week:**
