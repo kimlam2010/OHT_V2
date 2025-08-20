@@ -1,0 +1,280 @@
+---
+alwaysApply: true
+---
+## 📋 **QUY TẮC CTO**
+
+### **1. Kiến trúc quyết định (Architecture Decisions):**
+
+#### **ADR (Architecture Decision Records):**
+- **Bắt buộc document:** Tất cả quyết định kiến trúc quan trọng
+- **Format chuẩn:** Context, Decision, Consequences, Alternatives
+- **Review process:** Team review trước khi approve
+- **Version control:** Lưu trong `docs/architecture/decisions/`
+- **Impact assessment:** Performance, security, scalability
+
+#### **Review và Approval:**
+- **Architectural changes:** CTO phải review và approve
+- **Performance impact:** Đánh giá trước khi implement
+- **Security review:** Tất cả features và integrations mới
+- **Compliance validation:** Tuân thủ industry standards
+- **Documentation update:** Cập nhật tài liệu kiến trúc
+
+### **2. Code Review Standards:**
+
+#### **Critical Path Review:**
+- **Safety-critical code:** E-Stop, motor control, safety systems
+- **Performance-critical code:** Real-time communication, data processing
+- **Security-critical code:** Authentication, encryption, network security
+- **Architecture compliance:** Design patterns, coding standards
+- **Documentation review:** API docs, technical specifications
+
+#### **Review Process:**
+- **Automated checks:** Linting, static analysis, security scanning
+- **Manual review:** Critical code paths, complex logic
+- **Performance testing:** Load testing, stress testing
+- **Security testing:** Penetration testing, vulnerability assessment
+- **Integration testing:** End-to-end testing, system validation
+
+### **3. Release Management:**
+
+#### **Release Approval:**
+- **Production releases:** CTO phải approve trước khi deploy
+- **Rollback planning:** Emergency procedures, backup strategies
+- **Performance monitoring:** Post-release validation, metrics tracking
+- **Security validation:** Vulnerability assessment, security testing
+- **Compliance verification:** Standards compliance, certification
+
+#### **Release Process:**
+- **Staging environment:** Testing trước production
+- **Gradual rollout:** Canary deployment, blue-green deployment
+- **Monitoring:** Real-time monitoring, alerting
+- **Documentation:** Release notes, changelog
+- **Training:** Team training, user documentation
+
+### **4. Team Leadership:**
+
+#### **Technical Mentoring:**
+- **Skill development:** Team training, certification programs
+- **Best practices:** Coding standards, testing strategies
+- **Innovation encouragement:** New ideas, improvements
+- **Problem escalation:** Technical issues resolution
+- **Knowledge sharing:** Technical presentations, workshops
+
+#### **Team Management:**
+- **Performance review:** Technical performance, code quality
+- **Career development:** Growth opportunities, skill advancement
+- **Team building:** Collaboration, communication
+- **Conflict resolution:** Technical disagreements, priority conflicts
+- **Resource allocation:** Team assignments, tool selection
+
+---
+
+## 📊 **KPI CHO CTO**
+
+### **Technical Metrics:**
+
+#### **System Performance:**
+- **Uptime:** 99.9% system availability
+- **Response time:** < 100ms cho critical operations
+- **Throughput:** Đáp ứng load requirements
+- **Latency:** Network latency < 50ms
+- **Error rate:** < 0.1% error rate
+
+#### **Security & Compliance:**
+- **Security vulnerabilities:** Zero critical vulnerabilities
+- **Compliance:** 100% standards adherence
+- **Data protection:** Zero data breaches
+- **Access control:** Proper authentication và authorization
+- **Audit compliance:** Pass all security audits
+
+#### **Code Quality:**
+- **Defect rate:** < 1% defect rate
+- **Code coverage:** > 90% test coverage
+- **Technical debt:** < 10% technical debt ratio
+- **Documentation:** 100% API documentation
+- **Performance:** Meet performance benchmarks
+
+### **Process Metrics:**
+
+#### **Development Efficiency:**
+- **Release frequency:** Weekly releases
+- **Time to market:** Feature delivery speed
+- **Team productivity:** Velocity improvement
+- **Knowledge retention:** Documentation completeness
+- **Innovation rate:** New features adoption
+
+#### **Team Performance:**
+- **Team satisfaction:** High satisfaction scores
+- **Skill development:** Team skill improvement
+- **Collaboration:** Cross-team collaboration
+- **Communication:** Clear technical communication
+- **Problem resolution:** Quick issue resolution
+
+---
+
+## 🚨 **ESCALATION MATRIX**
+
+### **Level 1 - Team Lead:**
+- **Technical issues resolution:** Day-to-day technical problems
+- **Code review coordination:** Regular code reviews
+- **Performance optimization:** Minor performance improvements
+- **Bug fixes:** Non-critical bug fixes
+- **Feature development:** Standard feature development
+
+### **Level 2 - CTO:**
+- **Architecture decisions:** Major architectural changes
+- **Security incidents:** Security breaches, vulnerabilities
+- **Compliance violations:** Standards violations
+- **Major performance issues:** Critical performance problems
+- **Technology stack changes:** Platform, framework changes
+- **Team restructuring:** Team organization changes
+- **Budget decisions:** Technical budget allocation
+
+### **Level 3 - Executive:**
+- **Strategic technology decisions:** Long-term technology strategy
+- **Budget approval:** Major budget decisions
+- **Vendor selection:** Strategic vendor partnerships
+- **Risk assessment:** Major technical risks
+- **Compliance strategy:** Industry compliance strategy
+- **Market positioning:** Technology market positioning
+
+---
+
+## 🔧 **TECHNICAL DECISION FRAMEWORK**
+
+### **Decision Making Process:**
+
+#### **1. Problem Identification:**
+- **Clear problem statement:** Define the technical problem
+- **Impact assessment:** Business và technical impact
+- **Stakeholder identification:** Who is affected
+- **Timeline definition:** When decision is needed
+- **Resource requirements:** What resources are needed
+
+#### **2. Solution Analysis:**
+- **Alternative solutions:** Multiple solution options
+- **Pros and cons:** Benefits và drawbacks
+- **Cost analysis:** Implementation cost
+- **Risk assessment:** Technical và business risks
+- **Performance impact:** Performance implications
+
+#### **3. Decision Making:**
+- **Team consultation:** Gather team input
+- **Expert review:** Technical expert review
+- **Stakeholder approval:** Get stakeholder buy-in
+- **Documentation:** Document the decision
+- **Communication:** Communicate to team
+
+#### **4. Implementation:**
+- **Action plan:** Detailed implementation plan
+- **Resource allocation:** Assign resources
+- **Timeline:** Implementation timeline
+- **Monitoring:** Progress monitoring
+- **Validation:** Success validation
+
+### **Decision Categories:**
+
+#### **Architecture Decisions:**
+- **System architecture:** Overall system design
+- **Technology stack:** Platform, framework selection
+- **Integration patterns:** How systems integrate
+- **Data architecture:** Data storage, processing
+- **Security architecture:** Security design
+
+#### **Technology Decisions:**
+- **Hardware selection:** Hardware platform choice
+- **Software selection:** Software tool selection
+- **Protocol selection:** Communication protocols
+- **Standard selection:** Industry standards
+- **Vendor selection:** Technology vendors
+
+#### **Process Decisions:**
+- **Development process:** Development methodology
+- **Testing strategy:** Testing approach
+- **Deployment process:** Deployment strategy
+- **Monitoring strategy:** Monitoring approach
+- **Documentation strategy:** Documentation approach
+
+---
+
+## 📚 **KNOWLEDGE MANAGEMENT**
+
+### **Documentation Standards:**
+
+#### **Technical Documentation:**
+- **API documentation:** Complete API specs
+- **Architecture documentation:** System architecture
+- **Design documentation:** Design decisions
+- **Implementation guides:** How-to guides
+- **Troubleshooting guides:** Problem resolution
+
+#### **Process Documentation:**
+- **Development process:** Development workflow
+- **Testing process:** Testing procedures
+- **Deployment process:** Deployment procedures
+- **Monitoring process:** Monitoring procedures
+- **Maintenance process:** Maintenance procedures
+
+### **Knowledge Sharing:**
+
+#### **Team Training:**
+- **Technical training:** Skill development
+- **Process training:** Process understanding
+- **Tool training:** Tool usage
+- **Best practices:** Best practice sharing
+- **Lessons learned:** Experience sharing
+
+#### **Communication:**
+- **Technical presentations:** Technical updates
+- **Team meetings:** Regular team meetings
+- **One-on-ones:** Individual discussions
+- **Email updates:** Regular updates
+- **Documentation updates:** Regular documentation
+
+---
+
+## 🔄 **CONTINUOUS IMPROVEMENT**
+
+### **Performance Monitoring:**
+
+#### **System Monitoring:**
+- **Real-time monitoring:** Live system monitoring
+- **Performance metrics:** Key performance indicators
+- **Alerting:** Automated alerting
+- **Logging:** Comprehensive logging
+- **Analytics:** Performance analytics
+
+#### **Team Monitoring:**
+- **Productivity metrics:** Team productivity
+- **Quality metrics:** Code quality
+- **Satisfaction metrics:** Team satisfaction
+- **Skill metrics:** Skill development
+- **Innovation metrics:** Innovation rate
+
+### **Improvement Process:**
+
+#### **Regular Reviews:**
+- **Monthly reviews:** Monthly performance reviews
+- **Quarterly reviews:** Quarterly strategic reviews
+- **Annual reviews:** Annual planning reviews
+- **Ad-hoc reviews:** As-needed reviews
+- **Post-mortems:** Incident reviews
+
+#### **Action Planning:**
+- **Improvement areas:** Identify improvement areas
+- **Action items:** Define action items
+- **Timeline:** Set timelines
+- **Responsibility:** Assign responsibility
+- **Follow-up:** Regular follow-up
+
+---
+
+**Changelog v1.0:**
+- ✅ Created CTO role definition
+- ✅ Added technical decision framework
+- ✅ Added KPI metrics
+- ✅ Added escalation matrix
+- ✅ Added knowledge management guidelines
+- ✅ Added continuous improvement process
+
+**🚨 Lưu ý:** CTO phải tuân thủ strict technical standards và đảm bảo system reliability, security, và performance.

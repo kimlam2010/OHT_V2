@@ -1,0 +1,8 @@
+# OHT-50 Module Registry
+# Generated: 2025-01-28T00:00:00Z
+version: 1
+
+addr:0x02,type:unknown,name:module,version:,status:online
+addr:0x03,type:unknown,name:module,version:,status:online
+addr:0x04,type:unknown,name:module,version:,status:offline
+addr:0x05,type:unknown,name:module,version:,status:offline

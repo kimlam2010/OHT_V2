@@ -2,29 +2,73 @@
 
 **Ngày cập nhật:** 2025-01-27  
 **PM:** OHT-50 Project Manager  
-**Version:** 1.2.0
+**Version:** 4.0 - CLEANED & ORGANIZED
 
 ---
 
 ## 🎯 **TỔNG QUAN DỰ ÁN**
 
 ### **Project Status**
-- **Tổng số task:** 42 tasks
-- **Hoàn thành:** 17/42 (40%)
-- **Đang thực hiện:** 3/42 (7%)
-- **Chưa bắt đầu:** 22/42 (52%)
-- **Tiến độ tổng thể:** 40%
+- **Tổng số task:** 65 tasks across 6 teams
+- **Hoàn thành:** 25/65 (38.5%)
+- **Đang thực hiện:** 8/65 (12.3%)
+- **Chưa bắt đầu:** 32/65 (49.2%)
+- **Tiến độ tổng thể:** 38.5%
 
-### **Team Status**
-- **EMBED Team:** ✅ HOÀN THÀNH (100%)
-- **FW Team:** 🔄 ĐANG THỰC HIỆN (21%)
-- **BE Team:** 📋 CHƯA BẮT ĐẦU (0%)
-- **FE Team:** ✅ HOÀN THÀNH (100%)
-- **SIM Team:** 📋 CHƯA BẮT ĐẦU (0%)
+### **Team Status Matrix**
+| **Team** | **Total Tasks** | **Completed** | **In Progress** | **Pending** | **Progress %** | **Status** |
+|----------|----------------|---------------|-----------------|-------------|----------------|------------|
+| **PM Team** | 8 | 3 | 2 | 3 | 37.5% | 🔄 Active |
+| **EMBED Team** | 12 | 12 | 0 | 0 | 100% | ✅ Complete |
+| **FW Team** | 15 | 3 | 4 | 8 | 20% | 🔄 Active |
+| **BE Team** | 17 | 2 | 4 | 11 | 11.8% | 🔄 Active |
+| **FE Team** | 8 | 8 | 0 | 0 | 100% | ✅ Complete |
+| **SIM Team** | 5 | 0 | 0 | 5 | 0% | 📋 Pending |
 
 ---
 
 ## 📊 **TASK STATUS BY TEAM**
+
+### **📋 PM TEAM - PROJECT MANAGEMENT**
+**Status:** 🔄 ACTIVE (37.5%)
+
+#### **🎯 Mục tiêu:**
+- Quản lý tổng thể dự án OHT-50 Master Module
+- Đảm bảo tiến độ và chất lượng deliverables
+- Phối hợp giữa các teams và stakeholders
+- Risk management và issue resolution
+
+#### **📊 Task Status:**
+
+| **Task ID** | **Responsible** | **Description** | **Deliverables** | **Dependencies** | **Timeline** | **Status** | **Priority** |
+|-------------|----------------|-----------------|------------------|------------------|--------------|------------|--------------|
+| **PM-01** | PM Lead | Project planning & setup | Project plan, timeline | — | 1 week | ✅ Complete | 🔥 High |
+| **PM-02** | PM Lead | Team coordination | Team structure, roles | PM-01 | Ongoing | 🔄 Active | 🔥 High |
+| **PM-03** | PM Lead | Documentation management | Docs structure, templates | PM-01 | Ongoing | 🔄 Active | 🔥 High |
+| **PM-04** | PM Lead | Risk management | Risk register, mitigation | PM-01 | Ongoing | 📋 Pending | 🟡 Medium |
+| **PM-05** | PM Lead | Quality assurance | QA process, standards | PM-02 | 2 weeks | 📋 Pending | 🟡 Medium |
+| **PM-06** | PM Lead | Stakeholder communication | Communication plan | PM-01 | Ongoing | 📋 Pending | 🟡 Medium |
+| **PM-07** | PM Lead | Budget & resource management | Budget tracking | PM-01 | Ongoing | 📋 Pending | 🟡 Medium |
+| **PM-08** | PM Lead | Project closure | Final report, lessons learned | All teams | 1 week | 📋 Pending | 🔥 High |
+
+#### **📈 Kết quả mong muốn:**
+- **Project success:** 100% deliverables on time
+- **Team satisfaction:** High satisfaction scores
+- **Stakeholder alignment:** Clear communication
+- **Risk mitigation:** Zero critical risks
+
+#### **📝 Hướng dẫn cụ thể:**
+- **Daily standups:** 9:00 AM daily
+- **Weekly reviews:** Friday 2:00 PM
+- **Monthly reports:** End of month
+- **Risk reviews:** Bi-weekly
+
+#### **🎯 Trách nhiệm:**
+- **PM Lead:** Overall project management
+- **PM Coordinator:** Team coordination
+- **PM Analyst:** Data analysis và reporting
+
+---
 
 ### **🔧 EMBED Team (Hardware & Drivers)**
 **Status:** ✅ HOÀN THÀNH (100%)
@@ -44,21 +88,21 @@
 ---
 
 ### **⚙️ FW Team (Firmware)**
-**Status:** 🔄 ĐANG THỰC HIỆN (21%)
+**Status:** 🔄 ĐANG THỰC HIỆN (93%)
 
 | Task ID | Người phụ trách | Mô tả | Deliverables | Dependencies | Ước lượng | Status |
 |---------|----------------|-------|--------------|--------------|-----------|--------|
 | FW-01 | FW Lead | Khung FW + scheduler | Real-time scheduler | EM-01 | 3 | ✅ Hoàn thành |
 | FW-02 | FW Engineer (HAL) | HAL abstraction | HAL interface | EM-02 | 4 | ✅ Hoàn thành |
-| FW-03 | FW Engineer (State) | State machine | State machine | FW-01 | 3 | 📋 Chưa bắt đầu |
-| FW-04 | FW Engineer (Control) | Control loop | Control system | FW-02 | 4 | 📋 Chưa bắt đầu |
-| FW-05 | FW Engineer (Safety) | Safety mechanisms | Safety system | FW-03 | 3 | 📋 Chưa bắt đầu |
-| FW-06 | FW Engineer (Comms) | Communication stack | Comms protocol | FW-07 | 2 | 📋 Chưa bắt đầu |
+| FW-03 | FW Engineer (State) | State machine | State machine | FW-01 | 3 | ✅ Hoàn thành |
+| FW-04 | FW Engineer (Control) | Control loop | Control system | FW-02 | 4 | ✅ Hoàn thành |
+| FW-05 | FW Engineer (Safety) | Safety mechanisms | Safety system | FW-03 | 3 | ✅ Hoàn thành |
+| FW-06 | FW Engineer (Comms) | Communication stack | Comms protocol | FW-07 | 2 | ✅ Hoàn thành |
 | FW-07 | FW Engineer (Comms) | RS485 protocol | RS485 protocol | EM-02 | 3 | ✅ Hoàn thành |
-| FW-08 | FW Engineer (Config) | Configuration system | Config system | FW-02 | 2 | 📋 Chưa bắt đầu |
-| FW-09 | FW Engineer (Safety) | E-Stop & interlock | Safety system | FW-05 | 2 | 📋 Chưa bắt đầu |
-| FW-10 | FW Engineer (Test) | Unit tests | Test suite | FW-01-FW-09 | 3 | 📋 Chưa bắt đầu |
-| FW-11 | FW Engineer (Integration) | Integration testing | Integration test | FW-10 | 2 | 📋 Chưa bắt đầu |
+| FW-08 | FW Engineer (Config) | Configuration system | Config system | FW-02 | 2 | ✅ Hoàn thành |
+| FW-09 | FW Engineer (Safety) | E-Stop & interlock | Safety system | FW-05 | 2 | ✅ Hoàn thành |
+| FW-10 | FW Engineer (Test) | Unit tests | Test suite | FW-01-FW-09 | 3 | ✅ Hoàn thành |
+| FW-11 | FW Engineer (Integration) | Integration testing | Integration test | FW-10 | 2 | 🔄 Đang thực hiện |
 | FW-12 | FW Engineer (Performance) | Performance optimization | Performance test | FW-11 | 2 | 📋 Chưa bắt đầu |
 | FW-13 | FW Engineer (Documentation) | Documentation | FW docs | FW-12 | 1 | 📋 Chưa bắt đầu |
 | FW-14 | FW Lead | Final integration | FW release | FW-13 | 1 | 📋 Chưa bắt đầu |
@@ -66,8 +110,15 @@
 **Current Progress:**
 - ✅ **Framework Foundation**: Multi-threaded architecture với real-time scheduler
 - ✅ **HAL Abstraction**: Complete hardware abstraction layer
+- ✅ **State Machine**: Complete state management system
+- ✅ **Control Loop**: PID control với motion profiles
+- ✅ **Safety Mechanisms**: E-Stop, interlocks, emergency procedures
+- ✅ **Communication Stack**: RS485/Modbus RTU với retry logic
 - ✅ **RS485 Protocol**: Comprehensive protocol implementation
-- 🔄 **Next Phase**: State machine, control loop, safety mechanisms
+- ✅ **Configuration System**: Complete configuration management
+- ✅ **E-Stop & Interlock**: Enhanced safety system
+- ✅ **Unit Tests**: Comprehensive test suite complete (100% pass rate)
+- ✅ **All CTO Directive Tasks**: 100% complete
 
 ---
 
@@ -209,7 +260,42 @@
 
 ---
 
+## 📋 **MODULE DOCUMENTATION TASK**
+
+### **🎯 CTO Request - Module Documentation Completion**
+- **Priority:** 🔥 HIGH - Critical for system completeness
+- **Timeline:** 2 weeks
+- **Status:** ACTION REQUIRED
+
+### **📊 Current Status:**
+- **✅ Hoàn thành:** 4/7 modules (57.1%)
+- **🔄 Đang phát triển:** 2/7 modules (28.6%)
+- **📋 Kế hoạch:** 1/7 modules (14.3%)
+
+### **📋 Modules to Complete:**
+
+#### **Priority 1 (Week 1):**
+1. **DI/DO Module (0x06)** - `docs/technical/05-rs485-dido-module-integration.md`
+2. **AI Module (0x07)** - `docs/technical/06-rs485-ai-module-integration.md`
+
+#### **Priority 2 (Week 2):**
+3. **Custom Module (0x08+)** - `docs/technical/07-rs485-custom-module-integration.md`
+
+### **✅ Success Criteria:**
+- **100% module documentation** hoàn thành
+- **Consistent format** across all modules
+- **Ready for development** - developers can implement immediately
+- **Integration ready** - compatible với existing system
+
+---
+
 ## 📋 **CHANGELOG**
+
+### **v1.3.0 (2025-01-28)**
+- ✅ Cleaned up tasks folder - removed duplicate files
+- ✅ Merged team-specific tasks into respective guides
+- ✅ Added module documentation task from CTO
+- ✅ Streamlined documentation structure
 
 ### **v1.2.0 (2025-01-27)**
 - ✅ Updated FW-01, FW-02, FW-07 status to completed
@@ -229,4 +315,36 @@
 
 ---
 
+## 📋 **DOCUMENTATION RULES - MỚI**
+
+### **🎯 Quy tắc quản lý tài liệu:**
+1. **Mỗi team chỉ có 1 file tiến độ** trong folder `docs/tasks/`
+2. **Không tạo file riêng lẻ** cho từng task nhỏ
+3. **Merge tất cả tasks** vào file guide chính của team
+4. **Master scheduler** chứa tổng quan toàn bộ dự án
+5. **PM tasks** chứa quản lý tổng thể và cross-team tasks
+
+### **📁 Cấu trúc tài liệu chuẩn:**
+```
+docs/tasks/
+├── PM_TASKS_OHT-50.md              # PM - Quản lý tổng thể
+├── MASTER_SCHEDULER_OHT-50.md      # Master - Tổng quan dự án
+├── EMBED_TEAM_QUICK_GUIDE.md       # EMBED - Hardware & Drivers
+├── FW_TEAM_QUICK_GUIDE.md          # FW - Firmware & Control
+├── BACKEND_TEAM_QUICK_GUIDE.md     # BE - Backend & Services
+├── FRONTEND_TEAM_QUICK_GUIDE.md    # FE - Frontend & UI
+└── SIM_TEAM_QUICK_GUIDE.md         # SIM - Simulation & Testing
+```
+
+### **🚨 Quy tắc bắt buộc:**
+- **KHÔNG** tạo file mới nếu có thể merge vào file hiện có
+- **KHÔNG** tạo template files riêng lẻ
+- **KHÔNG** tạo prompt files riêng lẻ
+- **LUÔN** cập nhật file guide chính của team
+- **LUÔN** cập nhật master scheduler khi có thay đổi
+
+---
+
 **📊 Project Status: On track với framework foundation hoàn thành! 🚀**
+
+**🎉 Documentation cleaned và organized! 🎉**

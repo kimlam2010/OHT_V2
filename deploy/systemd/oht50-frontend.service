@@ -1,0 +1,20 @@
+[Unit]
+Description=OHT-50 Frontend (Node) - serves /opt/oht50/frontend/dist on :8081
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=oht
+Group=oht
+WorkingDirectory=/opt/oht50/frontend
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /opt/oht50/frontend/server.js --port 8081
+Restart=always
+RestartSec=3
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target
+
+

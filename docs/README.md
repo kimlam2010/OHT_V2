@@ -116,6 +116,22 @@ docs/
 
 ---
 
+## 🔧 Deploy/Ports/Services (Production Standard - No Nginx)
+
+- Services:
+  - `oht50.service` (FW) → runs firmware binary. No HTTP.
+  - `oht50-backend.service` (BE) → FastAPI on port 8000.
+  - `oht50-frontend.service` (FE) → Node static server on port 8081 serving `frontend/dist`.
+- Ports:
+  - FW: n/a
+  - BE: 8000 (`GET /health` returns 200 JSON `{status:"ok"}`)
+  - FE dev: 5173 (Vite)
+  - FE prod: 8081 (Node service)
+- Policy:
+  - No Nginx in deploy path. CI fails on any `nginx` reference under `deploy/`.
+  - No nested `OHT-50/OHT-50/**` directories.
+
+
 ## 📋 **Team Status Overview**
 
 ### **✅ Frontend Team:** 100% COMPLETE
@@ -205,3 +221,12 @@ docs/
 **🎯 Tất cả teams có thể tìm thấy tài liệu của mình dễ dàng!**
 
 **🚀 Project ready for efficient development!**
+
+## System Core Specs & ADRs
+
+- [System Architecture](specs/architecture.md)
+- [State Machine](specs/state_machine.md)
+- [Interfaces](specs/interfaces.md)
+- [ADR-0001 System Architecture Baseline](architecture/decisions/0001-system-architecture-baseline.md)
+- [ADR-0002 Runtime Config vs Firmware](architecture/decisions/0002-runtime-config-vs-firmware.md)
+- [ADR-0003 Safety: E-Stop Dual Channel](architecture/decisions/0003-safety-estop-dual-channel.md)

@@ -29,6 +29,9 @@ static struct {
     rs485_statistics_t statistics;
     rs485_device_info_t device_info;
     uint64_t last_operation_time_us;
+    uint32_t retry_count;
+    uint32_t max_retries;
+    uint32_t retry_delay_ms;
 } rs485_state = {0};
 
 // Internal function prototypes
@@ -86,8 +89,14 @@ hal_status_t hal_rs485_init(const rs485_config_t *config)
     memset(&rs485_state.statistics, 0, sizeof(rs485_statistics_t));
     rs485_state.last_operation_time_us = 0;
     
+    // Initialize retry parameters
+    rs485_state.retry_count = 0;
+    rs485_state.max_retries = 3;
+    rs485_state.retry_delay_ms = 100;
+    
     rs485_state.initialized = true;
     rs485_state.device_open = false;
+    rs485_state.device_fd = -1;  // Initialize device file descriptor
     
     pthread_mutex_unlock(&rs485_state.mutex);
     
@@ -185,7 +194,7 @@ hal_status_t hal_rs485_close(void)
 }
 
 /**
- * @brief Transmit data over RS485
+ * @brief Transmit data over RS485 with retry logic
  * @param data Data to transmit
  * @param length Data length
  * @return HAL status
@@ -203,32 +212,51 @@ hal_status_t hal_rs485_transmit(const uint8_t *data, size_t length)
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    // Update status for transmission
-    rs485_state.device_info.rs485_status = RS485_STATUS_TRANSMITTING;
+    hal_status_t result = HAL_STATUS_ERROR;
+    uint32_t current_retry = 0;
+    uint32_t current_delay = rs485_state.retry_delay_ms;
     
-    // Write data directly to UART1
-    ssize_t written = write(rs485_state.device_fd, data, length);
-    
-    // Update status
-    rs485_state.device_info.rs485_status = RS485_STATUS_IDLE;
-    
-    if (written == (ssize_t)length) {
-        // Update statistics
-        rs485_state.statistics.bytes_transmitted += length;
-        rs485_state.statistics.frames_transmitted++;
-        rs485_state.statistics.timestamp_us = rs485_get_timestamp_us();
-        rs485_state.last_operation_time_us = rs485_state.statistics.timestamp_us;
+    while (current_retry <= rs485_state.max_retries) {
+        // Update status for transmission
+        rs485_state.device_info.rs485_status = RS485_STATUS_TRANSMITTING;
         
-        pthread_mutex_unlock(&rs485_state.mutex);
-        return HAL_STATUS_OK;
-    } else {
-        // Update error statistics
-        rs485_state.statistics.errors_timeout++;
-        rs485_state.device_info.error_count++;
+        // Write data directly to UART1
+        ssize_t written = write(rs485_state.device_fd, data, length);
         
-        pthread_mutex_unlock(&rs485_state.mutex);
-        return HAL_STATUS_IO_ERROR;
+        // Update status
+        rs485_state.device_info.rs485_status = RS485_STATUS_IDLE;
+        
+        if (written == (ssize_t)length) {
+            // Success - update statistics
+            rs485_state.statistics.bytes_transmitted += length;
+            rs485_state.statistics.frames_transmitted++;
+            rs485_state.statistics.timestamp_us = rs485_get_timestamp_us();
+            rs485_state.last_operation_time_us = rs485_state.statistics.timestamp_us;
+            rs485_state.retry_count = 0; // Reset retry count on success
+            
+            result = HAL_STATUS_OK;
+            break;
+        } else {
+            // Failure - update error statistics
+            rs485_state.statistics.errors_timeout++;
+            rs485_state.device_info.error_count++;
+            rs485_state.retry_count++;
+            
+            if (current_retry < rs485_state.max_retries) {
+                // Exponential backoff: delay *= 2
+                usleep(current_delay * 1000);
+                current_delay *= 2;
+                current_retry++;
+            } else {
+                // Max retries reached
+                result = HAL_STATUS_IO_ERROR;
+                break;
+            }
+        }
     }
+    
+    pthread_mutex_unlock(&rs485_state.mutex);
+    return result;
 }
 
 /**
@@ -436,8 +464,86 @@ uint16_t modbus_calculate_crc(const uint8_t *data __attribute__((unused)), size_
 bool modbus_verify_crc(const uint8_t *data __attribute__((unused)), size_t length __attribute__((unused)), uint16_t crc __attribute__((unused))) { return true; }
 // No separate DE/RE pin control needed for UART1 RS485
 
-// Internal functions (stubs for now)
-static hal_status_t rs485_open_device(void) { return HAL_STATUS_OK; }
-static hal_status_t rs485_close_device(void) { return HAL_STATUS_OK; }
-static hal_status_t rs485_configure_serial(void) { return HAL_STATUS_OK; }
-static uint64_t rs485_get_timestamp_us(void) { return 0; }
+// Internal functions
+static hal_status_t rs485_open_device(void) {
+    // Open RS485 device file
+    rs485_state.device_fd = open(rs485_state.config.device_path, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (rs485_state.device_fd == -1) {
+        printf("Failed to open RS485 device %s: %s\n", rs485_state.config.device_path, strerror(errno));
+        return HAL_STATUS_IO_ERROR;
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+static hal_status_t rs485_close_device(void) {
+    if (rs485_state.device_fd != -1) {
+        close(rs485_state.device_fd);
+        rs485_state.device_fd = -1;
+    }
+    return HAL_STATUS_OK;
+}
+
+static hal_status_t rs485_configure_serial(void) {
+    struct termios tty;
+    
+    // Get current settings
+    if (tcgetattr(rs485_state.device_fd, &tty) != 0) {
+        printf("Failed to get serial attributes: %s\n", strerror(errno));
+        return HAL_STATUS_IO_ERROR;
+    }
+    
+    // Set baud rate
+    speed_t baud_rate;
+    switch (rs485_state.config.baud_rate) {
+        case 9600: baud_rate = B9600; break;
+        case 19200: baud_rate = B19200; break;
+        case 38400: baud_rate = B38400; break;
+        case 57600: baud_rate = B57600; break;
+        case 115200: baud_rate = B115200; break;
+        default: baud_rate = B9600; break;
+    }
+    
+    cfsetospeed(&tty, baud_rate);
+    cfsetispeed(&tty, baud_rate);
+    
+    // Set data bits, stop bits, parity
+    tty.c_cflag &= ~PARENB;  // No parity
+    tty.c_cflag &= ~CSTOPB;  // 1 stop bit
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8;      // 8 data bits
+    
+    // Set other flags
+    tty.c_cflag |= CREAD | CLOCAL;  // Enable receiver, ignore modem control lines
+    #ifdef CRTSCTS
+    tty.c_cflag &= ~CRTSCTS;        // No hardware flow control
+    #endif
+    
+    // Set input flags
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);  // No software flow control
+    tty.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);  // Raw input
+    
+    // Set output flags
+    tty.c_oflag &= ~OPOST;  // Raw output
+    
+    // Set local flags
+    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);  // Raw mode
+    
+    // Set timeout
+    tty.c_cc[VTIME] = rs485_state.config.timeout_ms / 100;  // Timeout in deciseconds
+    tty.c_cc[VMIN] = 0;  // Non-blocking
+    
+    // Apply settings
+    if (tcsetattr(rs485_state.device_fd, TCSANOW, &tty) != 0) {
+        printf("Failed to set serial attributes: %s\n", strerror(errno));
+        return HAL_STATUS_IO_ERROR;
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+static uint64_t rs485_get_timestamp_us(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000000ULL + (uint64_t)tv.tv_usec;
+}

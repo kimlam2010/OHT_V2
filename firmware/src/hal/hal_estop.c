@@ -8,11 +8,11 @@
 
 // E-Stop configuration
 static estop_config_t estop_config = {
-    .channel1_pin = ESTOP_CHANNEL1_PIN,
-    .channel2_pin = ESTOP_CHANNEL2_PIN,
+    .channel1_pin = ESTOP_PIN,
+    .channel2_pin = 0, // Single channel
     .response_timeout_ms = ESTOP_RESPONSE_TIME_MS,
     .debounce_time_ms = ESTOP_DEBOUNCE_TIME_MS,
-    .dual_channel_required = true,
+    .dual_channel_required = false,
     .auto_reset_enabled = false
 };
 
@@ -55,29 +55,17 @@ hal_status_t hal_estop_init(const estop_config_t *config) {
     estop_status.trigger_count = 0;
     estop_status.fault_count = 0;
 
-    // Export GPIO pins
+    // Export GPIO pin (single channel)
     hal_status_t status = gpio_export(estop_config.channel1_pin);
     if (status != HAL_STATUS_OK) {
-        printf("Failed to export E-Stop channel 1 GPIO pin %d\n", estop_config.channel1_pin);
+        printf("Failed to export E-Stop GPIO pin %d\n", estop_config.channel1_pin);
         return status;
     }
 
-    status = gpio_export(estop_config.channel2_pin);
-    if (status != HAL_STATUS_OK) {
-        printf("Failed to export E-Stop channel 2 GPIO pin %d\n", estop_config.channel2_pin);
-        return status;
-    }
-
-    // Set GPIO directions (input)
+    // Set GPIO direction (input)
     status = gpio_set_direction(estop_config.channel1_pin, false);
     if (status != HAL_STATUS_OK) {
-        printf("Failed to set E-Stop channel 1 direction\n");
-        return status;
-    }
-
-    status = gpio_set_direction(estop_config.channel2_pin, false);
-    if (status != HAL_STATUS_OK) {
-        printf("Failed to set E-Stop channel 2 direction\n");
+        printf("Failed to set E-Stop direction\n");
         return status;
     }
 

@@ -5,8 +5,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Relay GPIO Pin Definition (updated for available pins)
-#define RELAY_OUTPUT_PIN       132 // GPIO4_A4 - Relay output
+// Relay GPIO Pin Definitions (updated for available pins)
+#define RELAY1_OUTPUT_PIN      131 // GPIO4_A3 - Relay 1 output
+#define RELAY2_OUTPUT_PIN      132 // GPIO4_A4 - Relay 2 output
 
 // Relay Specifications
 #define RELAY_VOLTAGE          24  // V DC
@@ -98,6 +99,72 @@ hal_status_t hal_relay_on(void);
  * @return HAL status
  */
 hal_status_t hal_relay_off(void);
+
+// Dual Relay Support Functions
+
+/**
+ * @brief Set relay 1 state
+ * @param state Relay state
+ * @return HAL status
+ */
+hal_status_t hal_relay1_set_state(relay_state_t state);
+
+/**
+ * @brief Set relay 2 state
+ * @param state Relay state
+ * @return HAL status
+ */
+hal_status_t hal_relay2_set_state(relay_state_t state);
+
+/**
+ * @brief Get relay 1 state
+ * @param state Pointer to store relay state
+ * @return HAL status
+ */
+hal_status_t hal_relay1_get_state(relay_state_t *state);
+
+/**
+ * @brief Get relay 2 state
+ * @param state Pointer to store relay state
+ * @return HAL status
+ */
+hal_status_t hal_relay2_get_state(relay_state_t *state);
+
+/**
+ * @brief Turn relay 1 on
+ * @return HAL status
+ */
+hal_status_t hal_relay1_on(void);
+
+/**
+ * @brief Turn relay 2 on
+ * @return HAL status
+ */
+hal_status_t hal_relay2_on(void);
+
+/**
+ * @brief Turn relay 1 off
+ * @return HAL status
+ */
+hal_status_t hal_relay1_off(void);
+
+/**
+ * @brief Turn relay 2 off
+ * @return HAL status
+ */
+hal_status_t hal_relay2_off(void);
+
+/**
+ * @brief Get relay 1 status
+ * @return true if relay 1 is on, false otherwise
+ */
+bool hal_relay1_get_status(void);
+
+/**
+ * @brief Get relay 2 status
+ * @return true if relay 2 is on, false otherwise
+ */
+bool hal_relay2_get_status(void);
 
 /**
  * @brief Toggle relay

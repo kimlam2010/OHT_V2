@@ -1,0 +1,21 @@
+[Unit]
+Description=OHT-50 Backend API Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=oht
+Group=oht
+WorkingDirectory=/opt/oht50/backend
+Environment="VIRTUAL_ENV=/opt/oht50/venv"
+Environment="PATH=/opt/oht50/venv/bin:/usr/bin"
+ExecStart=/opt/oht50/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target
+
+
