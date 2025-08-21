@@ -190,6 +190,16 @@ vim docs/specs/embedded_io_drivers.md
 
 ---
 
+## 👥 Assignments (EMBED Team)
+
+Tham chiếu ma trận: `docs/reports/ASSIGNMENTS_MATRIX.md`.
+
+- Owner: EMBED Lead (HW bus, GPIO mapping, transceiver/termination)
+- ETA: Done (Phase 1), hỗ trợ W4 cho startup/CI
+- Dependencies: —
+- DoD: GPIO/RS485 verified; docs cập nhật; HIL loopback pass
+- Tests: gpioinfo/gpioset; loopback/BER; latency samples
+
 ## 📈 **SUCCESS METRICS:**
 
 ### **Technical Metrics:**

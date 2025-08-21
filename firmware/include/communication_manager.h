@@ -15,7 +15,7 @@
 #include "hal_common.h"
 #include "hal_rs485.h"
 #include "system_state_machine.h"
-#include "module_registry.h"
+#include "module_manager.h"
 
 #ifdef __cplusplus
 extern "C" {

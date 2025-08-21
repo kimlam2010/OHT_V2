@@ -432,7 +432,7 @@ void power_module_print_status(const power_module_handler_t *handler) {
     printf("  Online: %s\n", handler->status.online ? "YES" : "NO");
     printf("  Error count: %u\n", handler->status.error_count);
     printf("  Timeout count: %u\n", handler->status.timeout_count);
-    printf("  Last seen: %llu ms ago\n", 
+        printf("  Last seen: %lu ms ago\n",
            hal_get_timestamp_ms() - handler->status.last_seen_ms);
 }
 
@@ -447,6 +447,6 @@ void power_module_print_data(const power_module_handler_t *handler) {
     printf("  Relay 2: %s\n", handler->data.relay2_status ? "ON" : "OFF");
     printf("  Alarm status: 0x%04X (%s)\n", handler->data.alarm_status, 
            power_module_get_alarm_description(handler->data.alarm_status));
-    printf("  Last update: %llu ms ago\n", 
+        printf("  Last update: %lu ms ago\n",
            hal_get_timestamp_ms() - handler->data.last_update_ms);
 }

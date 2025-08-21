@@ -303,12 +303,12 @@ hal_status_t hal_estop_validate_safety(void) {
     uint64_t response_time = get_timestamp_ms() - start_time;
     
     if (response_time > estop_config.response_timeout_ms) {
-        printf("E-Stop validation failed: response time %llu ms > %u ms\n", 
+                printf("E-Stop validation failed: response time %lu ms > %u ms\n",
                response_time, estop_config.response_timeout_ms);
         return HAL_STATUS_ERROR;
     }
 
-    printf("E-Stop safety validation passed: response time %llu ms\n", response_time);
+    printf("E-Stop safety validation passed: response time %lu ms\n", response_time);
     return HAL_STATUS_OK;
 }
 
@@ -587,7 +587,7 @@ static hal_status_t gpio_get_value(uint8_t pin, bool *value) {
     }
     
     int val;
-    fscanf(fp, "%d", &val);
+    (void)fscanf(fp, "%d", &val);
     fclose(fp);
     
     *value = (val != 0);

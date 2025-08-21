@@ -476,5 +476,11 @@ static hal_status_t lidar_configure_serial(void) { return HAL_STATUS_OK; }
 static hal_status_t lidar_send_command(const uint8_t *command __attribute__((unused)), size_t len __attribute__((unused))) { return HAL_STATUS_OK; }
 static hal_status_t lidar_read_response(uint8_t *buffer __attribute__((unused)), size_t max_len __attribute__((unused)), size_t *actual_len __attribute__((unused))) { return HAL_STATUS_OK; }
 static uint64_t lidar_get_timestamp_us(void) { return 0; }
-static hal_status_t lidar_parse_scan_data(const uint8_t *data __attribute__((unused)), size_t len __attribute__((unused)), lidar_scan_data_t *scan_data __attribute__((unused))) { return HAL_STATUS_OK; }
+__attribute__((unused))
+static hal_status_t lidar_parse_scan_data(const uint8_t *data, size_t len, lidar_scan_data_t *scan_data) { 
+    (void)data; // Unused parameter
+    (void)len; // Unused parameter
+    (void)scan_data; // Unused parameter
+    return HAL_STATUS_OK; 
+}
 static hal_status_t lidar_process_safety_status(void) { return HAL_STATUS_OK; }

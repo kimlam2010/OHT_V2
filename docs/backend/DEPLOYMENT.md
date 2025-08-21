@@ -1,323 +1,117 @@
-# Hướng dẫn Triển khai OHT-50 Backend
+# Backend Deployment Guide - OHT-50
 
-## Tổng quan
+## Overview
+Hướng dẫn triển khai OHT-50 Backend service với FastAPI, Pydantic và structured logging.
 
-Tài liệu này hướng dẫn cách triển khai OHT-50 Backend service trong các môi trường khác nhau.
+## Prerequisites
+- Python 3.11+
+- Docker (optional)
+- Systemd (for service management)
 
-## Môi trường
+## Quick Start
 
-### Development
-- **URL**: http://localhost:8000
-- **Database**: SQLite (local)
-- **Log Level**: DEBUG
-- **Auto-reload**: Enabled
-
-### Staging
-- **URL**: https://staging-backend.oht-50.com
-- **Database**: PostgreSQL
-- **Log Level**: INFO
-- **Auto-reload**: Disabled
-
-### Production
-- **URL**: https://backend.oht-50.com
-- **Database**: PostgreSQL (clustered)
-- **Log Level**: WARNING
-- **Auto-reload**: Disabled
-
-## Yêu cầu Hệ thống
-
-### Tối thiểu
-- **CPU**: 1 core
-- **RAM**: 512MB
-- **Storage**: 1GB
-- **OS**: Linux (Ubuntu 20.04+)
-
-### Khuyến nghị
-- **CPU**: 2 cores
-- **RAM**: 2GB
-- **Storage**: 10GB SSD
-- **OS**: Linux (Ubuntu 22.04 LTS)
-
-## Cài đặt
-
-### 1. Sử dụng Docker (Khuyến nghị)
-
+### 1. Local Development
 ```bash
-# Build image
-docker build -t oht-50-backend:latest .
-
-# Run container
-docker run -d \
-  --name oht-50-backend \
-  -p 8000:8000 \
-  -e DATABASE_URL=postgresql://user:pass@host:5432/oht50 \
-  -e API_KEY=your-api-key \
-  oht-50-backend:latest
-```
-
-### 2. Cài đặt trực tiếp
-
-```bash
-# Clone repository
-git clone https://github.com/your-org/oht-50.git
-cd oht-50/backend
-
-# Tạo virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# hoặc
-venv\Scripts\activate  # Windows
-
-# Cài đặt dependencies
+cd backend
 pip install -r requirements.txt
-
-# Chạy application
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## Cấu hình
+### 2. Docker Deployment
+```bash
+docker build -t oht50-backend .
+docker run -p 8000:8000 oht50-backend
+```
+
+### 3. Systemd Service
+```bash
+sudo cp deployment/oht50-backend.service /etc/systemd/system/
+sudo systemctl enable oht50-backend
+sudo systemctl start oht50-backend
+```
+
+## Configuration
 
 ### Environment Variables
-
-Tạo file `.env` hoặc set environment variables:
-
 ```bash
-# Server
-SERVER_HOST=0.0.0.0
-SERVER_PORT=8000
+# Required
+SECRET_KEY=your-secret-key-here
 DEBUG=false
+
+# Optional
 LOG_LEVEL=INFO
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/oht50
-
-# Security
-API_KEY=your-secure-api-key
-CORS_ORIGINS=["https://frontend.oht-50.com"]
-
-# Telemetry
-TELEMETRY_BUFFER_SIZE=1000
-TELEMETRY_FLUSH_INTERVAL=5
-
-# Center Communication
-CENTER_URL=https://center.oht-50.com
-CENTER_API_KEY=your-center-api-key
-
-# Motor Configuration
-MOTOR_MAX_SPEED=100.0
-MOTOR_ACCELERATION=10.0
-
-# Safety Zones
-SAFETY_ZONE_X_MIN=-1000.0
-SAFETY_ZONE_X_MAX=1000.0
-SAFETY_ZONE_Y_MIN=-1000.0
-SAFETY_ZONE_Y_MAX=1000.0
+CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
 ```
 
-### Docker Compose
+### Configuration Files
+- `config/production.yaml` - Production settings
+- `config/development.yaml` - Development settings
 
-```yaml
-version: '3.8'
-
-services:
-  backend:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/oht50
-      - API_KEY=${API_KEY}
-      - DEBUG=false
-    depends_on:
-      - db
-    restart: unless-stopped
-
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=oht50
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-```
-
-## CI/CD Pipeline
-
-### GitHub Actions
-
-Pipeline tự động chạy khi push code:
-
-1. **Lint & Security**: Kiểm tra code style và bảo mật
-2. **Test**: Chạy unit tests với coverage >80%
-3. **Build**: Tạo Docker image
-4. **Deploy Dev**: Tự động deploy lên staging
-5. **Deploy Prod**: Manual approval cho production
-
-### Manual Deployment
-
-```bash
-# Development
-make deploy-dev
-
-# Production
-make deploy-prod
-```
+## API Documentation
+- **OpenAPI UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+- **Health Check**: `http://localhost:8000/health/`
 
 ## Monitoring
 
-### Health Checks
+### Health Endpoints
+- `GET /health/` - Basic health check
+- `GET /health/detailed` - Detailed system status
 
-```bash
-# Basic health
-curl http://localhost:8000/health
+### Logging
+- Structured JSON logging
+- Log rotation via systemd
+- Centralized logging (ELK stack recommended)
 
-# Detailed health
-curl http://localhost:8000/health/detailed
+## Security
 
-# Readiness probe
-curl http://localhost:8000/health/ready
+### Authentication
+- Bearer token authentication
+- DEBUG mode bypass (development only)
+- CORS configuration
 
-# Liveness probe
-curl http://localhost:8000/health/live
-```
+### Network Security
+- HTTPS termination at reverse proxy
+- Rate limiting via Nginx
+- Security headers
 
-### Logs
+## Performance
 
-```bash
-# Docker logs
-docker logs oht-50-backend
+### Optimization
+- Async/await patterns
+- Connection pooling
+- Response caching
+- Background tasks
 
-# Application logs
-tail -f logs/app.log
-```
-
-### Metrics
-
-- **CPU Usage**: `/health/detailed` endpoint
-- **Memory Usage**: `/health/detailed` endpoint
-- **Disk Usage**: `/health/detailed` endpoint
-- **Uptime**: `/health/detailed` endpoint
+### Scaling
+- Horizontal scaling with load balancer
+- Database connection pooling
+- Redis for caching (optional)
 
 ## Troubleshooting
 
 ### Common Issues
-
-1. **Port already in use**
-   ```bash
-   # Check port usage
-   netstat -tulpn | grep :8000
-   
-   # Kill process
-   sudo kill -9 <PID>
-   ```
-
-2. **Database connection failed**
-   ```bash
-   # Check database
-   psql -h localhost -U postgres -d oht50
-   
-   # Check environment
-   echo $DATABASE_URL
-   ```
-
-3. **Permission denied**
-   ```bash
-   # Fix permissions
-   sudo chown -R $USER:$USER .
-   chmod +x scripts/*.sh
-   ```
+1. **Port already in use**: Check `sudo netstat -tlnp | grep 8000`
+2. **Permission denied**: Check file permissions and user
+3. **Import errors**: Verify Python environment and dependencies
 
 ### Debug Mode
-
 ```bash
-# Enable debug
 export DEBUG=true
-export LOG_LEVEL=DEBUG
-
-# Run with debug
 uvicorn app.main:app --reload --log-level debug
-```
-
-## Backup & Recovery
-
-### Database Backup
-
-```bash
-# PostgreSQL backup
-pg_dump -h localhost -U postgres oht50 > backup.sql
-
-# Restore
-psql -h localhost -U postgres oht50 < backup.sql
-```
-
-### Configuration Backup
-
-```bash
-# Backup config
-cp .env .env.backup
-
-# Restore config
-cp .env.backup .env
-```
-
-## Security
-
-### API Key Management
-
-```bash
-# Generate secure API key
-openssl rand -hex 32
-
-# Rotate API key
-export API_KEY=new-secure-key
-```
-
-### SSL/TLS
-
-```bash
-# Generate SSL certificate
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
-
-# Run with SSL
-uvicorn app.main:app --ssl-keyfile key.pem --ssl-certfile cert.pem
-```
-
-## Performance Tuning
-
-### Gunicorn (Production)
-
-```bash
-# Install gunicorn
-pip install gunicorn
-
-# Run with multiple workers
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
-```
-
-### Nginx Reverse Proxy
-
-```nginx
-server {
-    listen 80;
-    server_name backend.oht-50.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
 ```
 
 ## Support
 
-- **Documentation**: https://github.com/your-org/oht-50/docs
-- **Issues**: https://github.com/your-org/oht-50/issues
-- **Email**: team@oht-50.com
+### Documentation Structure
+- **API Specifications**: `api-specs/` - CONFIG_API.md, TELEMETRY_API.md, WEBSOCKET_EVENTS.md, INTEGRATION_CENTER.md
+- **Operational**: `operational/` - SECURITY_GUIDE.md, HARDENING_CHECKLIST.md, RUNBOOK.md, SLO_SLA.md, ERROR_MATRIX.md
+- **Development Guides**: `guides/` - OPENAPI_EXAMPLES_GUIDE.md, OPENAPI_REVIEW.md, CI_DOCS_CHECK_GUIDE.md
+- **Testing Tools**: `tools/` - postman_collection.json, INSOMNIA_WORKSPACE.json, curl_suite.sh
+- **Core Docs**: DEPLOYMENT.md, RELEASE_NOTES.md, ERRORS_CONVENTION.md, BE-02_COMPLETION_SUMMARY.md
+
+### Quick References
+- **Testing**: Import Postman collection hoặc Insomnia workspace từ `tools/`
+- **API Reference**: Xem `api-specs/` cho endpoint details
+- **Security**: Review `operational/SECURITY_GUIDE.md` và `operational/HARDENING_CHECKLIST.md`
+- **CI/CD**: Follow `guides/CI_DOCS_CHECK_GUIDE.md` cho automated validation
