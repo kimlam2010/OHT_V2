@@ -110,19 +110,6 @@ static const security_mgr_role_config_t default_roles[] = {
         .enabled = true
     }
 };
-    {
-        .role_name = "admin",
-        .level = SECURITY_MGR_LEVEL_ADMIN,
-        .permissions = (1 << SECURITY_MGR_PERM_READ) | (1 << SECURITY_MGR_PERM_WRITE) | (1 << SECURITY_MGR_PERM_EXECUTE) | (1 << SECURITY_MGR_PERM_CONFIGURE),
-        .enabled = true
-    },
-    {
-        .role_name = "super_admin",
-        .level = SECURITY_MGR_LEVEL_SUPER_ADMIN,
-        .permissions = (1 << SECURITY_MGR_PERM_READ) | (1 << SECURITY_MGR_PERM_WRITE) | (1 << SECURITY_MGR_PERM_EXECUTE) | (1 << SECURITY_MGR_PERM_CONFIGURE) | (1 << SECURITY_MGR_PERM_ADMIN),
-        .enabled = true
-    }
-};
 
 // Forward declarations
 static hal_status_t generate_session_id(char *session_id);

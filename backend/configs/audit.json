@@ -46,5 +46,53 @@
     "device": "OHT-50-01",
     "correlation_id": "c-0000",
     "signature": "sha256:mock"
+  },
+  {
+    "time": "2025-08-21T16:59:40.291598",
+    "user": "alice",
+    "action": "UPDATE_SETTINGS",
+    "target": "user.settings",
+    "result": "OK",
+    "ip": "127.0.0.1",
+    "session": "S-1",
+    "device": "OHT-50-01",
+    "correlation_id": "c-0000",
+    "signature": "sha256:mock"
+  },
+  {
+    "time": "2025-08-21T16:59:40.313241",
+    "user": "operator",
+    "action": "UPDATE_SETTINGS",
+    "target": "user.settings",
+    "result": "OK",
+    "ip": "127.0.0.1",
+    "session": "S-1",
+    "device": "OHT-50-01",
+    "correlation_id": "c-0000",
+    "signature": "sha256:mock"
+  },
+  {
+    "time": "2025-08-21T17:00:55.880526",
+    "user": "alice",
+    "action": "UPDATE_SETTINGS",
+    "target": "user.settings",
+    "result": "OK",
+    "ip": "127.0.0.1",
+    "session": "S-1",
+    "device": "OHT-50-01",
+    "correlation_id": "c-0000",
+    "signature": "sha256:mock"
+  },
+  {
+    "time": "2025-08-21T17:00:55.911020",
+    "user": "operator",
+    "action": "UPDATE_SETTINGS",
+    "target": "user.settings",
+    "result": "OK",
+    "ip": "127.0.0.1",
+    "session": "S-1",
+    "device": "OHT-50-01",
+    "correlation_id": "c-0000",
+    "signature": "sha256:mock"
   }
 ]
