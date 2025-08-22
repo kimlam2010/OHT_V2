@@ -366,3 +366,106 @@ Integrate tất cả backend components và perform system testing.
 - [ ] Performance requirements met
 - [ ] Security requirements met
 - [ ] Reliability requirements met
+
+---
+
+## 🎯 **Issue #BE-007: Align System Status Endpoint**
+
+### **Mô tả:**
+Docs `docs/specs/interfaces.md` và `docs/dev_radxa/11_ui_local_dashboard.md` tham chiếu `GET /status`, nhưng backend hiện chỉ cung cấp `GET /api/v1/telemetry/current`. Cần cung cấp alias endpoint hoặc cập nhật tài liệu.
+
+### **Requirements:**
+- [ ] Thêm `GET /api/v1/status` (alias, trả về `TelemetryStatus` rút gọn hoặc `TelemetryData` tùy quyết định)
+- [ ] Hoặc cập nhật docs để dùng `GET /api/v1/telemetry/current` (giữ backward-compat bằng alias tối thiểu)
+- [ ] Cập nhật OpenAPI và docs `TELEMETRY_API.md`
+
+### **Acceptance Criteria:**
+- [ ] FE gọi status trả về thành công
+- [ ] Docs và triển khai đồng bộ
+
+### **Estimate:** 0.5 ngày
+### **Priority:** High
+
+---
+
+## 🎯 **Issue #BE-008: Implement Control Command API**
+
+### **Mô tả:**
+FE đang gọi `POST /api/v1/control/command` (`frontend/src/services/control.ts`) nhưng backend chưa có router `control`. Cần implement API lệnh control tối thiểu theo UI docs (`moveTo/stop/dock/undock/...`) với guard an toàn.
+
+### **Requirements:**
+- [ ] Tạo router `app/api/v1/control.py`
+- [ ] `POST /api/v1/control/command` body `{ command: string, ...params }`
+- [ ] Validate theo state machine và giới hạn an toàn
+- [ ] Audit log + correlation id
+
+### **Acceptance Criteria:**
+- [ ] FE gửi lệnh nhận 200 hoặc 4xx hợp lệ khi bị chặn
+- [ ] Test unit/integ cơ bản pass
+
+### **Estimate:** 1–2 ngày
+### **Priority:** High
+
+---
+
+## 🎯 **Issue #BE-009: Add Config Apply Endpoint**
+
+### **Mô tả:**
+`docs/specs/interfaces.md` tham chiếu `POST /config/apply` nhưng backend chỉ có `PUT /api/v1/config`, `POST /import`, `POST /validate`, `POST /rollback`.
+
+### **Requirements:**
+- [ ] Thêm `POST /api/v1/config/apply` (safe-apply + rollback guard) → wrap service `update_config`
+- [ ] Cập nhật docs API `CONFIG_API.md` và interfaces
+
+### **Acceptance Criteria:**
+- [ ] Endpoint apply hoạt động với validate trước khi áp dụng
+- [ ] Docs đồng bộ
+
+### **Estimate:** 0.5–1 ngày
+### **Priority:** Medium
+
+---
+
+## 🎯 **Issue #BE-010: Extend Telemetry Safety With Latched**
+
+### **Mô tả:**
+UI spec (`docs/dev_radxa/11_ui_local_dashboard.md`) kỳ vọng `safety.latched`. Schema hiện tại có `estop`, `zone_blocked`, `interlock_active` (không có `latched`).
+
+### **Requirements:**
+- [ ] Mở rộng `TelemetrySafety` thêm `latched: bool`
+- [ ] Cập nhật `backend/app/models/telemetry.py` và producer
+- [ ] Cập nhật `docs/specs/telemetry_schema.md` và `TELEMETRY_API.md`
+
+### **Acceptance Criteria:**
+- [ ] WS/HTTP trả về trường `latched`
+- [ ] UI hiển thị chính xác
+
+### **Estimate:** 0.5 ngày
+### **Priority:** Medium
+
+---
+
+## 🎯 **Issue #BE-011: Fix README WebSocket Path Mismatch**
+
+### **Mô tả:**
+`backend/README.md` ghi `WebSocket /ws/telemetry` trong khi code dùng `/api/v1/telemetry/ws`.
+
+### **Tasks:**
+- [ ] Cập nhật README cho đúng đường dẫn WS
+- [ ] Kiểm tra ví dụ script/smoke tests
+
+### **Priority:** Low
+### **Estimate:** 0.25 ngày
+
+## 🎯 **Issue #BE-012: Add Config Spec Documentation**
+
+### **Mô tả:**
+`backend/TASK_BE-01_COMPLETED.md` tham chiếu `docs/specs/config_spec.md` nhưng file chưa tồn tại. Cần bổ sung spec cấu hình chính thức và liên kết từ `interfaces.md`/`CONFIG_API.md`.
+
+### **Tasks:**
+- [ ] Tạo `docs/specs/config_spec.md` (schema, versioning, validation rules)
+- [ ] Đồng bộ với `backend/app/models/config.py`
+- [ ] Cập nhật liên kết chéo trong tài liệu
+
+### **Priority:** Medium
+### **Estimate:** 0.5 ngày

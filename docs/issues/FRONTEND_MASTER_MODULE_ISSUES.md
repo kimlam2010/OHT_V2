@@ -466,3 +466,64 @@ Integrate tất cả frontend components và perform testing.
 - [ ] Performance requirements met
 - [ ] Usability requirements met
 - [ ] Accessibility requirements met
+
+---
+
+## 🎯 **Issue #FE-009: Update API Endpoints Usage**
+
+### **Mô tả:**
+Docs UI dùng `GET /status`, WS `/telemetry`; backend hiện có `GET /api/v1/telemetry/current` và WS `/api/v1/telemetry/ws`. Cần đồng bộ endpoint FE và fallback khi alias chưa có.
+
+### **Tasks:**
+- [ ] Điều chỉnh services để dùng `GET /api/v1/telemetry/current` tạm thời
+- [ ] Cấu hình WS path `/api/v1/telemetry/ws`
+- [ ] Khi BE-007 hoàn tất, thêm alias `GET /api/v1/status` nếu cần
+
+### **Acceptance Criteria:**
+- [ ] Dashboard lấy status OK
+- [ ] WS realtime chạy ổn định
+
+### **Priority:** High
+### **Estimate:** 0.5 ngày
+
+---
+
+## 🎯 **Issue #FE-010: Control Command Integration Guarded**
+
+### **Mô tả:**
+FE hiện gọi `POST /api/v1/control/command` nhưng backend chưa có; tạm thời cần feature flag/try-catch và hiển thị thông báo pending.
+
+### **Tasks:**
+- [ ] Thêm guard nếu 404 → hiển thị "Control API chưa khả dụng"
+- [ ] Sau khi BE-008 hoàn tất, bật tính năng và thêm xác nhận an toàn UI
+
+### **Priority:** High
+### **Estimate:** 0.5 ngày
+
+---
+
+## 🎯 **Issue #FE-011: Telemetry Safety UI Adds Latched**
+
+### **Mô tả:**
+UI hiển thị `safety.latched` theo spec, nhưng payload hiện chưa có; chờ BE-010. Chuẩn bị UI part và ẩn khi trường vắng.
+
+### **Tasks:**
+- [ ] Render `latched` nếu có, fallback "—" nếu không
+- [ ] Thêm test hiển thị trạng thái latched
+
+### **Priority:** Medium
+### **Estimate:** 0.5 ngày
+
+---
+
+## 🎯 **Issue #FE-012: Reconcile Progress Reporting (Docs vs Report)**
+
+### **Mô tả:**
+`docs/tasks/FRONTEND_TEAM_QUICK_GUIDE.md` báo 100% (8/8), nhưng `docs/PROJECT_OVERALL_PROGRESS_REPORT.md` báo Frontend 60% với mục chưa hoàn thành (Advanced analytics, Mobile app). Cần đồng bộ số liệu.
+
+### **Tasks:**
+- [ ] Cập nhật Quick Guide hoặc Progress Report cho thống nhất
+- [ ] Liệt kê deliverables còn thiếu theo thực tế repo
+
+### **Priority:** Medium
+### **Estimate:** 0.25 ngày

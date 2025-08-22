@@ -360,3 +360,34 @@ Integrate tất cả firmware software components và perform testing.
 - [ ] Performance requirements met
 - [ ] Safety requirements met
 - [ ] Reliability requirements met
+
+---
+
+## 🎯 **Issue #FW-007: Expose Safety Latched State**
+
+### **Mô tả:**
+FE/BE cần `safety.latched` trong telemetry/status. FW cần cung cấp trường này từ state machine/safety manager.
+
+### **Requirements:**
+- [ ] Bổ sung flag `latched` trong safety status (HAL/state)
+- [ ] Đưa `latched` vào payload status/telemetry lên BE
+- [ ] Cập nhật tài liệu safety
+
+### **Acceptance Criteria:**
+- [ ] Telemetry có `latched` khi latch sau lỗi khẩn
+
+### **Priority:** Medium
+
+---
+
+## 🎯 **Issue #FW-008: Control Command Handler Mapping**
+
+### **Mô tả:**
+Chuẩn hóa mapping lệnh `moveTo/stop/dock/undock/resetLatch` theo API BE-008; đảm bảo guard an toàn.
+
+### **Tasks:**
+- [ ] Map lệnh và validate theo state
+- [ ] Hook E‑Stop/Interlock chặn lệnh nguy hiểm
+- [ ] Trả mã lỗi chuẩn cho BE
+
+### **Priority:** High
