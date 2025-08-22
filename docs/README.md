@@ -36,6 +36,23 @@ docs/
 │   ├── TELEMETRY_API.md
 │   ├── BE-02_COMPLETION_SUMMARY.md
 │   └── BACKEND_TEAM_QUICK_GUIDE.md  # ← Hướng dẫn Backend team
+├── design/                      # 🎨 Design System & UI/UX
+│   ├── DESIGN_SYSTEM.md         # ← Design tokens, colors, typography
+│   ├── COMPONENT_LIBRARY.md     # ← Reusable components
+│   └── ACCESSIBILITY.md         # ← WCAG 2.1 AA guidelines
+├── architecture/                # Architecture decisions
+│   └── decisions/               # ADR (Architecture Decision Records)
+│       ├── ADR-001-SYSTEM_ARCHITECTURE.md
+│       ├── ADR-002-AUTHENTICATION_SYSTEM.md
+│       ├── ADR-003-DATABASE_ARCHITECTURE.md
+│       ├── ADR-004-COMMUNICATION_PROTOCOLS.md
+│       ├── ADR-005-SAFETY_ARCHITECTURE.md
+│       ├── ADR-FE-01-ROUTING_ARCHITECTURE.md
+│       ├── ADR-FE-02-DATA_FETCHING.md
+│       ├── ADR-FE-03-CHARTING_LIBRARY.md
+│       ├── ADR-FE-04-DESIGN_SYSTEM.md
+│       ├── ADR-FE-05-INTERNATIONALIZATION.md
+│       └── ADR-FE-06-PWA_STRATEGY.md
 ├── dev_radxa/                   # Radxa development docs
 ├── specs/                       # Technical specifications
 │   ├── embedded_io_drivers.md
@@ -89,6 +106,10 @@ docs/
 - **File:** `tasks/FRONTEND_TEAM_QUICK_GUIDE.md`
 - **Status:** ✅ 100% COMPLETE (25/25 tasks)
 - **Achievement:** All tasks completed successfully!
+- **Design System:** ✅ Complete (`design/DESIGN_SYSTEM.md`)
+- **Component Library:** ✅ Complete (`design/COMPONENT_LIBRARY.md`)
+- **Accessibility:** ✅ Complete (`design/ACCESSIBILITY.md`)
+- **ADR Frontend:** ✅ Complete (6 ADR files)
 - **Cấu trúc docs:** Đã cập nhật với đường dẫn mới
 
 ---
@@ -98,6 +119,12 @@ docs/
 ### **Cấu trúc docs đã thay đổi hoàn toàn:**
 - **Tất cả docs** đã được gom về `/home/orangepi/OHT-50/docs/`
 - **Không còn** các thư mục docs lộn xộn
+
+### **🎨 Design System đã được bổ sung:**
+- **Design System:** `docs/design/DESIGN_SYSTEM.md` - Tokens, colors, typography
+- **Component Library:** `docs/design/COMPONENT_LIBRARY.md` - Reusable components
+- **Accessibility:** `docs/design/ACCESSIBILITY.md` - WCAG 2.1 AA guidelines
+- **Frontend ADR:** 6 ADR files trong `docs/architecture/decisions/`
 - **Chỉ có 1 thư mục docs** duy nhất
 
 ### **Đường dẫn mới (CẬP NHẬT):**
