@@ -13,22 +13,10 @@
 #define HAL_OTA_UPDATE_H
 
 /* Include dependencies */
+#include "hal_common.h"
 #include <stdint.h>
 #include <stdbool.h>
-
-/**
- * @file hal_ota_update.h
- * @brief OTA (Over-The-Air) Update HAL for OHT-50 Master Module
- * @version 1.0.0
- * @date 2025-01-27
- * @team FW
- * @task FW-06 (OTA Update System)
- */
-
-#ifndef HAL_OTA_UPDATE_H
-#define HAL_OTA_UPDATE_H
-
-#include "02-HAL/hal_common.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>

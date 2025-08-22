@@ -13,22 +13,9 @@
 #define HAL_CONFIG_PERSISTENCE_H
 
 /* Include dependencies */
+#include "hal_common.h"
 #include <stdint.h>
 #include <stdbool.h>
-
-/**
- * @file hal_config_persistence.h
- * @brief HAL header for Configuration Persistence System
- * @version 1.0.0
- * @date 2025-01-27
- * @team FIRMWARE
- * @task Task 3.2 (Configuration Persistence)
- */
-
-#ifndef HAL_CONFIG_PERSISTENCE_H
-#define HAL_CONFIG_PERSISTENCE_H
-
-#include "02-HAL/hal_common.h"
 #include <stdint.h>
 #include <stdbool.h>
 

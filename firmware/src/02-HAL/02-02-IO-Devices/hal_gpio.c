@@ -119,16 +119,7 @@ hal_status_t hal_gpio_get_statistics(gpio_statistics_t *statistics __attribute__
 hal_status_t hal_gpio_reset_statistics(void) { return HAL_STATUS_OK; }
 hal_status_t hal_gpio_health_check(void) { return HAL_STATUS_OK; }
 
-// Relay functions (stubs for now)
-hal_status_t hal_relay_init(const relay_config_t *config __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_deinit(void) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_set(uint8_t channel __attribute__((unused)), bool state __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_get(uint8_t channel __attribute__((unused)), bool *state __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_pulse(uint8_t channel __attribute__((unused)), uint32_t duration_ms __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_toggle(uint8_t channel __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_get_statistics(relay_statistics_t *statistics __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_reset_statistics(void) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_health_check(void) { return HAL_STATUS_OK; }
+// Relay functions removed - implemented in hal_relay.c
 
 // Utility functions (stubs for now)
 hal_status_t gpio_validate_config(const gpio_config_t *config __attribute__((unused))) { return HAL_STATUS_OK; }

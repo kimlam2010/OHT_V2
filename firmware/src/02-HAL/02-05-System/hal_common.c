@@ -372,3 +372,42 @@ hal_status_t hal_get_version(uint32_t *major, uint32_t *minor, uint32_t *patch) 
 const char* hal_get_version_string(void) {
     return HAL_VERSION_STRING;
 }
+
+// HAL module monitoring functions (stubs)
+hal_status_t hal_module_heartbeat_register(const char *module_name) {
+    (void)module_name;
+    return HAL_STATUS_OK;
+}
+
+hal_status_t hal_module_heartbeat_check(const char *module_name, bool *alive) {
+    (void)module_name;
+    if (alive != NULL) {
+        *alive = true;
+    }
+    return HAL_STATUS_OK;
+}
+
+hal_status_t hal_module_health_check(hal_module_health_t *health) {
+    if (health != NULL) {
+        health->status = HAL_DEVICE_STATUS_OK;
+        health->error_count = 0;
+        health->warning_count = 0;
+        health->last_check_time = hal_get_timestamp_us();
+    }
+    return HAL_STATUS_OK;
+}
+
+hal_status_t hal_module_timeout_detect(uint32_t timeout_ms) {
+    (void)timeout_ms;
+    return HAL_STATUS_OK;
+}
+
+// HAL safety functions (stubs)
+hal_status_t hal_safety_get_status(hal_safety_status_t *status) {
+    if (status != NULL) {
+        status->enabled = true;
+        status->state = HAL_SAFETY_STATE_SAFE;
+        status->last_check_time = hal_get_timestamp_us();
+    }
+    return HAL_STATUS_OK;
+}

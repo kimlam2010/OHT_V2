@@ -13,13 +13,9 @@
 #define HAL_ESTOP_H
 
 /* Include dependencies */
+#include "hal_common.h"
 #include <stdint.h>
 #include <stdbool.h>
-
-#ifndef HAL_ESTOP_H
-#define HAL_ESTOP_H
-
-#include "02-HAL/hal_common.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -46,34 +42,30 @@ typedef enum {
     ESTOP_FAULT_NONE = 0,
     ESTOP_FAULT_CHANNEL_OPEN,     // Channel open circuit
     ESTOP_FAULT_RESPONSE_TIMEOUT, // Response timeout
-    ESTOP_FAULT_MODULE_TIMEOUT,   // Module communication timeout
-    ESTOP_FAULT_HEARTBEAT_LOST,   // Module heartbeat lost
+    ESTOP_FAULT_CHANNEL_MISMATCH, // Channel mismatch (dual channel)
     ESTOP_FAULT_HARDWARE_ERROR    // Hardware error
 } estop_fault_t;
 
 // E-Stop Configuration Structure
 typedef struct {
-    uint8_t channel_pin;              // Single channel pin
+    uint8_t channel1_pin;             // Channel 1 pin
+    uint8_t channel2_pin;             // Channel 2 pin (for dual channel)
     uint32_t response_timeout_ms;     // Response timeout
     uint32_t debounce_time_ms;        // Debounce time
-    uint32_t module_timeout_ms;       // Module communication timeout
-    uint32_t heartbeat_interval_ms;   // Heartbeat check interval
+    bool dual_channel_required;       // Dual channel required
     bool auto_reset_enabled;          // Auto reset enabled
-    bool module_monitoring_enabled;   // Module monitoring enabled
 } estop_config_t;
 
 // E-Stop Status Structure
 typedef struct {
     estop_state_t state;              // Current state
     estop_fault_t fault;              // Current fault
-    bool channel_status;              // Channel status
-    bool module_communication_ok;     // Module communication status
+    bool channel1_status;             // Channel 1 status
+    bool channel2_status;             // Channel 2 status
     uint64_t last_trigger_time;       // Last trigger time
     uint64_t last_reset_time;         // Last reset time
-    uint64_t last_heartbeat_time;     // Last heartbeat time
     uint32_t trigger_count;           // Trigger count
     uint32_t fault_count;             // Fault count
-    uint32_t module_timeout_count;    // Module timeout count
 } estop_status_t;
 
 // E-Stop Event Callback
