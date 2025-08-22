@@ -830,6 +830,7 @@ static hal_status_t restore_primary_interface(void) {
     return perform_failover(g_network_manager.current_primary_interface);
 }
 
+__attribute__((unused))
 static hal_status_t update_interface_status(uint8_t interface_id) {
     if (interface_id >= NETWORK_MGR_MAX_INTERFACES || 
         !g_network_manager.interface_registered[interface_id]) {

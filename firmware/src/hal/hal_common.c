@@ -62,6 +62,7 @@ const char* hal_device_type_to_string(hal_device_type_t device_type) {
         case HAL_DEVICE_TYPE_UART: return "UART";
         case HAL_DEVICE_TYPE_GPIO: return "GPIO";
         case HAL_DEVICE_TYPE_CAN: return "CAN";
+        case HAL_DEVICE_TYPE_USB: return "USB";
         default: return "UNKNOWN";
     }
 }
@@ -220,6 +221,8 @@ hal_status_t hal_set_configuration(const hal_config_t *config) {
 
 // HAL device management functions
 hal_status_t hal_register_device(hal_device_type_t device_type, const char *device_name) {
+    (void)device_type; // Unused parameter
+    (void)device_name; // Unused parameter
     if (device_name == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
@@ -229,11 +232,13 @@ hal_status_t hal_register_device(hal_device_type_t device_type, const char *devi
 }
 
 hal_status_t hal_unregister_device(uint32_t device_id) {
+    (void)device_id; // Unused parameter
     // TODO: Implement device unregistration
     return HAL_STATUS_OK;
 }
 
 hal_status_t hal_get_device_info(uint32_t device_id, hal_device_info_t *device_info) {
+    (void)device_id; // Unused parameter
     if (device_info == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }

@@ -222,6 +222,16 @@
 
 ---
 
+## 👥 Assignments (Frontend Team)
+
+Ma trận đầy đủ: `docs/reports/ASSIGNMENTS_MATRIX.md`.
+
+- Owner: FE Lead (UI Dashboard)
+- ETA: Phase 2 support W5–W8
+- Dependencies: Backend APIs (BE-04..08)
+- DoD: UI wired to APIs; real-time telemetry; auth flows; docs
+- Tests: UI integration, e2e with BE, performance (<200ms render)
+
 **🎨 Frontend Team: CONGRATULATIONS! 100% COMPLETE! 🎉**
 
 **📚 All deliverables completed and in support mode! 🚀**

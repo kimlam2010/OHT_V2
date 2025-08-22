@@ -96,7 +96,8 @@ typedef enum {
     HAL_DEVICE_TYPE_ESTOP = 6,            // Emergency stop
     HAL_DEVICE_TYPE_UART = 7,             // UART interface
     HAL_DEVICE_TYPE_GPIO = 8,             // GPIO interface
-    HAL_DEVICE_TYPE_CAN = 9               // CAN interface
+    HAL_DEVICE_TYPE_CAN = 9,              // CAN interface
+    HAL_DEVICE_TYPE_USB = 10              // USB interface
 } hal_device_type_t;
 
 // HAL device information structure

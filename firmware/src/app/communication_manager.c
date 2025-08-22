@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "communication_manager.h"
 #include "hal_common.h"
-#include "module_registry.h"
+#include "module_manager.h"
 
 // Communication Manager instance
 static struct {
@@ -58,8 +58,8 @@ static const comm_mgr_config_t default_config = {
     .data_bits = 8,
     .stop_bits = 1,
     .parity = 0,  // No parity
-    .timeout_ms = 1500,  // Increased to match EMBED team's successful test
-    .retry_count = 2,
+    .timeout_ms = 1000,  // Match COMMUNICATION_SPEC RS485_TIMEOUT_MS
+    .retry_count = 3,    // Match COMMUNICATION_SPEC MAX_RETRY_COUNT
     .retry_delay_ms = 100,
     .modbus_slave_id = 1,
     .enable_crc_check = true,

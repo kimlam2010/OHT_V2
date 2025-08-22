@@ -1,218 +1,201 @@
-# 🧪 SIM TEAM QUICK GUIDE
+# SIMULATION TEAM QUICK GUIDE - OHT-50 Master Module
 
-**Team:** SIM (Simulation & Testing)  
-**Status:** 📋 PENDING (0% - 0/5 tasks completed)  
-**Version:** 1.0 - Team Progress Guide
-
----
-
-## 📁 **TÀI LIỆU CỦA BẠN**
-
-### **📋 Task Management:**
-- **Main tasks:** `PM_TASKS_OHT-50.md`
-- **Master scheduler:** `MASTER_SCHEDULER_OHT-50.md`
-- **Status tracking:** `PM_TASKS_OHT-50.md`
-
-### **🔧 Technical Specifications:**
-- **HIL Testing:** `../specs/bench_hil_testing.md`
-- **Performance Testing:** `../specs/production_test_checklist.md`
-- **System Testing:** `../specs/embedded_io_drivers.md`
+**Phiên bản:** v3.0  
+**Ngày cập nhật:** 2024-12-19  
+**Team:** Simulation Team  
+**Trạng thái:** 📋 READY TO START  
+**Tiến độ:** 0% Complete
 
 ---
 
-## 📋 **TASK PROGRESS TRACKING**
+## 🎯 **TỔNG QUAN**
 
-### **📊 Progress Overview:**
-- **Tổng số tasks:** 5 tasks
-- **Hoàn thành:** 0/5 (0%)
-- **Đang thực hiện:** 0/5 (0%)
-- **Chưa bắt đầu:** 5/5 (100%)
-- **Tiến độ tổng thể:** 0% 📋
+### **Mục tiêu hiện tại:**
+- Implement simulation framework theo specifications
+- Tích hợp với backend và firmware
+- Đảm bảo accuracy và performance
+- Đạt tiêu chí Gate E (Sim & V&V)
 
-### **🔍 Task Detail Tracking:**
-
-| **Task ID** | **Mô tả** | **Kết quả mong muốn** | **Dependencies** | **Timeline** | **Status** | **Completion %** | **Notes** |
-|-------------|-----------|----------------------|------------------|--------------|------------|------------------|-----------|
-| **SIM-01** | Simulation framework | Sim framework, test environment | FW-15 | 3 days | 📋 Blocked | 0% | **BLOCKED: FW-15** |
-| **SIM-02** | Hardware simulation | HW sim, HIL testing setup | EM-12, SIM-01 | 4 days | 📋 Blocked | 0% | **BLOCKED: SIM-01** |
-| **SIM-03** | System testing | System tests, end-to-end validation | All teams | 5 days | 📋 Blocked | 0% | **BLOCKED: All teams** |
-| **SIM-04** | Performance testing | Perf tests, benchmark validation | SIM-03 | 3 days | 📋 Blocked | 0% | **BLOCKED: SIM-03** |
-| **SIM-05** | Quality assurance | QA report, final validation | SIM-04 | 2 days | 📋 Blocked | 0% | **BLOCKED: SIM-04** |
-
-### **⚠️ Blockers & Dependencies:**
-- **Critical Blocker:** FW-15 (Firmware final integration) - blocks SIM-01
-- **Secondary Blockers:** All teams completion needed for SIM-03
-- **Chain Dependencies:** SIM-01 → SIM-02 → SIM-03 → SIM-04 → SIM-05
-
-### **🔥 Critical Path Priority:**
-1. **SIM-01** (Simulation Framework) - 📋 Blocked - 3 days - **CRITICAL**
-2. **SIM-02** (Hardware Simulation) - 📋 Blocked - 4 days - **HIGH**
-3. **SIM-03** (System Testing) - 📋 Blocked - 5 days - **CRITICAL**
-4. **SIM-04** (Performance Testing) - 📋 Blocked - 3 days - **HIGH**
-5. **SIM-05** (Quality Assurance) - 📋 Blocked - 2 days - **CRITICAL**
-
-### **📈 Team Performance Metrics:**
-- **Readiness Level:** 80% (Preparation phase complete)
-- **Dependencies Status:** 🔴 Critical (All teams needed)
-- **Framework Preparation:** 90% (Tools and environment ready)
-- **Test Planning:** 95% (Test scenarios documented)
-- **Team Availability:** 100% (Ready to start immediately)
+### **Trạng thái hiện tại:**
+- ✅ Dependencies cleared (Backend 85% complete)
+- 📋 Ready to start development Week 7
+- 🔧 Simulation framework design needed
+- 🔧 System testing strategy needed
+- 🔧 Performance validation needed
 
 ---
 
-## 🎯 **TEAM OBJECTIVES:**
+## 📋 **TASK LIST**
 
-### **🎯 Mục tiêu:**
-- System simulation development
-- Comprehensive testing framework
-- Performance validation
-- Quality assurance
+### **🚨 CRITICAL TASKS (2/2)**
 
-### **📈 Kết quả mong muốn:**
-- **Test coverage:** > 90% code coverage
-- **Performance validation:** All requirements met
-- **Quality assurance:** Zero critical defects
-- **System reliability:** 99.9% uptime
+#### **SIM-01: Simulation Framework** 🚨
+- **Mô tả:** Comprehensive simulation framework implementation
+- **Ưu tiên:** HIGH
+- **Thời gian:** 2 tuần (Week 7-8)
+- **Features:**
+  - 1D motion simulation theo ray
+  - Hardware-in-the-loop (HIL) simulation
+  - Module behavior simulation
+  - Safety system simulation
+  - Performance monitoring
+  - Real-time simulation
+- **Dependencies:** Backend API completion (BE-13, BE-14)
+- **Files:** `sim/simulation_framework.py`
 
-### **📝 Hướng dẫn cụ thể:**
-- **Simulation:** Hardware-in-the-loop testing
-- **Testing:** Automated test suites
-- **Validation:** Performance benchmarking
-- **Reporting:** Quality metrics
-
-### **🎯 Trách nhiệm:**
-- **SIM Lead:** Testing strategy
-- **SIM Engineer:** Test development
-- **SIM Analyst:** Performance analysis
-
----
-
-## 🔗 **DEPENDENCIES & INTEGRATION:**
-
-### **⚠️ Dependencies Required:**
-- **EMBED Team:** 100% complete - Hardware ready ✅
-- **FW Team:** Need 100% complete - Firmware ready (waiting for FW-15) ⏳
-- **BE Team:** Need 100% complete - Backend ready (waiting for BE-17) ⏳
-- **FE Team:** 100% complete - Frontend ready ✅
-
-### **🔄 Integration Points:**
-- **All Teams:** Comprehensive system testing
-- **Hardware:** HIL testing với EMBED deliverables
-- **Software:** Integration testing với FW/BE/FE
-- **Performance:** Benchmark testing cho all components
-
-### **📊 Current Blockers:**
-- **SIM-01:** Waiting for FW-15 (Firmware final integration)
-- **SIM-02:** Waiting for EM-12 (LiDAR system) ✅ - CLEARED
-- **SIM-03:** Waiting for all teams completion
-- **SIM-04:** Waiting for SIM-03 completion
-- **SIM-05:** Waiting for SIM-04 completion
+#### **SIM-02: System Testing** 🚨
+- **Mô tả:** Comprehensive system testing và validation
+- **Ưu tiên:** HIGH
+- **Thời gian:** 1 tuần (Week 8)
+- **Features:**
+  - End-to-end system testing
+  - Performance testing
+  - Stress testing
+  - Integration testing
+  - Validation testing
+  - Test reporting
+- **Dependencies:** SIM-01, Backend completion (BE-20)
+- **Files:** `sim/system_tests.py`
 
 ---
 
-## 🎯 **NEXT ACTIONS:**
+## 🔧 **TECHNICAL SPECIFICATIONS**
 
-### **📋 Preparation (While Waiting):**
-1. **Test planning** - Develop test strategies
-2. **Tool preparation** - Setup testing frameworks
-3. **Environment setup** - Prepare testing environment
-4. **Documentation** - Create test documentation templates
+### **Simulation Requirements:**
+- **Platform:** Python-based simulation framework
+- **Real-time:** Real-time simulation capability
+- **Accuracy:** High accuracy simulation models
+- **Performance:** Fast simulation execution
+- **Integration:** Hardware-in-the-loop support
 
-### **🚀 Immediate (After Dependencies Clear):**
-1. **SIM-01 start** - Simulation framework development (3 days)
-2. **SIM-02 start** - Hardware simulation setup (4 days)
-3. **SIM-03 start** - System testing implementation (5 days)
+### **Simulation Models:**
+- **Motion Model:** 1D motion along rail
+- **Hardware Model:** Hardware behavior simulation
+- **Module Model:** Module communication simulation
+- **Safety Model:** Safety system simulation
+- **Network Model:** Communication simulation
 
-### **📈 Short-term (Next 2 weeks):**
-1. **SIM-04** - Performance testing và benchmarking
-2. **SIM-05** - Quality assurance và final reports
-
-### **🎯 Long-term (Next month):**
-1. **Complete testing** - All test suites
-2. **Quality validation** - Final quality assurance
-3. **Documentation** - Testing documentation
-
----
-
-## 📈 **SUCCESS METRICS:**
-
-### **Technical Metrics:**
-- **Test coverage:** > 90% code coverage
-- **Performance validation:** All requirements met
-- **Quality assurance:** Zero critical defects
-- **System reliability:** 99.9% uptime
-
-### **Process Metrics:**
-- **Task completion:** 100% on schedule
-- **Test automation:** 100% automated
-- **Documentation:** 100% complete
-- **Quality standards:** Industry best practices
+### **Performance Requirements:**
+- **Simulation speed:** Real-time or faster
+- **Accuracy:** > 95% accuracy
+- **Memory usage:** < 1GB
+- **CPU usage:** < 80%
+- **Response time:** < 100ms
 
 ---
 
-## 📞 **Support & Communication:**
+## 📊 **PERFORMANCE METRICS**
 
-### **PM Communication:**
-- **Status updates:** Update trong `PM_TASKS_OHT-50.md`
-- **Dependency tracking:** Monitor other teams progress
-- **Preparation reports:** Regular preparation status
+### **Current Performance:**
+- **Simulation accuracy:** N/A (not implemented)
+- **Simulation speed:** N/A (not implemented)
+- **Memory usage:** N/A (not implemented)
+- **CPU usage:** N/A (not implemented)
 
-### **Team Coordination:**
-- **All Teams:** Monitor completion status for readiness
-- **EMBED Team:** HIL testing coordination
-- **FW Team:** Integration testing planning
-- **BE Team:** API testing coordination
-- **FE Team:** UI testing support
-
----
-
-## 🚨 **Important Notes:**
-
-### **1. Dependency Status:**
-- **EMBED Team:** ✅ 100% complete - Ready
-- **FE Team:** ✅ 100% complete - Ready
-- **FW Team:** ⏳ 20% complete - Need FW-15
-- **BE Team:** ⏳ 11.8% complete - Need BE-17
-
-### **2. Preparation Activities:**
-- **Test framework setup:** In progress
-- **Environment preparation:** Ready to start
-- **Documentation templates:** Available
-- **Resource allocation:** Team ready
-
-### **3. Testing Strategy:**
-- **HIL Testing:** Hardware-in-the-loop với EMBED
-- **Integration Testing:** Cross-team system validation
-- **Performance Testing:** Benchmark all components
-- **Quality Assurance:** Comprehensive validation
+### **Target Performance:**
+- **Simulation accuracy:** > 95%
+- **Simulation speed:** Real-time or faster
+- **Memory usage:** < 1GB
+- **CPU usage:** < 80%
 
 ---
 
-## 🔧 **TESTING FRAMEWORK PREPARATION:**
+## 🔗 **INTEGRATION POINTS**
 
-### **📋 Test Categories:**
-1. **Unit Testing:** Individual component testing
-2. **Integration Testing:** Cross-team integration
-3. **System Testing:** End-to-end validation
-4. **Performance Testing:** Benchmark validation
-5. **Quality Assurance:** Final validation
+### **Dependencies:**
+- **Backend Team:** API simulation integration (85% complete)
+- **FW Team:** Firmware simulation integration (61% complete)
+- **Frontend Team:** UI simulation integration (83% complete)
 
-### **🧪 Testing Tools:**
-- **Simulation Framework:** Custom simulation environment
-- **HIL Testing:** Hardware-in-the-loop setup
-- **Automated Testing:** Automated test suites
-- **Performance Monitoring:** Benchmark tools
-- **Quality Metrics:** Quality assessment tools
-
-### **📊 Test Planning:**
-- **Test scenarios:** Comprehensive scenario coverage
-- **Test data:** Realistic test data sets
-- **Test automation:** Fully automated execution
-- **Test reporting:** Detailed reporting system
-- **Test validation:** Quality validation procedures
+### **Deliverables:**
+- **Simulation Framework:** Complete simulation system
+- **Test Suite:** Comprehensive test suite
+- **Validation Reports:** System validation reports
+- **Performance Reports:** Performance analysis reports
 
 ---
 
-**🧪 SIM Team: Prepared and waiting for dependencies! ⏳**
+## 📋 **NEXT ACTIONS**
 
-**📋 Next Action:** Monitor dependencies và continue preparation until teams are ready! 🚀**
+### **Immediate (Week 7):**
+1. **Start simulation framework** (SIM-01)
+2. **Design simulation models**
+3. **Setup development environment**
+
+### **Short Term (Week 7-8):**
+1. **Complete simulation framework** (SIM-01)
+2. **Begin system testing** (SIM-02)
+3. **Integration testing**
+
+### **Medium Term (Week 8):**
+1. **Complete system testing** (SIM-02)
+2. **Performance optimization**
+3. **Final validation**
+
+---
+
+## 📚 **REFERENCES**
+
+### **Specifications:**
+- `docs/FIRMWARE/01_SPECIFICATIONS/SAFETY_SPEC.md`
+- `docs/FIRMWARE/01_SPECIFICATIONS/MODULE_MANAGEMENT_SPEC.md`
+- `docs/FIRMWARE/01_SPECIFICATIONS/COMMUNICATION_SPEC.md`
+- `docs/FIRMWARE/01_SPECIFICATIONS/STATE_MACHINE_SPEC.md`
+
+### **Architecture:**
+- `docs/FIRMWARE/02_ARCHITECTURE/safety_architecture.md`
+- `docs/FIRMWARE/02_ARCHITECTURE/MODULES/module_architecture.md`
+- `docs/FIRMWARE/02_ARCHITECTURE/SERVICES/communication_architecture.md`
+- `docs/FIRMWARE/02_ARCHITECTURE/state_machine.md`
+
+### **Implementation:**
+- `sim/` - Simulation code
+- `sim/tests/` - Test suite
+- `sim/docs/` - Documentation
+- `sim/reports/` - Reports
+
+---
+
+## 👥 Assignments (Simulation Team)
+
+Ma trận đầy đủ: `docs/reports/ASSIGNMENTS_MATRIX.md`.
+
+- Owner: SIM Lead
+- ETA: SIM-01 W7–W8; SIM-02 W8
+- Dependencies: Backend API completion (BE-13, BE-14, BE-20)
+- DoD: Simulation framework; HIL hooks; reports
+- Tests: Unit models, integration, performance, fault injection
+
+## 📝 **CHANGELOG**
+
+### **v3.0 (2024-12-19):**
+- ✅ Updated based on actual Backend team progress
+- ✅ Updated dependencies status (Backend 85% complete)
+- ✅ Added detailed task breakdown
+- ✅ Added performance metrics
+- ✅ Added integration points
+- ✅ Added technical specifications
+- ✅ Added simulation requirements
+- ✅ Updated timeline (Week 7-8)
+
+### **v2.2 (2025-01-28):**
+- ✅ Updated based on specifications analysis
+- ✅ Added detailed task breakdown
+- ✅ Added performance metrics
+- ✅ Added integration points
+- ✅ Added technical specifications
+- ✅ Added simulation requirements
+
+### **v2.1 (2025-01-28):**
+- ✅ Updated dependencies status
+- ✅ Added FW integration tasks
+- ✅ Updated completion status to 0%
+
+### **v2.0 (2025-01-27):**
+- ✅ Initial SIM team quick guide
+- ✅ Basic task structure
+- ✅ Team responsibilities
+
+---
+
+**📋 Status:** Ready to start Week 7, waiting for Backend API completion dependencies.

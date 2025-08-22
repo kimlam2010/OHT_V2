@@ -626,6 +626,7 @@ static hal_status_t handle_safety_event(safety_event_t event) {
 
 // E-Stop callback function
 static void estop_callback(estop_state_t state, estop_fault_t fault) {
+    (void)fault; // Unused parameter
     if (!g_safety_manager.initialized) {
         return;
     }

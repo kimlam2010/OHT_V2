@@ -650,7 +650,7 @@ static hal_status_t gpio_get_value(uint8_t pin, bool *value) {
     }
     
     int val;
-    fscanf(fp, "%d", &val);
+    (void)fscanf(fp, "%d", &val);
     fclose(fp);
     
     *value = (val != 0);
@@ -668,6 +668,7 @@ static void* relay_monitor_thread_func(void *arg) {
     return NULL;
 }
 
+__attribute__((unused))
 static void relay_handle_fault(relay_fault_t fault) {
     printf("Relay fault detected: %d\n", fault);
     

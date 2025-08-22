@@ -17,7 +17,7 @@
 #include "system_state_machine.h"
 #include "safety_manager.h"
 #include "communication_manager.h"
-#include "module_registry.h"
+#include "module_manager.h"
 #include "power_module_handler.h"
 
 static volatile sig_atomic_t g_should_run = 1;

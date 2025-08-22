@@ -499,7 +499,7 @@ static hal_status_t gpio_get_value(uint8_t pin, bool *value) {
     }
     
     int val;
-    fscanf(fp, "%d", &val);
+    (void)fscanf(fp, "%d", &val);
     fclose(fp);
     
     *value = (val != 0);

@@ -104,6 +104,7 @@ static bool transition_condition_safety_ok(void) {
     return g_state_machine.safety_ok;
 }
 
+__attribute__((unused))
 static bool transition_condition_system_ready(void) {
     return g_state_machine.system_ready;
 }

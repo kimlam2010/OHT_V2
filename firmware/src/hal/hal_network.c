@@ -865,6 +865,7 @@ static uint64_t get_timestamp_ms(void) {
     return (uint64_t)tv.tv_sec * 1000 + (uint64_t)tv.tv_usec / 1000;
 }
 
+__attribute__((unused))
 static void* network_monitor_thread_func(void *arg) {
     (void)arg; // Unused parameter
     

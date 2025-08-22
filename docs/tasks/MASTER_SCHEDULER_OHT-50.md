@@ -1,353 +1,432 @@
-# 🎯 MASTER SCHEDULER - OHT-50 PROJECT TASK MANAGEMENT
-
-## 📋 **TỔNG QUAN DỰ ÁN**
+# MASTER SCHEDULER - OHT-50 Master Module
 
 **Phiên bản:** v3.0  
-**Ngày cập nhật:** 2025-01-27  
-**CTO:** OHT-50 Chief Technology Officer  
-**Status:** 🔄 COMPREHENSIVE UPDATE
+**Ngày cập nhật:** 2024-12-19  
+**PM:** Project Manager  
+**Trạng thái:** 🎯 PRIORITY EXECUTION  
+**Tiến độ tổng thể:** 75% Complete
 
 ---
 
-## 🎯 **PROJECT STATUS OVERVIEW**
+## 🎯 **TỔNG QUAN DỰ ÁN**
 
-### **📊 Tổng quan tiến độ:**
-- **Tổng số task:** 65 tasks across 6 teams
-- **Hoàn thành:** 25/65 (38.5%)
-- **Đang thực hiện:** 8/65 (12.3%)
-- **Chưa bắt đầu:** 32/65 (49.2%)
-- **Tiến độ tổng thể:** 38.5%
+### **Mục tiêu hiện tại:**
+- **Phase 1 (Weeks 1-4):** ✅ COMPLETED - EMBED + FW Teams đã hoàn thành nền tảng
+- **Phase 2 (Weeks 5-8):** 🔧 ACTIVE - Backend + Frontend Teams đang phát triển
+- Đạt Gate D (Backend & Frontend Integration) và Gate E (Sim & V&V)
+- Đảm bảo quality và performance
 
-### **🏢 Team Status Matrix:**
-
-| **Team** | **Total Tasks** | **Completed** | **In Progress** | **Pending** | **Progress %** | **Status** |
-|----------|----------------|---------------|-----------------|-------------|----------------|------------|
-| **PM Team** | 8 | 3 | 2 | 3 | 37.5% | 🔄 Active |
-| **EMBED Team** | 12 | 12 | 0 | 0 | 100% | ✅ Complete |
-| **FW Team** | 15 | 3 | 4 | 8 | 20% | 🔄 Active |
-| **BE Team** | 17 | 2 | 4 | 11 | 11.8% | 🔄 Active |
-| **FE Team** | 8 | 8 | 0 | 0 | 100% | ✅ Complete |
-| **SIM Team** | 5 | 0 | 0 | 5 | 0% | 📋 Pending |
+### **Trạng thái hiện tại:**
+- ✅ Firmware source code analysis complete
+- ✅ 20 test executables working
+- ✅ **Gate C COMPLETED** - FW Team đã hoàn thành Phase 1 core deliverables
+- ✅ **Backend Team 85% complete** - Core infrastructure và API endpoints hoàn thành
+- 🔧 **ACTIVE:** Backend business logic implementation
+- 🎯 **NEW:** Production deployment preparation
 
 ---
 
-## 🏢 **TEAM SCHEDULER DETAILS**
+## 📊 **PROJECT STATUS OVERVIEW**
 
-### **📋 PM TEAM - PROJECT MANAGEMENT**
+### **Tổng quan tiến độ:**
+- **Tổng số tasks:** 80 tasks (updated)
+- **Hoàn thành:** 60/80 (75%)
+- **Đang thực hiện:** 15/80 (19%)
+- **Chưa bắt đầu:** 5/80 (6%)
+- **Tiến độ tổng thể:** 75% 🎯
 
-#### **🎯 Mục tiêu:**
-- Quản lý tổng thể dự án OHT-50 Master Module
-- Đảm bảo tiến độ và chất lượng deliverables
-- Phối hợp giữa các teams và stakeholders
-- Risk management và issue resolution
+### **Team Status Matrix:**
 
-#### **📊 Task Status:**
-
-| **Task ID** | **Responsible** | **Description** | **Deliverables** | **Dependencies** | **Timeline** | **Status** | **Priority** |
-|-------------|----------------|-----------------|------------------|------------------|--------------|------------|--------------|
-| **PM-01** | PM Lead | Project planning & setup | Project plan, timeline | — | 1 week | ✅ Complete | 🔥 High |
-| **PM-02** | PM Lead | Team coordination | Team structure, roles | PM-01 | Ongoing | 🔄 Active | 🔥 High |
-| **PM-03** | PM Lead | Documentation management | Docs structure, templates | PM-01 | Ongoing | 🔄 Active | 🔥 High |
-| **PM-04** | PM Lead | Risk management | Risk register, mitigation | PM-01 | Ongoing | 📋 Pending | 🟡 Medium |
-| **PM-05** | PM Lead | Quality assurance | QA process, standards | PM-02 | 2 weeks | 📋 Pending | 🟡 Medium |
-| **PM-06** | PM Lead | Stakeholder communication | Communication plan | PM-01 | Ongoing | 📋 Pending | 🟡 Medium |
-| **PM-07** | PM Lead | Budget & resource management | Budget tracking | PM-01 | Ongoing | 📋 Pending | 🟡 Medium |
-| **PM-08** | PM Lead | Project closure | Final report, lessons learned | All teams | 1 week | 📋 Pending | 🔥 High |
-
-#### **📈 Kết quả mong muốn:**
-- **Project success:** 100% deliverables on time
-- **Team satisfaction:** High satisfaction scores
-- **Stakeholder alignment:** Clear communication
-- **Risk mitigation:** Zero critical risks
-
-#### **📝 Hướng dẫn cụ thể:**
-- **Daily standups:** 9:00 AM daily
-- **Weekly reviews:** Friday 2:00 PM
-- **Monthly reports:** End of month
-- **Risk reviews:** Bi-weekly
-
-#### **🎯 Trách nhiệm:**
-- **PM Lead:** Overall project management
-- **PM Coordinator:** Team coordination
-- **PM Analyst:** Data analysis và reporting
+| **Team** | **Total Tasks** | **Completed** | **In Progress** | **Pending** | **Completion %** | **Status** | **Priority** |
+|----------|----------------|---------------|-----------------|-------------|------------------|------------|--------------|
+| **EMBED** | 8 | 8 | 0 | 0 | 100% | ✅ COMPLETE | 🎯 **PHASE 1** |
+| **FW** | 33 | 20 | 13 | 0 | 61% | 🔧 ACTIVE | 🎯 **PHASE 1** |
+| **Backend** | 20 | 12 | 3 | 5 | 85% | 🔧 **ACTIVE** | **PHASE 2** |
+| **Frontend** | 12 | 10 | 0 | 2 | 83% | ✅ NEAR COMPLETE | **PHASE 2** |
+| **SIM** | 2 | 0 | 0 | 2 | 0% | 📋 PENDING | **PHASE 2** |
+| **PM** | 10 | 8 | 0 | 2 | 80% | ✅ NEAR COMPLETE | 🎯 **ACTIVE** |
 
 ---
 
-### **🔧 EMBED TEAM - HARDWARE & DRIVERS**
+## 🔄 **GATE PROGRESS**
 
-#### **🎯 Mục tiêu:**
-- Hardware bring-up cho Orange Pi 5B platform
-- Driver development và HAL implementation
-- Safety system integration
-- Hardware validation và testing
+### **Gate Status:**
+- **Gate A (Architecture):** ✅ COMPLETE
+- **Gate B (Hardware & Safety):** ✅ COMPLETE
+- **Gate C (Drivers & Services):** ✅ **COMPLETED** - **PHASE 1 DONE**
+- **Gate D (Backend & Frontend):** 🔧 **IN PROGRESS** - **PHASE 2**
+- **Gate E (Sim & V&V):** 📋 PENDING - **PHASE 2**
+- **Gate R (Release):** 📋 PENDING
 
-#### **📊 Task Status:**
-
-| **Task ID** | **Responsible** | **Description** | **Deliverables** | **Dependencies** | **Timeline** | **Status** | **Priority** |
-|-------------|----------------|-----------------|------------------|------------------|--------------|------------|--------------|
-| **EM-01** | EMBED Lead | Hardware bring-up | Platform ready | — | 2 weeks | ✅ Complete | 🔥 High |
-| **EM-02** | EMBED Engineer | RS485 transceiver | UART1 RS485 ready | EM-01 | 2 weeks | ✅ Complete | 🔥 High |
-| **EM-03** | EMBED Engineer | UART/CAN init + DMA | HAL interface | EM-02 | 1 week | ✅ Complete | 🔥 High |
-| **EM-04** | EMBED Engineer | GPIO LED control | LED system ready | EM-01 | 1 week | ✅ Complete | 🔥 High |
-| **EM-05** | EMBED Engineer | E-Stop safety system | Safety system ready | EM-01 | 2 weeks | ✅ Complete | 🔥 High |
-| **EM-06** | EMBED Engineer | Relay output control | Relay system ready | EM-01 | 1 week | ✅ Complete | 🔥 High |
-| **EM-07** | EMBED Engineer | Network interfaces | Ethernet/WiFi ready | EM-01 | 2 weeks | ✅ Complete | 🔥 High |
-| **EM-08** | EMBED Engineer | USB debug interface | Debug interface ready | EM-01 | 1 week | ✅ Complete | 🔥 High |
-| **EM-09** | EMBED Engineer | Device tree overlays | DT overlays ready | EM-01 | 1 week | ✅ Complete | 🔥 High |
-| **EM-10** | EMBED Engineer | GPIO1_D3/D2 offsets | GPIO mapping ready | EM-01 | 1 week | ✅ Complete | 🔥 High |
-| **EM-11** | EMBED Engineer | UART1 verification | UART1 ready | EM-02 | 1 week | ✅ Complete | 🔥 High |
-| **EM-12** | EMBED Engineer | LiDAR driver & USB | LiDAR system ready | EM-08 | 2 weeks | ✅ Complete | 🔥 High |
-
-#### **📈 Kết quả mong muốn:**
-- **Hardware reliability:** 99.9% uptime
-- **Driver stability:** Zero critical bugs
-- **Safety compliance:** SIL2 standards met
-- **Performance:** < 100ms response time
-
-#### **📝 Hướng dẫn cụ thể:**
-- **Hardware testing:** Automated test suite
-- **Driver validation:** HIL testing
-- **Safety validation:** SIL2 compliance testing
-- **Documentation:** Complete technical docs
-
-#### **🎯 Trách nhiệm:**
-- **EMBED Lead:** Hardware architecture
-- **EMBED Engineer:** Driver development
-- **EMBED Tester:** Hardware validation
+### **Gate D Requirements (Backend & Frontend Integration) - PHASE 2:**
+- ✅ Backend core infrastructure (FastAPI, CI/CD, Testing)
+- ✅ API endpoints chính (Config, Telemetry, Auth, Center)
+- 🔧 Backend business logic implementation (60% complete)
+- 🔧 Production deployment preparation
+- 📋 Frontend integration testing
+- 📋 End-to-end system validation
 
 ---
 
-### **⚙️ FW TEAM - FIRMWARE & REAL-TIME CONTROL**
+## 🎯 **CRITICAL PATH ANALYSIS - PHASE 2**
 
-#### **🎯 Mục tiêu:**
-- Real-time firmware development
-- Control system implementation
-- Safety mechanisms và protocols
-- System integration và optimization
+### **Current Critical Path (Weeks 5-8):** 🔧 ACTIVE
+1. **BE-13:** Business Logic Implementation (Week 5-6) - 🔧 60% COMPLETE
+2. **BE-14:** Advanced Testing (Week 6) - 🔧 40% COMPLETE
+3. **BE-16:** Production Deployment (Week 7) - 📋 PENDING
+4. **BE-20:** Final Integration (Week 8) - 📋 PENDING
+5. **SIM-01:** Simulation framework (Week 7-8) - 📋 PENDING
 
-#### **📊 Task Status:**
-
-| **Task ID** | **Responsible** | **Description** | **Deliverables** | **Dependencies** | **Timeline** | **Status** | **Priority** |
-|-------------|----------------|-----------------|------------------|------------------|--------------|------------|--------------|
-| **FW-01** | FW Lead | Framework foundation | Real-time scheduler | EM-01 | 3 days | ✅ Complete | 🔥 High |
-| **FW-02** | FW Engineer | HAL abstraction | HAL interface | EM-02 | 4 days | ✅ Complete | 🔥 High |
-| **FW-03** | FW Engineer | State machine | State machine | FW-01 | 3 days | 🔄 Active | 🔥 High |
-| **FW-04** | FW Engineer | Control loop | Control system | FW-02 | 4 days | 📋 Pending | 🔥 High |
-| **FW-05** | FW Engineer | Safety mechanisms | Safety system | FW-03 | 3 days | 📋 Pending | 🔥 High |
-| **FW-06** | FW Engineer | Communication stack | Comms protocol | FW-07 | 2 days | 📋 Pending | 🔥 High |
-| **FW-07** | FW Engineer | RS485 protocol | RS485 protocol | EM-02 | 3 days | ✅ Complete | 🔥 High |
-| **FW-08** | FW Engineer | Configuration system | Config system | FW-02 | 2 days | 📋 Pending | 🟡 Medium |
-| **FW-09** | FW Engineer | E-Stop & interlock | Safety system | FW-05 | 2 days | 📋 Pending | 🔥 High |
-| **FW-10** | FW Engineer | Unit tests | Test suite | FW-01-FW-09 | 3 days | 📋 Pending | 🟡 Medium |
-| **FW-11** | FW Engineer | LiDAR integration | LiDAR system | EM-12 | 3 days | 📋 Pending | 🔥 High |
-| **FW-12** | FW Engineer | Integration testing | Integration test | FW-10 | 2 days | 📋 Pending | 🟡 Medium |
-| **FW-13** | FW Engineer | Performance optimization | Performance test | FW-11 | 2 days | 📋 Pending | 🟡 Medium |
-| **FW-14** | FW Engineer | Documentation | FW docs | FW-12 | 1 day | 📋 Pending | 🟡 Medium |
-| **FW-15** | FW Lead | Final integration | FW release | FW-13 | 1 day | 📋 Pending | 🔥 High |
-
-#### **📈 Kết quả mong muốn:**
-- **Real-time performance:** < 1ms control loop
-- **Safety compliance:** SIL2 functional safety
-- **Communication reliability:** < 0.1% packet loss
-- **System stability:** 99.9% uptime
-
-#### **📝 Hướng dẫn cụ thể:**
-- **Development:** Real-time C/C++ development
-- **Testing:** Unit tests, integration tests
-- **Validation:** HIL testing, performance testing
-- **Documentation:** API docs, technical specs
-
-#### **🎯 Trách nhiệm:**
-- **FW Lead:** Architecture và coordination
-- **FW Engineer:** Module development
-- **FW Tester:** Testing và validation
+### **Phase 1 Critical Path (Weeks 1-4):** ✅ COMPLETED
+1. **EMBED-01:** GPIO Pin Mapping (Week 1) - ✅ COMPLETED
+2. **EMBED-02:** Hardware Bring-up (Week 1) - ✅ COMPLETED
+3. **EMBED-03:** Safety Hardware (Week 2) - ✅ COMPLETED
+4. **FW-21:** Fix compiler warnings (Week 1) - ✅ COMPLETED
+5. **FW-22:** Hardware pin verification (Week 1) - ✅ COMPLETED
+6. **FW-23:** Add missing features (Week 3-4) - ✅ COMPLETED
+7. **EMBED-04:** RS485 Hardware (Week 3) - ✅ COMPLETED
+8. **EMBED-05:** Network Hardware (Week 3) - ✅ COMPLETED
+9. **FW-24:** State Machine (Week 3) - ✅ COMPLETED
+10. **FW-25:** Module Management (Week 4) - ✅ COMPLETED
 
 ---
 
-### **🌐 BE TEAM - BACKEND & SERVICES**
+## 📋 **PHASE 2 PRIORITY TASKS**
 
-#### **🎯 Mục tiêu:**
-- API development và services
-- Database integration và management
-- Security implementation
-- System scalability và performance
+### **Backend Team Priority Tasks:**
 
-#### **📊 Task Status:**
+#### **Week 5-6: Core Development**
+- **BE-13:** Business Logic Implementation (CRITICAL) - Week 5-6
+  - Mission management lifecycle
+  - Safety system integration
+  - Movement control algorithms
+  - State machine implementation
+  - Validation: Business logic tests
 
-| **Task ID** | **Responsible** | **Description** | **Deliverables** | **Dependencies** | **Timeline** | **Status** | **Priority** |
-|-------------|----------------|-----------------|------------------|------------------|--------------|------------|--------------|
-| **BE-01** | BE Lead | API framework | API framework | FW-14 | 3 days | ✅ Complete | 🔥 High |
-| **BE-02** | BE Engineer | Device management | Device API | BE-01 | 3 days | ✅ Complete | 🔥 High |
-| **BE-03** | BE Engineer | Configuration API | Config API | BE-01 | 2 days | 🔄 Active | 🔥 High |
-| **BE-04** | BE Engineer | Telemetry API | Telemetry API | BE-01 | 3 days | 📋 Pending | 🔥 High |
-| **BE-05** | BE Engineer | WebSocket server | WS server | BE-01 | 2 days | 🔄 Active | 🔥 High |
-| **BE-06** | BE Engineer | Database integration | DB layer | BE-01 | 2 days | 📋 Pending | 🔥 High |
-| **BE-07** | BE Engineer | Authentication | Auth system | BE-01 | 2 days | 📋 Pending | 🔥 High |
-| **BE-08** | BE Engineer | Logging system | Log system | BE-01 | 2 days | 🔄 Active | 🟡 Medium |
-| **BE-09** | BE Engineer | Error handling | Error system | BE-01 | 2 days | 📋 Pending | 🟡 Medium |
-| **BE-10** | BE Engineer | Testing | BE tests | BE-01-BE-09 | 3 days | 📋 Pending | 🟡 Medium |
-| **BE-11** | BE Lead | Integration | BE release | BE-10 | 1 day | 📋 Pending | 🔥 High |
-| **BE-12** | BE Engineer | OTA backend | OTA system | BE-01 | 3 days | 📋 Pending | 🟡 Medium |
-| **BE-13** | BE Engineer | Telemetry expansion | Enhanced telemetry | BE-04 | 2 days | 🔄 Active | 🔥 High |
-| **BE-14** | BE Engineer | DI refactoring | Config service | BE-03 | 1 day | 📋 Pending | 🟡 Medium |
-| **BE-15** | BE Engineer | Schema sync | Telemetry schema | BE-13 | 1 day | 🔄 Active | 🔥 High |
-| **BE-16** | BE Engineer | FW/Center integration | Integration layer | FW-15 | 3 days | 📋 Pending | 🔥 High |
-| **BE-17** | BE Engineer | Production cleanup | Production ready | BE-16 | 2 days | 📋 Pending | 🔥 High |
+- **BE-14:** Advanced Testing Framework (HIGH) - Week 6
+  - Performance testing
+  - Security testing
+  - Load testing
+  - Integration testing
+  - Validation: Test coverage >90%
 
-#### **🔧 Module Management Tasks (Cross-team):**
-- **Phase 1 (48h):** GET `/api/v1/modules`, POST `/api/v1/modules/scan`, Bridge FW
-- **Phase 2 (72–96h):** PUT `/api/v1/modules/{addr}`, GET `/api/v1/modules/{addr}/points`, Persist server-side
-- **Files:** `services/backend/oht50/main.py`, `services/backend/requirements.txt`
+- **BE-15:** Documentation Completion (MEDIUM) - Week 6
+  - OpenAPI specification
+  - API documentation
+  - Code examples
+  - Testing documentation
+  - Validation: Documentation 100% complete
 
-#### **📈 Kết quả mong muốn:**
-- **API performance:** < 100ms response time
-- **System scalability:** 1000+ concurrent users
-- **Security compliance:** Zero vulnerabilities
-- **Data integrity:** 99.99% accuracy
+#### **Week 7-8: Production Preparation**
+- **BE-16:** Production Deployment (CRITICAL) - Week 7
+  - Production environment setup
+  - Database migration scripts
+  - Monitoring và alerting
+  - Backup và recovery procedures
+  - Validation: Production deployment successful
 
-#### **📝 Hướng dẫn cụ thể:**
-- **Development:** Python/FastAPI development
-- **Testing:** API tests, load testing
-- **Security:** Authentication, authorization
-- **Deployment:** Docker, CI/CD
+- **BE-17:** Performance Optimization (HIGH) - Week 7
+  - Response caching
+  - Database optimization
+  - Memory optimization
+  - Load balancing
+  - Validation: Performance requirements met
 
-#### **🎯 Trách nhiệm:**
-- **BE Lead:** Architecture và coordination
-- **BE Engineer:** Service development
-- **BE Tester:** API testing
+- **BE-20:** Final Integration (CRITICAL) - Week 8
+  - End-to-end integration
+  - System validation
+  - Performance validation
+  - Security validation
+  - Validation: All integration tests pass
 
----
+### **SIM Team Priority Tasks:**
 
-### **🎨 FE TEAM - FRONTEND & UI**
+#### **Week 7-8: Simulation Framework**
+- **SIM-01:** Simulation Framework (HIGH) - Week 7-8
+  - 1D motion simulation theo ray
+  - Hardware-in-the-loop (HIL) simulation
+  - Module behavior simulation
+  - Safety system simulation
+  - Validation: Simulation accuracy >95%
 
-#### **🎯 Mục tiêu:**
-- User interface development
-- Real-time monitoring dashboard
-- Configuration management UI
-- Mobile app development
-
-#### **📊 Task Status:**
-
-| **Task ID** | **Responsible** | **Description** | **Deliverables** | **Dependencies** | **Timeline** | **Status** | **Priority** |
-|-------------|----------------|-----------------|------------------|------------------|--------------|------------|--------------|
-| **FE-01** | FE Lead | UI framework setup | React/Vue framework | — | 2 days | ✅ Complete | 🔥 High |
-| **FE-02** | FE Engineer | Dashboard layout | Main dashboard | FE-01 | 3 days | ✅ Complete | 🔥 High |
-| **FE-03** | FE Engineer | Real-time monitoring | Monitoring UI | BE-05 | 4 days | ✅ Complete | 🔥 High |
-| **FE-04** | FE Engineer | Configuration UI | Config interface | BE-03 | 3 days | ✅ Complete | 🔥 High |
-| **FE-05** | FE Engineer | Mobile app | Mobile interface | FE-03 | 5 days | ✅ Complete | 🔥 High |
-| **FE-06** | FE Engineer | Authentication UI | Login/logout | BE-07 | 2 days | ✅ Complete | 🔥 High |
-| **FE-07** | FE Engineer | Error handling UI | Error display | BE-09 | 2 days | ✅ Complete | 🟡 Medium |
-| **FE-08** | FE Lead | Final integration | UI release | FE-01-FE-07 | 1 day | ✅ Complete | 🔥 High |
-
-#### **📈 Kết quả mong muốn:**
-- **UI responsiveness:** < 200ms render time
-- **User experience:** High satisfaction scores
-- **Cross-platform:** Desktop, tablet, mobile
-- **Accessibility:** WCAG 2.1 compliance
-
-#### **📝 Hướng dẫn cụ thể:**
-- **Development:** React/Vue.js development
-- **Testing:** UI tests, user testing
-- **Design:** Responsive design, accessibility
-- **Integration:** API integration
-
-#### **🎯 Trách nhiệm:**
-- **FE Lead:** UI architecture
-- **FE Engineer:** Component development
-- **FE Designer:** UI/UX design
+- **SIM-02:** System Testing (HIGH) - Week 8
+  - End-to-end system testing
+  - Performance testing
+  - Stress testing
+  - Integration testing
+  - Validation: All system tests pass
 
 ---
 
-### **🧪 SIM TEAM - SIMULATION & TESTING**
+## 🔄 **PARALLEL EXECUTION PLAN**
 
-#### **🎯 Mục tiêu:**
-- System simulation development
-- Comprehensive testing framework
-- Performance validation
-- Quality assurance
+### **Week 5-6: Backend Core Development** 🔧 ACTIVE
+```mermaid
+gantt
+    title Week 5-6: Backend Core Development - ACTIVE
+    dateFormat  YYYY-MM-DD
+    section Backend
+    Business Logic        :active, be13, 2024-12-19, 7d
+    Advanced Testing      :active, be14, 2024-12-19, 7d
+    Documentation         :active, be15, 2024-12-19, 7d
+```
 
-#### **📊 Task Status:**
-
-| **Task ID** | **Responsible** | **Description** | **Deliverables** | **Dependencies** | **Timeline** | **Status** | **Priority** |
-|-------------|----------------|-----------------|------------------|------------------|--------------|------------|--------------|
-| **SIM-01** | SIM Lead | Simulation framework | Sim framework | FW-15 | 3 days | 📋 Pending | 🔥 High |
-| **SIM-02** | SIM Engineer | Hardware simulation | HW sim | EM-12 | 4 days | 📋 Pending | 🔥 High |
-| **SIM-03** | SIM Engineer | System testing | System tests | All teams | 5 days | 📋 Pending | 🔥 High |
-| **SIM-04** | SIM Engineer | Performance testing | Perf tests | SIM-03 | 3 days | 📋 Pending | 🟡 Medium |
-| **SIM-05** | SIM Lead | Quality assurance | QA report | SIM-04 | 2 days | 📋 Pending | 🔥 High |
-
-#### **📈 Kết quả mong muốn:**
-- **Test coverage:** > 90% code coverage
-- **Performance validation:** All requirements met
-- **Quality assurance:** Zero critical defects
-- **System reliability:** 99.9% uptime
-
-#### **📝 Hướng dẫn cụ thể:**
-- **Simulation:** Hardware-in-the-loop testing
-- **Testing:** Automated test suites
-- **Validation:** Performance benchmarking
-- **Reporting:** Quality metrics
-
-#### **🎯 Trách nhiệm:**
-- **SIM Lead:** Testing strategy
-- **SIM Engineer:** Test development
-- **SIM Analyst:** Performance analysis
+### **Week 7-8: Production Preparation** 📋 PLANNED
+```mermaid
+gantt
+    title Week 7-8: Production Preparation - PLANNED
+    dateFormat  YYYY-MM-DD
+    section Backend
+    Production Deployment :crit, be16, 2024-12-26, 7d
+    Performance Optimization :high, be17, 2024-12-26, 7d
+    Final Integration     :crit, be20, 2024-12-26, 7d
+    section SIM
+    Simulation Framework  :high, sim01, 2024-12-26, 7d
+    System Testing        :high, sim02, 2024-12-26, 7d
+```
 
 ---
 
-## 📊 **CRITICAL PATH ANALYSIS**
+## 📊 **SUCCESS CRITERIA - PHASE 2**
 
-### **🔥 Critical Path Tasks:**
-1. **FW-03** (State Machine) - 🔄 Active
-2. **FW-04** (Control Loop) - 📋 Pending
-3. **FW-05** (Safety Mechanisms) - 📋 Pending
-4. **FW-15** (Final Integration) - 📋 Pending
-5. **BE-16** (FW/Center Integration) - 📋 Pending
-6. **SIM-01** (Simulation Framework) - 📋 Pending
+### **Backend Team Success Metrics:** 🔧 IN PROGRESS
+```bash
+# Week 5-6 Success Criteria
+✅ Core infrastructure complete (FastAPI, CI/CD, Testing)
+✅ API endpoints functional (Config, Telemetry, Auth, Center)
+🔧 Business logic implementation (60% complete)
+🔧 Advanced testing framework (40% complete)
+✅ Documentation comprehensive (95% complete)
 
-### **⚠️ Dependencies Blocking:**
-- **BE Team:** Waiting for FW-14 (Firmware release)
-- **SIM Team:** Waiting for all teams completion
-- **PM Team:** Waiting for all deliverables
+# Week 7-8 Success Criteria
+📋 Production deployment ready
+📋 Performance optimization complete
+📋 Final integration successful
+📋 All tests passing (>90% coverage)
+📋 Security validation complete
+```
 
----
-
-## 🚀 **NEXT ACTIONS**
-
-### **Immediate (This Week):**
-1. **FW-03 completion** - State machine implementation
-2. **BE-03 completion** - Configuration API
-3. **BE-05 completion** - WebSocket server
-4. **PM-04 start** - Risk management
-
-### **Short-term (Next 2 weeks):**
-1. **FW-04, FW-05** - Control loop và safety
-2. **BE-04, BE-06** - Telemetry và database
-3. **SIM-01 start** - Simulation framework
-
-### **Long-term (Next month):**
-1. **FW-15** - Final firmware integration
-2. **BE-16** - System integration
-3. **SIM-05** - Quality assurance
+### **SIM Team Success Metrics:** 📋 PLANNED
+```bash
+# Week 7-8 Success Criteria
+📋 Simulation framework operational
+📋 HIL simulation working
+📋 System testing complete
+📋 Performance validation successful
+📋 Integration testing passed
+```
 
 ---
 
-## 📈 **SUCCESS METRICS**
+## 🚨 **CRITICAL DEPENDENCIES - PHASE 2**
 
-### **Project Metrics:**
-- **Timeline adherence:** 100% on schedule
-- **Quality standards:** Zero critical defects
-- **Team satisfaction:** > 90% satisfaction
-- **Stakeholder alignment:** Clear communication
+### **Backend Team Dependencies:**
+```bash
+# Backend can proceed independently
+✅ Core infrastructure complete
+✅ API endpoints functional
+✅ Testing framework operational
+✅ Documentation comprehensive
+🔧 Business logic implementation in progress
+📋 Production deployment preparation
+```
 
-### **Technical Metrics:**
-- **System performance:** < 100ms response time
-- **Safety compliance:** SIL2 standards met
-- **Code quality:** > 90% test coverage
-- **Documentation:** 100% complete
+### **SIM Team Dependencies:**
+```bash
+# SIM depends on Backend completion
+📋 Backend API completion (BE-13, BE-14)
+📋 Production deployment (BE-16)
+📋 Final integration (BE-20)
+```
+
+### **Risk Mitigation:**
+```bash
+# If Backend delays, SIM can work on:
+1. Simulation framework design
+2. Test scenario planning
+3. Performance modeling
+4. Integration test planning
+5. Documentation preparation
+```
 
 ---
 
-**🎯 Kết luận:** Master scheduler đã được cập nhật với cấu trúc rõ ràng, tracking tables, và clear responsibilities cho tất cả teams. Critical path đã được xác định và next actions đã được prioritized.
+## 📋 **DAILY CHECKPOINTS - PHASE 2**
 
-**📋 Next Action:** All team leads review và confirm their task assignments và timelines.
+### **Backend Team Daily:** 🔧 ACTIVE
+```bash
+# Morning Standup (9:15 AM)
+✅ Business logic progress update
+✅ Advanced testing status
+✅ Documentation completion status
+✅ Performance metrics review
+✅ Integration testing status
+✅ Production deployment planning
+
+# Evening Review (5:15 PM)
+✅ Code quality metrics
+✅ Test coverage status
+✅ Integration progress
+✅ Next day planning
+✅ Risk assessment
+✅ Timeline adjustments
+```
+
+### **SIM Team Daily:** 📋 PLANNED
+```bash
+# Morning Standup (9:30 AM)
+📋 Simulation framework design
+📋 Test scenario planning
+📋 Backend dependencies check
+📋 Resource requirements
+📋 Timeline planning
+
+# Evening Review (5:30 PM)
+📋 Design progress
+📋 Planning completion
+📋 Next day priorities
+📋 Risk assessment
+📋 Timeline validation
+```
+
+---
+
+## 🔄 **WEEKLY REVIEWS - PHASE 2**
+
+### **Week 5-6 Review:** 🔧 ACTIVE
+```bash
+# Friday 5:00 PM
+🔧 Backend: Business logic implementation progress
+🔧 Backend: Advanced testing framework status
+✅ Backend: Documentation completion
+✅ Integration: Backend API validation
+📋 Next week: Production deployment preparation
+```
+
+### **Week 7-8 Review:** 📋 PLANNED
+```bash
+# Friday 5:00 PM
+📋 Backend: Production deployment status
+📋 Backend: Performance optimization complete
+📋 Backend: Final integration successful
+📋 SIM: Simulation framework operational
+📋 Next phase: System validation và release preparation
+```
+
+---
+
+## 📋 **NEXT ACTIONS**
+
+### **Immediate Actions (This Week):**
+1. **Backend Team:** Complete BE-13 (Business Logic) - CRITICAL
+2. **Backend Team:** Continue BE-14 (Advanced Testing) - HIGH
+3. **Backend Team:** Finish BE-15 (Documentation) - MEDIUM
+4. **PM Team:** Update task assignments và timeline
+
+### **Next Week Actions:**
+1. **Backend Team:** Start BE-16 (Production Deployment)
+2. **Backend Team:** Begin BE-17 (Performance Optimization)
+3. **SIM Team:** Start SIM-01 (Simulation Framework)
+4. **Integration:** Begin end-to-end testing
+
+### **Medium Term (Next Month):**
+1. **Complete Phase 2** (Backend + Frontend + SIM)
+2. **Gate D completion** (Backend & Frontend Integration)
+3. **Gate E preparation** (Sim & V&V)
+4. **Release preparation** (Gate R)
+
+---
+
+## 📚 **REFERENCES**
+
+### **CTO Priority Guide:**
+- `docs/tasks/PM_PRIORITY_GUIDE.md` - CTO Priority Execution Strategy
+
+### **Specifications:**
+- `docs/FIRMWARE/01_SPECIFICATIONS/SAFETY_SPEC.md`
+- `docs/FIRMWARE/01_SPECIFICATIONS/MODULE_MANAGEMENT_SPEC.md`
+- `docs/FIRMWARE/01_SPECIFICATIONS/COMMUNICATION_SPEC.md`
+- `docs/FIRMWARE/01_SPECIFICATIONS/STATE_MACHINE_SPEC.md`
+
+### **Architecture:**
+- `docs/FIRMWARE/02_ARCHITECTURE/safety_architecture.md`
+- `docs/FIRMWARE/02_ARCHITECTURE/MODULES/module_architecture.md`
+- `docs/FIRMWARE/02_ARCHITECTURE/SERVICES/communication_architecture.md`
+- `docs/FIRMWARE/02_ARCHITECTURE/state_machine.md`
+
+### **Team Guides:**
+- `docs/tasks/FW_TEAM_QUICK_GUIDE.md`
+- `docs/tasks/BACKEND_TEAM_QUICK_GUIDE.md`
+- `docs/tasks/FRONTEND_TEAM_QUICK_GUIDE.md`
+- `docs/tasks/SIM_TEAM_QUICK_GUIDE.md`
+- `docs/tasks/EMBED_TEAM_QUICK_GUIDE.md`
+
+---
+
+## 👥 **ASSIGNMENTS SUMMARY**
+
+Xem ma trận phân công chi tiết: `docs/reports/ASSIGNMENTS_MATRIX.md`.
+
+| Hạng mục | Owner | ETA | Status |
+|---|---|---|---|
+| Business Logic Implementation | Backend Lead | W5-6 | 🔧 60% Complete |
+| Advanced Testing | Backend Lead | W6 | 🔧 40% Complete |
+| Production Deployment | Backend Lead | W7 | 📋 Pending |
+| Performance Optimization | Backend Lead | W7 | 📋 Pending |
+| Final Integration | Backend Lead | W8 | 📋 Pending |
+| Simulation Framework | SIM Lead | W7-8 | 📋 Pending |
+| System Testing | SIM Lead | W8 | 📋 Pending |
+
+---
+
+## 📝 **CHANGELOG**
+
+### **v3.0 (2024-12-19):**
+- ✅ Updated based on actual Backend team progress
+- ✅ Updated completion status to 75%
+- ✅ Added Phase 2 critical path analysis
+- ✅ Updated Backend team status (85% complete)
+- ✅ Added production deployment preparation
+- ✅ Updated weekly reviews for Phase 2
+- ✅ Added SIM team planning
+
+### **v2.4 (2025-01-28):**
+- 🚨 Added critical module implementation status
+- 🚨 Added 5 new FW tasks (FW-29 to FW-33) for missing modules
+- 🚨 Updated critical path with module implementation
+- 🚨 Added Backend integration blockers
+- 🚨 Updated success criteria with module implementation
+- 🚨 Added new weekly reviews for module implementation
+- 🚨 Updated team status matrix (FW: 28 tasks total)
+- 🚨 Updated completion status to 61%
+
+### **v2.3 (2025-01-28):**
+- ✅ Updated with CTO Priority Strategy
+- ✅ Added Phase 1 focus (EMBED + FW Teams)
+- ✅ Added Phase 2 planning (Backend + Frontend Teams)
+- ✅ Added detailed weekly execution plan
+- ✅ Added success criteria for Phase 1
+- ✅ Added daily checkpoints and weekly reviews
+
+### **v2.2 (2025-01-28):**
+- ✅ Updated based on specifications analysis
+- ✅ Added detailed task breakdown
+- ✅ Added performance metrics
+- ✅ Added integration points
+- ✅ Added technical specifications
+- ✅ Updated completion status to 65%
+
+### **v2.1 (2025-01-28):**
+- ✅ Updated with firmware analysis results
+- ✅ Added compiler warnings details
+- ✅ Added hardware pin verification tasks
+- ✅ Updated completion status to 60%
+
+### **v2.0 (2025-01-27):**
+- ✅ Initial master scheduler
+- ✅ Basic project structure
+- ✅ Team coordination
+
+---
+
+**🎯 Kết luận:** Phase 2 active, Backend team 85% complete - production deployment preparation in progress. SIM team ready to start Week 7.
