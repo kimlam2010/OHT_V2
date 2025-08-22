@@ -81,6 +81,23 @@ class Settings(BaseSettings):
         default="manual", description="Chính sách reset E-Stop (manual/auto)"
     )
 
+    # FW Integration
+    FW_HOST: str = Field(
+        default="localhost", description="FW server host"
+    )
+    FW_HTTP_PORT: int = Field(
+        default=8080, description="FW HTTP server port"
+    )
+    FW_WS_PORT: int = Field(
+        default=8081, description="FW WebSocket server port"
+    )
+    FW_AUTH_TOKEN: Optional[str] = Field(
+        default=None, description="FW authentication token"
+    )
+    FW_SECRET_KEY: Optional[str] = Field(
+        default=None, description="FW secret key for message signing"
+    )
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

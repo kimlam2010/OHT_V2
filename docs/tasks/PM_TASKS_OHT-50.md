@@ -1,6 +1,6 @@
 # PM TASKS - OHT-50 Master Module
 
-**Phiên bản:** v3.0  
+**Phiên bản:** v4.0  
 **Ngày cập nhật:** 2024-12-19  
 **PM:** Project Manager  
 **Trạng thái:** 🎯 PRIORITY EXECUTION  
@@ -21,6 +21,7 @@
 - ✅ Backend Team - 85% hoàn thành (12/20 tasks)
 - 🔧 **ACTIVE:** Backend business logic implementation
 - 🎯 **NEW:** Production deployment preparation
+- 🚨 **CRITICAL:** Core business logic services missing (tracked via GitHub issues)
 
 ---
 
@@ -43,6 +44,38 @@
 | **Frontend** | 12 | 10 | 0 | 2 | 83% | ✅ NEAR COMPLETE | **PHASE 2** |
 | **SIM** | 2 | 0 | 0 | 2 | 0% | 📋 PENDING | **PHASE 2** |
 | **PM** | 5 | 5 | 0 | 0 | 100% | ✅ COMPLETE | 🎯 **ACTIVE** |
+
+---
+
+## 🚨 **CRITICAL MISSING COMPONENTS - BACKEND**
+
+### **Core Business Logic Services (MISSING):**
+- ❌ **MissionService** - Quản lý lifecycle mission
+- ❌ **SafetyService** - Hệ thống an toàn
+- ❌ **MovementService** - Điều khiển chuyển động
+- ❌ **PathPlanningService** - Lập kế hoạch đường đi
+- ❌ **StateManagementService** - Quản lý trạng thái hệ thống
+
+### **Business Logic Implementation (MISSING):**
+- ❌ **Mission Lifecycle Management** - Mission creation, validation, execution, state transitions
+- ❌ **Safety System Implementation** - E-Stop handling, safety zone monitoring, collision detection
+- ❌ **Movement Control** - Trajectory planning, speed profile management, position control
+- ❌ **Path Planning** - Route optimization, obstacle avoidance, safety zone integration
+
+### **Advanced Features (MISSING):**
+- ❌ **Real-time Mission Execution**
+- ❌ **Advanced Safety Algorithms**
+- ❌ **Predictive Maintenance**
+- ❌ **Analytics Dashboard**
+- ❌ **Multi-device Support**
+
+### **GitHub Issues Created:**
+- **#22:** 🚨 CRITICAL - Core Business Logic Services
+- **#24:** 🎯 HIGH - Mission Lifecycle Management Implementation
+- **#25:** 🛡️ HIGH - Safety System Implementation
+- **#26:** 🚀 HIGH - Movement Control System Implementation
+- **#27:** 🛣️ MEDIUM - Path Planning System Implementation
+- **#28:** 📊 MEDIUM - Advanced Features Implementation
 
 ---
 
@@ -156,6 +189,7 @@
 - **Critical Tasks:** Business logic implementation (BE-13)
 - **Next Actions:** Complete business logic, advanced testing, production deployment
 - **Dependencies:** FW module handlers (optional for basic functionality)
+- **🚨 Critical Missing:** Core business logic services (tracked via GitHub issues)
 
 ### **Frontend Team (83% Complete):**
 - **Status:** ✅ NEAR COMPLETE
@@ -193,11 +227,13 @@
 1. **Business Logic Complexity:** BE-13 implementation complexity
 2. **Production Deployment:** BE-16 production readiness
 3. **Integration Testing:** End-to-end system validation
+4. **Critical Missing Components:** Core business logic services not implemented
 
 ### **Mitigation Strategies:**
 1. **Incremental Development:** Complete business logic in phases
 2. **Early Testing:** Start integration testing early
 3. **Risk Communication:** Regular updates to stakeholders
+4. **GitHub Issue Tracking:** Monitor critical missing components
 
 ---
 
@@ -241,6 +277,7 @@
 2. **Backend Team:** Start BE-14 (Advanced Testing) - HIGH
 3. **PM Team:** Update task assignments và timeline
 4. **CTO Review:** Backend production readiness
+5. **GitHub Issues:** Monitor critical missing components
 
 ### **Next Week Actions:**
 1. **Backend Team:** Complete advanced testing (BE-14)
@@ -265,10 +302,14 @@
 - `docs/tasks/MASTER_SCHEDULER_OHT-50.md` - Master project scheduler
 - `docs/reports/ASSIGNMENTS_MATRIX.md` - Detailed task assignments
 
+### **GitHub Issues:**
+- Repository: https://github.com/kimlam2010/OHT-50
+- Issues: #22, #24, #25, #26, #27, #28 (Critical missing components)
+
 ---
 
 **Báo cáo bởi:** Project Manager  
 **Ngày cập nhật:** 2024-12-19  
-**Phiên bản:** v3.0
+**Phiên bản:** v4.0
 
-**🎯 Status:** Phase 2 active, Backend team 85% complete - production deployment preparation in progress!
+**🎯 Status:** Phase 2 active, Backend team 85% complete - CRITICAL missing components identified and tracked via GitHub issues!

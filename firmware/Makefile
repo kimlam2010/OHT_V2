@@ -19,6 +19,7 @@ MANAGERS_TEST_DIR = $(TEST_DIR)/managers
 CORE_TEST_DIR = $(TEST_DIR)/core
 MODULES_TEST_DIR = $(TEST_DIR)/modules
 INTEGRATION_TEST_DIR = $(TEST_DIR)/integration
+APP_TEST_DIR = $(TEST_DIR)/app
 
 # Source files
 HAL_SOURCES = $(wildcard $(SRC_DIR)/hal/*.c)
@@ -30,6 +31,7 @@ MANAGERS_TEST_SOURCES = $(wildcard $(MANAGERS_TEST_DIR)/*.c)
 CORE_TEST_SOURCES = $(wildcard $(CORE_TEST_DIR)/*.c)
 MODULES_TEST_SOURCES = $(wildcard $(MODULES_TEST_DIR)/*.c)
 INTEGRATION_TEST_SOURCES = $(wildcard $(INTEGRATION_TEST_DIR)/*.c)
+APP_TEST_SOURCES = $(wildcard $(APP_TEST_DIR)/*.c)
 
 # Object files
 HAL_OBJECTS = $(HAL_SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -41,6 +43,7 @@ MANAGERS_TEST_OBJECTS = $(MANAGERS_TEST_SOURCES:$(MANAGERS_TEST_DIR)/%.c=$(OBJ_D
 CORE_TEST_OBJECTS = $(CORE_TEST_SOURCES:$(CORE_TEST_DIR)/%.c=$(OBJ_DIR)/tests/core/%.o)
 MODULES_TEST_OBJECTS = $(MODULES_TEST_SOURCES:$(MODULES_TEST_DIR)/%.c=$(OBJ_DIR)/tests/modules/%.o)
 INTEGRATION_TEST_OBJECTS = $(INTEGRATION_TEST_SOURCES:$(INTEGRATION_TEST_DIR)/%.c=$(OBJ_DIR)/tests/integration/%.o)
+APP_TEST_OBJECTS = $(APP_TEST_SOURCES:$(APP_TEST_DIR)/%.c=$(OBJ_DIR)/tests/app/%.o)
 
 # Target executables
 TEST_LIDAR_EXEC = $(BUILD_DIR)/test_lidar
@@ -69,6 +72,10 @@ TEST_MOTOR_MODULE_EXEC = $(BUILD_DIR)/test_motor_module
 TEST_MOTOR_SIMPLE_EXEC = $(BUILD_DIR)/test_motor_simple
 TEST_IO_MODULE_EXEC = $(BUILD_DIR)/test_io_module
 TEST_DOCK_MODULE_EXEC = $(BUILD_DIR)/test_dock_module
+TEST_DI_DO_MODULE_EXEC = $(BUILD_DIR)/test_di_do_module
+TEST_HTTP_SERVER_EXEC = $(BUILD_DIR)/test_http_server
+TEST_API_ENDPOINTS_EXEC = $(BUILD_DIR)/test_api_endpoints
+TEST_WEBSOCKET_SERVER_EXEC = $(BUILD_DIR)/test_websocket_server
 
 # Main application
 MAIN_EXEC = $(BUILD_DIR)/oht50_main
@@ -77,7 +84,7 @@ MAIN_EXEC = $(BUILD_DIR)/oht50_main
 GPIO_VERIFY_TOOL = $(BUILD_DIR)/gpio_pin_verify
 
 # Default target
-all: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC) $(TEST_USB_DEBUG_EXEC) $(TEST_CONFIG_PERSISTENCE_EXEC) $(TEST_OTA_UPDATE_EXEC) $(TEST_SECURITY_MANAGER_EXEC) $(TEST_SYSTEM_STATE_MACHINE_EXEC) $(TEST_SAFETY_MANAGER_EXEC) $(TEST_LED_MANAGER_EXEC) $(TEST_COMMUNICATION_MANAGER_EXEC) $(TEST_MODULE_MANAGER_EXEC) $(TEST_NETWORK_MANAGER_EXEC) $(TEST_MODULE_REGISTRY_EXEC) $(TEST_POWER_MODULE_EXEC) $(TEST_CONFIG_SYSTEM_EXEC) $(TEST_INTERLOCK_EXEC) $(TEST_SUITE_EXEC) $(TEST_MOTOR_MODULE_EXEC) $(TEST_MOTOR_SIMPLE_EXEC) $(TEST_IO_MODULE_EXEC) $(TEST_DOCK_MODULE_EXEC) $(MAIN_EXEC)
+all: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC) $(TEST_USB_DEBUG_EXEC) $(TEST_CONFIG_PERSISTENCE_EXEC) $(TEST_OTA_UPDATE_EXEC) $(TEST_SECURITY_MANAGER_EXEC) $(TEST_SYSTEM_STATE_MACHINE_EXEC) $(TEST_SAFETY_MANAGER_EXEC) $(TEST_LED_MANAGER_EXEC) $(TEST_COMMUNICATION_MANAGER_EXEC) $(TEST_MODULE_MANAGER_EXEC) $(TEST_NETWORK_MANAGER_EXEC) $(TEST_MODULE_REGISTRY_EXEC) $(TEST_POWER_MODULE_EXEC) $(TEST_CONFIG_SYSTEM_EXEC) $(TEST_INTERLOCK_EXEC) $(TEST_SUITE_EXEC) $(TEST_MOTOR_MODULE_EXEC) $(TEST_MOTOR_SIMPLE_EXEC) $(TEST_IO_MODULE_EXEC) $(TEST_DOCK_MODULE_EXEC) $(TEST_DI_DO_MODULE_EXEC) $(TEST_HTTP_SERVER_EXEC) $(TEST_API_ENDPOINTS_EXEC) $(TEST_WEBSOCKET_SERVER_EXEC) $(MAIN_EXEC)
 
 # Tools target
 tools: $(GPIO_VERIFY_TOOL)
@@ -92,6 +99,7 @@ $(BUILD_DIR):
 	@mkdir -p $(OBJ_DIR)/tests/core
 	@mkdir -p $(OBJ_DIR)/tests/modules
 	@mkdir -p $(OBJ_DIR)/tests/integration
+	@mkdir -p $(OBJ_DIR)/tests/app
 
 # Build HAL object files
 $(OBJ_DIR)/hal/%.o: $(SRC_DIR)/hal/%.c | $(BUILD_DIR)
@@ -126,6 +134,10 @@ $(OBJ_DIR)/tests/modules/%.o: $(MODULES_TEST_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
 $(OBJ_DIR)/tests/integration/%.o: $(INTEGRATION_TEST_DIR)/%.c | $(BUILD_DIR)
+	@echo "Compiling $<..."
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
+
+$(OBJ_DIR)/tests/app/%.o: $(APP_TEST_DIR)/%.c | $(BUILD_DIR)
 	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
@@ -234,8 +246,24 @@ $(TEST_DOCK_MODULE_EXEC): $(OBJ_DIR)/app/dock_module_handler.o $(OBJ_DIR)/app/co
 	@echo "Linking $@..."
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
+$(TEST_DI_DO_MODULE_EXEC): $(OBJ_DIR)/app/di_do_module_handler.o $(OBJ_DIR)/app/communication_manager.o $(OBJ_DIR)/app/module_registry.o $(OBJ_DIR)/app/safety_manager.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_rs485.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/tests/modules/test_di_do_module.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+$(TEST_HTTP_SERVER_EXEC): $(OBJ_DIR)/app/http_server.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/tests/app/test_http_server.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS) -lpthread
+
+$(TEST_API_ENDPOINTS_EXEC): $(OBJ_DIR)/app/api_endpoints.o $(OBJ_DIR)/app/http_server.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/tests/app/test_api_endpoints.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS) -lpthread
+
+$(TEST_WEBSOCKET_SERVER_EXEC): $(OBJ_DIR)/app/websocket_server.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/tests/app/test_websocket_server.o
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS) -lssl -lcrypto
+
 # Link main application
-$(MAIN_EXEC): $(OBJ_DIR)/main.o $(OBJ_DIR)/app/system_state_machine.o $(OBJ_DIR)/app/safety_manager.o $(OBJ_DIR)/app/communication_manager.o $(OBJ_DIR)/app/module_registry.o $(OBJ_DIR)/app/power_module_handler.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/hal/hal_rs485.o
+$(MAIN_EXEC): $(OBJ_DIR)/main.o $(OBJ_DIR)/app/system_state_machine.o $(OBJ_DIR)/app/safety_manager.o $(OBJ_DIR)/app/communication_manager.o $(OBJ_DIR)/app/module_registry.o $(OBJ_DIR)/app/power_module_handler.o $(OBJ_DIR)/app/api_manager.o $(OBJ_DIR)/app/http_server.o $(OBJ_DIR)/app/api_endpoints.o $(OBJ_DIR)/hal/hal_common.o $(OBJ_DIR)/hal/hal_led.o $(OBJ_DIR)/hal/hal_estop.o $(OBJ_DIR)/hal/hal_rs485.o
 	@echo "Linking $@..."
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
@@ -250,7 +278,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 # Test targets
-test: test-hal test-managers test-core test-modules test-integration
+test: test-hal test-managers test-core test-modules test-integration test-app
 
 test-hal: $(TEST_LIDAR_EXEC) $(TEST_RS485_EXEC) $(TEST_GPIO_EXEC) $(TEST_LED_EXEC) $(TEST_ESTOP_EXEC) $(TEST_RELAY_EXEC) $(TEST_NETWORK_EXEC)
 	@echo "Running HAL tests..."
@@ -261,10 +289,13 @@ test-managers: $(TEST_SAFETY_MANAGER_EXEC) $(TEST_LED_MANAGER_EXEC) $(TEST_COMMU
 test-core: $(TEST_SYSTEM_STATE_MACHINE_EXEC) $(TEST_CONFIG_SYSTEM_EXEC)
 	@echo "Running Core tests..."
 
-test-modules: $(TEST_MODULE_REGISTRY_EXEC) $(TEST_POWER_MODULE_EXEC) $(TEST_MOTOR_MODULE_EXEC) $(TEST_DOCK_MODULE_EXEC)
+test-modules: $(TEST_MODULE_REGISTRY_EXEC) $(TEST_POWER_MODULE_EXEC) $(TEST_MOTOR_MODULE_EXEC) $(TEST_DOCK_MODULE_EXEC) $(TEST_DI_DO_MODULE_EXEC)
 	@echo "Running Module tests..."
 
 test-integration: $(TEST_INTERLOCK_EXEC) $(TEST_SUITE_EXEC)
 	@echo "Running Integration tests..."
 
-.PHONY: all clean test test-hal test-managers test-core test-modules test-integration tools
+test-app: $(TEST_HTTP_SERVER_EXEC) $(TEST_API_ENDPOINTS_EXEC) $(TEST_WEBSOCKET_SERVER_EXEC)
+	@echo "Running App tests..."
+
+.PHONY: all clean test test-hal test-managers test-core test-modules test-integration test-app tools

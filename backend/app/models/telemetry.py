@@ -163,8 +163,7 @@ class TelemetryData(BaseModel):
     tag_id: Optional[str] = Field(default=None, description="Last RFID tag id (nếu có sự kiện)")
     rssi: Optional[int] = Field(default=None, description="RFID RSSI (nếu có)")
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    # Note: json_encoders moved to model_config in Pydantic v2
 
 
 class TelemetryHistory(BaseModel):

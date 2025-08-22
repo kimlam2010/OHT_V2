@@ -19,6 +19,7 @@
 #include "communication_manager.h"
 #include "module_manager.h"
 #include "power_module_handler.h"
+#include "api_manager.h"
 
 static volatile sig_atomic_t g_should_run = 1;
 static bool g_dry_run = false;
@@ -212,7 +213,41 @@ int main(int argc, char **argv) {
         printf("[OHT-50] DRY-RUN: Skipping system_state_machine_init\n");
     }
 
-    // 4) Application loop
+    // 4) Initialize API Manager for BE communication
+    if (!g_dry_run) {
+        printf("[OHT-50] Initializing API Manager for BE communication...\n");
+        api_mgr_config_t api_config = {
+            .http_port = 8080,
+            .websocket_port = 8081,
+            .http_enabled = true,
+            .websocket_enabled = true,
+            .cors_enabled = true,
+            .cors_origin = "*",
+            .max_request_size = 8192,
+            .max_response_size = 16384,
+            .request_timeout_ms = 30000,
+            .websocket_timeout_ms = 60000,
+            .authentication_required = false,  // Disable for testing
+            .ssl_enabled = false,
+            .ssl_certificate_path = "",
+            .ssl_private_key_path = ""
+        };
+        
+        if (api_manager_init(&api_config) != HAL_STATUS_OK) {
+            fprintf(stderr, "[OHT-50] api_manager_init failed (continuing)\n");
+        } else {
+            printf("[OHT-50] API Manager initialized - HTTP:8080, WebSocket:8081\n");
+            if (api_manager_start() != HAL_STATUS_OK) {
+                fprintf(stderr, "[OHT-50] api_manager_start failed (continuing)\n");
+            } else {
+                printf("[OHT-50] API Manager started successfully\n");
+            }
+        }
+    } else {
+        printf("[OHT-50] DRY-RUN: Skipping API Manager initialization\n");
+    }
+
+    // 5) Application loop
     printf("[OHT-50] Entering main loop. Press Ctrl+C to exit.\n");
     fflush(stdout);
     uint64_t last_led_toggle_ms = now_ms();
@@ -380,6 +415,11 @@ int main(int argc, char **argv) {
     printf("[OHT-50] Shutting down...\n");
     // Graceful shutdown
     if (!g_dry_run) {
+        // Stop API Manager
+        printf("[OHT-50] Stopping API Manager...\n");
+        (void)api_manager_stop();
+        (void)api_manager_deinit();
+        
         if (power_handler_initialized) {
             (void)power_module_deinit(&power_handler);
         }

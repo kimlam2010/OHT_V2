@@ -1,335 +1,277 @@
-# BACKEND TEAM QUICK GUIDE - OHT-50 Master Module
+# Backend Team Quick Guide - OHT-50
 
-**Phiên bản:** v3.0  
-**Ngày cập nhật:** 2024-12-19  
-**Team:** Backend Team  
-**Trạng thái:** 🔧 ACTIVE DEVELOPMENT  
-**Tiến độ:** 85% Complete
+## 🚨 **CRITICAL UPDATE: Core Business Logic Services Required**
 
----
+### **📋 Current Status**
+- **Infrastructure:** ✅ 100% Complete
+- **API Layer:** ✅ 100% Complete  
+- **Data Layer:** ✅ 100% Complete
+- **Business Logic:** ❌ 0% Complete (CRITICAL GAP)
 
-## 🎯 **TỔNG QUAN**
+### **🎯 Priority Tasks (IMMEDIATE)**
 
-### **Mục tiêu hiện tại:**
-- Hoàn thiện backend services theo specifications
-- Tích hợp với firmware và frontend
-- Đảm bảo performance và scalability
-- Đạt tiêu chí Gate D (Backend & Frontend Integration)
+#### **BE-19: MissionService Implementation** 🔴 CRITICAL
+- **Status:** ❌ NOT STARTED
+- **Priority:** IMMEDIATE
+- **Timeline:** 2-3 weeks
+- **Description:** Mission lifecycle management system
+- **Files to create:**
+  - `backend/app/services/mission_service.py`
+  - `backend/app/services/mission_queue.py`
+  - `backend/app/services/mission_validator.py`
+  - `backend/app/services/mission_analytics.py`
+  - `backend/app/models/mission.py`
+  - `backend/app/models/mission_state.py`
+  - `backend/app/api/missions.py`
+- **Reference:** `docs/backend/IMPLEMENTATION_PLAN_CORE_SERVICES.md`
 
-### **Trạng thái hiện tại:**
-- ✅ Core infrastructure hoàn thành (FastAPI, CI/CD, Testing)
-- ✅ API endpoints chính đã implement (Config, Telemetry, Auth, Center)
-- 🔧 Business logic implementation đang tiến hành
-- 🔧 Production deployment preparation
-- 📋 Advanced features planning
+#### **BE-20: SafetyService Implementation** 🔴 CRITICAL
+- **Status:** ❌ NOT STARTED
+- **Priority:** IMMEDIATE
+- **Timeline:** 2-3 weeks
+- **Description:** Safety system implementation
+- **Files to create:**
+  - `backend/app/services/safety_service.py`
+  - `backend/app/services/safety_monitor.py`
+  - `backend/app/services/safety_validator.py`
+  - `backend/app/services/emergency_handler.py`
+  - `backend/app/models/safety_event.py`
+  - `backend/app/models/safety_zone.py`
+  - `backend/app/api/safety.py`
+- **Reference:** `docs/backend/IMPLEMENTATION_PLAN_CORE_SERVICES.md`
 
----
+#### **BE-21: StateManagementService Implementation** 🔴 CRITICAL
+- **Status:** ❌ NOT STARTED
+- **Priority:** IMMEDIATE
+- **Timeline:** 1-2 weeks
+- **Description:** System state machine
+- **Files to create:**
+  - `backend/app/services/state_manager.py`
+  - `backend/app/services/state_persistence.py`
+  - `backend/app/services/state_recovery.py`
+  - `backend/app/models/system_state.py`
+  - `backend/app/models/state_transition.py`
+  - `backend/app/api/system_state.py`
+- **Reference:** `docs/backend/IMPLEMENTATION_PLAN_CORE_SERVICES.md`
 
-## 📋 **TASK LIST**
+#### **BE-22: MovementService Implementation** 🟡 HIGH
+- **Status:** ❌ NOT STARTED
+- **Priority:** HIGH
+- **Timeline:** 2-3 weeks
+- **Description:** Movement control system
+- **Files to create:**
+  - `backend/app/services/movement_service.py`
+  - `backend/app/services/trajectory_planner.py`
+  - `backend/app/services/speed_controller.py`
+  - `backend/app/services/position_controller.py`
+  - `backend/app/models/trajectory.py`
+  - `backend/app/models/speed_profile.py`
+  - `backend/app/api/movement.py`
+- **Reference:** `docs/backend/IMPLEMENTATION_PLAN_CORE_SERVICES.md`
 
-### **✅ COMPLETED TASKS (12/20)**
-
-#### **BE-01: Project Setup** ✅
-- **Mô tả:** Backend project setup và environment
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/requirements.txt`, `backend/README.md`, `backend/app/main.py`
-
-#### **BE-02: CI/CD Pipeline Setup** ✅
-- **Mô tả:** CI/CD pipeline với GitHub Actions
-- **Trạng thái:** COMPLETE
-- **Files:** `.github/workflows/ci-cd.yml`, `pyproject.toml`, `Makefile`
-- **Coverage:** 82% test coverage
-
-#### **BE-03: Configuration Management** ✅
-- **Mô tả:** Configuration management system
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/api/v1/config.py`, `backend/app/services/config_service.py`
-- **Features:** CRUD operations, versioning, import/export
-
-#### **BE-04: Telemetry API** ✅
-- **Mô tả:** Real-time telemetry API implementation
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/api/v1/telemetry.py`, `backend/app/services/telemetry_service.py`
-- **Features:** WebSocket streaming, history, statistics
-
-#### **BE-05: Authentication & Security** ✅
-- **Mô tả:** Authentication và security implementation
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/api/v1/auth.py`, `backend/app/services/auth_service.py`
-- **Features:** JWT authentication, user management, RBAC
-
-#### **BE-06: Center Integration** ✅
-- **Mô tả:** Center system integration
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/api/v1/center.py`, `backend/app/services/center_client.py`
-- **Features:** Mission reception, permission requests, proxy endpoints
-
-#### **BE-07: RS485 Communication** ✅
-- **Mô tả:** RS485 hardware communication
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/api/v1/rs485.py`, `backend/app/services/rs485_bus.py`
-- **Features:** Modbus RTU protocol, module discovery, points snapshot
-
-#### **BE-08: Health & Monitoring** ✅
-- **Mô tả:** Health check và monitoring endpoints
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/api/v1/health.py`
-- **Features:** Basic health, detailed health, readiness, liveness probes
-
-#### **BE-09: Error Handling** ✅
-- **Mô tả:** Comprehensive error handling system
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/core/exceptions.py`, `backend/app/main.py`
-- **Features:** Custom exceptions, error middleware, structured responses
-
-#### **BE-10: Logging & Audit** ✅
-- **Mô tả:** Structured logging và audit system
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/core/logging.py`, `backend/app/services/log_service.py`
-- **Features:** Correlation ID, structured logging, audit trail
-
-#### **BE-11: User Settings** ✅
-- **Mô tả:** User settings management
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/api/v1/user.py`, `backend/app/services/user_settings_service.py`
-- **Features:** User preferences, theme settings, profile management
-
-#### **BE-12: Data Models** ✅
-- **Mô tả:** Complete data models và validation
-- **Trạng thái:** COMPLETE
-- **Files:** `backend/app/models/`
-- **Features:** Pydantic models, validation, serialization
-
-### **🔧 IN PROGRESS TASKS (3/20)**
-
-#### **BE-13: Business Logic Implementation** 🔧
-- **Mô tả:** Core business logic implementation
-- **Trạng thái:** 60% COMPLETE
-- **Thời gian:** 3 ngày remaining
-- **Features:**
-  - Mission management lifecycle
-  - Safety system integration
-  - Movement control algorithms
-  - State machine implementation
-- **Files:** `backend/app/services/mission_service.py` (planned)
-
-#### **BE-14: Advanced Testing** 🔧
-- **Mô tả:** Advanced testing framework
-- **Trạng thái:** 40% COMPLETE
-- **Thời gian:** 2 ngày remaining
-- **Features:**
-  - Performance testing
-  - Security testing
-  - Load testing
-  - Integration testing
-- **Files:** `backend/tests/performance/`, `backend/tests/security/` (planned)
-
-#### **BE-15: Documentation Completion** 🔧
-- **Mô tả:** Complete API documentation
-- **Trạng thái:** 95% COMPLETE
-- **Thời gian:** 1 ngày remaining
-- **Features:**
-  - OpenAPI specification
-  - API documentation
-  - Code examples
-  - Testing documentation
-- **Files:** `docs/backend/` (95% complete)
-
-### **📋 PENDING TASKS (5/20)**
-
-#### **BE-16: Production Deployment** 📋
-- **Mô tả:** Production environment setup
-- **Ưu tiên:** HIGH
-- **Thời gian:** 2 ngày
-- **Features:**
-  - Production configuration
-  - Database migration scripts
-  - Monitoring và alerting
-  - Backup và recovery procedures
-- **Files:** `backend/deploy/`, `backend/docker/`
-
-#### **BE-17: Performance Optimization** 📋
-- **Mô tả:** Performance optimization và caching
-- **Ưu tiên:** MEDIUM
-- **Thời gian:** 2 ngày
-- **Features:**
-  - Response caching
-  - Database optimization
-  - Memory optimization
-  - Load balancing
-- **Files:** `backend/app/optimization/`
-
-#### **BE-18: Advanced Features** 📋
-- **Mô tả:** Advanced system features
-- **Ưu tiên:** MEDIUM
-- **Thời gian:** 4 ngày
-- **Features:**
-  - Real-time mission execution
-  - Advanced safety algorithms
-  - Predictive maintenance
-  - Analytics dashboard
-- **Files:** `backend/app/features/`
-
-#### **BE-19: Mobile API** 📋
-- **Mô tả:** Mobile app API support
-- **Ưu tiên:** LOW
-- **Thời gian:** 3 ngày
-- **Features:**
-  - Mobile-specific endpoints
-  - Push notifications
-  - Offline support
-  - Mobile authentication
-- **Files:** `backend/app/api/v1/mobile.py`
-
-#### **BE-20: Final Integration** 📋
-- **Mô tả:** Final integration và validation
-- **Ưu tiên:** HIGH
-- **Thời gian:** 2 ngày
-- **Features:**
-  - End-to-end integration
-  - System validation
-  - Performance validation
-  - Security validation
-- **Files:** `backend/integration/`
+#### **BE-23: PathPlanningService Implementation** 🟡 HIGH
+- **Status:** ❌ NOT STARTED
+- **Priority:** HIGH
+- **Timeline:** 2-3 weeks
+- **Description:** Path planning and optimization
+- **Files to create:**
+  - `backend/app/services/path_planning_service.py`
+  - `backend/app/services/route_optimizer.py`
+  - `backend/app/services/obstacle_detector.py`
+  - `backend/app/services/waypoint_generator.py`
+  - `backend/app/models/path.py`
+  - `backend/app/models/route.py`
+  - `backend/app/api/path_planning.py`
+- **Reference:** `docs/backend/IMPLEMENTATION_PLAN_CORE_SERVICES.md`
 
 ---
 
-## 🔧 **TECHNICAL SPECIFICATIONS**
+## 📋 **Existing Tasks Status**
 
-### **Technology Stack:**
-- **Framework:** FastAPI + Pydantic V2
-- **Database:** SQLite (development), PostgreSQL (production)
-- **Authentication:** JWT + bcrypt
-- **Documentation:** OpenAPI/Swagger
-- **Testing:** pytest + coverage
-- **CI/CD:** GitHub Actions
+### **✅ Completed Tasks**
+- **BE-01:** Project setup và environment configuration
+- **BE-02:** Basic FastAPI application structure
+- **BE-03:** API configuration CRUD operations
+- **BE-04:** Database models và migrations
+- **BE-05:** Telemetry data ingest
+- **BE-06:** WebSocket real-time streaming
+- **BE-07:** Authentication system (JWT)
+- **BE-08:** Mock device integration
+- **BE-09:** API documentation (OpenAPI)
+- **BE-10:** Error handling và logging
+- **BE-11:** Configuration management
+- **BE-12:** Health check endpoints
+- **BE-13:** Metrics collection (Prometheus)
+- **BE-14:** Security hardening
+- **BE-15:** Center system integration
+- **BE-16:** Testing framework setup
+- **BE-17:** Deployment configuration
+- **BE-18:** Documentation completion
 
-### **API Requirements:**
-- **REST API:** CRUD operations ✅
-- **WebSocket:** Real-time communication ✅
-- **Authentication:** JWT-based ✅
-- **Validation:** Pydantic models ✅
-
-### **Performance Requirements:**
-- **Response time:** < 200ms ✅
-- **Throughput:** 1000+ requests/second ✅
-- **Uptime:** 99.9% target
-- **Memory usage:** < 2GB ✅
-- **CPU usage:** < 70% ✅
-
----
-
-## 📊 **PERFORMANCE METRICS**
-
-### **Current Performance:**
-- **API response time:** < 100ms ✅
-- **Database performance:** < 50ms queries ✅
-- **Memory usage:** < 200MB ✅
-- **CPU usage:** < 30% ✅
-- **Test coverage:** 82% ✅
-
-### **Target Performance:**
-- **API response time:** < 200ms ✅
-- **Database performance:** < 100ms queries ✅
-- **Memory usage:** < 2GB ✅
-- **CPU usage:** < 70% ✅
+### **🔄 In Progress Tasks**
+- **BE-19:** MissionService Implementation (NEW - CRITICAL)
+- **BE-20:** SafetyService Implementation (NEW - CRITICAL)
+- **BE-21:** StateManagementService Implementation (NEW - CRITICAL)
+- **BE-22:** MovementService Implementation (NEW - HIGH)
+- **BE-23:** PathPlanningService Implementation (NEW - HIGH)
 
 ---
 
-## 🔗 **INTEGRATION POINTS**
+## 🎯 **Implementation Guidelines**
 
-### **Dependencies:**
-- **FW Team:** Firmware API integration ✅
-- **Frontend Team:** UI API integration ✅
-- **DevOps Team:** Deployment support 🔧
+### **Development Workflow**
+1. **Create feature branch:** `feature/be-XX-service-name`
+2. **Follow implementation plan:** Reference `docs/backend/IMPLEMENTATION_PLAN_CORE_SERVICES.md`
+3. **Implement service class:** Follow provided class structure
+4. **Create data models:** Use Pydantic models
+5. **Add API endpoints:** Follow REST conventions
+6. **Write tests:** Unit tests for all methods
+7. **Update documentation:** API docs và integration guides
 
-### **Deliverables:**
-- **REST API:** Complete API endpoints ✅
-- **WebSocket API:** Real-time communication ✅
-- **Database:** Data storage và management ✅
-- **Security:** Authentication và authorization ✅
-- **Documentation:** API documentation 🔧
+### **Code Standards**
+- **Python:** Use type hints, async/await
+- **FastAPI:** Follow FastAPI best practices
+- **Database:** Use SQLAlchemy ORM
+- **Testing:** Pytest với async support
+- **Documentation:** Docstrings cho all methods
 
----
+### **Performance Requirements**
+- **API Response:** < 100ms
+- **Safety Check:** < 10ms
+- **State Transition:** < 50ms
+- **Movement Command:** < 20ms
+- **Path Planning:** < 500ms
 
-## 📋 **NEXT ACTIONS**
-
-### **Immediate (This Week):**
-1. **Complete business logic** (BE-13) - 3 days
-2. **Finish advanced testing** (BE-14) - 2 days
-3. **Complete documentation** (BE-15) - 1 day
-
-### **Short Term (Next 2 Weeks):**
-1. **Production deployment** (BE-16) - 2 days
-2. **Performance optimization** (BE-17) - 2 days
-3. **Final integration** (BE-20) - 2 days
-
-### **Medium Term (Next Month):**
-1. **Advanced features** (BE-18) - 4 days
-2. **Mobile API** (BE-19) - 3 days
-3. **System optimization** - Ongoing
+### **Testing Requirements**
+- **Unit Tests:** > 90% coverage
+- **Integration Tests:** Service-to-service communication
+- **Performance Tests:** Load testing
+- **End-to-End Tests:** Complete workflows
 
 ---
 
-## 📚 **REFERENCES**
+## 📅 **Timeline & Milestones**
 
-### **Specifications:**
-- `docs/FIRMWARE/01_SPECIFICATIONS/COMMUNICATION_SPEC.md`
-- `docs/FIRMWARE/01_SPECIFICATIONS/MODULE_MANAGEMENT_SPEC.md`
-- `docs/FIRMWARE/01_SPECIFICATIONS/SAFETY_SPEC.md`
+### **Week 1 (Aug 21-27): MissionService**
+- **Monday:** Service class implementation
+- **Wednesday:** Queue management
+- **Friday:** API endpoints và testing
 
-### **Architecture:**
-- `docs/FIRMWARE/02_ARCHITECTURE/SERVICES/communication_architecture.md`
-- `docs/FIRMWARE/02_ARCHITECTURE/MODULES/module_architecture.md`
-- `docs/FIRMWARE/02_ARCHITECTURE/safety_architecture.md`
+### **Week 2 (Aug 28-Sep 3): SafetyService**
+- **Monday:** Safety monitoring
+- **Wednesday:** Emergency procedures
+- **Friday:** Integration với MissionService
 
-### **Implementation:**
-- `backend/app/` - Application code
-- `backend/tests/` - Test suite
-- `backend/docs/` - Documentation
-- `backend/deploy/` - Deployment scripts
+### **Week 3 (Sep 4-10): StateManagementService**
+- **Monday:** State machine implementation
+- **Wednesday:** State persistence
+- **Friday:** Integration testing
 
----
+### **Week 4 (Sep 11-17): MovementService**
+- **Monday:** Trajectory planning
+- **Wednesday:** Speed control
+- **Friday:** Position control
 
-## 👥 Assignments (Backend Team)
+### **Week 5 (Sep 18-24): PathPlanningService**
+- **Monday:** Path planning algorithms
+- **Wednesday:** Obstacle detection
+- **Friday:** Route optimization
 
-Ma trận đầy đủ: `docs/reports/ASSIGNMENTS_MATRIX.md`.
-
-- Owner: Backend Lead (API REST/WS per API_SPEC)
-- ETA: W5–W6 (Business Logic, Testing, Documentation)
-- Dependencies: FW-20 (Complete), Module handlers (FW-29 to FW-33)
-- DoD: OpenAPI docs; unit/integration/load tests; JWT security; monitoring
-- Tests: API unit, integration, load/stress; security checks
-
-## 📝 **CHANGELOG**
-
-### **v3.0 (2024-12-19):**
-- ✅ Updated based on actual code implementation
-- ✅ Added completed tasks (12/20)
-- ✅ Updated progress to 85%
-- ✅ Added performance metrics
-- ✅ Updated integration points
-- ✅ Added technical specifications
-- ✅ Updated next actions
-
-### **v2.2 (2025-01-28):**
-- ✅ Updated based on specifications analysis
-- ✅ Added detailed task breakdown
-- ✅ Added performance metrics
-- ✅ Added integration points
-- ✅ Added technical specifications
-- ✅ Added API requirements
-
-### **v2.1 (2025-01-28):**
-- ✅ Updated dependencies status
-- ✅ Added FW integration tasks
-- ✅ Updated completion status to 15%
-
-### **v2.0 (2025-01-27):**
-- ✅ Initial Backend team quick guide
-- ✅ Basic task structure
-- ✅ Team responsibilities
+### **Week 6 (Sep 25-Oct 1): Integration & Testing**
+- **Monday:** Service integration
+- **Wednesday:** End-to-end testing
+- **Friday:** Performance optimization
 
 ---
 
-**🎯 Status:** Core infrastructure complete, business logic implementation in progress - ready for production deployment preparation!
+## 🔗 **Related Documentation**
+
+### **Implementation Guides**
+- `docs/backend/IMPLEMENTATION_PLAN_CORE_SERVICES.md` - Detailed implementation plan
+- `docs/backend/business/BUSINESS_LOGIC_SPEC.md` - Business logic specification
+- `docs/backend/business/MISSION_MANAGEMENT.md` - Mission management guide
+- `docs/backend/business/SAFETY_LOGIC.md` - Safety system guide
+- `docs/backend/business/PATH_PLANNING.md` - Path planning guide
+
+### **API Documentation**
+- `docs/backend/api-specs/README.md` - API specifications
+- `docs/backend/api-specs/CONFIG_API.md` - Configuration API
+- `docs/backend/api-specs/TELEMETRY_API.md` - Telemetry API
+- `docs/backend/api-specs/WEBSOCKET_EVENTS.md` - WebSocket events
+
+### **Architecture Documentation**
+- `docs/backend/architecture/SYSTEM_ARCHITECTURE.md` - System architecture
+- `docs/backend/architecture/CORE_ARCHITECTURE.md` - Core architecture
+- `docs/backend/data/DATABASE_SCHEMA.md` - Database schema
+- `docs/backend/data/DATA_MODELS.md` - Data models
+
+---
+
+## 🚨 **Critical Issues to Address**
+
+### **Issue #22: CRITICAL - Core Business Logic Services**
+- **Status:** 🔴 BLOCKING
+- **Impact:** System cannot function without these services
+- **Solution:** Implement BE-19 through BE-23
+
+### **Issue #24: HIGH - Mission Lifecycle Management**
+- **Status:** 🟡 HIGH PRIORITY
+- **Impact:** No mission execution possible
+- **Solution:** Implement BE-19 (MissionService)
+
+### **Issue #25: HIGH - Safety System Implementation**
+- **Status:** 🟡 HIGH PRIORITY
+- **Impact:** No safety system active
+- **Solution:** Implement BE-20 (SafetyService)
+
+### **Issue #26: HIGH - Movement Control System**
+- **Status:** 🟡 HIGH PRIORITY
+- **Impact:** No movement control available
+- **Solution:** Implement BE-22 (MovementService)
+
+---
+
+## 📊 **Success Metrics**
+
+### **Completion Targets**
+- **Week 3:** Core services (BE-19, BE-20, BE-21) - 100%
+- **Week 6:** All services (BE-19 through BE-23) - 100%
+- **Week 10:** Full system integration - 100%
+
+### **Quality Targets**
+- **Code Coverage:** > 90%
+- **Test Pass Rate:** 100%
+- **API Response Time:** < 100ms
+- **Documentation Coverage:** 100%
+
+### **Performance Targets**
+- **System Uptime:** 99.9%
+- **Mission Success Rate:** > 95%
+- **Safety System Availability:** 100%
+- **State Consistency:** 100%
+
+---
+
+## 🎯 **Next Actions**
+
+### **Immediate (This Week)**
+1. **Start BE-19:** MissionService implementation
+2. **Review implementation plan:** `docs/backend/IMPLEMENTATION_PLAN_CORE_SERVICES.md`
+3. **Set up development environment:** Feature branches
+4. **Begin coding:** Follow provided class structures
+
+### **Weekly Reviews**
+- **Monday:** Progress review và blocker identification
+- **Wednesday:** Code review và quality check
+- **Friday:** Integration testing và demo
+
+### **Monthly Milestones**
+- **End of August:** MissionService completion
+- **End of September:** All core services completion
+- **End of October:** Full system integration
+
+---
+
+**CTO Approval:** ✅ APPROVED  
+**Date:** 2024-08-21  
+**Next Review:** 2024-08-28

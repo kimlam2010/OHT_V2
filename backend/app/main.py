@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.responses import Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.v1 import center, config, health, telemetry, rs485, user, auth
+from app.api.v1 import center, config, health, telemetry, rs485, user, auth, mission, safety, fw_integration
 from app.config import get_settings
 from app.core.exceptions import OHT50Exception
 from app.core.logging import CorrelationIdMiddleware, get_logger
@@ -210,17 +210,28 @@ async def log_requests(request: Request, call_next):
 
 
 # Include API routers
-app.include_router(health.router, prefix="/health", tags=["Health"])
-app.include_router(config.router, prefix="/api/v1/config", tags=["Configuration"])
-app.include_router(telemetry.router, prefix="/api/v1/telemetry", tags=["Telemetry"])
-app.include_router(
-    center.router, prefix="/api/v1/center", tags=["Center Communication"]
-)
-app.include_router(rs485.router, prefix="/api/v1/rs485", tags=["RS485"])
-app.include_router(user.router, prefix="/api/v1/user", tags=["User"])
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
-# Alias admin routes to auth router for user management endpoints
-app.include_router(auth.router, prefix="/api/v1/admin", tags=["Admin"])
+app.include_router(health.router, prefix="/health")
+app.include_router(config.router, prefix="/api/v1/config")
+app.include_router(telemetry.router, prefix="/api/v1/telemetry")
+app.include_router(center.router, prefix="/api/v1/center")
+app.include_router(rs485.router, prefix="/api/v1/rs485")
+app.include_router(user.router, prefix="/api/v1/user")
+app.include_router(auth.router, prefix="/api/v1/auth")
+app.include_router(mission.router, prefix="/api/v1/mission")
+app.include_router(safety.router, prefix="/api/v1/safety")
+
+# Import và include admin router riêng biệt
+from app.api.v1 import admin
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
+
+# Import và include analytics router
+from app.api.v1 import analytics
+app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
+
+# Import và include hardware router
+from app.api.v1 import hardware
+app.include_router(hardware.router, prefix="/api/v1/hardware", tags=["Hardware Control"])
+app.include_router(fw_integration.router, prefix="/api/v1/fw", tags=["FW Integration"])
 
 
 @app.get("/", tags=["Root"])
@@ -251,6 +262,8 @@ async def info() -> Dict[str, Any]:
             "rs485": "/api/v1/rs485",
             "user": "/api/v1/user",
             "auth": "/api/v1/auth",
+            "mission": "/api/v1/mission",
+            "safety": "/api/v1/safety",
             "admin": "/api/v1/admin",
             "docs": "/docs",
         },

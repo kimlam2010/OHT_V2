@@ -1,6 +1,6 @@
 # SIMULATION TEAM QUICK GUIDE - OHT-50 Master Module
 
-**Phiên bản:** v3.0  
+**Phiên bản:** v4.0  
 **Ngày cập nhật:** 2024-12-19  
 **Team:** Simulation Team  
 **Trạng thái:** 📋 READY TO START  
@@ -22,6 +22,33 @@
 - 🔧 Simulation framework design needed
 - 🔧 System testing strategy needed
 - 🔧 Performance validation needed
+- 🚨 **CRITICAL:** Backend business logic services missing (tracked via GitHub issues)
+
+---
+
+## 🚨 **BACKEND DEPENDENCIES STATUS**
+
+### **Backend Team Progress (85% Complete):**
+- ✅ Core infrastructure complete (FastAPI, CI/CD, Testing)
+- ✅ API endpoints functional (Config, Telemetry, Auth, Center)
+- 🔧 Business logic implementation (60% complete)
+- 🔧 Production deployment preparation
+- 📋 Advanced features planning
+
+### **Critical Missing Components (Blocking SIM):**
+- ❌ **MissionService** - Quản lý lifecycle mission
+- ❌ **SafetyService** - Hệ thống an toàn
+- ❌ **MovementService** - Điều khiển chuyển động
+- ❌ **PathPlanningService** - Lập kế hoạch đường đi
+- ❌ **StateManagementService** - Quản lý trạng thái hệ thống
+
+### **GitHub Issues Tracking:**
+- **#22:** 🚨 CRITICAL - Core Business Logic Services
+- **#24:** 🎯 HIGH - Mission Lifecycle Management Implementation
+- **#25:** 🛡️ HIGH - Safety System Implementation
+- **#26:** 🚀 HIGH - Movement Control System Implementation
+- **#27:** 🛣️ MEDIUM - Path Planning System Implementation
+- **#28:** 📊 MEDIUM - Advanced Features Implementation
 
 ---
 
@@ -121,16 +148,19 @@
 1. **Start simulation framework** (SIM-01)
 2. **Design simulation models**
 3. **Setup development environment**
+4. **Monitor Backend dependencies** (GitHub issues)
 
 ### **Short Term (Week 7-8):**
 1. **Complete simulation framework** (SIM-01)
 2. **Begin system testing** (SIM-02)
 3. **Integration testing**
+4. **Backend integration** (when business logic complete)
 
 ### **Medium Term (Week 8):**
 1. **Complete system testing** (SIM-02)
 2. **Performance optimization**
 3. **Final validation**
+4. **End-to-end testing** with Backend
 
 ---
 
@@ -154,6 +184,10 @@
 - `sim/docs/` - Documentation
 - `sim/reports/` - Reports
 
+### **GitHub Issues:**
+- Repository: https://github.com/kimlam2010/OHT-50
+- Issues: #22, #24, #25, #26, #27, #28 (Backend critical missing components)
+
 ---
 
 ## 👥 Assignments (Simulation Team)
@@ -167,6 +201,14 @@ Ma trận đầy đủ: `docs/reports/ASSIGNMENTS_MATRIX.md`.
 - Tests: Unit models, integration, performance, fault injection
 
 ## 📝 **CHANGELOG**
+
+### **v4.0 (2024-12-19):**
+- ✅ Updated based on GitHub issues creation
+- ✅ Added Backend dependencies status section
+- ✅ Added critical missing components tracking
+- ✅ Added GitHub issues references
+- ✅ Updated dependencies monitoring
+- ✅ Added Backend integration planning
 
 ### **v3.0 (2024-12-19):**
 - ✅ Updated based on actual Backend team progress
@@ -198,4 +240,4 @@ Ma trận đầy đủ: `docs/reports/ASSIGNMENTS_MATRIX.md`.
 
 ---
 
-**📋 Status:** Ready to start Week 7, waiting for Backend API completion dependencies.
+**📋 Status:** Ready to start Week 7, monitoring Backend dependencies via GitHub issues for critical missing components.

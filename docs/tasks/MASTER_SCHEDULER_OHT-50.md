@@ -1,6 +1,6 @@
 # MASTER SCHEDULER - OHT-50 Master Module
 
-**Phiên bản:** v3.0  
+**Phiên bản:** v4.0  
 **Ngày cập nhật:** 2024-12-19  
 **PM:** Project Manager  
 **Trạng thái:** 🎯 PRIORITY EXECUTION  
@@ -23,6 +23,7 @@
 - ✅ **Backend Team 85% complete** - Core infrastructure và API endpoints hoàn thành
 - 🔧 **ACTIVE:** Backend business logic implementation
 - 🎯 **NEW:** Production deployment preparation
+- 🚨 **CRITICAL:** Core business logic services missing (tracked via GitHub issues)
 
 ---
 
@@ -45,6 +46,38 @@
 | **Frontend** | 12 | 10 | 0 | 2 | 83% | ✅ NEAR COMPLETE | **PHASE 2** |
 | **SIM** | 2 | 0 | 0 | 2 | 0% | 📋 PENDING | **PHASE 2** |
 | **PM** | 10 | 8 | 0 | 2 | 80% | ✅ NEAR COMPLETE | 🎯 **ACTIVE** |
+
+---
+
+## 🚨 **CRITICAL MISSING COMPONENTS - BACKEND**
+
+### **Core Business Logic Services (MISSING):**
+- ❌ **MissionService** - Quản lý lifecycle mission
+- ❌ **SafetyService** - Hệ thống an toàn
+- ❌ **MovementService** - Điều khiển chuyển động
+- ❌ **PathPlanningService** - Lập kế hoạch đường đi
+- ❌ **StateManagementService** - Quản lý trạng thái hệ thống
+
+### **Business Logic Implementation (MISSING):**
+- ❌ **Mission Lifecycle Management** - Mission creation, validation, execution, state transitions
+- ❌ **Safety System Implementation** - E-Stop handling, safety zone monitoring, collision detection
+- ❌ **Movement Control** - Trajectory planning, speed profile management, position control
+- ❌ **Path Planning** - Route optimization, obstacle avoidance, safety zone integration
+
+### **Advanced Features (MISSING):**
+- ❌ **Real-time Mission Execution**
+- ❌ **Advanced Safety Algorithms**
+- ❌ **Predictive Maintenance**
+- ❌ **Analytics Dashboard**
+- ❌ **Multi-device Support**
+
+### **GitHub Issues Created:**
+- **#22:** 🚨 CRITICAL - Core Business Logic Services
+- **#24:** 🎯 HIGH - Mission Lifecycle Management Implementation
+- **#25:** 🛡️ HIGH - Safety System Implementation
+- **#26:** 🚀 HIGH - Movement Control System Implementation
+- **#27:** 🛣️ MEDIUM - Path Planning System Implementation
+- **#28:** 📊 MEDIUM - Advanced Features Implementation
 
 ---
 
@@ -262,6 +295,7 @@ gantt
 ✅ Performance metrics review
 ✅ Integration testing status
 ✅ Production deployment planning
+✅ GitHub issues monitoring
 
 # Evening Review (5:15 PM)
 ✅ Code quality metrics
@@ -270,6 +304,7 @@ gantt
 ✅ Next day planning
 ✅ Risk assessment
 ✅ Timeline adjustments
+✅ Critical missing components status
 ```
 
 ### **SIM Team Daily:** 📋 PLANNED
@@ -301,6 +336,7 @@ gantt
 ✅ Backend: Documentation completion
 ✅ Integration: Backend API validation
 📋 Next week: Production deployment preparation
+✅ GitHub issues: Critical missing components status
 ```
 
 ### **Week 7-8 Review:** 📋 PLANNED
@@ -322,6 +358,7 @@ gantt
 2. **Backend Team:** Continue BE-14 (Advanced Testing) - HIGH
 3. **Backend Team:** Finish BE-15 (Documentation) - MEDIUM
 4. **PM Team:** Update task assignments và timeline
+5. **GitHub Issues:** Monitor critical missing components
 
 ### **Next Week Actions:**
 1. **Backend Team:** Start BE-16 (Production Deployment)
@@ -361,6 +398,10 @@ gantt
 - `docs/tasks/SIM_TEAM_QUICK_GUIDE.md`
 - `docs/tasks/EMBED_TEAM_QUICK_GUIDE.md`
 
+### **GitHub Issues:**
+- Repository: https://github.com/kimlam2010/OHT-50
+- Issues: #22, #24, #25, #26, #27, #28 (Critical missing components)
+
 ---
 
 ## 👥 **ASSIGNMENTS SUMMARY**
@@ -380,6 +421,15 @@ Xem ma trận phân công chi tiết: `docs/reports/ASSIGNMENTS_MATRIX.md`.
 ---
 
 ## 📝 **CHANGELOG**
+
+### **v4.0 (2024-12-19):**
+- ✅ Updated based on GitHub issues creation
+- ✅ Added critical missing components section
+- ✅ Added GitHub issues references
+- ✅ Updated business logic implementation status
+- ✅ Added detailed missing features list
+- ✅ Updated daily checkpoints with GitHub monitoring
+- ✅ Updated weekly reviews with critical components status
 
 ### **v3.0 (2024-12-19):**
 - ✅ Updated based on actual Backend team progress
@@ -429,4 +479,4 @@ Xem ma trận phân công chi tiết: `docs/reports/ASSIGNMENTS_MATRIX.md`.
 
 ---
 
-**🎯 Kết luận:** Phase 2 active, Backend team 85% complete - production deployment preparation in progress. SIM team ready to start Week 7.
+**🎯 Kết luận:** Phase 2 active, Backend team 85% complete - CRITICAL missing components identified and tracked via GitHub issues. SIM team ready to start Week 7.

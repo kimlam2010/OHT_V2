@@ -10,7 +10,7 @@ from app.services.auth_service import AuthService
 
 
 logger = get_logger(__name__)
-router = APIRouter(tags=["Auth"])
+router = APIRouter(tags=["Authentication"])
 
 _svc = None
 

@@ -9,7 +9,7 @@ from app.services.center_client import CenterClient
 from app.models.center_comm import Position
 from app.core.security import verify_token
 
-router = APIRouter()
+router = APIRouter(tags=["Center Integration"])
 
 
 async def get_center_client():
@@ -30,7 +30,7 @@ class MissionIn(BaseModel):
 _last_mission: Optional[MissionIn] = None
 
 
-@router.post("/mission", dependencies=[Depends(verify_token)])
+@router.post("/receive-mission", dependencies=[Depends(verify_token)])
 async def receive_mission(payload: MissionIn):
     global _last_mission
     _last_mission = payload

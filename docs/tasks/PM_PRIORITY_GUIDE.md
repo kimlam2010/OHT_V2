@@ -1,6 +1,6 @@
 # PM PRIORITY GUIDE - OHT-50 Master Module
 
-**Phiên bản:** v2.0  
+**Phiên bản:** v3.0  
 **Ngày tạo:** 2024-12-19  
 **Team:** PM Team  
 **Trạng thái:** 🎯 PHASE 2 EXECUTION
@@ -14,6 +14,38 @@
 
 ### **Phase 2: Backend + Frontend Teams (Weeks 5-8)** 🔧 ACTIVE
 **Mục tiêu:** Services và UI development trên nền tảng vững chắc
+
+---
+
+## 🚨 **CRITICAL MISSING COMPONENTS - BACKEND**
+
+### **Core Business Logic Services (MISSING):**
+- ❌ **MissionService** - Quản lý lifecycle mission
+- ❌ **SafetyService** - Hệ thống an toàn
+- ❌ **MovementService** - Điều khiển chuyển động
+- ❌ **PathPlanningService** - Lập kế hoạch đường đi
+- ❌ **StateManagementService** - Quản lý trạng thái hệ thống
+
+### **Business Logic Implementation (MISSING):**
+- ❌ **Mission Lifecycle Management** - Mission creation, validation, execution, state transitions
+- ❌ **Safety System Implementation** - E-Stop handling, safety zone monitoring, collision detection
+- ❌ **Movement Control** - Trajectory planning, speed profile management, position control
+- ❌ **Path Planning** - Route optimization, obstacle avoidance, safety zone integration
+
+### **Advanced Features (MISSING):**
+- ❌ **Real-time Mission Execution**
+- ❌ **Advanced Safety Algorithms**
+- ❌ **Predictive Maintenance**
+- ❌ **Analytics Dashboard**
+- ❌ **Multi-device Support**
+
+### **GitHub Issues Created:**
+- **#22:** 🚨 CRITICAL - Core Business Logic Services
+- **#24:** 🎯 HIGH - Mission Lifecycle Management Implementation
+- **#25:** 🛡️ HIGH - Safety System Implementation
+- **#26:** 🚀 HIGH - Movement Control System Implementation
+- **#27:** 🛣️ MEDIUM - Path Planning System Implementation
+- **#28:** 📊 MEDIUM - Advanced Features Implementation
 
 ---
 
@@ -197,6 +229,7 @@ gantt
 ✅ Performance metrics review
 ✅ Integration testing status
 ✅ Production deployment planning
+✅ GitHub issues monitoring
 
 # Evening Review (5:15 PM)
 ✅ Code quality metrics
@@ -205,6 +238,7 @@ gantt
 ✅ Next day planning
 ✅ Risk assessment
 ✅ Timeline adjustments
+✅ Critical missing components status
 ```
 
 ### **SIM Team Daily:** 📋 PLANNED
@@ -236,6 +270,7 @@ gantt
 ✅ Backend: Documentation completion
 ✅ Integration: Backend API validation
 📋 Next week: Production deployment preparation
+✅ GitHub issues: Critical missing components status
 ```
 
 ### **Week 7-8 Review:** 📋 PLANNED
@@ -259,6 +294,7 @@ gantt
 - Production deployment issues
 - Integration testing failures
 - Performance below specifications
+- Critical missing components not implemented
 ```
 
 ### **Resource Issues:**
@@ -268,6 +304,7 @@ gantt
 - Team member availability
 - Timeline conflicts
 - Dependencies delays
+- GitHub issues not being addressed
 ```
 
 ---
@@ -282,6 +319,7 @@ gantt
 3. Security validation complete
 4. Integration testing passed
 5. Documentation complete
+6. Critical missing components implemented
 ```
 
 ### **Week 7-8 Preparation for SIM:**
@@ -292,6 +330,7 @@ gantt
 3. Testing framework operational
 4. Performance metrics available
 5. Integration points defined
+6. Critical missing components resolved
 ```
 
 ---
@@ -308,6 +347,10 @@ gantt
 - `docs/FIRMWARE/02_ARCHITECTURE/` - Architecture documents
 - `docs/backend/api-specs/` - Backend API specifications
 
+### **GitHub Issues:**
+- Repository: https://github.com/kimlam2010/OHT-50
+- Issues: #22, #24, #25, #26, #27, #28 (Critical missing components)
+
 ---
 
 ## 🚀 **EXECUTION COMMAND**
@@ -319,13 +362,15 @@ gantt
 3. Coordinate production deployment planning
 4. Establish integration testing schedule
 5. Begin release preparation
+6. Monitor GitHub issues for critical missing components
 
 # Success Formula
 Backend Core Development + Production Preparation = Complete System
 Complete System + Simulation Framework = Validated System
 Validated System + Integration Testing = Release Ready
+Critical Missing Components + Implementation = Full Functionality
 ```
 
 ---
 
-**🎯 Kết luận:** Phase 2 active, Backend team 85% complete - focus on business logic completion and production deployment preparation. SIM team ready to start Week 7.
+**🎯 Kết luận:** Phase 2 active, Backend team 85% complete - CRITICAL missing components identified and tracked via GitHub issues. Focus on business logic completion and production deployment preparation. SIM team ready to start Week 7.
