@@ -1,0 +1,37 @@
+# Backup files
+*.backup
+*.bak
+*.old
+*.orig
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Build artifacts
+build/
+dist/
+*.o
+*.a
+*.so
+*.d
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Configuration backups
+config.backup.*
+settings.backup.*
