@@ -319,3 +319,17 @@ Implement Ethernet và WiFi hardware circuits.
 - [ ] Safety validation passed
 - [ ] Performance requirements met
 - [ ] Reliability requirements met
+
+---
+
+## 🎯 **Issue #EMBED-006: Dual-channel E‑Stop Signal Exposure**
+
+### **Mô tả:**
+Đảm bảo cả hai kênh E‑Stop (dual-channel) được đọc/giám sát và expose rõ ràng tới FW để suy ra `latched` chính xác.
+
+### **Tasks:**
+- [ ] Xác nhận wiring và debounce hai kênh
+- [ ] Cập nhật HAL IO map cho E‑Stop A/B
+- [ ] Tài liệu timing và edge cases (bounce, mismatch)
+
+### **Priority:** Medium
