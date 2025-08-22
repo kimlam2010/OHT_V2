@@ -696,3 +696,31 @@ static void relay_handle_fault(relay_fault_t fault) {
         relay_callback(RELAY_STATE_FAULT, fault);
     }
 }
+
+hal_status_t hal_relay_health_check(void) {
+    if (!relay_initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Check relay 1 health
+    if (relay1_status.fault != RELAY_FAULT_NONE) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Check relay 2 health
+    if (relay2_status.fault != RELAY_FAULT_NONE) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Check temperature
+    if (relay1_status.temperature_c > 80 || relay2_status.temperature_c > 80) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Check current
+    if (relay1_status.current_ma > 2000 || relay2_status.current_ma > 2000) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    return HAL_STATUS_OK;
+}

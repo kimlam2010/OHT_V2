@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "../include/hal_estop.h"
-#include "../include/hal_common.h"
+#include "hal_estop.h"
+#include "hal_common.h"
 
 // Test configuration
 #define TEST_DELAY_MS 1000

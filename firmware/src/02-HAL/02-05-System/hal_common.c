@@ -43,6 +43,9 @@ const char* hal_status_to_string(hal_status_t status) {
         case HAL_STATUS_TIMEOUT: return "TIMEOUT";
         case HAL_STATUS_BUSY: return "BUSY";
         case HAL_STATUS_NOT_SUPPORTED: return "NOT_SUPPORTED";
+        case HAL_STATUS_ALREADY_INITIALIZED: return "ALREADY_INITIALIZED";
+        case HAL_STATUS_ALREADY_ACTIVE: return "ALREADY_ACTIVE";
+        case HAL_STATUS_IO_ERROR: return "IO_ERROR";
         default: return "UNKNOWN";
     }
 }
@@ -374,40 +377,29 @@ const char* hal_get_version_string(void) {
 }
 
 // HAL module monitoring functions (stubs)
-hal_status_t hal_module_heartbeat_register(const char *module_name) {
-    (void)module_name;
+hal_status_t hal_module_heartbeat_register(uint32_t module_id) {
+    (void)module_id;
     return HAL_STATUS_OK;
 }
 
-hal_status_t hal_module_heartbeat_check(const char *module_name, bool *alive) {
-    (void)module_name;
-    if (alive != NULL) {
-        *alive = true;
-    }
+hal_status_t hal_module_heartbeat_check(uint32_t module_id) {
+    (void)module_id;
     return HAL_STATUS_OK;
 }
 
-hal_status_t hal_module_health_check(hal_module_health_t *health) {
+hal_status_t hal_module_health_check(uint32_t module_id, hal_module_health_t *health) {
+    (void)module_id;
     if (health != NULL) {
-        health->status = HAL_DEVICE_STATUS_OK;
-        health->error_count = 0;
-        health->warning_count = 0;
-        health->last_check_time = hal_get_timestamp_us();
+        *health = HAL_MODULE_HEALTH_OK;
     }
     return HAL_STATUS_OK;
 }
 
-hal_status_t hal_module_timeout_detect(uint32_t timeout_ms) {
-    (void)timeout_ms;
+hal_status_t hal_module_timeout_detect(void) {
     return HAL_STATUS_OK;
 }
 
 // HAL safety functions (stubs)
-hal_status_t hal_safety_get_status(hal_safety_status_t *status) {
-    if (status != NULL) {
-        status->enabled = true;
-        status->state = HAL_SAFETY_STATE_SAFE;
-        status->last_check_time = hal_get_timestamp_us();
-    }
-    return HAL_STATUS_OK;
+hal_safety_status_t hal_safety_get_status(void) {
+    return HAL_SAFETY_OK;
 }

@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "../include/hal_relay.h"
-#include "../include/hal_common.h"
+#include "hal_relay.h"
+#include "hal_common.h"
 
 // Test configuration
 #define TEST_DELAY_MS 1000
