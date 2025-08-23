@@ -1,812 +1,411 @@
-# KẾ HOẠCH TRIỂN KHAI PHẦN CỨNG OHT-50
-## Hardware Implementation Plan
+# Hardware Implementation Plan - OHT-50 (v2.0)
 
-**Phiên bản:** v1.0  
-**Ngày tạo:** $(date +%Y-%m-%d)  
-**PM:** [Tên PM]  
-**Trạng thái:** Implementation Plan  
+**Phiên bản:** 2.0  
+**Ngày cập nhật:** 2025-01-27  
+**Trạng thái:** Updated với Dock & Location module
 
 ---
 
-## 📋 **TỔNG QUAN KẾ HOẠCH**
+## 🎯 **MỤC TIÊU**
 
-### **🎯 Mục tiêu:**
-Triển khai hệ thống OHT-50 hoàn chỉnh với 6 module chính trong 6 tuần, đảm bảo chất lượng, an toàn và hiệu suất cao.
-
-### **📅 Timeline tổng thể:**
-```
-OHT-50 Hardware Implementation Timeline
-Week 1-2: Core Hardware Development
-Week 3-4: Sensing & Control Integration  
-Week 5-6: User Interface & System Integration
-Week 7: Testing & Validation
-Week 8: Documentation & Deployment
-```
+Lập kế hoạch triển khai phần cứng cho hệ thống OHT-50 với 5 module bắt buộc, bao gồm Dock & Location module cho positioning và navigation.
 
 ---
 
-## 🔧 **PHASE 1: CORE HARDWARE DEVELOPMENT (Week 1-2)**
+## 📋 **PHASE 1: MASTER MODULE SETUP**
 
-### **Week 1: Master Module & Basic Infrastructure**
-
-#### **Day 1-2: Master Module Setup**
+### **Week 1-2: Platform Setup**
 ```
-🎯 Objectives:
-├── Orange Pi 5B hardware setup
-├── Operating system installation
-├── Network configuration
-├── GPIO pin mapping verification
-└── Basic functionality testing
+Day 1-3: Orange Pi 5B Setup
+- Install Ubuntu 22.04 LTS
+- Configure network interfaces (Ethernet + WiFi)
+- Install development tools và dependencies
+- Configure UART1 cho RS485 communication
 
-📋 Tasks:
-├── Install Ubuntu 22.04 LTS
-├── Configure network (Ethernet + WiFi)
-├── Test GPIO pins (LEDs, E-Stop, Relay)
-├── Verify RS485 communication
-└── Document pin assignments
+Day 4-7: GPIO Configuration
+- Configure GPIO pins cho E-Stop inputs
+- Configure GPIO pins cho relay outputs
+- Configure GPIO pins cho status LEDs
+- Test GPIO functionality
 
-📊 Deliverables:
-├── Working Master Module
-├── GPIO test results
-├── Network connectivity verified
-└── Basic documentation
-```
+Day 8-10: Communication Setup
+- Configure UART1 RS485 với termination
+- Test Modbus RTU communication
+- Configure Ethernet và WiFi failover
+- Test network connectivity
 
-#### **Day 3-4: Power Management Module**
-```
-🎯 Objectives:
-├── Power supply design
-├── Battery backup system
-├── Power distribution
-└── Safety protection circuits
-
-📋 Tasks:
-├── Design power distribution board
-├── Integrate AC/DC converter
-├── Install LiFePO4 battery system
-├── Implement protection circuits
-└── Test power stability
-
-📊 Deliverables:
-├── Power Management Module
-├── Stable power supply (24V, 12V, 5V)
-├── Battery backup system
-└── Protection circuits working
+Day 11-14: Safety System Integration
+- Install E-Stop buttons và wiring
+- Configure dual-channel safety monitoring
+- Test emergency stop functionality
+- Configure emergency brake control
 ```
 
-#### **Day 5-7: Basic Mechanical Structure**
+### **Deliverables:**
+- ✅ Orange Pi 5B với Ubuntu 22.04 LTS
+- ✅ UART1 RS485 communication working
+- ✅ GPIO control cho E-Stop và relays
+- ✅ Network connectivity (Ethernet + WiFi)
+- ✅ Basic safety system functionality
+
+---
+
+## 📋 **PHASE 2: CORE MODULES IMPLEMENTATION**
+
+### **Week 3-4: Power Module**
 ```
-🎯 Objectives:
-├── Frame assembly
-├── Basic mounting system
-├── Wheel installation
-└── Initial mechanical testing
+Day 15-17: Battery System
+- Install LiFePO4 battery pack (50Ah @ 24V)
+- Configure BMS với cell balancing
+- Test charging/discharging cycles
+- Validate safety protections
 
-📋 Tasks:
-├── Assemble aluminum frame
-├── Install mounting brackets
-├── Mount wheels và bearings
-├── Test mechanical stability
-└── Verify weight capacity
+Day 18-21: Power Distribution
+- Install power distribution board
+- Configure 24V, 12V, 5V, 3.3V rails
+- Test power monitoring và protection
+- Validate UPS functionality
 
-📊 Deliverables:
-├── Mechanical frame assembled
-├── Wheel system installed
-├── Mounting system ready
-└── Mechanical testing completed
-```
-
-### **Week 2: Motor Drive & Basic Safety**
-
-#### **Day 8-10: Motor Drive Module**
-```
-🎯 Objectives:
-├── Motor control system
-├── Encoder integration
-├── Basic motion control
-└── Safety protection
-
-📋 Tasks:
-├── Assemble STM32F407 board
-├── Install DRV8833 motor drivers
-├── Connect DC motors
-├── Integrate encoders
-└── Test basic motor control
-
-📊 Deliverables:
-├── Motor Drive Module
-├── Working motor control
-├── Encoder feedback
-└── Basic motion capability
+Day 22-28: Charging System
+- Install AC/DC converter (220V → 24V)
+- Configure MPPT charger (optional)
+- Install magnetic charging connector
+- Test charging interface
 ```
 
-#### **Day 11-12: Basic Safety System**
+### **Week 5-6: Safety Module**
 ```
-🎯 Objectives:
-├── E-Stop integration
-├── Basic safety circuits
-├── Emergency brake system
-└── Safety testing
+Day 29-31: E-Stop System
+- Install dual-channel E-Stop buttons
+- Configure safety monitoring circuits
+- Test response time (< 10ms)
+- Validate SIL2 compliance
 
-📋 Tasks:
-├── Install E-Stop buttons
-├── Connect emergency brake
-├── Implement safety circuits
-├── Test emergency stop
-└── Verify safety functionality
+Day 32-35: Safety Sensors
+- Install safety light curtain
+- Install 4x safety mats
+- Install 2x door sensors
+- Test all safety sensors
 
-📊 Deliverables:
-├── Basic Safety Module
-├── E-Stop system working
-├── Emergency brake functional
-└── Safety testing completed
+Day 36-42: Emergency Brake
+- Install electromagnetic brake
+- Configure brake control circuit
+- Test brake response time
+- Validate fail-safe operation
 ```
 
-#### **Day 13-14: Integration & Testing**
+### **Week 7-8: Travel Motor Module**
 ```
-🎯 Objectives:
-├── Module integration
-├── Basic system testing
-├── Performance validation
-└── Documentation
+Day 43-45: Motor Installation
+- Install 2x DC motors (500W each)
+- Configure motor drivers (H-bridge)
+- Test motor control functionality
+- Validate power ratings
 
-📋 Tasks:
-├── Connect all modules
-├── Test system integration
-├── Validate basic functionality
-├── Performance testing
-└── Document Phase 1 results
+Day 46-49: Encoder Integration
+- Install quadrature encoders (2000 PPR)
+- Configure encoder interface
+- Test position feedback
+- Validate accuracy (±0.1°)
 
-📊 Deliverables:
-├── Integrated core system
-├── Basic functionality working
-├── Performance test results
-└── Phase 1 documentation
+Day 50-56: Gearbox & Wheels
+- Install planetary gearbox (12:1 ratio)
+- Install omni-directional wheels
+- Test differential drive
+- Validate load capacity
 ```
 
 ---
 
-## 📡 **PHASE 2: SENSING & CONTROL INTEGRATION (Week 3-4)**
+## 📋 **PHASE 3: DOCK & LOCATION MODULE IMPLEMENTATION**
 
-### **Week 3: Sensor Module & Advanced Safety**
-
-#### **Day 15-17: Sensor Module Development**
+### **Week 9-10: IMU & Sensors**
 ```
-🎯 Objectives:
-├── LiDAR integration
-├── Ultrasonic sensors
-├── IMU setup
-└── Sensor fusion
+Day 57-59: IMU Installation
+- Install MPU6050 IMU module
+- Configure I2C/SPI interface
+- Test accelerometer và gyroscope
+- Validate sensor accuracy
 
-📋 Tasks:
-├── Install RPLIDAR A1M8
-├── Connect ultrasonic sensors
-├── Setup MPU6050 IMU
-├── Implement sensor fusion
-└── Test sensor accuracy
+Day 60-63: Magnetic Sensors
+- Install 2x Hall effect sensors
+- Configure analog interface
+- Test magnetic field detection
+- Validate position tracking
 
-📊 Deliverables:
-├── Sensor Module
-├── LiDAR scanning working
-├── Obstacle detection
-└── Position tracking
+Day 64-70: Sensor Calibration
+- Calibrate IMU sensors
+- Calibrate magnetic sensors
+- Test sensor fusion algorithms
+- Validate positioning accuracy (±10mm)
 ```
 
-#### **Day 18-19: Advanced Safety Systems**
+### **Week 11-12: RFID & Dock Sensors**
 ```
-🎯 Objectives:
-├── Light curtain installation
-├── Safety mats integration
-├── Door sensors
-└── Advanced safety logic
+Day 71-73: RFID Reader
+- Install RFID reader module
+- Configure UART/SPI interface
+- Test tag reading functionality
+- Validate read range (10-50cm)
 
-📋 Tasks:
-├── Install safety light curtains
-├── Connect pressure sensors
-├── Setup door sensors
-├── Implement safety logic
-└── Test safety systems
+Day 74-77: Dock Alignment Sensors
+- Install 4x infrared proximity sensors
+- Configure sensor array
+- Test alignment detection
+- Validate accuracy (±1mm)
 
-📊 Deliverables:
-├── Advanced Safety Module
-├── Light curtain protection
-├── Safety mat detection
-└── Door monitoring
-```
-
-#### **Day 20-21: Motion Control Algorithms**
-```
-🎯 Objectives:
-├── Path planning
-├── Obstacle avoidance
-├── Position control
-└── Speed control
-
-📋 Tasks:
-├── Implement path planning
-├── Develop obstacle avoidance
-├── Test position control
-├── Validate speed control
-└── Performance optimization
-
-📊 Deliverables:
-├── Motion control algorithms
-├── Path planning working
-├── Obstacle avoidance
-└── Position/speed control
+Day 78-84: Charging Interface
+- Install magnetic charging connector
+- Configure charging circuit
+- Test charging functionality
+- Validate alignment tolerance (±5mm)
 ```
 
-### **Week 4: Advanced Integration & Testing**
-
-#### **Day 22-24: System Integration**
+### **Week 13-14: GPS & Integration**
 ```
-🎯 Objectives:
-├── Full system integration
-├── Communication testing
-├── Performance optimization
-└── Reliability testing
+Day 85-87: GPS Module (Optional)
+- Install multi-constellation GNSS receiver
+- Configure UART interface
+- Test GPS functionality
+- Validate accuracy (±2.5m)
 
-📋 Tasks:
-├── Integrate all modules
-├── Test RS485 communication
-├── Optimize performance
-├── Test system reliability
-└── Document integration
+Day 88-91: Module Integration
+- Integrate all sensors vào single module
+- Configure power distribution
+- Test communication interface
+- Validate overall functionality
 
-📊 Deliverables:
-├── Fully integrated system
-├── Stable communication
-├── Optimized performance
-└── Reliability test results
-```
-
-#### **Day 25-26: Advanced Testing**
-```
-🎯 Objectives:
-├── Stress testing
-├── Safety validation
-├── Performance benchmarking
-└── Error handling
-
-📋 Tasks:
-├── Conduct stress tests
-├── Validate safety systems
-├── Benchmark performance
-├── Test error handling
-└── Document test results
-
-📊 Deliverables:
-├── Stress test results
-├── Safety validation
-├── Performance benchmarks
-└── Error handling verified
-```
-
-#### **Day 27-28: Documentation & Review**
-```
-🎯 Objectives:
-├── Technical documentation
-├── User manuals
-├── Maintenance guides
-└── Phase 2 review
-
-📋 Tasks:
-├── Write technical docs
-├── Create user manuals
-├── Develop maintenance guides
-├── Review Phase 2
-└── Plan Phase 3
-
-📊 Deliverables:
-├── Technical documentation
-├── User manuals
-├── Maintenance guides
-└── Phase 2 completion report
+Day 92-98: Testing & Validation
+- Test positioning accuracy
+- Test navigation functionality
+- Test docking procedures
+- Validate safety integration
 ```
 
 ---
 
-## 🖥️ **PHASE 3: USER INTERFACE & SYSTEM INTEGRATION (Week 5-6)**
+## 📋 **PHASE 4: OPTIONAL MODULES**
 
-### **Week 5: HMI Module Development**
-
-#### **Day 29-31: HMI Hardware**
+### **Week 15-16: Lifter Motor Module**
 ```
-🎯 Objectives:
-├── Display installation
-├── Touch interface setup
-├── Physical buttons
-└── Audio system
+Day 99-101: Linear Actuator
+- Install ball screw linear actuator
+- Configure motor driver
+- Test stroke và load capacity
+- Validate position accuracy
 
-📋 Tasks:
-├── Install 7" TFT LCD
-├── Setup capacitive touch
-├── Connect physical buttons
-├── Install buzzer
-└── Test HMI hardware
+Day 102-105: Load Cell
+- Install strain gauge load cell
+- Configure load monitoring
+- Test weight measurement
+- Validate accuracy (±0.1% FS)
 
-📊 Deliverables:
-├── HMI Module hardware
-├── Working display
-├── Touch interface
-└── Audio feedback
+Day 106-112: Integration
+- Integrate actuator và load cell
+- Configure safety limits
+- Test complete lifter system
+- Validate safety functionality
 ```
 
-#### **Day 32-33: HMI Software**
+### **Week 17-18: Cargo Door Module**
 ```
-🎯 Objectives:
-├── User interface design
-├── Touch controls
-├── Status display
-└── Configuration interface
+Day 113-115: Door Actuator
+- Install electric linear actuator
+- Configure door control
+- Test door movement
+- Validate position feedback
 
-📋 Tasks:
-├── Design UI layout
-├── Implement touch controls
-├── Create status displays
-├── Add configuration options
-└── Test HMI software
+Day 116-119: Sensors
+- Install door position sensor
+- Install cargo presence sensor
+- Test sensor functionality
+- Validate detection accuracy
 
-📊 Deliverables:
-├── HMI software
-├── User interface
-├── Touch controls
-└── Configuration system
-```
-
-#### **Day 34-35: HMI Integration**
-```
-🎯 Objectives:
-├── System integration
-├── Real-time updates
-├── User interaction
-└── Interface testing
-
-📋 Tasks:
-├── Integrate with main system
-├── Implement real-time updates
-├── Test user interactions
-├── Validate interface
-└── Document HMI
-
-📊 Deliverables:
-├── Integrated HMI
-├── Real-time system updates
-├── User interaction working
-└── HMI documentation
-```
-
-### **Week 6: Final Integration & Optimization**
-
-#### **Day 36-38: Complete System Integration**
-```
-🎯 Objectives:
-├── Full system integration
-├── Performance optimization
-├── Reliability enhancement
-└── Final testing
-
-📋 Tasks:
-├── Integrate all components
-├── Optimize performance
-├── Enhance reliability
-├── Conduct final tests
-└── Document system
-
-📊 Deliverables:
-├── Complete OHT-50 system
-├── Optimized performance
-├── Enhanced reliability
-└── Final test results
-```
-
-#### **Day 39-40: System Validation**
-```
-🎯 Objectives:
-├── System validation
-├── Safety certification
-├── Performance verification
-└── Quality assurance
-
-📋 Tasks:
-├── Validate system functionality
-├── Certify safety systems
-├── Verify performance metrics
-├── Quality assurance testing
-└── Document validation
-
-📊 Deliverables:
-├── System validation report
-├── Safety certification
-├── Performance verification
-└── Quality assurance report
-```
-
-#### **Day 41-42: Documentation & Handover**
-```
-🎯 Objectives:
-├── Complete documentation
-├── User training materials
-├── Maintenance procedures
-└── System handover
-
-📋 Tasks:
-├── Complete all documentation
-├── Create training materials
-├── Develop maintenance procedures
-├── Prepare handover
-└── Final review
-
-📊 Deliverables:
-├── Complete documentation
-├── Training materials
-├── Maintenance procedures
-└── System handover package
+Day 120-126: Integration
+- Integrate door system
+- Configure safety interlocks
+- Test complete door system
+- Validate safety functionality
 ```
 
 ---
 
-## 🧪 **PHASE 4: TESTING & VALIDATION (Week 7)**
+## 📋 **PHASE 5: SYSTEM INTEGRATION**
 
-### **Comprehensive Testing Plan**
-
-#### **Functional Testing**
+### **Week 19-20: Mechanical Integration**
 ```
-🧪 Functional Test Categories
-├── Motor Control Testing
-│   ├── Speed control accuracy
-│   ├── Direction control
-│   ├── Position control
-│   └── Torque control
-├── Sensor Testing
-│   ├── LiDAR accuracy
-│   ├── Ultrasonic range
-│   ├── IMU calibration
-│   └── Encoder precision
-├── Safety Testing
-│   ├── E-Stop functionality
-│   ├── Light curtain detection
-│   ├── Emergency brake
-│   └── Safety logic
-└── Communication Testing
-    ├── RS485 reliability
-    ├── Modbus protocol
-    ├── Network connectivity
-    └── Data integrity
+Day 127-129: Chassis Assembly
+- Assemble robot chassis
+- Install all modules
+- Configure cable management
+- Test mechanical fit
+
+Day 130-133: Power Integration
+- Connect power distribution
+- Test all power rails
+- Validate power monitoring
+- Test UPS functionality
+
+Day 134-140: Safety Integration
+- Connect all safety sensors
+- Test safety monitoring
+- Validate emergency procedures
+- Test fail-safe operation
 ```
 
-#### **Performance Testing**
+### **Week 21-22: Communication Integration**
 ```
-📊 Performance Test Metrics
-├── Response Time
-│   ├── Motor response: < 100ms
-│   ├── Sensor response: < 50ms
-│   ├── Safety response: < 10ms
-│   └── UI response: < 200ms
-├── Accuracy
-│   ├── Position accuracy: ±5mm
-│   ├── Speed accuracy: ±2%
-│   ├── Distance accuracy: ±1cm
-│   └── Angle accuracy: ±0.5°
-├── Reliability
-│   ├── Uptime: > 99.5%
-│   ├── Error rate: < 0.1%
-│   ├── Recovery time: < 30s
-│   └── MTBF: > 1000 hours
-└── Power Efficiency
-    ├── Power consumption: < 500W
-    ├── Battery life: > 4 hours
-    ├── Charging time: < 6 hours
-    └── Standby power: < 50W
-```
+Day 141-143: RS485 Bus
+- Connect all modules to RS485 bus
+- Configure Modbus RTU addresses
+- Test communication
+- Validate auto-discovery
 
-#### **Safety Testing**
-```
-🛡️ Safety Test Procedures
-├── Emergency Stop Testing
-│   ├── Single E-Stop activation
-│   ├── Dual E-Stop activation
-│   ├── E-Stop during motion
-│   └── E-Stop recovery
-├── Light Curtain Testing
-│   ├── Beam interruption detection
-│   ├── Multiple beam interruption
-│   ├── False alarm testing
-│   └── Recovery procedures
-├── Safety Mat Testing
-│   ├── Pressure detection
-│   ├── Multiple sensor activation
-│   ├── Sensitivity adjustment
-│   └── False trigger prevention
-└── Door Sensor Testing
-    ├── Door open detection
-    ├── Multiple door monitoring
-    ├── Tamper detection
-    └── Recovery procedures
+Day 144-147: Network Integration
+- Configure Ethernet connectivity
+- Configure WiFi connectivity
+- Test network failover
+- Validate communication reliability
+
+Day 148-154: System Testing
+- Test complete system functionality
+- Validate all safety features
+- Test navigation system
+- Validate performance requirements
 ```
 
 ---
 
-## 📚 **PHASE 5: DOCUMENTATION & DEPLOYMENT (Week 8)**
+## 📋 **PHASE 6: TESTING & VALIDATION**
 
-### **Documentation Requirements**
-
-#### **Technical Documentation**
+### **Week 23-24: Functional Testing**
 ```
-📋 Technical Documentation
-├── Hardware Specifications
-│   ├── Component specifications
-│   ├── Pin assignments
-│   ├── Wiring diagrams
-│   └── Mechanical drawings
-├── Software Documentation
-│   ├── API documentation
-│   ├── Configuration guides
-│   ├── Troubleshooting guides
-│   └── Development guides
-├── Integration Documentation
-│   ├── System architecture
-│   ├── Communication protocols
-│   ├── Data flow diagrams
-│   └── Interface specifications
-└── Testing Documentation
-    ├── Test procedures
-    ├── Test results
-    ├── Performance data
-    └── Validation reports
+Day 155-157: Module Testing
+- Test each module individually
+- Validate module specifications
+- Test communication protocols
+- Validate safety features
+
+Day 158-161: Integration Testing
+- Test module interactions
+- Validate system coordination
+- Test safety integration
+- Validate performance
+
+Day 162-168: System Testing
+- Test complete system functionality
+- Validate all requirements
+- Test edge cases
+- Validate reliability
 ```
 
-#### **User Documentation**
+### **Week 25-26: Performance Testing**
 ```
-👥 User Documentation
-├── User Manuals
-│   ├── Operation manual
-│   ├── Safety manual
-│   ├── Maintenance manual
-│   └── Troubleshooting guide
-├── Training Materials
-│   ├── Training videos
-│   ├── Training presentations
-│   ├── Hands-on exercises
-│   └── Assessment materials
-├── Quick Reference Guides
-│   ├── Quick start guide
-│   ├── Emergency procedures
-│   ├── Daily checklist
-│   └── Contact information
-└── Safety Documentation
-    ├── Safety procedures
-    ├── Emergency protocols
-    ├── Safety training
-    └── Incident reporting
+Day 169-171: Performance Testing
+- Test positioning accuracy (±10mm)
+- Test navigation speed (0.5-2.0 m/s)
+- Test docking accuracy (±5mm)
+- Validate response times
+
+Day 172-175: Safety Testing
+- Test E-Stop response (< 10ms)
+- Test safety monitoring
+- Test emergency procedures
+- Validate safety compliance
+
+Day 176-182: Environmental Testing
+- Test temperature range (-20°C to +50°C)
+- Test humidity resistance
+- Test vibration resistance
+- Validate environmental compliance
 ```
 
 ---
 
-## 🎯 **MILESTONES & DELIVERABLES**
+## 📊 **TIMELINE TỔNG THỂ**
 
-### **Key Milestones**
+### **Phase Breakdown:**
 ```
-🎯 Project Milestones
-├── Week 1: Master Module & Power Management
-├── Week 2: Motor Drive & Basic Safety
-├── Week 3: Sensor Module & Advanced Safety
-├── Week 4: Motion Control & Integration
-├── Week 5: HMI Module Development
-├── Week 6: Complete System Integration
-├── Week 7: Testing & Validation
-└── Week 8: Documentation & Deployment
+Phase 1 (Week 1-2):   Master Module Setup
+Phase 2 (Week 3-8):   Core Modules Implementation
+Phase 3 (Week 9-14):  Dock & Location Module
+Phase 4 (Week 15-18): Optional Modules
+Phase 5 (Week 19-22): System Integration
+Phase 6 (Week 23-26): Testing & Validation
 ```
 
-### **Major Deliverables**
+### **Critical Path:**
 ```
-📦 Major Deliverables
-├── Hardware Components
-│   ├── Master Module (Orange Pi 5B)
-│   ├── Motor Drive Module
-│   ├── Power Management Module
-│   ├── Sensor Module
-│   ├── Safety Module
-│   └── HMI Module
-├── Mechanical System
-│   ├── Frame assembly
-│   ├── Wheel system
-│   ├── Lifting mechanism
-│   └── Mounting system
-├── Electrical System
-│   ├── Power distribution
-│   ├── Communication network
-│   ├── Safety circuits
-│   └── Control systems
-└── Documentation Package
-    ├── Technical documentation
-    ├── User manuals
-    ├── Training materials
-    └── Maintenance guides
+Week 1-2:   Master Module (Critical)
+Week 3-4:   Power Module (Critical)
+Week 5-6:   Safety Module (Critical)
+Week 7-8:   Travel Motor Module (Critical)
+Week 9-14:  Dock & Location Module (Critical)
+Week 19-22: System Integration (Critical)
+Week 23-26: Testing & Validation (Critical)
 ```
 
 ---
 
-## 💰 **RESOURCE ALLOCATION**
+## 🔧 **RESOURCE REQUIREMENTS**
 
-### **Human Resources**
-```
-👥 Team Allocation
-├── Hardware Engineers: 2 people
-├── Software Engineers: 2 people
-├── Mechanical Engineers: 1 person
-├── Safety Engineers: 1 person
-├── Test Engineers: 1 person
-└── Project Manager: 1 person
+### **Hardware Components:**
+- **Master Module:** Orange Pi 5B, accessories
+- **Power Module:** LiFePO4 battery, BMS, chargers
+- **Safety Module:** E-Stop buttons, sensors, brake
+- **Travel Motor Module:** DC motors, drivers, encoders
+- **Dock & Location Module:** IMU, sensors, RFID, GPS
+- **Optional Modules:** Actuators, sensors, controllers
 
-Total Team Size: 8 people
-```
+### **Tools & Equipment:**
+- **Development Tools:** Oscilloscope, multimeter, power supply
+- **Testing Equipment:** Load tester, environmental chamber
+- **Software Tools:** Development IDE, testing frameworks
+- **Documentation:** Technical manuals, datasheets
 
-### **Budget Allocation**
-```
-💰 Budget Breakdown
-├── Hardware Components: $2,950
-├── Development Tools: $500
-├── Testing Equipment: $300
-├── Documentation: $200
-├── Training: $300
-└── Contingency: $750
-
-Total Budget: $5,000
-```
+### **Personnel:**
+- **Hardware Engineer:** 1 person, full-time
+- **Embedded Engineer:** 1 person, full-time
+- **Test Engineer:** 1 person, part-time
+- **Project Manager:** 1 person, part-time
 
 ---
 
-## ⚠️ **RISK MANAGEMENT**
+## 🚨 **RISK MANAGEMENT**
 
-### **Technical Risks**
-```
-⚠️ Technical Risk Mitigation
-├── Component Availability
-│   ├── Risk: Component shortages
-│   ├── Mitigation: Multiple suppliers
-│   └── Backup: Alternative components
-├── Integration Complexity
-│   ├── Risk: Module integration issues
-│   ├── Mitigation: Modular design
-│   └── Backup: Simplified integration
-├── Performance Issues
-│   ├── Risk: Performance not meeting specs
-│   ├── Mitigation: Early testing
-│   └── Backup: Performance optimization
-└── Safety Compliance
-    ├── Risk: Safety standards not met
-    ├── Mitigation: Safety-first design
-    └── Backup: Safety certification
-```
+### **Technical Risks:**
+- **Component Availability:** Supply chain issues
+- **Integration Complexity:** Module interaction issues
+- **Performance Requirements:** Accuracy và speed requirements
+- **Safety Compliance:** SIL2 compliance challenges
 
-### **Schedule Risks**
-```
-📅 Schedule Risk Mitigation
-├── Development Delays
-│   ├── Risk: Development behind schedule
-│   ├── Mitigation: Agile methodology
-│   └── Backup: Resource reallocation
-├── Testing Delays
-│   ├── Risk: Testing taking longer
-│   ├── Mitigation: Parallel testing
-│   └── Backup: Extended timeline
-├── Documentation Delays
-│   ├── Risk: Documentation incomplete
-│   ├── Mitigation: Continuous documentation
-│   └── Backup: External documentation
-└── Integration Delays
-    ├── Risk: Integration issues
-    ├── Mitigation: Early integration
-    └── Backup: Phased integration
-```
+### **Mitigation Strategies:**
+- **Early Procurement:** Order components early
+- **Modular Design:** Independent module development
+- **Extensive Testing:** Comprehensive testing program
+- **Expert Consultation:** Safety expert review
 
 ---
 
-## 🎯 **SUCCESS CRITERIA**
+## 📋 **DELIVERABLES**
 
-### **Technical Success Criteria**
-```
-✅ Technical Success Metrics
-├── System Performance
-│   ├── Response time < 100ms
-│   ├── Position accuracy ±5mm
-│   ├── Speed accuracy ±2%
-│   └── Uptime > 99.5%
-├── Safety Compliance
-│   ├── E-Stop response < 10ms
-│   ├── Safety system redundancy
-│   ├── Emergency procedures
-│   └── Safety certification
-├── Reliability
-│   ├── Error rate < 0.1%
-│   ├── Recovery time < 30s
-│   ├── MTBF > 1000 hours
-│   └── Maintenance intervals
-└── Usability
-    ├── User interface intuitive
-    ├── Training time < 2 hours
-    ├── Error recovery simple
-    └── Documentation complete
-```
+### **Hardware Deliverables:**
+- ✅ Complete robot system với 5 core modules
+- ✅ All optional modules (if required)
+- ✅ Complete documentation
+- ✅ Test reports và validation
 
-### **Project Success Criteria**
-```
-🎯 Project Success Metrics
-├── Schedule
-│   ├── On-time delivery
-│   ├── Milestone achievement
-│   ├── Resource utilization
-│   └── Risk management
-├── Budget
-│   ├── Within budget
-│   ├── Cost control
-│   ├── Resource efficiency
-│   └── Value delivery
-├── Quality
-│   ├── Technical excellence
-│   ├── Safety compliance
-│   ├── User satisfaction
-│   └── Documentation quality
-└── Stakeholder Satisfaction
-    ├── Customer satisfaction
-    ├── Team satisfaction
-    ├── Management approval
-    └── End-user acceptance
-```
+### **Documentation Deliverables:**
+- ✅ Hardware specifications
+- ✅ Assembly instructions
+- ✅ Test procedures
+- ✅ Maintenance manuals
 
 ---
 
-## 📞 **COMMUNICATION PLAN**
+**Changelog:**
+- v2.0 (2025-01-27): Added Dock & Location module implementation
+- v1.0 (2025-01-27): Initial implementation plan
 
-### **Reporting Structure**
-```
-📊 Communication Plan
-├── Daily Standups
-│   ├── Team progress updates
-│   ├── Issue identification
-│   ├── Resource needs
-│   └── Action items
-├── Weekly Reviews
-│   ├── Milestone progress
-│   ├── Risk assessment
-│   ├── Resource allocation
-│   └── Schedule updates
-├── Monthly Reports
-│   ├── Project status
-│   ├── Budget review
-│   ├── Quality metrics
-│   └── Stakeholder updates
-└── Phase Reviews
-    ├── Phase completion
-    ├── Deliverable validation
-    ├── Lessons learned
-    └── Next phase planning
-```
-
----
-
-## 🎉 **CONCLUSION**
-
-### **Expected Outcomes**
-OHT-50 Hardware Implementation Plan sẽ dẫn đến:
-- ✅ **Complete OHT-50 System:** Fully functional overhead hoist transfer system
-- ✅ **Safety Compliant:** Meeting all safety standards and requirements
-- ✅ **Performance Optimized:** Achieving all performance targets
-- ✅ **Well Documented:** Comprehensive documentation and training materials
-- ✅ **Ready for Deployment:** Production-ready system for customer use
-
-### **Next Steps**
-1. **Review and Approve Plan:** Stakeholder approval of implementation plan
-2. **Resource Allocation:** Secure necessary resources and budget
-3. **Team Formation:** Assemble implementation team
-4. **Procurement:** Begin component procurement
-5. **Implementation Start:** Begin Phase 1 implementation
-
----
-
-**📄 Tài liệu này sẽ được cập nhật khi có thay đổi trong kế hoạch hoặc yêu cầu mới.**
-
-**Ngày cập nhật:** $(date +%Y-%m-%d)  
-**Phiên bản:** v1.0  
-**Trạng thái:** Implementation Plan
+**Status:** Updated với Dock & Location module  
+**Next Steps:** Motor Control Module update
