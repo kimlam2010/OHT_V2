@@ -10,14 +10,16 @@
 
 | **Tính năng** | **Mô tả** | **Trạng thái** |
 |---------------|-----------|----------------|
-| **Điều khiển động cơ** | Điều khiển tốc độ, hướng di chuyển | ✅ Hoàn thành |
-| **Giám sát cảm biến** | Đọc nhiệt độ, áp suất, vị trí | ✅ Hoàn thành |
-| **Hệ thống an toàn** | Dừng khẩn cấp khi có nguy hiểm | ✅ Hoàn thành |
-| **Điều khiển đèn LED** | Hiển thị trạng thái hệ thống | ✅ Hoàn thành |
-| **Kết nối mạng** | Giao tiếp với các thiết bị khác | ✅ Hoàn thành |
-| **Cập nhật từ xa** | Cập nhật phần mềm không cần dừng máy | ✅ Hoàn thành |
+| **Điều khiển Relay** | Điều khiển 2 relay qua GPIO (pin 131, 132) | ✅ Hoàn thành |
+| **Giao tiếp RS485** | Kết nối UART1 với Modbus RTU | ✅ Hoàn thành |
+| **Hệ thống E-Stop** | Xử lý nút dừng khẩn cấp | ✅ Hoàn thành |
+| **Điều khiển LED** | Hiển thị trạng thái hệ thống | ✅ Hoàn thành |
+| **Kết nối mạng** | Ethernet và WiFi | ✅ Hoàn thành |
+| **Cập nhật từ xa** | OTA Update không dây | ✅ Hoàn thành |
 | **Lưu trữ cấu hình** | Lưu các thiết lập quan trọng | ✅ Hoàn thành |
-| **Giao diện web** | Điều khiển qua trình duyệt web | ✅ Hoàn thành |
+| **Giao diện web** | API HTTP/HTTPS | ✅ Hoàn thành |
+| **USB Debug** | Kết nối debug và cập nhật | ✅ Hoàn thành |
+| **LiDAR** | Cảm biến khoảng cách | ✅ Hoàn thành |
 
 ## 🏗️ KIẾN TRÚC HỆ THỐNG
 
@@ -62,31 +64,31 @@ graph TB
 ```mermaid
 graph TB
     subgraph "Lớp 1: Phát hiện"
-        S1[Cảm biến va chạm]
-        S2[Cảm biến nhiệt độ]
-        S3[Cảm biến áp suất]
-        S4[Giám sát tốc độ]
+        S1[E-Stop Button - Nút dừng khẩn]
+        S2[LiDAR Sensor - Cảm biến khoảng cách]
+        S3[Relay Protection - Bảo vệ relay]
+        S4[System Monitoring - Giám sát hệ thống]
     end
     
     subgraph "Lớp 2: Xử lý"
-        P1[Phân tích dữ liệu]
-        P2[So sánh ngưỡng an toàn]
-        P3[Ra quyết định]
+        P1[Safety Manager - Quản lý an toàn]
+        P2[Fault Detection - Phát hiện lỗi]
+        P3[Decision Making - Ra quyết định]
     end
     
     subgraph "Lớp 3: Hành động"
-        A1[Dừng động cơ]
-        A2[Bật đèn cảnh báo]
-        A3[Gửi thông báo]
-        A4[Ghi log sự kiện]
+        A1[Emergency Stop - Dừng khẩn cấp]
+        A2[Relay Control - Điều khiển relay]
+        A3[LED Indicators - Đèn báo trạng thái]
+        A4[Log Events - Ghi log sự kiện]
     end
     
     S1 --> P1
     S2 --> P1
-    S3 --> P1
-    S4 --> P1
+    S3 --> P2
+    S4 --> P2
     
-    P1 --> P2
+    P1 --> P3
     P2 --> P3
     P3 --> A1
     P3 --> A2
@@ -99,10 +101,9 @@ graph TB
 | **Thành phần** | **Chức năng** | **Cách hoạt động** |
 |----------------|---------------|-------------------|
 | **E-Stop** | Dừng khẩn cấp | Nhấn nút → Dừng toàn bộ hệ thống |
-| **Giám sát tốc độ** | Kiểm tra tốc độ động cơ | Vượt quá giới hạn → Tự động giảm tốc |
-| **Giám sát nhiệt độ** | Kiểm tra nhiệt độ động cơ | Quá nóng → Dừng và làm mát |
-| **Giám sát va chạm** | Phát hiện vật cản | Có vật cản → Dừng ngay |
-| **Backup dữ liệu** | Sao lưu cấu hình | Mất điện → Không mất thiết lập |
+| **LiDAR** | Phát hiện vật cản | Quét laser → Đo khoảng cách |
+| **Relay Protection** | Bảo vệ relay | Quá dòng/áp → Tự động tắt |
+| **System Monitor** | Giám sát hệ thống | Kiểm tra trạng thái → Báo lỗi |
 
 ## 📊 HIỆU SUẤT HỆ THỐNG
 
@@ -145,14 +146,14 @@ sequenceDiagram
     participant UI as Giao diện điều khiển
     participant FW as Firmware
     participant HW as Phần cứng
-    participant Machine as Máy móc
+    participant Relay as Relay
     
     User->>UI: Nhập lệnh điều khiển
     UI->>FW: Gửi lệnh
     FW->>FW: Kiểm tra an toàn
     FW->>HW: Thực hiện lệnh
-    HW->>Machine: Điều khiển máy móc
-    Machine-->>HW: Phản hồi trạng thái
+    HW->>Relay: Điều khiển relay
+    Relay-->>HW: Phản hồi trạng thái
     HW-->>FW: Cập nhật dữ liệu
     FW-->>UI: Hiển thị kết quả
     UI-->>User: Thông báo hoàn thành
@@ -164,7 +165,7 @@ sequenceDiagram
 |----------|------------------|---------------|-------------|
 | **1. Nhập lệnh** | Người vận hành | 5-10 giây | Lệnh được gửi |
 | **2. Kiểm tra an toàn** | Firmware | < 1 giây | Xác nhận an toàn |
-| **3. Thực hiện lệnh** | Phần cứng | 1-5 giây | Máy móc hoạt động |
+| **3. Thực hiện lệnh** | Phần cứng | 1-5 giây | Relay hoạt động |
 | **4. Giám sát** | Hệ thống | Liên tục | Đảm bảo an toàn |
 | **5. Báo cáo** | Giao diện | < 1 giây | Hiển thị kết quả |
 
@@ -175,17 +176,17 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph "Thiết bị điều khiển"
-        M1[Motor - Động cơ]
-        M2[Sensor - Cảm biến]
+        M1[Relay 1 - Công tắc 1]
+        M2[Relay 2 - Công tắc 2]
         M3[LED - Đèn báo]
-        M4[Relay - Công tắc]
+        M4[LiDAR - Cảm biến]
     end
     
     subgraph "Loại cảm biến"
-        S1[Cảm biến nhiệt độ]
-        S2[Cảm biến áp suất]
-        S3[Cảm biến vị trí]
-        S4[Cảm biến va chạm]
+        S1[LiDAR - Cảm biến khoảng cách]
+        S2[E-Stop - Nút dừng khẩn]
+        S3[GPIO - Cổng vào/ra]
+        S4[UART - Giao tiếp nối tiếp]
     end
     
     subgraph "Đèn LED"
@@ -198,18 +199,16 @@ graph TB
 
 ### Bảng thiết bị
 
-| **Thiết bị** | **Chức năng** | **Trạng thái** |
-|--------------|---------------|----------------|
-| **Motor** | Điều khiển tốc độ và hướng | ✅ Hoạt động |
-| **Cảm biến nhiệt độ** | Đo nhiệt độ động cơ | ✅ Hoạt động |
-| **Cảm biến áp suất** | Đo áp suất hệ thống | ✅ Hoạt động |
-| **Cảm biến vị trí** | Xác định vị trí chính xác | ✅ Hoạt động |
-| **Cảm biến va chạm** | Phát hiện vật cản | ✅ Hoạt động |
-| **LED Power** | Hiển thị trạng thái nguồn | ✅ Hoạt động |
-| **LED System** | Hiển thị trạng thái hệ thống | ✅ Hoạt động |
-| **LED Comm** | Hiển thị trạng thái giao tiếp | ✅ Hoạt động |
-| **LED Error** | Hiển thị lỗi | ✅ Hoạt động |
-| **Relay** | Điều khiển công tắc | ✅ Hoạt động |
+| **Thiết bị** | **Chức năng** | **Chân GPIO** | **Trạng thái** |
+|--------------|---------------|---------------|----------------|
+| **Relay 1** | Điều khiển công tắc 1 | Pin 131 | ✅ Hoạt động |
+| **Relay 2** | Điều khiển công tắc 2 | Pin 132 | ✅ Hoạt động |
+| **LiDAR** | Cảm biến khoảng cách | UART | ✅ Hoạt động |
+| **E-Stop** | Nút dừng khẩn cấp | GPIO | ✅ Hoạt động |
+| **LED Power** | Hiển thị trạng thái nguồn | GPIO | ✅ Hoạt động |
+| **LED System** | Hiển thị trạng thái hệ thống | GPIO | ✅ Hoạt động |
+| **LED Comm** | Hiển thị trạng thái giao tiếp | GPIO | ✅ Hoạt động |
+| **LED Error** | Hiển thị lỗi | GPIO | ✅ Hoạt động |
 
 ## 📡 KẾT NỐI MẠNG
 
@@ -287,9 +286,9 @@ graph TB
     end
     
     subgraph "Chức năng giao diện"
-        F1[Điều khiển thiết bị]
+        F1[Điều khiển relay]
         F2[Giám sát trạng thái]
-        F3[Xem dữ liệu cảm biến]
+        F3[Xem dữ liệu LiDAR]
         F4[Cấu hình hệ thống]
     end
 ```
@@ -310,20 +309,20 @@ graph TB
 ```mermaid
 graph LR
     subgraph "Điều khiển"
-        C1[Điều khiển động cơ]
-        C2[Điều khiển LED]
-        C3[Điều khiển Relay]
+        C1[Điều khiển Relay 1]
+        C2[Điều khiển Relay 2]
+        C3[Điều khiển LED]
     end
     
     subgraph "Giám sát"
-        M1[Giám sát cảm biến]
-        M2[Giám sát nhiệt độ]
-        M3[Giám sát áp suất]
+        M1[Giám sát LiDAR]
+        M2[Giám sát E-Stop]
+        M3[Giám sát hệ thống]
     end
     
     subgraph "An toàn"
         S1[Hệ thống E-Stop]
-        S2[Giám sát va chạm]
+        S2[Bảo vệ relay]
         S3[Backup dữ liệu]
     end
     
