@@ -4,15 +4,15 @@
 
 **Source:** [GitHub Driver_2_Motor](https://github.com/KhaLin0401/Driver_2_Motor/blob/main/Docs/modbus_map.md)  
 **Target:** OHT-50 DC Motor Module  
-**Version:** 1.1  
-**Date:** 2025-01-27
+**Version:** 2.0  
+**Date:** 2025-01-28
 
 ---
 
 ## 🎯 **MỤC TIÊU PHÂN TÍCH**
 
 ### **Mục tiêu:**
-- So sánh mapping Modbus từ GitHub với hệ thống OHT-50
+- So sánh mapping Modbus từ GitHub với hệ thống OHT-50 Architecture v2.0
 - Xác định các tính năng cần bổ sung
 - Đảm bảo tương thích ngược
 - Cải thiện tính năng hệ thống
@@ -29,14 +29,15 @@
 
 ### **1. Platform Comparison:**
 
-| **Aspect** | **GitHub Driver_2_Motor** | **OHT-50 System** | **Phân tích** |
+| **Aspect** | **GitHub Driver_2_Motor** | **OHT-50 System v2.0** | **Phân tích** |
 |------------|------------------------------|-------------------|---------------|
 | **Platform** | STM32F103C8T6 | Orange Pi 5B (RK3588) | OHT-50 mạnh hơn về processing power |
 | **Register Range** | 0x0000-0x00F6 (247 registers) | 0x0000-0x05FF (1536 registers) | OHT-50 có nhiều registers hơn |
-| **Motor Control** | 2 DC motors | 2 DC + 1 Stepper | OHT-50 linh hoạt hơn |
-| **Digital I/O** | 4 DI + 2 DO | 8 DI + 8 DO | OHT-50 có nhiều I/O hơn |
-| **Control Modes** | ONOFF, LINEAR, PID | PID only | GitHub có nhiều mode hơn |
+| **Motor Control** | 2 DC motors | 2 DC motors | OHT-50 tương thích hoàn toàn |
+| **Digital I/O** | 4 DI + 2 DO | 8 DI + 8 DO (DI/DO Module) | OHT-50 có nhiều I/O hơn |
+| **Control Modes** | ONOFF, LINEAR, PID | PID with enhanced features | OHT-50 có tính năng nâng cao |
 | **Encoder Support** | Không có | Có encoder feedback | OHT-50 tiên tiến hơn |
+| **System Architecture** | Single module | 5 mandatory modules | OHT-50 modular và scalable |
 
 ### **2. Register Mapping Analysis:**
 
@@ -49,17 +50,9 @@
 0x00F0-0x00F6: System Registers (7 registers)
 ```
 
-#### **OHT-50 Original Structure:**
+#### **OHT-50 Architecture v2.0 Structure:**
 ```
-0x0000-0x000F: Motor 1 Control (16 registers)
-0x0010-0x001F: Motor 2 Control (16 registers)
-0x0020-0x002F: Status Information (16 registers)
-0x0030-0x003F: Configuration (16 registers)
-0x0040-0x004F: Fault Status (16 registers)
-```
-
-#### **OHT-50 Enhanced Structure (v1.1):**
-```
+DC Motor Module (0x04):
 0x0000-0x000F: Motor 1 Control (16 registers) - Enhanced
 0x0010-0x001F: Motor 2 Control (16 registers) - Enhanced
 0x0020-0x002F: Digital Input Status (11 registers) - New
@@ -68,6 +61,14 @@
 0x0050-0x005F: Configuration (16 registers) - Enhanced
 0x0060-0x006F: Fault Status (16 registers) - Enhanced
 0x00F0-0x00FF: System Registers (16 registers) - New
+
+DI/DO Module (0x06):
+0x0000-0x000F: Digital Input Status (16 registers)
+0x0010-0x001F: Digital Output Control (16 registers)
+0x0020-0x002F: Current Monitoring (16 registers)
+0x0030-0x003F: Safety Status (16 registers)
+0x0040-0x004F: Fault Status (16 registers)
+0x0050-0x00FF: Reserved (176 registers)
 ```
 
 ---
@@ -81,7 +82,7 @@ GitHub: 0x0000 = M1_Control_Mode
 OHT-50: 0x0000 = Motor 1 Speed
 
 // Solution: Reorganized OHT-50 mapping
-OHT-50 v1.1: 0x0000 = Motor 1 Control Mode (compatible)
+OHT-50 v2.0: 0x0000 = Motor 1 Control Mode (compatible)
 ```
 
 ### **2. Data Type Mismatches:**
@@ -93,7 +94,7 @@ M1_Command_Speed: uint8 (0-255)
 DC_MOTOR_REG_MOTOR1_SPEED: 16-bit signed (-100 to +100%)
 
 // Solution: Support both formats
-OHT-50 v1.1: Added 8-bit compatibility + 16-bit extended
+OHT-50 v2.0: Added 8-bit compatibility + 16-bit extended
 ```
 
 ### **3. Missing Features:**
@@ -299,5 +300,10 @@ def test_extended_features():
 ---
 
 **Changelog:**
-- v1.0 (2025-01-27): Initial analysis document
+- v2.0 (2025-01-28): Updated for Architecture v2.0
+  - ✅ Aligned with 5 mandatory modules
+  - ✅ Removed Stepper Motor references
+  - ✅ Updated comparison table
+  - ✅ Enhanced compatibility analysis
 - v1.1 (2025-01-27): Added implementation details and testing strategy
+- v1.0 (2025-01-27): Initial analysis document
