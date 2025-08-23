@@ -460,8 +460,28 @@ hal_status_t rs485_validate_config(const rs485_config_t *config)
 }
 
 hal_status_t modbus_validate_config(const modbus_config_t *config __attribute__((unused))) { return HAL_STATUS_OK; }
-uint16_t modbus_calculate_crc(const uint8_t *data __attribute__((unused)), size_t length __attribute__((unused))) { return 0; }
-bool modbus_verify_crc(const uint8_t *data __attribute__((unused)), size_t length __attribute__((unused)), uint16_t crc __attribute__((unused))) { return true; }
+
+uint16_t modbus_calculate_crc(const uint8_t *data, size_t length) {
+    uint16_t crc = 0xFFFF;
+    
+    for (size_t i = 0; i < length; i++) {
+        crc ^= (uint16_t)data[i];
+        for (int j = 0; j < 8; j++) {
+            if (crc & 0x0001) {
+                crc = (crc >> 1) ^ 0xA001;
+            } else {
+                crc = crc >> 1;
+            }
+        }
+    }
+    
+    return crc;
+}
+
+bool modbus_verify_crc(const uint8_t *data, size_t length, uint16_t crc) {
+    uint16_t calculated_crc = modbus_calculate_crc(data, length);
+    return (calculated_crc == crc);
+}
 // No separate DE/RE pin control needed for UART1 RS485
 
 // Internal functions

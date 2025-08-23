@@ -1,332 +1,164 @@
-# 📚 OHT-50 Documentation Structure - CLEANED & ORGANIZED
+# 📚 OHT-50 Documentation - ISO Standard Structure
 
-**Phiên bản:** v3.0  
-**Ngày cập nhật:** 2025-01-27  
+**Phiên bản:** v4.0  
+**Ngày cập nhật:** 2025-01-24  
 **PM:** OHT-50 Project Manager  
-**Status:** ✅ ENHANCED - Industrial Deployment Ready
+**Status:** ✅ ISO STANDARD COMPLIANT
 
 ---
 
-## 🎉 **ĐÃ DỌN DẸP HOÀN TOÀN VÀ NÂNG CẤP!**
+## 🎯 **Cấu trúc tài liệu theo chuẩn ISO**
 
-### **Trước đây:** 5 thư mục `docs/` lộn xộn
-- ❌ `/home/orangepi/OHT-50/docs`
-- ❌ `/home/orangepi/OHT-50/OHT-50/OHT-50/backend/docs`
-- ❌ `/home/orangepi/OHT-50/OHT-50/OHT-50/docs`
-- ❌ `/home/orangepi/OHT-50/EMBED/docs`
-- ❌ `/home/orangepi/OHT-50/OHT-50/docs`
+Dự án OHT-50 Master Module được tổ chức theo chuẩn tài liệu ISO, đảm bảo tính nhất quán, dễ tìm kiếm và bảo trì.
 
-### **Bây giờ:** 1 thư mục `docs/` duy nhất ✅
-- ✅ `/home/orangepi/OHT-50/docs` ← **DUY NHẤT**
-
-### **🔄 Nâng cấp mới:** Industrial Deployment Ready
-- ✅ **Enhanced Component Library** - Industrial-grade components
-- ✅ **Advanced Safety Features** - SIL2 compliance
-- ✅ **Hardware Monitoring** - Motor, sensor, power monitoring
-- ✅ **Performance Analytics** - Efficiency và quality metrics
-- ✅ **Maintenance Dashboard** - Predictive maintenance
-
----
-
-## 🗂️ **Cấu trúc thư mục tài liệu (ĐÃ DỌN DẸP HOÀN TOÀN)**
+### **📁 Cấu trúc thư mục ISO:**
 
 ```
 docs/
-├── README.md                    # ← Bạn đang đọc file này
-├── EMBED/                       # EMBED team files
-│   ├── EMBED_PROGRESS_UPDATE.md
-│   ├── EMBED_TEAM_NOTICE.md
-│   ├── PM_NOTICE.md
-│   └── EMBED_TEAM_QUICK_GUIDE.md  # ← Hướng dẫn EMBED team
-├── backend/                     # Backend team docs
-│   ├── DEPLOYMENT.md
-│   ├── TELEMETRY_API.md
-│   ├── BE-02_COMPLETION_SUMMARY.md
-│   └── BACKEND_TEAM_QUICK_GUIDE.md  # ← Hướng dẫn Backend team
-├── design/                      # 🎨 Design System & UI/UX
-│   ├── DESIGN_SYSTEM.md         # ← Design tokens, colors, typography
-│   ├── COMPONENT_LIBRARY.md     # ← Reusable components (ENHANCED v2.0)
-│   └── ACCESSIBILITY.md         # ← WCAG 2.1 AA guidelines
-├── architecture/                # Architecture decisions
-│   └── decisions/               # ADR (Architecture Decision Records)
-│       ├── ADR-001-SYSTEM_ARCHITECTURE.md
-│       ├── ADR-002-AUTHENTICATION_SYSTEM.md
-│       ├── ADR-003-DATABASE_ARCHITECTURE.md
-│       ├── ADR-004-COMMUNICATION_PROTOCOLS.md
-│       ├── ADR-005-SAFETY_ARCHITECTURE.md
-│       ├── ADR-FE-01-ROUTING_ARCHITECTURE.md  # ← UPDATED v2.0
-│       ├── ADR-FE-02-DATA_FETCHING.md
-│       ├── ADR-FE-03-CHARTING_LIBRARY.md
-│       ├── ADR-FE-04-DESIGN_SYSTEM.md
-│       ├── ADR-FE-05-INTERNATIONALIZATION.md
-│       └── ADR-FE-06-PWA_STRATEGY.md
-├── dev_radxa/                   # Radxa development docs
-├── specs/                       # Technical specifications
-│   ├── embedded_io_drivers.md
-│   ├── emi_esd_guidelines.md
-│   ├── production_test_checklist.md
-│   ├── bench_hil_testing.md
-│   ├── bootloader_layout.md
-│   ├── rs485_wiring_verification.md
-│   ├── lidar_wiring_guide.md
-│   ├── lidar_setup_guide.md
-│   ├── lidar_test_procedures.md
-│   └── lidar_integration_guide.md
-├── tasks/                       # Task management & prompts
-│   ├── PM_TASKS_OHT-50.md
-│   ├── EMBED_PROMPT_TEMPLATE.md
-│   ├── FW_PROMPT_TEMPLATE.md
-│   ├── PROGRAMMING_PROMPT_OHT-50.md
-│   ├── PROMPT_USAGE_GUIDE.md
-│   ├── EMBED_FW_STATUS_SUMMARY.md
-│   ├── PM_EMBED_REVIEW_REPORT.md
-│   ├── PM_EMBED_COMPLETION_NOTICE.md
-│   ├── EMBED_TEAM_QUICK_GUIDE.md
-│   ├── FW_TEAM_QUICK_GUIDE.md      # ← Hướng dẫn FW team
-│   └── FRONTEND_TEAM_QUICK_GUIDE.md # ← Hướng dẫn Frontend team (ENHANCED v2.0)
-└── tests/                       # Test documentation
+├── 01-OVERVIEW/                 # Tổng quan dự án
+│   ├── README.md                # Tài liệu này
+│   ├── PROJECT_OVERALL_PROGRESS_REPORT.md
+│   └── MASTER_MODULE_IMPLEMENTATION_SUMMARY.md
+├── 02-REQUIREMENTS/             # Yêu cầu hệ thống
+│   ├── specs/                   # Đặc tả kỹ thuật
+│   └── technical/               # Tài liệu kỹ thuật
+├── 03-ARCHITECTURE/             # Kiến trúc hệ thống
+│   ├── architecture/            # Quyết định kiến trúc
+│   └── CTO_DECISIONS_ISSUES_22_24_25_26.md
+├── 04-DESIGN/                   # Thiết kế chi tiết
+│   └── design/                  # Design system & UI/UX
+├── 05-IMPLEMENTATION/           # Triển khai
+│   ├── EMBED/                   # Embedded development
+│   ├── FIRMWARE/                # Firmware development
+│   └── dev_radxa/               # Radxa platform docs
+├── 06-TESTING/                  # Kiểm thử
+│   └── integration/             # Integration testing
+├── 07-DEPLOYMENT/               # Triển khai
+├── 08-OPERATIONS/               # Vận hành
+├── 09-MAINTENANCE/              # Bảo trì
+└── 10-REFERENCES/               # Tài liệu tham khảo
+    ├── tasks/                   # Task management
+    └── CTO/                     # CTO decisions
 ```
 
 ---
 
-## 👥 **Team Quick Guides (MỚI - CẬP NHẬT)**
+## 📋 **Mô tả từng thư mục:**
 
-### **🔧 EMBED Team:**
-- **File:** `EMBED/EMBED_TEAM_QUICK_GUIDE.md`
-- **Status:** ✅ 90.9% COMPLETE (10/11 tasks)
-- **Next Task:** EM-12 (LiDAR Driver & USB Integration)
-- **Cấu trúc docs:** Đã cập nhật với đường dẫn mới
+### **01-OVERVIEW/** - Tổng quan dự án
+- **Mục đích:** Cung cấp cái nhìn tổng quan về dự án
+- **Nội dung:** Project overview, progress reports, implementation summaries
+- **Đối tượng:** Stakeholders, project managers, new team members
 
-### **⚡ FW Team:**
-- **File:** `tasks/FW_TEAM_QUICK_GUIDE.md`
-- **Status:** 🚀 READY TO START (0/15 tasks)
-- **Dependencies:** ✅ All cleared
-- **Cấu trúc docs:** Đã cập nhật với đường dẫn mới
+### **02-REQUIREMENTS/** - Yêu cầu hệ thống
+- **Mục đích:** Định nghĩa yêu cầu kỹ thuật và chức năng
+- **Nội dung:** Technical specifications, hardware requirements, interface definitions
+- **Đối tượng:** System architects, requirements engineers
 
-### **🌐 Backend Team:**
-- **File:** `backend/BACKEND_TEAM_QUICK_GUIDE.md`
-- **Status:** 🔄 IN PROGRESS (2/17 tasks completed)
-- **Current:** BE-03, BE-05, BE-08, BE-15 in progress
-- **Cấu trúc docs:** Đã cập nhật với đường dẫn mới
+### **03-ARCHITECTURE/** - Kiến trúc hệ thống
+- **Mục đích:** Mô tả kiến trúc tổng thể và quyết định thiết kế
+- **Nội dung:** Architecture decisions (ADR), system design, CTO decisions
+- **Đối tượng:** Architects, technical leads, CTO
 
-### **🎨 Frontend Team:**
-- **File:** `tasks/FRONTEND_TEAM_QUICK_GUIDE.md`
-- **Status:** 🔄 ENHANCED - Industrial Deployment Ready (8/12 tasks completed)
-- **Achievement:** Original 8 tasks completed, 4 new industrial tasks in progress!
-- **Design System:** ✅ Complete (`design/DESIGN_SYSTEM.md`)
-- **Component Library:** ✅ Enhanced v2.0 (`design/COMPONENT_LIBRARY.md`)
-- **Accessibility:** ✅ Complete (`design/ACCESSIBILITY.md`)
-- **ADR Frontend:** ✅ Complete (6 ADR files, 1 updated)
-- **Cấu trúc docs:** Đã cập nhật với đường dẫn mới
+### **04-DESIGN/** - Thiết kế chi tiết
+- **Mục đích:** Thiết kế UI/UX và component library
+- **Nội dung:** Design system, component library, accessibility guidelines
+- **Đối tượng:** UI/UX designers, frontend developers
 
----
+### **05-IMPLEMENTATION/** - Triển khai
+- **Mục đích:** Hướng dẫn triển khai và development
+- **Nội dung:** Embedded guides, firmware documentation, platform setup
+- **Đối tượng:** Developers, embedded engineers, firmware engineers
 
-## 🚨 **LƯU Ý QUAN TRỌNG CHO TẤT CẢ TEAMS**
+### **06-TESTING/** - Kiểm thử
+- **Mục đích:** Kế hoạch và thực hiện kiểm thử
+- **Nội dung:** Integration testing, test reports, validation procedures
+- **Đối tượng:** QA engineers, testers, integration specialists
 
-### **Cấu trúc docs đã thay đổi hoàn toàn:**
-- **Tất cả docs** đã được gom về `/home/orangepi/OHT-50/docs/`
-- **Không còn** các thư mục docs lộn xộn
+### **07-DEPLOYMENT/** - Triển khai
+- **Mục đích:** Hướng dẫn triển khai production
+- **Nội dung:** Deployment guides, production setup, release procedures
+- **Đối tượng:** DevOps engineers, system administrators
 
-### **🎨 Design System đã được bổ sung:**
-- **Design System:** `docs/design/DESIGN_SYSTEM.md` - Tokens, colors, typography
-- **Component Library:** `docs/design/COMPONENT_LIBRARY.md` - Reusable components (ENHANCED v2.0)
-- **Accessibility:** `docs/design/ACCESSIBILITY.md` - WCAG 2.1 AA guidelines
-- **Frontend ADR:** 6 ADR files trong `docs/architecture/decisions/` (1 updated)
-- **Chỉ có 1 thư mục docs** duy nhất
+### **08-OPERATIONS/** - Vận hành
+- **Mục đích:** Hướng dẫn vận hành hệ thống
+- **Nội dung:** Operational procedures, monitoring, troubleshooting
+- **Đối tượng:** Operations team, support engineers
 
-### **🔄 NEW: Industrial Features Added:**
-- **Hardware Monitoring Components:** Motor, sensor, power monitoring
-- **Advanced Safety Components:** SIL2 compliance, enhanced safety
-- **Performance Analytics Components:** Efficiency, quality metrics
-- **Maintenance Dashboard Components:** Predictive maintenance, spare parts
-- **Enhanced Chart Components:** Jerk data, power consumption
-- **Industrial Layout Components:** Emergency controls, alerts panel
+### **09-MAINTENANCE/** - Bảo trì
+- **Mục đích:** Kế hoạch và thực hiện bảo trì
+- **Nội dung:** Maintenance schedules, procedures, preventive maintenance
+- **Đối tượng:** Maintenance engineers, field technicians
 
-### **Đường dẫn mới (CẬP NHẬT):**
-- **Task management:** `docs/tasks/`
-- **Backend docs:** `docs/backend/`
-- **Technical specs:** `docs/specs/`
-- **EMBED files:** `docs/EMBED/`
-- **Radxa docs:** `docs/dev_radxa/`
-- **Test docs:** `docs/tests/`
-
-### **Tránh nhầm lẫn:**
-- **KHÔNG** đọc từ `/home/orangepi/OHT-50/OHT-50/docs/`
-- **KHÔNG** đọc từ `/home/orangepi/OHT-50/EMBED/docs/`
-- **KHÔNG** đọc từ `/home/orangepi/OHT-50/OHT-50/OHT-50/docs/`
-- **CHỈ** đọc từ `/home/orangepi/OHT-50/docs/`
+### **10-REFERENCES/** - Tài liệu tham khảo
+- **Mục đích:** Lưu trữ tài liệu tham khảo và lịch sử
+- **Nội dung:** Task management, historical decisions, reference materials
+- **Đối tượng:** All team members, for reference purposes
 
 ---
 
-## 🔧 Deploy/Ports/Services (Production Standard - No Nginx)
+## 🔄 **Quy tắc đặt tên file:**
 
-- Services:
-  - `oht50.service` (FW) → runs firmware binary. No HTTP.
-  - `oht50-backend.service` (BE) → FastAPI on port 8000.
-  - `oht50-frontend.service` (FE) → Node static server on port 8081 serving `frontend/dist`.
-- Ports:
-  - FW: n/a
-  - BE: 8000 (`GET /health` returns 200 JSON `{status:"ok"}`)
-  - FE dev: 5173 (Vite)
-  - FE prod: 8081 (Node service)
-- Policy:
-  - No Nginx in deploy path. CI fails on any `nginx` reference under `deploy/`.
-  - No nested `OHT-50/OHT-50/**` directories.
+### **Chuẩn ISO:**
+- **Format:** `YYYY-MM-DD_Description_Version.md`
+- **Ví dụ:** `2025-01-24_System_Architecture_v2.1.md`
 
-
-## 📋 **Team Status Overview**
-
-### **🔄 Frontend Team:** ENHANCED - Industrial Deployment Ready
-- **8/12 tasks** completed (67%)
-- **4 new industrial tasks** in progress
-- **Enhanced dashboard** với industrial-grade monitoring
-- **Ready for industrial deployment**
-
-### **🔄 Backend Team:** IN PROGRESS
-- **2/17 tasks** completed
-- **BE-03, BE-05, BE-08, BE-15** in progress
-- **API development** ongoing
-- **Industrial APIs** needed for new features
-
-### **🔧 EMBED Team:** 90.9% COMPLETE
-- **10/11 tasks** completed
-- **EM-12 (LiDAR)** pending
-- **Hardware bring-up** complete
-- **Ready for industrial integration**
-
-### **⚡ FW Team:** READY TO START
-- **0/15 tasks** started
-- **All dependencies** cleared
-- **Ready to begin** FW development
-- **Industrial features** integration needed
+### **Chuẩn dự án (đã áp dụng):**
+- **Format:** `DESCRIPTION_VERSION.md`
+- **Ví dụ:** `MASTER_MODULE_IMPLEMENTATION_SUMMARY.md`
 
 ---
 
-## 🎯 **Next Steps for Each Team**
+## 📊 **Trạng thái dự án:**
 
-### **🔧 EMBED Team:**
-1. **Complete EM-12** (LiDAR Driver & USB Integration)
-2. **Update progress** trong `docs/EMBED/EMBED_PROGRESS_UPDATE.md`
-3. **Notify PM** khi hoàn thành
-4. **Prepare for industrial integration** với new dashboard features
+### **✅ Hoàn thành:**
+- ✅ Cấu trúc ISO đã được thiết lập
+- ✅ Tài liệu đã được phân loại và di chuyển
+- ✅ README.md đã được cập nhật
 
-### **⚡ FW Team:**
-1. **Start FW-01** (Khung FW + scheduler)
-2. **Use prompt template** từ `docs/tasks/FW_PROMPT_TEMPLATE.md`
-3. **Update status** trong `docs/tasks/EMBED_FW_STATUS_SUMMARY.md`
-4. **Plan industrial features** integration
+### **🔄 Đang thực hiện:**
+- 🔄 Xóa tài liệu không cần thiết
+- 🔄 Cập nhật đường dẫn trong các file
+- 🔄 Tạo index cho từng thư mục
 
-### **🌐 Backend Team:**
-1. **Complete BE-03** (API cấu hình CRUD)
-2. **Complete BE-05** (Telemetry ingest)
-3. **Complete BE-08** (Mock device)
-4. **Plan industrial APIs** cho new dashboard features
-
-### **🎨 Frontend Team:**
-1. **Complete FE-09** (Hardware Monitoring) - 60% done
-2. **Complete FE-10** (Advanced Safety) - 40% done
-3. **Complete FE-11** (Performance Analytics) - 30% done
-4. **Complete FE-12** (Maintenance Dashboard) - 20% done
-5. **Support integration testing** với other teams
+### **📋 Kế hoạch:**
+- 📋 Tạo file index cho mỗi thư mục
+- 📋 Cập nhật cross-references
+- 📋 Review và cleanup final
 
 ---
 
-## 📞 **PM Communication**
+## 🚀 **Hướng dẫn sử dụng:**
 
-### **Status Updates:**
-- **File:** `docs/tasks/EMBED_FW_STATUS_SUMMARY.md`
-- **Updated:** Daily by PM
-- **Teams:** Update progress here
+### **Cho người mới:**
+1. Bắt đầu từ `01-OVERVIEW/README.md`
+2. Đọc `PROJECT_OVERALL_PROGRESS_REPORT.md`
+3. Xem `03-ARCHITECTURE/` để hiểu kiến trúc
+4. Tham khảo `05-IMPLEMENTATION/` cho development
 
-### **Task Management:**
-- **File:** `docs/tasks/PM_TASKS_OHT-50.md`
-- **Updated:** When tasks completed
-- **Teams:** Reference for task assignments
+### **Cho developers:**
+1. Xem `02-REQUIREMENTS/` cho specifications
+2. Đọc `05-IMPLEMENTATION/` cho implementation guides
+3. Tham khảo `06-TESTING/` cho testing procedures
 
-### **Team Notices:**
-- **EMBED:** `docs/EMBED/PM_NOTICE.md`
-- **All Teams:** Use respective quick guides
-
----
-
-## 🎉 **Kết quả dọn dẹp và nâng cấp**
-
-### **✅ Đã hoàn thành:**
-- **Consolidated** 5 docs directories → 1
-- **Created** team-specific quick guides
-- **Updated** all file paths và references
-- **Organized** documentation hierarchy
-- **Eliminated** confusion và scattered files
-- **Enhanced** Component Library cho industrial deployment
-- **Added** 4 new industrial dashboard pages
-- **Updated** routing architecture cho new features
-
-### **✅ Benefits:**
-- **Single source of truth** cho documentation
-- **Clear team responsibilities** và file locations
-- **Professional organization** cho client
-- **Easy navigation** cho all teams
-- **No more documentation mess**
-- **Industrial-grade monitoring** capabilities
-- **Enhanced safety features** với SIL2 compliance
-- **Predictive maintenance** dashboard
-- **Performance analytics** system
+### **Cho operations:**
+1. Xem `07-DEPLOYMENT/` cho deployment guides
+2. Đọc `08-OPERATIONS/` cho operational procedures
+3. Tham khảo `09-MAINTENANCE/` cho maintenance
 
 ---
 
-## 🏭 **NEW: Industrial Features Summary**
+## 📞 **Liên hệ:**
 
-### **🔧 Hardware Monitoring Dashboard:**
-- **Motor Status Panel:** Real-time motor health, efficiency, temperature
-- **Sensor Health Panel:** Calibration status, accuracy, range monitoring
-- **Power System Monitor:** Battery health, voltage, current, efficiency
-- **Mechanical Health Panel:** Bearing wear, belt tension, alignment
-
-### **🛡️ Advanced Safety Configuration:**
-- **Safety Configuration Panel:** Velocity, acceleration, jerk limits
-- **Safety Zone Editor:** Virtual boundaries, access control
-- **Safety Status Dashboard:** Multi-layer safety monitoring
-- **Compliance Monitor:** SIL2 standards, audit trails
-
-### **📊 Performance Analytics Dashboard:**
-- **Efficiency Metrics Panel:** Power consumption, operational efficiency
-- **Performance Trend Chart:** Historical analysis, optimization
-- **Quality Assurance Panel:** Accuracy, repeatability, defect rates
-- **Optimization Recommendations:** AI-powered suggestions
-
-### **🔧 Maintenance Dashboard:**
-- **Predictive Maintenance Panel:** Component health prediction
-- **Spare Parts Management:** Inventory, ordering, cost analysis
-- **Service History:** Maintenance records, cost tracking
-- **Maintenance Schedule:** Preventive maintenance planning
+- **Project Manager:** OHT-50 PM
+- **Technical Lead:** CTO
+- **Documentation:** PM Team
 
 ---
 
-**📚 Tài liệu đã được dọn dẹp, tổ chức chuyên nghiệp và nâng cấp cho industrial deployment!**
-
-**🎯 Tất cả teams có thể tìm thấy tài liệu của mình dễ dàng!**
-
-**🚀 Project ready for industrial-grade monitoring và control!**
-
-## System Core Specs & ADRs
-
-- [System Architecture](specs/architecture.md)
-- [State Machine](specs/state_machine.md)
-- [Interfaces](specs/interfaces.md)
-- [ADR-0001 System Architecture Baseline](architecture/decisions/0001-system-architecture-baseline.md)
-- [ADR-0002 Runtime Config vs Firmware](architecture/decisions/0002-runtime-config-vs-firmware.md)
-- [ADR-0003 Safety: E-Stop Dual Channel](architecture/decisions/0003-safety-estop-dual-channel.md)
-
-## Changelog
-
-**v3.0 (2025-01-27):**
-- ✅ Enhanced Component Library v2.0 cho industrial deployment
-- ✅ Added 4 new industrial dashboard pages
-- ✅ Updated routing architecture cho new features
-- ✅ Enhanced Frontend Team Quick Guide v2.0
-- ✅ Added industrial features documentation
-- ✅ Updated ADR-FE-01 routing architecture
-- ✅ Added hardware monitoring components
-- ✅ Added advanced safety components
-- ✅ Added performance analytics components
-- ✅ Added maintenance dashboard components
+**Changelog v4.0:**
+- ✅ Reorganized according to ISO documentation standards
+- ✅ Created 10 main categories with clear purposes
+- ✅ Moved all existing documentation to appropriate folders
+- ✅ Updated README.md with ISO structure explanation
+- ✅ Added usage guidelines for different user types
