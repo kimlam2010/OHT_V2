@@ -1,373 +1,374 @@
-# 🔧 LiDAR Setup Guide - OHT-50
+# LiDAR Setup Guide - OHT-50 (v2.0)
 
-**Version:** 1.0.0  
-**Date:** 2025-01-27  
-**Team:** EMBED  
-**Task:** EM-12 (LiDAR Driver & USB Integration)
-
----
-
-## 📋 **Prerequisites**
-
-### **Hardware Requirements:**
-- Orange Pi 5B với USB 2.0 port
-- RPLIDAR A1M8 sensor
-- USB Type-A to Type-C cable
-- Mounting bracket cho LiDAR
-
-### **Software Requirements:**
-- Ubuntu 22.04 LTS hoặc tương đương
-- GCC compiler
-- Git
-- libudev-dev package
+**Phiên bản:** 2.0  
+**Ngày cập nhật:** 2025-01-27  
+**Trạng thái:** Updated để tích hợp với Dock & Location module qua USB
 
 ---
 
-## 🛠️ **Step-by-Step Setup**
+## 🎯 **MỤC TIÊU**
 
-### **Step 1: Hardware Installation**
+Hướng dẫn cài đặt và cấu hình LiDAR RPLIDAR A1M8 qua USB để tích hợp với Dock & Location module cho hệ thống OHT-50.
 
-#### **1.1 Physical Mounting:**
-```bash
-# Mount LiDAR trên OHT-50 platform
-# Vị trí: Front-facing, height 300mm from ground
-# Orientation: Forward direction (0° angle)
+---
+
+## 🔧 **HARDWARE SETUP**
+
+### **LiDAR Components:**
+```
+1. RPLIDAR A1M8 Sensor
+2. USB 2.0 Cable (Type-A to Type-B)
+3. Power Supply via USB (5V, 1.5A)
+4. Mounting Bracket
+5. Protection Cover
+6. Cable Management
+7. Vibration Isolation Mounts
 ```
 
-#### **1.2 USB Connection:**
-```bash
-# Kết nối USB cable
-# Port: Bất kỳ USB 2.0 port nào trên Orange Pi 5B
-# Cable: USB Type-A to Type-C (included với LiDAR)
+### **Mounting Requirements:**
+```
+Height:              300-500mm từ mặt đất
+Orientation:         Horizontal scan plane
+Clearance:           ≥100mm clearance xung quanh
+Stability:           Vibration isolation recommended
+Protection:          Dust và moisture protection
+Mounting Surface:    Flat, stable surface
 ```
 
-#### **1.3 Power Verification:**
-```bash
-# Kiểm tra power supply
-# Voltage: 5V DC
-# Current: ~500mA peak
-# Power: ~2.5W
+### **Power Requirements:**
+```
+Voltage:             5V DC via USB
+Current:             1.5A continuous
+Power:               7.5W
+Protection:          USB over-current protection
+Filtering:           USB power filtering
 ```
 
-### **Step 2: Software Installation**
+---
 
-#### **2.1 System Update:**
+## 🔌 **WIRING DIAGRAM**
+
+### **USB Connection:**
+```
+LiDAR RPLIDAR A1M8
+    │
+    ├── USB Type-B → USB Type-A Cable
+    │
+    └── USB Type-A → Orange Pi 5B USB Port
+```
+
+### **Power Connection:**
+```
+USB Port (Orange Pi 5B)
+    │
+    ├── 5V → LiDAR Power Input (via USB)
+    ├── GND → LiDAR Ground (via USB)
+    └── Data+ → LiDAR Data+ (via USB)
+    └── Data- → LiDAR Data- (via USB)
+```
+
+### **Integration với Dock & Location Module:**
+```
+LiDAR (USB) → Orange Pi 5B → Dock & Location Module (RS485)
+    │              │                    │
+    ├── Scan Data  ├── Process Data     ├── Register Map
+    ├── Status     ├── Localization     ├── Safety Integration
+    └── Health     └── Mapping          └── Navigation
+```
+
+---
+
+## ⚙️ **SOFTWARE SETUP**
+
+### **Driver Installation:**
 ```bash
+# Install RPLIDAR SDK
 sudo apt-get update
-sudo apt-get upgrade -y
-```
-
-#### **2.2 Install Dependencies:**
-```bash
-sudo apt-get install -y \
-    build-essential \
-    git \
-    libudev-dev \
-    cmake \
-    pkg-config
-```
-
-#### **2.3 Install RPLIDAR SDK:**
-```bash
-# Clone RPLIDAR SDK
-cd ~
+sudo apt-get install build-essential cmake
 git clone https://github.com/Slamtec/rplidar_sdk.git
 cd rplidar_sdk
-
-# Build SDK
 mkdir build && cd build
 cmake ..
-make -j4
-
-# Install SDK
+make
 sudo make install
-sudo ldconfig
 ```
 
-#### **2.4 Configure udev Rules:**
+### **USB Configuration:**
 ```bash
-# Tạo udev rules file
+# Check USB device
+lsusb | grep RPLIDAR
+
+# Check device permissions
+ls -la /dev/ttyUSB*
+
+# Add user to dialout group
+sudo usermod -a -G dialout $USER
+
+# Configure USB permissions
 sudo nano /etc/udev/rules.d/99-rplidar.rules
 ```
 
-**Nội dung file `/etc/udev/rules.d/99-rplidar.rules`:**
+### **Udev Rules:**
 ```
-# RPLIDAR A1M8 udev rules
+# /etc/udev/rules.d/99-rplidar.rules
+KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666", GROUP="dialout"
+KERNEL=="ttyACM*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666", GROUP="dialout"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666"
-SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666"
 ```
 
-```bash
-# Reload udev rules
-sudo udevadm control --reload-rules
-sudo udevadm trigger
+---
+
+## 🔧 **CONFIGURATION**
+
+### **LiDAR Configuration:**
+```c
+// LiDAR configuration parameters
+typedef struct {
+    char device_path[64];       // "/dev/ttyUSB0"
+    uint32_t baudrate;          // 115200 bps
+    uint32_t scan_frequency;    // 5.5 Hz
+    uint32_t rotation_speed;    // 330 RPM
+    float detection_range;      // 12.0 m
+    float angular_resolution;   // 0.9 degrees
+    uint32_t update_rate;       // 5 Hz
+} lidar_config_t;
 ```
 
-### **Step 3: Device Verification**
-
-#### **3.1 Check USB Detection:**
-```bash
-# Kiểm tra USB device
-lsusb | grep 10c4
-# Expected output: Bus XXX Device XXX: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
+### **USB Configuration:**
+```c
+// USB configuration
+typedef struct {
+    char device_path[64];       // USB device path
+    uint32_t timeout_ms;        // 1000 ms
+    uint8_t retry_count;        // 3
+    uint32_t buffer_size;       // 4096 bytes
+    uint8_t auto_reconnect;     // 1 = enabled
+} usb_config_t;
 ```
 
-#### **3.2 Check Serial Device:**
+### **Integration Configuration:**
+```c
+// Integration với Dock & Location module
+typedef struct {
+    uint8_t module_address;     // 0x05 (Dock & Location)
+    uint32_t register_offset;   // 0x0070 (LiDAR registers)
+    uint32_t update_rate;       // 5 Hz
+    uint8_t priority;           // High priority
+    char usb_device[64];        // USB device path
+} integration_config_t;
+```
+
+---
+
+## 🧪 **TESTING PROCEDURES**
+
+### **Hardware Testing:**
+```
+1. USB Connection Test
+   - Verify USB connection
+   - Check device detection
+   - Test data transfer
+
+2. Power Test
+   - Verify USB power supply
+   - Check current consumption
+   - Monitor temperature
+
+3. Mechanical Test
+   - Check mounting stability
+   - Verify vibration isolation
+   - Test protection cover
+```
+
+### **Software Testing:**
+```
+1. Driver Test
+   - Test LiDAR driver
+   - Verify USB communication
+   - Check scan data
+
+2. Integration Test
+   - Test USB integration
+   - Verify register mapping
+   - Check data flow
+
+3. Performance Test
+   - Test scan frequency
+   - Verify data accuracy
+   - Check update rate
+```
+
+### **Functional Testing:**
+```
+1. Mapping Test
+   - Test map generation
+   - Verify map accuracy
+   - Check map storage
+
+2. Localization Test
+   - Test position estimation
+   - Verify accuracy
+   - Check stability
+
+3. Obstacle Detection Test
+   - Test detection range
+   - Verify accuracy
+   - Check response time
+```
+
+---
+
+## 🔧 **TROUBLESHOOTING**
+
+### **Common Issues:**
+```
+1. USB Connection Issues
+   - Symptom: LiDAR không được detect
+   - Cause: USB cable hoặc port problem
+   - Solution: Check USB connection và cable
+
+2. Power Issues
+   - Symptom: LiDAR không khởi động
+   - Cause: Insufficient USB power
+   - Solution: Use powered USB hub hoặc external power
+
+3. Permission Issues
+   - Symptom: Cannot access device
+   - Cause: USB permissions
+   - Solution: Check udev rules và user groups
+
+4. Driver Issues
+   - Symptom: No scan data
+   - Cause: Driver installation problem
+   - Solution: Reinstall RPLIDAR SDK
+```
+
+### **Diagnostic Commands:**
 ```bash
-# Kiểm tra serial device
+# Check USB devices
+lsusb
+dmesg | grep -i usb
+
+# Check LiDAR device
 ls -la /dev/ttyUSB*
-# Expected: /dev/ttyUSB0
+ls -la /dev/ttyACM*
 
-# Check device permissions
-ls -la /dev/ttyUSB0
-# Expected: crw-rw-rw- 1 root dialout 188, 0 Jan 27 10:00 /dev/ttyUSB0
-```
+# Test USB communication
+sudo stty -F /dev/ttyUSB0 115200
+sudo cat /dev/ttyUSB0
 
-#### **3.3 Test Serial Communication:**
-```bash
-# Test basic serial communication
-sudo chmod 666 /dev/ttyUSB0
-stty -F /dev/ttyUSB0 115200
-
-# Send test command (Get device info)
-echo -e "\xA5\x25" > /dev/ttyUSB0
-
-# Check response (optional)
-hexdump -C /dev/ttyUSB0
-```
-
-### **Step 4: SDK Testing**
-
-#### **4.1 Test with RPLIDAR SDK:**
-```bash
-# Navigate to SDK examples
-cd ~/rplidar_sdk/sdk/output/Linux/Release/
-
-# Test basic functionality
-./ultra_simple /dev/ttyUSB0
-# Expected: LiDAR starts scanning và hiển thị distance data
-```
-
-#### **4.2 Test with SDK Examples:**
-```bash
-# Test với các examples khác
-./simple_grabber /dev/ttyUSB0
-./frame_grabber /dev/ttyUSB0
-```
-
----
-
-## 🔧 **Configuration**
-
-### **Serial Port Configuration:**
-```bash
-# Configure serial port parameters
-stty -F /dev/ttyUSB0 \
-    baudrate 115200 \
-    cs8 \
-    -cstopb \
-    -parenb \
-    -echo \
-    -echoe \
-    -echok \
-    -icanon \
-    -isig \
-    -iexten \
-    -opost
-```
-
-### **Performance Tuning:**
-```bash
-# Optimize USB performance
-echo 'ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTR{power/autosuspend}="-1"' | sudo tee -a /etc/udev/rules.d/99-rplidar.rules
-```
-
----
-
-## 🧪 **Validation Tests**
-
-### **Test 1: Basic Connectivity**
-```bash
-#!/bin/bash
-# Test script: test_lidar_basic.sh
-
-echo "=== LiDAR Basic Connectivity Test ==="
-
-# Check USB device
-echo "1. Checking USB device..."
-if lsusb | grep -q "10c4:ea60"; then
-    echo "✅ USB device detected"
-else
-    echo "❌ USB device not found"
-    exit 1
-fi
-
-# Check serial device
-echo "2. Checking serial device..."
-if [ -e /dev/ttyUSB0 ]; then
-    echo "✅ Serial device found: /dev/ttyUSB0"
-else
-    echo "❌ Serial device not found"
-    exit 1
-fi
-
-# Test permissions
-echo "3. Checking permissions..."
-if [ -r /dev/ttyUSB0 ] && [ -w /dev/ttyUSB0 ]; then
-    echo "✅ Device permissions OK"
-else
-    echo "❌ Permission issues"
-    exit 1
-fi
-
-echo "✅ Basic connectivity test PASSED"
-```
-
-### **Test 2: SDK Functionality**
-```bash
-#!/bin/bash
-# Test script: test_lidar_sdk.sh
-
-echo "=== LiDAR SDK Functionality Test ==="
-
-# Test SDK installation
-echo "1. Testing SDK installation..."
-if [ -f /usr/local/lib/librplidar_sdk.so ]; then
-    echo "✅ SDK library found"
-else
-    echo "❌ SDK library not found"
-    exit 1
-fi
-
-# Test SDK examples
-echo "2. Testing SDK examples..."
-cd ~/rplidar_sdk/sdk/output/Linux/Release/
-
-if [ -f ./ultra_simple ]; then
-    echo "✅ SDK examples compiled"
-else
-    echo "❌ SDK examples not compiled"
-    exit 1
-fi
-
-echo "✅ SDK functionality test PASSED"
-```
-
-### **Test 3: Data Acquisition**
-```bash
-#!/bin/bash
-# Test script: test_lidar_data.sh
-
-echo "=== LiDAR Data Acquisition Test ==="
-
-# Test data acquisition (timeout 10 seconds)
-echo "1. Testing data acquisition..."
-timeout 10s ./ultra_simple /dev/ttyUSB0 > /tmp/lidar_test.log 2>&1
-
-# Check if data was received
-if [ -s /tmp/lidar_test.log ]; then
-    echo "✅ Data acquisition successful"
-    echo "Sample data:"
-    head -5 /tmp/lidar_test.log
-else
-    echo "❌ No data received"
-    exit 1
-fi
-
-echo "✅ Data acquisition test PASSED"
-```
-
----
-
-## 🚨 **Troubleshooting**
-
-### **Issue 1: Device Not Detected**
-```bash
-# Symptoms: lsusb không hiển thị 10c4:ea60
-# Solution:
-sudo dmesg | grep -i usb
-sudo dmesg | grep -i tty
-# Check USB cable connection
-# Try different USB port
-```
-
-### **Issue 2: Permission Denied**
-```bash
-# Symptoms: Cannot access /dev/ttyUSB0
-# Solution:
-sudo usermod -a -G dialout $USER
-# Logout và login lại
-# Hoặc:
-sudo chmod 666 /dev/ttyUSB0
-```
-
-### **Issue 3: No Data from LiDAR**
-```bash
-# Symptoms: SDK không nhận được data
-# Solution:
-# 1. Check baud rate
-stty -F /dev/ttyUSB0 115200
-
-# 2. Check cable connection
-# 3. Restart LiDAR power
-# 4. Check for interference
-```
-
-### **Issue 4: Inaccurate Readings**
-```bash
-# Symptoms: Distance readings không chính xác
-# Solution:
-# 1. Check mounting angle
-# 2. Check for reflective surfaces
-# 3. Calibrate sensor
-# 4. Check for vibration
-```
-
----
-
-## 📊 **Performance Monitoring**
-
-### **System Resources:**
-```bash
-# Monitor USB bandwidth
-sudo cat /sys/kernel/debug/usb/devices | grep -A 10 "10c4:ea60"
-
-# Monitor serial port
-sudo cat /proc/tty/driver/usbserial
-
-# Monitor system load
+# Check system resources
 htop
-```
-
-### **LiDAR Performance:**
-```bash
-# Monitor scan rate
-# Expected: 8Hz (125ms per scan)
-
-# Monitor data quality
-# Expected: 400 points per scan
-
-# Monitor range accuracy
-# Expected: ±2cm
+iostat
 ```
 
 ---
 
-## 📝 **Documentation**
+## 📊 **CALIBRATION**
 
-### **Files Created:**
-- ✅ `docs/specs/lidar_wiring_guide.md`
-- ✅ `docs/specs/lidar_setup_guide.md`
-- 🔄 `docs/specs/lidar_test_procedures.md` (next)
-- 🔄 `docs/specs/lidar_integration_guide.md` (next)
+### **Mechanical Calibration:**
+```
+1. Mounting Calibration
+   - Ensure horizontal mounting
+   - Check height requirements
+   - Verify clearance
 
-### **Next Steps:**
-1. Tạo test procedures
-2. Tạo integration guide
-3. Implement HAL driver
-4. Tích hợp với safety system
+2. Orientation Calibration
+   - Align với robot coordinate system
+   - Check scan plane orientation
+   - Verify coordinate transformation
+```
+
+### **Software Calibration:**
+```
+1. USB Calibration
+   - Calibrate USB communication
+   - Adjust timeout settings
+   - Set retry parameters
+
+2. Sensor Calibration
+   - Calibrate scan frequency
+   - Adjust angular resolution
+   - Set detection range
+
+3. Integration Calibration
+   - Calibrate với IMU
+   - Align với magnetic sensors
+   - Verify coordinate system
+```
 
 ---
 
-**🎯 Setup Complete!**
-LiDAR sensor đã được cài đặt và cấu hình thành công. Sẵn sàng cho bước tiếp theo: test procedures và HAL driver implementation.
+## 📋 **MAINTENANCE**
+
+### **Regular Maintenance:**
+```
+1. Visual Inspection
+   - Check USB cable connection
+   - Inspect protection cover
+   - Verify mounting stability
+
+2. Performance Check
+   - Monitor scan quality
+   - Check update rate
+   - Verify accuracy
+
+3. Software Update
+   - Update LiDAR driver
+   - Update firmware
+   - Check configuration
+```
+
+### **Preventive Maintenance:**
+```
+1. Monthly
+   - Clean USB connectors
+   - Check cable integrity
+   - Verify power supply
+
+2. Quarterly
+   - Calibrate sensor
+   - Update software
+   - Performance test
+
+3. Annually
+   - Complete system check
+   - Replace worn parts
+   - Update documentation
+```
+
+---
+
+## 📚 **DOCUMENTATION**
+
+### **Required Documentation:**
+```
+1. Hardware Setup
+   - USB connection diagram
+   - Mounting diagram
+   - Parts list
+
+2. Software Setup
+   - Driver installation guide
+   - Configuration guide
+   - Testing procedures
+
+3. Integration Guide
+   - USB integration
+   - Register mapping
+   - Data flow
+
+4. Maintenance Guide
+   - Maintenance schedule
+   - Troubleshooting guide
+   - Calibration procedures
+```
+
+---
+
+**Changelog:**
+- v2.0 (2025-01-27): Updated để tích hợp với Dock & Location module qua USB
+- v1.0 (2025-01-27): Initial LiDAR setup guide
+
+**Status:** Updated để tích hợp với Dock & Location module qua USB  
+**Next Steps:** Implementation theo USB setup guide
