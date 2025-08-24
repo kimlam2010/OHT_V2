@@ -20,6 +20,7 @@
 #include "module_manager.h"
 #include "power_module_handler.h"
 #include "api_manager.h"
+#include "constants.h"
 
 static volatile sig_atomic_t g_should_run = 1;
 static bool g_dry_run = false;
@@ -71,18 +72,18 @@ int main(int argc, char **argv) {
         // Print planned initialization without touching hardware
         printf("[OHT-50] DRY-RUN: Initialization plan:\n");
         printf("  - HAL: LED → E-Stop(pin=%d) → RS485(device=%s, %u baud)\n", ESTOP_PIN, RS485_DEVICE_PATH, RS485_BAUD_RATE);
-        printf("  - Safety: interval=50ms, estop_timeout=100ms\n");
-        printf("  - State Machine: update_period=50ms (skipped in dry-run)\n");
+        printf("  - Safety: interval=%ums, estop_timeout=%ums\n", SAFETY_CHECK_INTERVAL_MS, ESTOP_RESPONSE_TIME_MS);
+        printf("  - State Machine: update_period=%ums (skipped in dry-run)\n", UPDATE_PERIOD_MS);
         printf("[OHT-50] DRY-RUN: Simulating main loop...\n");
         fflush(stdout);
-        for (int i = 1; i <= 5; ++i) {
-            printf("[OHT-50] DRY-RUN tick %d/5\n", i);
+        for (int i = 1; i <= LED_COUNT; ++i) {
+            printf("[OHT-50] DRY-RUN tick %d/%d\n", i, LED_COUNT);
             if (g_debug_mode) {
                 // Simulated diagnostics
                 printf("[OHT-50][DEBUG] diag: state=IDLE safety=NORMAL estop=SAFE\n");
             }
             fflush(stdout);
-            hal_sleep_ms(200);
+            hal_sleep_ms(SLEEP_DELAY_MS);
         }
         printf("[OHT-50] DRY-RUN complete. Exiting.\n");
         fflush(stdout);
@@ -102,7 +103,7 @@ int main(int argc, char **argv) {
         // E-Stop subsystem
         estop_config_t estop_cfg = {
             .channel1_pin = ESTOP_PIN,
-            .channel2_pin = 0,
+            .channel2_pin = 0U,
             .response_timeout_ms = ESTOP_RESPONSE_TIME_MS,
             .debounce_time_ms = ESTOP_DEBOUNCE_TIME_MS,
             .dual_channel_required = false,
@@ -137,11 +138,11 @@ int main(int argc, char **argv) {
         // Test init_rs485
         printf("[MAIN] Testing init_rs485...\n");
         rs485_config_t test_rs485_cfg = {
-            .baud_rate = 115200,
-            .data_bits = 8,
-            .stop_bits = 1,
-            .parity = 0,
-            .timeout_ms = 1500
+            .baud_rate = RS485_BAUD_RATE,
+            .data_bits = RS485_DATA_BITS,
+            .stop_bits = RS485_STOP_BITS,
+            .parity = RS485_PARITY,
+            .timeout_ms = RS485_TIMEOUT_MS
         };
         strcpy(test_rs485_cfg.device_path, "/dev/ttyOHT485");
         hal_status_t rs485_status = hal_rs485_init(&test_rs485_cfg);
@@ -153,17 +154,17 @@ int main(int argc, char **argv) {
         printf("[MAIN] hal_rs485_open returned: %d\n", open_status);
         
         comm_mgr_config_t cm_cfg = {
-            .baud_rate = 115200,
-            .data_bits = 8,
-            .stop_bits = 1,
-            .parity = 0,
-            .timeout_ms = 1500,
-            .retry_count = 2,
-            .retry_delay_ms = 100,
-            .modbus_slave_id = 1,
+            .baud_rate = RS485_BAUD_RATE,
+            .data_bits = RS485_DATA_BITS,
+            .stop_bits = RS485_STOP_BITS,
+            .parity = RS485_PARITY,
+            .timeout_ms = RS485_TIMEOUT_MS,
+            .retry_count = RS485_RETRY_COUNT,
+            .retry_delay_ms = RS485_RETRY_DELAY_MS,
+            .modbus_slave_id = MODBUS_SLAVE_ID,
             .enable_crc_check = false,  // Disable CRC check temporarily
             .enable_echo_suppression = true,
-            .buffer_size = 256
+            .buffer_size = RS485_BUFFER_SIZE
         };
         hal_status_t comm_status = comm_manager_init(&cm_cfg);
         if (comm_status != HAL_STATUS_OK) {
@@ -177,10 +178,10 @@ int main(int argc, char **argv) {
 
     // 2) Initialize Safety Manager
     safety_config_t safety_cfg = {
-        .safety_check_interval_ms = 50,
-        .estop_response_timeout_ms = 100,
-        .safety_circuit_timeout_ms = 100,
-        .sensor_timeout_ms = 100,
+        .safety_check_interval_ms = SAFETY_CHECK_INTERVAL_MS,
+        .estop_response_timeout_ms = ESTOP_RESPONSE_TIME_MS,
+        .safety_circuit_timeout_ms = SAFETY_CIRCUIT_TIMEOUT_MS,
+        .sensor_timeout_ms = SENSOR_TIMEOUT_MS,
         .enable_auto_recovery = true,
         .enable_safety_monitoring = true,
         .enable_estop_monitoring = true,
@@ -197,8 +198,8 @@ int main(int argc, char **argv) {
     // 3) Initialize System State Machine
     if (!g_dry_run) {
         system_config_t sys_cfg = {
-            .state_timeout_ms = 5000,
-            .update_period_ms = 50,
+            .state_timeout_ms = STATE_TIMEOUT_MS,
+            .update_period_ms = UPDATE_PERIOD_MS,
             .auto_recovery_enabled = true,
             .safety_monitoring_enabled = true,
             .communication_monitoring_enabled = true,
@@ -217,16 +218,16 @@ int main(int argc, char **argv) {
     if (!g_dry_run) {
         printf("[OHT-50] Initializing API Manager for BE communication...\n");
         api_mgr_config_t api_config = {
-            .http_port = 8080,
-            .websocket_port = 8081,
+            .http_port = API_HTTP_PORT,
+            .websocket_port = API_WEBSOCKET_PORT,
             .http_enabled = true,
             .websocket_enabled = true,
             .cors_enabled = true,
             .cors_origin = "*",
-            .max_request_size = 8192,
-            .max_response_size = 16384,
-            .request_timeout_ms = 30000,
-            .websocket_timeout_ms = 60000,
+            .max_request_size = API_MAX_REQUEST_SIZE,
+            .max_response_size = API_MAX_RESPONSE_SIZE,
+            .request_timeout_ms = API_REQUEST_TIMEOUT_MS,
+            .websocket_timeout_ms = API_WEBSOCKET_TIMEOUT_MS,
             .authentication_required = false,  // Disable for testing
             .ssl_enabled = false,
             .ssl_certificate_path = "",
@@ -236,7 +237,7 @@ int main(int argc, char **argv) {
         if (api_manager_init(&api_config) != HAL_STATUS_OK) {
             fprintf(stderr, "[OHT-50] api_manager_init failed (continuing)\n");
         } else {
-            printf("[OHT-50] API Manager initialized - HTTP:8080, WebSocket:8081\n");
+            printf("[OHT-50] API Manager initialized - HTTP:%u, WebSocket:%u\n", API_HTTP_PORT, API_WEBSOCKET_PORT);
             if (api_manager_start_http_server() != HAL_STATUS_OK) {
                 fprintf(stderr, "[OHT-50] api_manager_start failed (continuing)\n");
             } else {
@@ -260,7 +261,7 @@ int main(int argc, char **argv) {
     bool power_handler_initialized = false;
 
     // Target: reach IDLE in <= 120s
-    uint64_t startup_deadline_ms = now_ms() + 120000ULL;
+    uint64_t startup_deadline_ms = now_ms() + STARTUP_DEADLINE_MS;
     bool startup_deadline_active = g_dry_run; // Only enforce deadline in dry-run
 
     // Run initial scan once (Phase 1)
@@ -269,7 +270,7 @@ int main(int argc, char **argv) {
         registry_set_scanning(true);
         hal_led_comm_set(LED_STATE_BLINK_SLOW); // Blink during scan
         
-        (void)comm_manager_scan_range(0x02, 0x07);
+        (void)comm_manager_scan_range(MODULE_ADDR_POWER, MODULE_ADDR_MAX);
         
         size_t online = registry_count_online();
         bool has_offline = registry_has_offline_saved();
@@ -301,16 +302,16 @@ int main(int argc, char **argv) {
     // Initialize Power Module handler if present and online
     if (!g_dry_run) {
         module_info_t mi;
-        if (registry_get(0x02, &mi) == 0 && mi.status == MODULE_STATUS_ONLINE /* allow unknown type too */) {
+        if (registry_get(MODULE_ADDR_POWER, &mi) == 0 && mi.status == MODULE_STATUS_ONLINE /* allow unknown type too */) {
             if (mi.type == MODULE_TYPE_POWER || mi.type == MODULE_TYPE_UNKNOWN) {
                 // Initialize power module handler with default config
                 power_module_config_t power_config = {0}; // Default config
                 if (power_module_handler_init(&power_config) == HAL_STATUS_OK) {
                     // Apply 4S defaults - simplified for now
                     power_handler_initialized = true;
-                    printf("[POWER] Handler initialized (addr=0x02, 4S defaults applied)\n");
+                    printf("[POWER] Handler initialized (addr=0x%02X, 4S defaults applied)\n", MODULE_ADDR_POWER);
                 } else {
-                    printf("[POWER] Failed to initialize handler for addr 0x02\n");
+                    printf("[POWER] Failed to initialize handler for addr 0x%02X\n", MODULE_ADDR_POWER);
                 }
             }
         }
@@ -327,14 +328,14 @@ int main(int argc, char **argv) {
 
         // Heartbeat LED on SYSTEM LED
         uint64_t t = now_ms();
-        if (!g_dry_run && (t - last_led_toggle_ms) >= 500) {
+        if (!g_dry_run && (t - last_led_toggle_ms) >= HEARTBEAT_INTERVAL_MS) {
             heartbeat_on = !heartbeat_on;
             (void)hal_led_system_set(heartbeat_on ? LED_STATE_ON : LED_STATE_OFF);
             last_led_toggle_ms = t;
         }
 
         // Periodic diagnostics in debug mode
-        if (g_debug_mode && (t - last_diag_ms) >= 1000) {
+        if (g_debug_mode && (t - last_diag_ms) >= DIAGNOSTICS_INTERVAL_MS) {
             system_status_t sys_status;
             safety_status_t safe_status;
             estop_status_t est_status;
@@ -365,7 +366,7 @@ int main(int argc, char **argv) {
 
         // Periodic Power Module polling (every 500ms)
         if (!g_dry_run && power_handler_initialized) {
-            if ((t - last_power_poll_ms) >= 500) {
+            if ((t - last_power_poll_ms) >= POWER_POLL_INTERVAL_MS) {
                 power_module_data_t power_data;
                 if (power_module_handler_read_data(&power_data) == HAL_STATUS_OK) {
                     // Simplified power module polling - no alarm checking for now

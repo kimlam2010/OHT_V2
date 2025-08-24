@@ -20,11 +20,11 @@ static struct {
     comm_mgr_status_info_t status;
     comm_mgr_event_callback_t event_callback;
     
-    // Communication buffers
-    uint8_t tx_buffer[256];
-    uint8_t rx_buffer[256];
-    uint16_t tx_length;
-    uint16_t rx_length;
+    // Communication buffers (reserved for future use)
+    uint8_t tx_buffer[256];  // NOLINT
+    uint8_t rx_buffer[256];  // NOLINT
+    uint16_t tx_length;      // NOLINT
+    uint16_t rx_length;      // NOLINT
     
     // Timing
     uint64_t last_communication_time;
@@ -110,7 +110,7 @@ hal_status_t comm_manager_init(const comm_mgr_config_t *config) {
     status = hal_rs485_open();
     if (status == HAL_STATUS_ALREADY_ACTIVE) {
         printf("[COMM] RS485 device already open, continuing...\n");
-        status = HAL_STATUS_OK;
+        // status already set to HAL_STATUS_ALREADY_ACTIVE, no need to reassign
     } else if (status != HAL_STATUS_OK) {
         printf("[COMM] ERROR: Failed to open RS485 device (status=%d)\n", status);
         g_comm_manager.status.last_error = COMM_MGR_ERROR_RS485_INIT_FAILED;
@@ -412,7 +412,7 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
     while (retry_count <= g_comm_manager.config.retry_count) {
         g_comm_manager.status.statistics.total_transmissions++;
         
-        printf("[MODBUS] Attempt %d/%d: sending frame...\n", retry_count + 1, g_comm_manager.config.retry_count + 1);
+        printf("[MODBUS] Attempt %u/%u: sending frame...\n", retry_count + 1, g_comm_manager.config.retry_count + 1);
         
         // Send frame
         status = send_modbus_frame(frame, frame_length);

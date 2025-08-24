@@ -10,8 +10,10 @@
 #ifndef API_ENDPOINTS_H
 #define API_ENDPOINTS_H
 
-#include "http_server.h"
 #include "hal_common.h"
+#include "api_manager.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 // API Version
 #define API_VERSION "v1"
@@ -102,7 +104,7 @@ typedef struct {
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_system_status(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_system_status(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle GET /api/v1/system/health
@@ -110,7 +112,7 @@ hal_status_t api_handle_system_status(const http_request_t *request, http_respon
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_system_health(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_system_health(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle GET /api/v1/modules
@@ -118,7 +120,7 @@ hal_status_t api_handle_system_health(const http_request_t *request, http_respon
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_modules_list(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_modules_list(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle GET /api/v1/modules/{id}
@@ -126,7 +128,7 @@ hal_status_t api_handle_modules_list(const http_request_t *request, http_respons
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_module_info(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_module_info(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle POST /api/v1/modules/{id}/command
@@ -134,7 +136,7 @@ hal_status_t api_handle_module_info(const http_request_t *request, http_response
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_module_command(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_module_command(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle GET /api/v1/safety/status
@@ -142,7 +144,7 @@ hal_status_t api_handle_module_command(const http_request_t *request, http_respo
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_safety_status(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_safety_status(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle POST /api/v1/safety/estop
@@ -150,7 +152,7 @@ hal_status_t api_handle_safety_status(const http_request_t *request, http_respon
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_safety_estop(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_safety_estop(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle GET /api/v1/config
@@ -158,7 +160,7 @@ hal_status_t api_handle_safety_estop(const http_request_t *request, http_respons
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_config_get(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_config_get(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle PUT /api/v1/config
@@ -166,7 +168,7 @@ hal_status_t api_handle_config_get(const http_request_t *request, http_response_
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_config_set(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_config_set(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle GET /api/v1/diagnostics
@@ -174,7 +176,7 @@ hal_status_t api_handle_config_set(const http_request_t *request, http_response_
  * @param response HTTP response
  * @return HAL status
  */
-hal_status_t api_handle_diagnostics(const http_request_t *request, http_response_t *response);
+hal_status_t api_handle_diagnostics(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 // API Utility Functions
 
@@ -183,14 +185,14 @@ hal_status_t api_handle_diagnostics(const http_request_t *request, http_response
  * @param server HTTP server instance
  * @return HAL status
  */
-hal_status_t api_endpoints_init(http_server_t *server);
+hal_status_t api_endpoints_init(void);
 
 /**
  * @brief Deinitialize API endpoints
  * @param server HTTP server instance
  * @return HAL status
  */
-hal_status_t api_endpoints_deinit(http_server_t *server);
+hal_status_t api_endpoints_deinit(void);
 
 /**
  * @brief Extract module ID from path
@@ -251,7 +253,7 @@ hal_status_t api_parse_json_body(const char *body, char *json_buffer, int buffer
  * @param required_path Required path pattern
  * @return HAL status
  */
-hal_status_t api_validate_request(const http_request_t *request, http_method_t required_method, const char *required_path);
+hal_status_t api_validate_request(const api_mgr_http_request_t *request, api_mgr_http_method_t required_method, const char *required_path);
 
 /**
  * @brief Create API error response
@@ -260,7 +262,7 @@ hal_status_t api_validate_request(const http_request_t *request, http_method_t r
  * @param error_message Error message
  * @return HAL status
  */
-hal_status_t api_create_error_response(http_response_t *response, http_status_t error_code, const char *error_message);
+hal_status_t api_create_error_response(api_mgr_http_response_t *response, api_mgr_response_code_t error_code, const char *error_message);
 
 /**
  * @brief Create API success response
@@ -268,6 +270,6 @@ hal_status_t api_create_error_response(http_response_t *response, http_status_t 
  * @param data JSON data
  * @return HAL status
  */
-hal_status_t api_create_success_response(http_response_t *response, const char *data);
+hal_status_t api_create_success_response(api_mgr_http_response_t *response, const char *data);
 
 #endif // API_ENDPOINTS_H

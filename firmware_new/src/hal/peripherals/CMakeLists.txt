@@ -5,6 +5,7 @@
 add_library(hal_peripherals STATIC
     hal_led.c
     hal_relay.c
+    hal_lidar.c
 )
 
 # Include directories
