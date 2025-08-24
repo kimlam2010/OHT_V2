@@ -68,11 +68,138 @@ target_link_libraries(test_hal_lidar
     unity
 )
 
+# HAL RS485 tests
+add_executable(test_hal_rs485
+    hal/test_hal_rs485.c
+)
+
+target_include_directories(test_hal_rs485 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_hal_rs485
+    hal_communication
+    hal_common
+    unity
+)
+
+# HAL Network tests
+add_executable(test_hal_network
+    hal/test_hal_network.c
+)
+
+target_include_directories(test_hal_network PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_hal_network
+    hal_communication
+    hal_common
+    unity
+)
+
+# HAL E-Stop tests
+add_executable(test_hal_estop
+    hal/test_hal_estop.c
+)
+
+target_include_directories(test_hal_estop PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_hal_estop
+    hal_safety
+    hal_common
+    unity
+    pthread
+)
+
+# HAL Storage tests
+add_executable(test_hal_storage
+    hal/test_hal_storage.c
+)
+
+target_include_directories(test_hal_storage PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/storage
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_hal_storage
+    hal_storage
+    hal_common
+    unity
+)
+
+# HAL USB tests
+add_executable(test_hal_usb
+    hal/test_hal_usb.c
+)
+
+target_include_directories(test_hal_usb PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_hal_usb
+    hal_communication
+    hal_common
+    unity
+    pthread
+)
+
+# Application Core tests
+add_executable(test_system_state_machine
+    app/test_system_state_machine.c
+)
+
+target_include_directories(test_system_state_machine PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_system_state_machine
+    app_core
+    hal_common
+    unity
+)
+
+add_executable(test_control_loop
+    app/test_control_loop.c
+)
+
+target_include_directories(test_control_loop PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_control_loop
+    app_core
+    hal_common
+    unity
+)
+
 # Add tests to CTest
 add_test(NAME test_hal_common COMMAND test_hal_common)
 add_test(NAME test_hal_gpio COMMAND test_hal_gpio)
 add_test(NAME test_api_manager COMMAND test_api_manager)
 add_test(NAME test_hal_lidar COMMAND test_hal_lidar)
+add_test(NAME test_hal_rs485 COMMAND test_hal_rs485)
+add_test(NAME test_hal_network COMMAND test_hal_network)
+add_test(NAME test_hal_estop COMMAND test_hal_estop)
+add_test(NAME test_hal_storage COMMAND test_hal_storage)
+add_test(NAME test_hal_usb COMMAND test_hal_usb)
+add_test(NAME test_system_state_machine COMMAND test_system_state_machine)
+add_test(NAME test_control_loop COMMAND test_control_loop)
 
 # Enable testing
 enable_testing()
