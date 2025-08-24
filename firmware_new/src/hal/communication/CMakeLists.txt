@@ -5,6 +5,7 @@
 add_library(hal_communication STATIC
     hal_rs485.c
     hal_network.c
+    hal_usb.c
 )
 
 # Include directories
