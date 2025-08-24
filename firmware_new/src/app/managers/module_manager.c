@@ -508,7 +508,7 @@ static uint8_t calculate_health_percentage(const module_status_info_t *status) {
     
     // Ensure percentage is within valid range
     if (percentage > 100) percentage = 100;
-    if (percentage < 0) percentage = 0;
+    // percentage is unsigned, so it cannot be < 0
     
     return percentage;
 }

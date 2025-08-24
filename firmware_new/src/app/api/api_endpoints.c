@@ -24,7 +24,7 @@ extern hal_status_t config_set_data(const char *data);
 
 // API Endpoint Handlers
 
-hal_status_t api_handle_system_status(const http_request_t *request, http_response_t *response) {
+hal_status_t api_handle_system_status(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
     // Create system status response
@@ -41,13 +41,13 @@ hal_status_t api_handle_system_status(const http_request_t *request, http_respon
     char json_buffer[1024];
     hal_status_t result = api_create_system_status_json(&status, json_buffer, sizeof(json_buffer));
     if (result != HAL_STATUS_OK) {
-        return api_create_error_response(response, HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to create system status");
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to create system status");
     }
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_system_health(const http_request_t *request, http_response_t *response) {
+hal_status_t api_handle_system_health(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
     // Create health status response
@@ -60,13 +60,13 @@ hal_status_t api_handle_system_health(const http_request_t *request, http_respon
     
     char json_buffer[512];
     snprintf(json_buffer, sizeof(json_buffer),
-             "{\"status\":\"%s\",\"timestamp\":%llu,\"response_time_ms\":%u,\"details\":\"%s\"}",
+             "{\"status\":\"%s\",\"timestamp\":%lu,\"response_time_ms\":%u,\"details\":\"%s\"}",
              health.status, health.timestamp, health.response_time_ms, health.details);
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_modules_list(const http_request_t *request, http_response_t *response) {
+hal_status_t api_handle_modules_list(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
     // Create modules list response
@@ -104,16 +104,16 @@ hal_status_t api_handle_modules_list(const http_request_t *request, http_respons
     char json_buffer[2048];
     hal_status_t result = api_create_modules_list_json(&modules, json_buffer, sizeof(json_buffer));
     if (result != HAL_STATUS_OK) {
-        return api_create_error_response(response, HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to create modules list");
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to create modules list");
     }
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_module_info(const http_request_t *request, http_response_t *response) {
+hal_status_t api_handle_module_info(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     int module_id = api_extract_module_id(request->path);
     if (module_id < 0) {
-        return api_create_error_response(response, HTTP_STATUS_BAD_REQUEST, "Invalid module ID");
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid module ID");
     }
     
     // Mock module info based on ID
@@ -144,7 +144,7 @@ hal_status_t api_handle_module_info(const http_request_t *request, http_response
             strcpy(module.status, "online");
             break;
         default:
-            return api_create_error_response(response, HTTP_STATUS_NOT_FOUND, "Module not found");
+            return api_create_error_response(response, API_MGR_RESPONSE_NOT_FOUND, "Module not found");
     }
     
     module.last_seen = hal_get_timestamp_ms();
@@ -152,40 +152,40 @@ hal_status_t api_handle_module_info(const http_request_t *request, http_response
     
     char json_buffer[512];
     snprintf(json_buffer, sizeof(json_buffer),
-             "{\"module_id\":%u,\"module_type\":\"%s\",\"status\":\"%s\",\"online\":%s,\"last_seen\":%llu,\"version\":\"%s\"}",
+             "{\"module_id\":%u,\"module_type\":\"%s\",\"status\":\"%s\",\"online\":%s,\"last_seen\":%lu,\"version\":\"%s\"}",
              module.module_id, module.module_type, module.status,
              module.online ? "true" : "false", module.last_seen, module.version);
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_module_command(const http_request_t *request, http_response_t *response) {
+hal_status_t api_handle_module_command(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     int module_id = api_extract_module_id(request->path);
     if (module_id < 0) {
-        return api_create_error_response(response, HTTP_STATUS_BAD_REQUEST, "Invalid module ID");
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid module ID");
     }
     
-    if (request->method != HTTP_METHOD_POST) {
-        return api_create_error_response(response, HTTP_STATUS_METHOD_NOT_ALLOWED, "Method not allowed");
+    if (request->method != API_MGR_HTTP_POST) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
     }
     
     // Parse command from request body
     api_module_command_t command = {0};
     hal_status_t result = api_parse_json_body(request->body, command.command, sizeof(command.command));
     if (result != HAL_STATUS_OK) {
-        return api_create_error_response(response, HTTP_STATUS_BAD_REQUEST, "Invalid command format");
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid command format");
     }
     
     // Mock command execution
     char json_buffer[512];
     snprintf(json_buffer, sizeof(json_buffer),
-             "{\"module_id\":%d,\"command\":\"%s\",\"status\":\"executed\",\"timestamp\":%llu}",
+             "{\"module_id\":%d,\"command\":\"%s\",\"status\":\"executed\",\"timestamp\":%lu}",
              module_id, command.command, hal_get_timestamp_ms());
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_safety_status(const http_request_t *request, http_response_t *response) {
+hal_status_t api_handle_safety_status(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
     // Create safety status response
@@ -200,22 +200,22 @@ hal_status_t api_handle_safety_status(const http_request_t *request, http_respon
     char json_buffer[1024];
     hal_status_t result = api_create_safety_status_json(&safety, json_buffer, sizeof(json_buffer));
     if (result != HAL_STATUS_OK) {
-        return api_create_error_response(response, HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to create safety status");
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to create safety status");
     }
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_safety_estop(const http_request_t *request, http_response_t *response) {
-    if (request->method != HTTP_METHOD_POST) {
-        return api_create_error_response(response, HTTP_STATUS_METHOD_NOT_ALLOWED, "Method not allowed");
+hal_status_t api_handle_safety_estop(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
+    if (request->method != API_MGR_HTTP_POST) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
     }
     
     // Parse E-Stop request
     api_estop_request_t estop = {0};
     hal_status_t result = api_parse_json_body(request->body, estop.estop_reason, sizeof(estop.estop_reason));
     if (result != HAL_STATUS_OK) {
-        return api_create_error_response(response, HTTP_STATUS_BAD_REQUEST, "Invalid E-Stop request format");
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid E-Stop request format");
     }
     
     // Mock E-Stop execution
@@ -224,13 +224,13 @@ hal_status_t api_handle_safety_estop(const http_request_t *request, http_respons
     
     char json_buffer[512];
     snprintf(json_buffer, sizeof(json_buffer),
-             "{\"estop_reason\":\"%s\",\"timestamp\":%llu,\"acknowledged\":%s,\"status\":\"executed\"}",
+             "{\"estop_reason\":\"%s\",\"timestamp\":%lu,\"acknowledged\":%s,\"status\":\"executed\"}",
              estop.estop_reason, estop.timestamp, estop.acknowledged ? "true" : "false");
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_config_get(const http_request_t *request, http_response_t *response) {
+hal_status_t api_handle_config_get(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
     // Create config data response
@@ -242,34 +242,34 @@ hal_status_t api_handle_config_get(const http_request_t *request, http_response_
     
     char json_buffer[2048];
     snprintf(json_buffer, sizeof(json_buffer),
-             "{\"config_data\":%s,\"config_version\":%u,\"last_updated\":%llu}",
+             "{\"config_data\":%s,\"config_version\":%u,\"last_updated\":%lu}",
              config.config_data, config.config_version, config.last_updated);
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_config_set(const http_request_t *request, http_response_t *response) {
-    if (request->method != HTTP_METHOD_PUT) {
-        return api_create_error_response(response, HTTP_STATUS_METHOD_NOT_ALLOWED, "Method not allowed");
+hal_status_t api_handle_config_set(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
+    if (request->method != API_MGR_HTTP_PUT) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
     }
     
     // Parse config data from request body
     char config_data[1024];
     hal_status_t result = api_parse_json_body(request->body, config_data, sizeof(config_data));
     if (result != HAL_STATUS_OK) {
-        return api_create_error_response(response, HTTP_STATUS_BAD_REQUEST, "Invalid config format");
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid config format");
     }
     
     // Mock config update
     char json_buffer[512];
     snprintf(json_buffer, sizeof(json_buffer),
-             "{\"status\":\"updated\",\"config_version\":2,\"timestamp\":%llu}",
+             "{\"status\":\"updated\",\"config_version\":2,\"timestamp\":%lu}",
              hal_get_timestamp_ms());
     
     return api_create_success_response(response, json_buffer);
 }
 
-hal_status_t api_handle_diagnostics(const http_request_t *request, http_response_t *response) {
+hal_status_t api_handle_diagnostics(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
     // Create diagnostics response
@@ -285,7 +285,7 @@ hal_status_t api_handle_diagnostics(const http_request_t *request, http_response
     char json_buffer[2048];
     hal_status_t result = api_create_diagnostics_json(&diagnostics, json_buffer, sizeof(json_buffer));
     if (result != HAL_STATUS_OK) {
-        return api_create_error_response(response, HTTP_STATUS_INTERNAL_SERVER_ERROR, "Failed to create diagnostics");
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to create diagnostics");
     }
     
     return api_create_success_response(response, json_buffer);
@@ -293,68 +293,16 @@ hal_status_t api_handle_diagnostics(const http_request_t *request, http_response
 
 // API Utility Functions
 
-hal_status_t api_endpoints_init(http_server_t *server) {
-    if (server == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
+hal_status_t api_endpoints_init(void) {
+    // Initialize API endpoints
+    // Note: Route registration will be handled by API manager
     
-    // Add API routes
-    hal_status_t status;
-    
-    // System endpoints
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/system/status", api_handle_system_status, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/system/health", api_handle_system_health, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    // Module endpoints
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/modules", api_handle_modules_list, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/modules/1", api_handle_module_info, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/modules/2", api_handle_module_info, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/modules/3", api_handle_module_info, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_POST, "/api/v1/modules/1/command", api_handle_module_command, true);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_POST, "/api/v1/modules/2/command", api_handle_module_command, true);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_POST, "/api/v1/modules/3/command", api_handle_module_command, true);
-    if (status != HAL_STATUS_OK) return status;
-    
-    // Safety endpoints
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/safety/status", api_handle_safety_status, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_POST, "/api/v1/safety/estop", api_handle_safety_estop, true);
-    if (status != HAL_STATUS_OK) return status;
-    
-    // Config endpoints
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/config", api_handle_config_get, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    status = http_server_add_route(server, HTTP_METHOD_PUT, "/api/v1/config", api_handle_config_set, true);
-    if (status != HAL_STATUS_OK) return status;
-    
-    // Diagnostics endpoint
-    status = http_server_add_route(server, HTTP_METHOD_GET, "/api/v1/diagnostics", api_handle_diagnostics, false);
-    if (status != HAL_STATUS_OK) return status;
-    
-    hal_log_info("[API] Endpoints initialized successfully");
+    // API endpoints initialized successfully
     return HAL_STATUS_OK;
 }
 
-hal_status_t api_endpoints_deinit(http_server_t *server) {
-    (void)server;
-    hal_log_info("[API] Endpoints deinitialized");
+hal_status_t api_endpoints_deinit(void) {
+    // API endpoints deinitialized
     return HAL_STATUS_OK;
 }
 
@@ -401,7 +349,7 @@ hal_status_t api_create_system_status_json(const api_system_status_t *status, ch
     
     int written = snprintf(json_buffer, buffer_size,
                           "{\"system_name\":\"%s\",\"version\":\"%s\",\"status\":\"%s\","
-                          "\"uptime_ms\":%llu,\"active_modules\":%u,\"estop_active\":%s,\"safety_ok\":%s}",
+                          "\"uptime_ms\":%lu,\"active_modules\":%u,\"estop_active\":%s,\"safety_ok\":%s}",
                           status->system_name, status->version, status->status,
                           status->uptime_ms, status->active_modules,
                           status->estop_active ? "true" : "false",
@@ -424,7 +372,7 @@ hal_status_t api_create_modules_list_json(const api_modules_list_t *modules, cha
         
         written += snprintf(json_buffer + written, buffer_size - written,
                            "{\"module_id\":%u,\"module_type\":\"%s\",\"status\":\"%s\","
-                           "\"online\":%s,\"last_seen\":%llu,\"version\":\"%s\"}",
+                           "\"online\":%s,\"last_seen\":%lu,\"version\":\"%s\"}",
                            modules->modules[i].module_id,
                            modules->modules[i].module_type,
                            modules->modules[i].status,
@@ -449,7 +397,7 @@ hal_status_t api_create_safety_status_json(const api_safety_status_t *safety, ch
     
     int written = snprintf(json_buffer, buffer_size,
                           "{\"estop_active\":%s,\"safety_ok\":%s,\"safety_level\":%u,"
-                          "\"safety_message\":\"%s\",\"last_safety_check\":%llu}",
+                          "\"safety_message\":\"%s\",\"last_safety_check\":%lu}",
                           safety->estop_active ? "true" : "false",
                           safety->safety_ok ? "true" : "false",
                           safety->safety_level,
@@ -466,7 +414,7 @@ hal_status_t api_create_diagnostics_json(const api_diagnostics_t *diagnostics, c
     
     int written = snprintf(json_buffer, buffer_size,
                           "{\"total_requests\":%u,\"successful_requests\":%u,\"failed_requests\":%u,"
-                          "\"uptime_ms\":%llu,\"system_info\":\"%s\",\"error_log\":\"%s\"}",
+                          "\"uptime_ms\":%lu,\"system_info\":\"%s\",\"error_log\":\"%s\"}",
                           diagnostics->total_requests,
                           diagnostics->successful_requests,
                           diagnostics->failed_requests,
@@ -489,7 +437,7 @@ hal_status_t api_parse_json_body(const char *body, char *json_buffer, int buffer
     return HAL_STATUS_OK;
 }
 
-hal_status_t api_validate_request(const http_request_t *request, http_method_t required_method, const char *required_path) {
+hal_status_t api_validate_request(const api_mgr_http_request_t *request, api_mgr_http_method_t required_method, const char *required_path) {
     if (request == NULL || required_path == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
@@ -505,18 +453,38 @@ hal_status_t api_validate_request(const http_request_t *request, http_method_t r
     return HAL_STATUS_OK;
 }
 
-hal_status_t api_create_error_response(http_response_t *response, http_status_t error_code, const char *error_message) {
+hal_status_t api_create_error_response(api_mgr_http_response_t *response, api_mgr_response_code_t error_code, const char *error_message) {
     if (response == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    return http_response_set_error(response, error_code, error_message);
+    // Set error response
+    response->status_code = error_code;
+    response->content_type = API_MGR_CONTENT_TYPE_JSON;
+    
+    // Create error JSON
+    char error_json[512];
+    snprintf(error_json, sizeof(error_json),
+             "{\"error\":\"%s\",\"code\":%d,\"timestamp\":%lu}",
+             error_message, error_code, hal_get_timestamp_ms());
+    
+    response->body = strdup(error_json);
+    response->body_length = strlen(error_json);
+    
+    return HAL_STATUS_OK;
 }
 
-hal_status_t api_create_success_response(http_response_t *response, const char *data) {
+hal_status_t api_create_success_response(api_mgr_http_response_t *response, const char *data) {
     if (response == NULL || data == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    return http_response_set_json(response, data);
+    // Set success response
+    response->status_code = API_MGR_RESPONSE_OK;
+    response->content_type = API_MGR_CONTENT_TYPE_JSON;
+    
+    response->body = strdup(data);
+    response->body_length = strlen(data);
+    
+    return HAL_STATUS_OK;
 }
