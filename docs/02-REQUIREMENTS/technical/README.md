@@ -1,55 +1,54 @@
 # TÀI LIỆU KỸ THUẬT RS485 OHT-50
 ## Technical Documentation Index
 
-**Phiên bản:** v1.0  
+**Phiên bản:** v2.0  
 **Ngày tạo:** 2025-01-27  
+**Ngày cập nhật:** 2025-01-28  
 **Team:** FW Team  
-**Trạng thái:** Documentation Index  
+**Trạng thái:** Documentation Index - Updated for Architecture v2.0  
 
 ---
 
 ## 📚 **DANH SÁCH TÀI LIỆU**
 
 ### **📋 Tài liệu tổng quan:**
-- [`00-rs485-system-overview.md`](00-rs485-system-overview.md) - Tổng quan hệ thống RS485 OHT-50
-- [`rs485-system-connection-guide.md`](rs485-system-connection-guide.md) - Hướng dẫn kết nối hệ thống
-- [`rs485-module-statistics.md`](rs485-module-statistics.md) - Thống kê tổng thể module
+- [`REQ_RS485_System_Overview.md`](REQ_RS485_System_Overview.md) - Tổng quan hệ thống RS485 OHT-50
+- [`REQ_RS485_System_Connection_Guide.md`](REQ_RS485_System_Connection_Guide.md) - Hướng dẫn kết nối hệ thống
+- [`REQ_RS485_Module_Statistics.md`](REQ_RS485_Module_Statistics.md) - Thống kê tổng thể module
 
-### **🔧 Tài liệu module tích hợp:**
+### **🔧 Tài liệu module tích hợp (5 Mandatory Modules):**
 
 #### **✅ Module đã hoàn thành:**
-1. [`01-rs485-power-module-integration.md`](01-rs485-power-module-integration.md) - Power Module Integration
-2. [`02-rs485-stepper-motor-integration.md`](02-rs485-stepper-motor-integration.md) - Stepper Motor Module Integration
-3. [`03-rs485-dc-motor-integration.md`](03-rs485-dc-motor-integration.md) - DC Motor Module Integration
-4. [`04-rs485-sensor-module-integration.md`](04-rs485-sensor-module-integration.md) - Sensor Module Integration
+1. [`REQ_RS485_Power_Module_Integration.md`](REQ_RS485_Power_Module_Integration.md) - Power Module Integration
+2. [`REQ_RS485_DC_Motor_Integration.md`](REQ_RS485_DC_Motor_Integration.md) - DC Motor Module Integration
+3. [`REQ_RS485_Sensor_Module_Integration.md`](REQ_RS485_Sensor_Module_Integration.md) - Sensor Module Integration
+4. [`REQ_RS485_DIDO_Module_Integration.md`](REQ_RS485_DIDO_Module_Integration.md) - DI/DO Module Integration
 
 #### **🔄 Module đang phát triển:**
-5. [`05-rs485-dido-module-integration.md`](05-rs485-dido-module-integration.md) - DI/DO Module Integration *(Đang phát triển)*
-6. [`06-rs485-ai-module-integration.md`](06-rs485-ai-module-integration.md) - AI Module Integration *(Đang phát triển)*
+5. Master Control Module - Integrated into Master Module (Orange Pi 5B)
 
-#### **📋 Module kế hoạch:**
-7. [`07-rs485-custom-module-integration.md`](07-rs485-custom-module-integration.md) - Custom Module Integration *(Kế hoạch)*
-
-### **📖 Tài liệu gốc:**
-- [`rs485-motor-control-integration.md`](rs485-motor-control-integration.md) - Tài liệu gốc Motor Control Integration
+### **📖 Tài liệu phân tích và chuẩn hóa:**
+- [`REQ_Analysis_Github_Mapping_Compatibility.md`](REQ_Analysis_Github_Mapping_Compatibility.md) - Phân tích tương thích GitHub mapping
+- [`REQ_Final_Modbus_Register_Map.md`](REQ_Final_Modbus_Register_Map.md) - Register map chuẩn hóa
+- [`REQ_Github_Issue_Modbus_Standardization.md`](REQ_Github_Issue_Modbus_Standardization.md) - Chuẩn hóa Modbus protocol
 
 ---
 
 ## 🎯 **HƯỚNG DẪN SỬ DỤNG**
 
 ### **1. Cho người mới bắt đầu:**
-1. Đọc [`00-rs485-system-overview.md`](00-rs485-system-overview.md) để hiểu tổng quan hệ thống
-2. Xem [`rs485-module-statistics.md`](rs485-module-statistics.md) để biết thống kê module
-3. Tham khảo [`rs485-system-connection-guide.md`](rs485-system-connection-guide.md) để kết nối
+1. Đọc [`REQ_RS485_System_Overview.md`](REQ_RS485_System_Overview.md) để hiểu tổng quan hệ thống
+2. Xem [`REQ_RS485_Module_Statistics.md`](REQ_RS485_Module_Statistics.md) để biết thống kê module
+3. Tham khảo [`REQ_RS485_System_Connection_Guide.md`](REQ_RS485_System_Connection_Guide.md) để kết nối
 
 ### **2. Cho kỹ sư phát triển:**
-1. Chọn module cần tích hợp từ danh sách trên
+1. Chọn module cần tích hợp từ danh sách 5 mandatory modules
 2. Đọc tài liệu integration tương ứng
 3. Thực hiện theo hướng dẫn implementation
 4. Chạy test và validation
 
 ### **3. Cho quản lý dự án:**
-1. Xem [`rs485-module-statistics.md`](rs485-module-statistics.md) để biết tiến độ
+1. Xem [`REQ_RS485_Module_Statistics.md`](REQ_RS485_Module_Statistics.md) để biết tiến độ
 2. Kiểm tra trạng thái module trong bảng thống kê
 3. Đánh giá khả năng mở rộng và hiệu suất
 
@@ -59,40 +58,36 @@
 
 | **Tài liệu** | **Trạng thái** | **Hoàn thành** | **Ghi chú** |
 |--------------|----------------|----------------|-------------|
-| **System Overview** | ✅ Hoàn thành | 100% | Tổng quan hệ thống |
+| **System Overview** | ✅ Hoàn thành | 100% | Tổng quan hệ thống v2.0 |
 | **Connection Guide** | ✅ Hoàn thành | 100% | Hướng dẫn kết nối |
 | **Module Statistics** | ✅ Hoàn thành | 100% | Thống kê tổng thể |
 | **Power Module** | ✅ Hoàn thành | 100% | Integration guide |
-| **Stepper Motor** | ✅ Hoàn thành | 100% | Integration guide |
-| **DC Motor** | ✅ Hoàn thành | 100% | Integration guide |
+| **DC Motor Module** | ✅ Hoàn thành | 100% | Integration guide |
 | **Sensor Module** | ✅ Hoàn thành | 100% | Integration guide |
-| **DI/DO Module** | 🔄 Đang phát triển | 0% | Chưa bắt đầu |
-| **AI Module** | 🔄 Đang phát triển | 0% | Chưa bắt đầu |
-| **Custom Module** | 📋 Kế hoạch | 0% | Chưa bắt đầu |
+| **DI/DO Module** | ✅ Hoàn thành | 100% | Integration guide |
+| **Master Control** | ✅ Hoàn thành | 100% | Integrated in Master Module |
 
 ---
 
 ## 🔧 **THÔNG TIN KỸ THUẬT**
 
-### **Hệ thống OHT-50 RS485:**
+### **Hệ thống OHT-50 RS485 (Architecture v2.0):**
 ```
 Platform: Orange Pi 5B (RK3588)
 Protocol: Modbus RTU
 Baud Rate: 115200 bps
 Address Range: 0x02 - 0xFF (254 addresses)
 Max Modules: 254 modules
-Current Modules: 4 hoàn thành + 2 đang phát triển
+Mandatory Modules: 5 modules (Power, DC Motor, Sensor, DI/DO, Master Control)
 ```
 
-### **Module Address Assignment:**
+### **Module Address Assignment (5 Mandatory Modules):**
 ```
-0x02: Power Module
-0x03: Stepper Motor Module
-0x04: DC Motor Module
-0x05: Sensor Module
-0x06: DI/DO Module (đang phát triển)
-0x07: AI Module (đang phát triển)
-0x08+: Custom Modules (kế hoạch)
+0x02: Power Module (Battery, Charger, Power Distribution)
+0x04: DC Motor Module (Differential Drive, Speed Control)
+0x05: Sensor Module (IMU, Magnetic, Limit Switches)
+0x06: DI/DO Module (Digital Input/Output)
+0x01: Master Control Module (Orange Pi 5B - Integrated)
 ```
 
 ---
@@ -100,16 +95,16 @@ Current Modules: 4 hoàn thành + 2 đang phát triển
 ## 📈 **TIẾN ĐỘ PHÁT TRIỂN**
 
 ### **Tổng quan:**
-- **Tài liệu hoàn thành:** 7/10 (70%)
-- **Module hoàn thành:** 4/7 (57.1%)
+- **Tài liệu hoàn thành:** 8/8 (100%)
+- **Module hoàn thành:** 5/5 (100%)
 - **Tính năng cơ bản:** 100% hoàn thành
 - **Khả năng triển khai:** Ready for production
 
 ### **Kế hoạch tiếp theo:**
-1. **Hoàn thành DI/DO Module** - Q1 2025
-2. **Hoàn thành AI Module** - Q2 2025
-3. **Phát triển Custom Module** - Q3 2025
-4. **Mở rộng hệ thống** - Q4 2025
+1. **System Integration Testing** - Q1 2025
+2. **Performance Optimization** - Q2 2025
+3. **Field Testing & Validation** - Q3 2025
+4. **Production Deployment** - Q4 2025
 
 ---
 
@@ -154,23 +149,26 @@ Current Modules: 4 hoàn thành + 2 đang phát triển
 ## 🔄 **CẬP NHẬT TÀI LIỆU**
 
 ### **Changelog:**
-- **v1.0 (2025-01-27):** Tạo index tài liệu kỹ thuật RS485
+- **v2.0 (2025-01-28):** Updated for Architecture v2.0
+  - ✅ Aligned with 5 mandatory modules
+  - ✅ Removed Stepper Motor, AI Module, Custom Module references
+  - ✅ Updated module address assignment
+  - ✅ Updated completion status to 100%
+  - ✅ Simplified documentation structure
+- **v1.0 (2025-01-27):** Initial documentation index
   - ✅ Tổng quan hệ thống
   - ✅ Hướng dẫn kết nối
   - ✅ Thống kê module
   - ✅ 4 module integration guides
-  - 🔄 2 module đang phát triển
-  - 📋 1 module kế hoạch
 
 ### **Kế hoạch cập nhật:**
-- **v1.1:** Hoàn thành DI/DO Module guide
-- **v1.2:** Hoàn thành AI Module guide
-- **v1.3:** Thêm Custom Module guide
-- **v2.0:** Cập nhật toàn bộ hệ thống
+- **v2.1:** Add performance benchmarks
+- **v2.2:** Add troubleshooting guides
+- **v3.0:** Add advanced features documentation
 
 ---
 
 **Tài liệu được tạo bởi: FW Team**  
-**Ngày cập nhật:** 2025-01-27  
-**Phiên bản:** v1.0  
-**Trạng thái:** Documentation Index Complete
+**Ngày cập nhật:** 2025-01-28  
+**Phiên bản:** v2.0  
+**Trạng thái:** Documentation Index Complete - Architecture v2.0 Ready
