@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+install/
+package/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Test artifacts
+*.gcov
+*.gcda
+*.gcno
+coverage/
+
+# Documentation
+docs/html/
+docs/latex/

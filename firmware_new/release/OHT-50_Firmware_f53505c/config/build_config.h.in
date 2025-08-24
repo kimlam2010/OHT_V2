@@ -1,0 +1,22 @@
+#ifndef BUILD_CONFIG_H
+#define BUILD_CONFIG_H
+
+// Build-time configuration
+#define FIRMWARE_VERSION "@PROJECT_VERSION@"
+#define BUILD_DATE "@CMAKE_BUILD_DATE@"
+#define BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+
+// Compiler flags
+#define COMPILER_C_STANDARD @CMAKE_C_STANDARD@
+#define COMPILER_FLAGS "@CMAKE_C_FLAGS@"
+
+// Platform configuration
+#define TARGET_PLATFORM "Orange Pi 5B"
+#define TARGET_ARCH "ARM64"
+
+// Feature flags
+#define ENABLE_DEBUG @ENABLE_DEBUG@
+#define ENABLE_LOGGING @ENABLE_LOGGING@
+#define ENABLE_SAFETY @ENABLE_SAFETY@
+
+#endif // BUILD_CONFIG_H
