@@ -16,6 +16,8 @@ Thư mục này chứa đặc tả chi tiết cho tất cả API endpoints của
 | [MASTER_CONTROL_API.md](./MASTER_CONTROL_API.md) | Master Control module coordination | `GET /api/v1/master-control/status`, `POST /api/v1/master-control/missions` | ✅ v2.0 |
 | [DC_MOTOR_API.md](./DC_MOTOR_API.md) | DC motor control (12V motors) | `GET /api/v1/dc-motor/status`, `POST /api/v1/dc-motor/control` | ✅ Complete |
 | [INTEGRATION_CENTER.md](./INTEGRATION_CENTER.md) | Tích hợp với Center system | `POST /api/v1/center/mission`, `GET /api/v1/center/modules` | ✅ Complete |
+| [MODULE_DISCOVERY_API.md](./MODULE_DISCOVERY_API.md) | Auto-discovery & plug-and-play | `GET /api/v1/discovery/status`, `POST /api/v1/discovery/start` | ✅ Complete |
+| [SYSTEM_STATUS_API.md](./SYSTEM_STATUS_API.md) | System health & monitoring | `GET /api/v1/system/status`, `GET /api/v1/system/health` | ✅ Complete |
 
 ## 🔗 Liên kết quan trọng
 
