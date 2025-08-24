@@ -1,7 +1,17 @@
-# System Architecture - OHT-50 Backend
+# System Architecture - OHT-50 Backend v2.0
 
 ## 📋 Tổng quan
-Tài liệu này mô tả kiến trúc tổng thể của OHT-50 Backend, bao gồm các component chính, luồng dữ liệu và tương tác giữa các hệ thống.
+Tài liệu này mô tả kiến trúc tổng thể của OHT-50 Backend Architecture v2.0, bao gồm các component chính, luồng dữ liệu và tương tác giữa các hệ thống với 5 mandatory modules.
+
+## 🔧 **Architecture v2.0 Features**
+- **5 Mandatory Modules:** Power, Safety, Travel Motor, Dock & Location, Master Control
+- **RS485 Communication:** Standardized cho tất cả modules
+- **LiDAR USB Integration:** RPLIDAR A1M8 qua USB 2.0
+- **24V System:** Power management với 24V nominal voltage
+- **Safety Integration:** E-Stop, safety zones, emergency procedures
+- **Mission Management:** Complete mission lifecycle
+- **State Machine:** System state management
+- **Real-time Coordination:** Master Control Module orchestration
 
 ## 🏗️ Kiến trúc tổng thể
 
@@ -23,13 +33,26 @@ graph TB
     end
     
     subgraph "Data Layer"
-        DB[(SQLite/PostgreSQL)]
+        DB[(PostgreSQL)]
         CACHE[(Redis Cache)]
         LOGS[Log Storage]
     end
     
+    subgraph "Hardware Layer - 5 Mandatory Modules"
+        POWER[Power Module<br/>24V System<br/>Address: 0x01]
+        SAFETY_MOD[Safety Module<br/>E-Stop & Zones<br/>Address: 0x02]
+        MOTOR[Travel Motor Module<br/>12V DC Motors<br/>Address: 0x03]
+        DOCK[Dock & Location Module<br/>LiDAR USB<br/>Address: 0x04]
+        MASTER[Master Control Module<br/>Coordination<br/>Address: 0x05]
+    end
+    
+    subgraph "Communication Layer"
+        RS485[RS485 Bus<br/>115200 bps<br/>5 Modules]
+        USB[USB 2.0<br/>LiDAR RPLIDAR A1M8]
+        ETHERNET[Ethernet<br/>Center Integration]
+    end
+    
     subgraph "External Systems"
-        FW[Firmware/Hardware]
         CENTER_EXT[Center System]
     end
     
@@ -48,8 +71,19 @@ graph TB
     SAFETY --> DB
     
     CENTER --> CENTER_EXT
-    TELEMETRY --> FW
-    SAFETY --> FW
+    TELEMETRY --> RS485
+    SAFETY --> RS485
+    MISSION --> RS485
+    CONFIG --> RS485
+    
+    RS485 --> POWER
+    RS485 --> SAFETY_MOD
+    RS485 --> MOTOR
+    RS485 --> DOCK
+    RS485 --> MASTER
+    
+    DOCK --> USB
+    MASTER --> ETHERNET
 ```
 
 ## 🔧 Core Components
@@ -97,7 +131,35 @@ graph TB
   - Path planning và optimization
   - Progress tracking
   - Mission history
+  - Module coordination
 - **Technology**: Graph algorithms, state machines
+
+### 6. Module Management Service
+- **Chức năng**: Quản lý 5 mandatory modules
+- **Responsibility**:
+  - Module discovery và registration
+  - RS485 communication management
+  - Module health monitoring
+  - Auto-discovery và hot-swap
+- **Technology**: RS485 protocol, Modbus RTU
+
+### 7. Safety Service
+- **Chức năng**: Quản lý an toàn hệ thống
+- **Responsibility**:
+  - E-Stop management
+  - Safety zones monitoring
+  - Emergency procedures
+  - Safety violations tracking
+- **Technology**: Real-time monitoring, event-driven
+
+### 8. Location & Navigation Service
+- **Chức năng**: Quản lý vị trí và điều hướng
+- **Responsibility**:
+  - LiDAR data processing
+  - Position tracking
+  - Path planning
+  - Obstacle detection
+- **Technology**: SLAM algorithms, USB 2.0 integration
 
 ### 6. Safety Service
 - **Chức năng**: Đảm bảo an toàn hệ thống
@@ -175,8 +237,141 @@ Firmware → Safety Service → Emergency Actions
 - **Async Processing**: Background tasks và queues
 
 ### Monitoring Points
+
+## 🔧 **5 Mandatory Modules Architecture**
+
+### **1. Power Module (Address: 0x01)**
+- **Chức năng**: Quản lý nguồn điện 24V system
+- **Hardware**: LiFePO4 battery pack, power distribution
+- **Features**:
+  - Battery management (50Ah capacity)
+  - Power distribution (5V, 12V, 24V outputs)
+  - Charging control và protection
+  - Temperature monitoring
+- **Communication**: RS485 Modbus RTU
+- **Voltage**: 24V nominal (28.8V max, 20V min)
+
+### **2. Safety Module (Address: 0x02)**
+- **Chức năng**: Quản lý an toàn hệ thống
+- **Hardware**: E-Stop buttons, safety sensors, light curtains
+- **Features**:
+  - E-Stop dual-channel safety
+  - Safety zones monitoring
+  - Speed limit enforcement
+  - Emergency brake control
+- **Communication**: RS485 Modbus RTU
+- **Safety Level**: SIL2 compliance
+
+### **3. Travel Motor Module (Address: 0x03)**
+- **Chức năng**: Điều khiển động cơ di chuyển
+- **Hardware**: 12V DC brushed motors, encoders
+- **Features**:
+  - PID speed control
+  - Encoder feedback
+  - Motor protection
+  - Speed monitoring
+- **Communication**: RS485 Modbus RTU
+- **Motors**: 2x 12V DC, 100W each
+
+### **4. Dock & Location Module (Address: 0x04)**
+- **Chức năng**: Định vị và điều hướng
+- **Hardware**: LiDAR RPLIDAR A1M8, IMU, RFID
+- **Features**:
+  - LiDAR mapping và localization
+  - Position tracking
+  - Navigation control
+  - Obstacle detection
+- **Communication**: RS485 Modbus RTU + USB 2.0 (LiDAR)
+- **LiDAR**: RPLIDAR A1M8 via USB 2.0
+
+### **5. Master Control Module (Address: 0x05)**
+- **Chức năng**: Điều phối toàn bộ hệ thống
+- **Hardware**: Orange Pi 5B, communication interfaces
+- **Features**:
+  - System state management
+  - Mission coordination
+  - Module communication
+  - Center integration
+- **Communication**: RS485 + Ethernet + WiFi
+- **Platform**: Orange Pi 5B (RK3588)
+
+## 🔌 **Communication Architecture**
+
+### **RS485 Bus Configuration**
+- **Protocol**: Modbus RTU
+- **Baudrate**: 115200 bps
+- **Addresses**: 0x01 - 0x05 (5 mandatory modules)
+- **Topology**: Master-Slave (Master Control as master)
+- **Termination**: 120Ω resistors
+- **Cable**: Shielded twisted pair
+
+### **USB 2.0 Integration**
+- **LiDAR Connection**: RPLIDAR A1M8
+- **Interface**: USB 2.0
+- **Data Rate**: Up to 480 Mbps
+- **Integration**: Connected to Dock & Location Module
+
+### **Ethernet Integration**
+- **Center Communication**: HTTP/WebSocket
+- **Protocol**: REST API + WebSocket
+- **Security**: SSL/TLS encryption
+- **Authentication**: JWT tokens
+
+## 🔄 **Data Flow v2.0**
+
+### **1. Module Communication Flow**
+```
+Master Control → RS485 Bus → Power/Safety/Motor/Dock Modules
+                ↓
+        Real-time Status Updates → Telemetry Service
+                ↓
+        WebSocket Events → Frontend
+```
+
+### **2. LiDAR Data Flow**
+```
+RPLIDAR A1M8 → USB 2.0 → Dock & Location Module
+                ↓
+        Scan Data → Location Service
+                ↓
+        Position Updates → Navigation Service
+```
+
+### **3. Safety Flow v2.0**
+```
+Safety Module → E-Stop Events → Safety Service
+                ↓
+        Emergency Actions → All Modules
+                ↓
+        Alert System → Frontend/Center
+```
+
+### **4. Mission Flow v2.0**
+```
+Center → Mission Service → Master Control Module
+                ↓
+        Module Coordination → All Modules
+                ↓
+        Progress Tracking → Telemetry Service
+```
 - **API Response Times**: P95 < 100ms
 - **Database Performance**: Query optimization
+
+---
+
+**Changelog v2.0:**
+- ✅ Updated to Architecture v2.0
+- ✅ Added 5 mandatory modules architecture
+- ✅ Added RS485 communication configuration
+- ✅ Added LiDAR USB integration
+- ✅ Standardized to 24V nominal voltage
+- ✅ Added module addresses và communication protocols
+- ✅ Enhanced data flow diagrams
+- ✅ Added communication architecture details
+- ✅ Updated system components for v2.0
+- ✅ Added safety integration details
+- ✅ Added mission management flow
+- ✅ Enhanced security và performance architecture
 - **Memory Usage**: Resource monitoring
 - **Network Latency**: Connection quality
 

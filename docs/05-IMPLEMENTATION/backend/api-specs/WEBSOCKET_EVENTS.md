@@ -1,14 +1,23 @@
-# WEBSOCKET EVENTS - OHT-50 Backend
+# WEBSOCKET EVENTS - OHT-50 Backend v2.0
 
-**Phiên bản:** v1.0  
-**Phạm vi:** WebSocket events và real-time communication  
-**Cập nhật:** 2024-12-19
+**Phiên bản:** v2.0  
+**Phạm vi:** WebSocket events và real-time communication cho Architecture v2.0  
+**Cập nhật:** 2025-01-28
 
 ---
 
 ## 📋 **Tổng quan**
 
-Tài liệu này định nghĩa các WebSocket events cho hệ thống OHT-50, bao gồm real-time telemetry, system status updates, và event-driven communication.
+Tài liệu này định nghĩa các WebSocket events cho hệ thống OHT-50 Architecture v2.0, bao gồm real-time telemetry cho 5 mandatory modules, system status updates, safety events, location tracking, mission progress, và event-driven communication.
+
+## 🔧 **Architecture v2.0 Features**
+- **5 Mandatory Modules:** Power, Safety, Travel Motor, Dock & Location, Master Control
+- **RS485 Communication:** Real-time module communication status
+- **LiDAR USB Integration:** RPLIDAR A1M8 scan data streaming
+- **24V System:** Power events với 24V nominal voltage
+- **Safety Integration:** E-Stop, safety zones, emergency events
+- **Mission Management:** Real-time mission progress tracking
+- **State Machine:** System state transitions và monitoring
 
 ---
 
@@ -48,17 +57,36 @@ wss://production.example.com/ws/telemetry  # Production
 ```json
 {
   "type": "system.status",
-  "timestamp": "2024-12-19T10:30:00Z",
+  "timestamp": "2025-01-28T10:30:00Z",
   "data": {
-    "status": "idle|moving|docking|fault|estop",
-    "state": "ready|busy|error|maintenance",
-    "uptime": 86400,
-    "version": "1.2.3",
-    "health": {
-      "cpu": 45.2,
-      "memory": 67.8,
-      "disk": 23.1,
-      "temperature": 42.5
+    "system_state": {
+      "current_state": "moving",
+      "state_duration": 45.2,
+      "previous_state": "idle",
+      "state_transitions": 12
+    },
+    "modules": {
+      "power": {"status": "online", "address": "0x01", "health": "healthy"},
+      "safety": {"status": "online", "address": "0x02", "health": "healthy"},
+      "travel_motor": {"status": "online", "address": "0x03", "health": "healthy"},
+      "dock_location": {"status": "online", "address": "0x04", "health": "healthy"},
+      "master_control": {"status": "online", "address": "0x05", "health": "healthy"}
+    },
+    "communication": {
+      "rs485": {"status": "healthy", "error_rate": 0.001},
+      "ethernet": {"status": "connected", "packet_loss": 0.0}
+    },
+    "system_health": {
+      "overall_health": "healthy",
+      "health_score": 0.95,
+      "critical_alerts": 0,
+      "warnings": 0
+    },
+    "performance": {
+      "cpu_usage": 25.5,
+      "memory_usage": 45.2,
+      "disk_usage": 30.1,
+      "network_latency": 0.05
     }
   }
 }
@@ -79,25 +107,384 @@ wss://production.example.com/ws/telemetry  # Production
 }
 ```
 
-### **2.2 Telemetry Events**
+### **2.2 Module Events**
 
-#### **Real-time Telemetry**
+#### **Power Module Events**
 ```json
 {
-  "type": "telemetry.realtime",
-  "timestamp": "2024-12-19T10:30:00Z",
+  "type": "module.power",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "module_address": "0x01",
+    "status": "online",
+    "battery": {
+      "voltage": 24.2,
+      "current": 2.5,
+      "soc": 85,
+      "temperature": 25.5,
+      "capacity": 50,
+      "cycle_count": 150
+    },
+    "charging": {
+      "status": "not_charging",
+      "mode": "idle",
+      "current": 0.0,
+      "voltage": 24.2
+    },
+    "power_distribution": {
+      "5v": {"voltage": 5.02, "current": 1.2, "status": "normal"},
+      "12v": {"voltage": 12.05, "current": 3.5, "status": "normal"},
+      "24v": {"voltage": 24.1, "current": 2.0, "status": "normal"}
+    },
+    "protection": {
+      "overvoltage": false,
+      "overcurrent": false,
+      "overtemperature": false,
+      "undervoltage": false
+    }
+  }
+}
+```
+
+#### **Safety Module Events**
+```json
+{
+  "type": "module.safety",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "module_address": "0x02",
+    "status": "online",
+    "estop": {
+      "status": "clear",
+      "triggered_by": null,
+      "trigger_time": null
+    },
+    "safety_zones": {
+      "zone_1": {"status": "clear", "violations": 0},
+      "zone_2": {"status": "clear", "violations": 0}
+    },
+    "speed_limits": {
+      "current_speed": 500.0,
+      "max_allowed": 1000.0,
+      "zone_restriction": false
+    },
+    "system_health": {
+      "estop_circuit": "healthy",
+      "safety_sensors": "healthy",
+      "communication": "healthy",
+      "power_supply": "healthy"
+    }
+  }
+}
+```
+
+#### **Travel Motor Module Events**
+```json
+{
+  "type": "module.travel_motor",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "module_address": "0x03",
+    "status": "online",
+    "motor": {
+      "speed": 500.0,
+      "direction": 45.0,
+      "current": 2.1,
+      "temperature": 35.2,
+      "status": "running"
+    },
+    "encoder": {
+      "count": 123456,
+      "speed": 500.0,
+      "position": 1250.5,
+      "health": "healthy"
+    },
+    "controller": {
+      "pid_status": "active",
+      "target_speed": 500.0,
+      "error": 0.0,
+      "output": 75.0
+    }
+  }
+}
+```
+
+#### **Dock & Location Module Events**
+```json
+{
+  "type": "module.dock_location",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "module_address": "0x04",
+    "status": "online",
+    "position": {
+      "x": 1250.5,
+      "y": 850.2,
+      "z": 0.0,
+      "accuracy": 2.0,
+      "confidence": 0.95
+    },
+    "orientation": {
+      "yaw": 45.2,
+      "pitch": 0.1,
+      "roll": 0.0,
+      "accuracy": 1.5
+    },
+    "navigation": {
+      "mode": "autonomous",
+      "target": "dock_01",
+      "distance_to_target": 150.5,
+      "estimated_arrival": "2025-01-28T10:32:00Z"
+    },
+    "sensors": {
+      "lidar": {
+        "status": "active",
+        "scan_frequency": 5.5,
+        "points_per_scan": 360,
+        "last_scan": "2025-01-28T10:30:00Z"
+      },
+      "rfid": {
+        "status": "active",
+        "tags_detected": 3,
+        "last_read": "2025-01-28T10:29:55Z"
+      },
+      "imu": {
+        "status": "active",
+        "calibration": "calibrated",
+        "drift_rate": 0.1
+      }
+    }
+  }
+}
+```
+
+#### **Master Control Module Events**
+```json
+{
+  "type": "module.master_control",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "module_address": "0x05",
+    "status": "online",
+    "mission": {
+      "current_mission": "mission_002",
+      "mission_status": "in_progress",
+      "progress": 0.35,
+      "estimated_completion": "2025-01-28T10:32:00Z"
+    },
+    "coordination": {
+      "modules_online": 4,
+      "modules_offline": 0,
+      "average_response_time": 0.045,
+      "total_errors": 0
+    }
+  }
+}
+```
+
+### **2.3 Safety Events**
+
+#### **E-Stop Events**
+```json
+{
+  "type": "safety.estop",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "event_type": "estop_triggered",
+    "severity": "critical",
+    "triggered_by": "hardware",
+    "reason": "emergency_button",
+    "emergency_level": "critical",
+    "system_response": {
+      "motors_stopped": true,
+      "brakes_activated": true,
+      "safety_lights_on": true,
+      "alert_sent": true
+    }
+  }
+}
+```
+
+#### **Safety Zone Violations**
+```json
+{
+  "type": "safety.zone_violation",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "event_type": "zone_violation",
+    "severity": "warning",
+    "zone_id": "zone_1",
+    "violation_type": "speed_limit_exceeded",
+    "details": {
+      "current_speed": 250.0,
+      "max_allowed": 200.0,
+      "position": {"x": 50, "y": 25}
+    },
+    "action_taken": "speed_reduction",
+    "resolved": true,
+    "resolution_time": "2025-01-28T10:30:05Z"
+  }
+}
+```
+
+### **2.4 Location & Navigation Events**
+
+#### **Position Updates**
+```json
+{
+  "type": "location.position_update",
+  "timestamp": "2025-01-28T10:30:00Z",
   "data": {
     "position": {
       "x": 1250.5,
-      "y": 0.0,
-      "z": 0.0
+      "y": 850.2,
+      "z": 0.0,
+      "accuracy": 2.0,
+      "confidence": 0.95
+    },
+    "orientation": {
+      "yaw": 45.2,
+      "pitch": 0.1,
+      "roll": 0.0,
+      "accuracy": 1.5
     },
     "velocity": {
-      "linear": 0.8,
-      "angular": 0.0
+      "linear": 0.5,
+      "angular": 0.1,
+      "direction": 45.2
     },
-    "acceleration": {
-      "linear": 0.2,
+    "sources": {
+      "primary": "lidar_slam",
+      "secondary": "rfid",
+      "backup": "imu"
+    }
+  }
+}
+```
+
+#### **LiDAR Scan Events**
+```json
+{
+  "type": "location.lidar_scan",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "scan_id": "scan_001",
+    "sensor_info": {
+      "model": "RPLIDAR_A1M8",
+      "interface": "USB_2.0",
+      "scan_frequency": 5.5,
+      "points_per_scan": 360
+    },
+    "scan_data": {
+      "points_count": 360,
+      "obstacles_detected": 1,
+      "map_updated": true,
+      "quality_score": 0.95
+    },
+    "obstacles": [
+      {
+        "id": "obs_001",
+        "position": {"x": 1300.0, "y": 900.0},
+        "distance": 150.0,
+        "angle": 45.0,
+        "size": "small",
+        "confidence": 0.92
+      }
+    ]
+  }
+}
+```
+
+### **2.5 Mission Events**
+
+#### **Mission Progress Updates**
+```json
+{
+  "type": "mission.progress",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "mission_id": "mission_002",
+    "mission_name": "Transport to Loading Station",
+    "status": "in_progress",
+    "progress": 0.35,
+    "current_waypoint": 2,
+    "distance_remaining": 550.5,
+    "estimated_arrival": "2025-01-28T10:32:00Z",
+    "waypoints": [
+      {
+        "id": "wp_001",
+        "x": 1250.5,
+        "y": 850.2,
+        "action": "start",
+        "status": "completed",
+        "completion_time": "2025-01-28T10:30:05Z"
+      },
+      {
+        "id": "wp_002",
+        "x": 2000.0,
+        "y": 1500.0,
+        "action": "dock",
+        "status": "in_progress",
+        "estimated_completion": "2025-01-28T10:32:00Z"
+      }
+    ],
+    "metrics": {
+      "distance_traveled": 550.5,
+      "time_elapsed": 65.0,
+      "battery_consumed": 5.2,
+      "obstacles_avoided": 2,
+      "safety_violations": 0
+    }
+  }
+}
+```
+
+### **2.6 State Machine Events**
+
+#### **State Transitions**
+```json
+{
+  "type": "state.transition",
+  "timestamp": "2025-01-28T10:30:05Z",
+  "data": {
+    "transition_id": "trans_001",
+    "from_state": "idle",
+    "to_state": "moving",
+    "trigger": "mission_start",
+    "timestamp": "2025-01-28T10:30:05Z",
+    "validation_passed": true,
+    "conditions_met": [
+      "all_modules_healthy",
+      "battery_sufficient",
+      "safety_clear"
+    ]
+  }
+}
+```
+
+### **2.7 Communication Events**
+
+#### **RS485 Communication Status**
+```json
+{
+  "type": "communication.rs485",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "status": "healthy",
+    "baudrate": 115200,
+    "error_rate": 0.001,
+    "response_time": 0.045,
+    "bus_load": 0.25,
+    "modules": {
+      "power": {"status": "online", "response_time": 0.05},
+      "safety": {"status": "online", "response_time": 0.03},
+      "travel_motor": {"status": "online", "response_time": 0.04},
+      "dock_location": {"status": "online", "response_time": 0.06},
+      "master_control": {"status": "online", "response_time": 0.04}
+    }
+  }
+}
+```
       "angular": 0.0
     },
     "orientation": {
@@ -600,12 +987,43 @@ asyncio.run(websocket_client())
   - Java: `Java WebSocket`
   - C#: `System.Net.WebSockets`
 
+## 📝 **Notes**
+
+- **Real-time Communication:** WebSocket events cho real-time updates
+- **Module-specific Events:** Events cho từng module riêng biệt
+- **Safety Integration:** Safety events và violations tracking
+- **Location Tracking:** Position và navigation events
+- **Mission Progress:** Real-time mission tracking
+- **LiDAR Integration:** LiDAR scan events streaming
+- **24V System:** Power events với 24V nominal voltage
+- **RS485 Communication:** Module communication events
+- **State Machine:** System state transition events
+
+## 🔒 **Security & Performance**
+
+### **Security Considerations:**
+- **Authentication:** JWT token required cho tất cả connections
+- **Authorization:** Role-based access control cho events
+- **Rate Limiting:** Prevent abuse và overload
+- **Data Encryption:** TLS/SSL cho production environments
+
+### **Performance Considerations:**
+- **Event Filtering:** Subscribe chỉ events cần thiết
+- **Rate Control:** Adjust event frequency based on needs
+- **Connection Management:** Proper connection lifecycle
+- **Error Handling:** Graceful degradation khi có lỗi
+
 ---
 
-**Changelog v1.0:**
-- ✅ Created comprehensive WebSocket events documentation
-- ✅ Defined all event types and formats
-- ✅ Added client commands and examples
-- ✅ Included security and performance considerations
-- ✅ Added error handling and client examples
-- ✅ Referenced related documents and tools
+**Changelog v2.0:**
+- ✅ Updated to Architecture v2.0
+- ✅ Added 5 mandatory modules events
+- ✅ Added module-specific event types
+- ✅ Added safety events (E-Stop, zone violations)
+- ✅ Added location & navigation events
+- ✅ Added mission progress events
+- ✅ Added state machine events
+- ✅ Added RS485 communication events
+- ✅ Standardized to 24V nominal voltage
+- ✅ Added LiDAR USB integration events
+- ✅ Enhanced security và performance considerations

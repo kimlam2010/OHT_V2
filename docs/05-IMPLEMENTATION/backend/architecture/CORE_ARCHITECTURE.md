@@ -1,14 +1,24 @@
-# CORE ARCHITECTURE - OHT-50 Backend
+# CORE ARCHITECTURE - OHT-50 Backend v2.0
 
-**Phiên bản:** v1.0  
-**Phạm vi:** Kiến trúc tổng thể hệ thống backend OHT-50  
-**Cập nhật:** 2024-12-19
+**Phiên bản:** v2.0  
+**Phạm vi:** Kiến trúc tổng thể hệ thống backend OHT-50 Architecture v2.0  
+**Cập nhật:** 2025-01-28
 
 ---
 
 ## 📋 **Tổng quan**
 
-Tài liệu này mô tả kiến trúc tổng thể của hệ thống backend OHT-50, bao gồm layered architecture, event-driven design, và các thành phần chính của hệ thống.
+Tài liệu này mô tả kiến trúc tổng thể của hệ thống backend OHT-50 Architecture v2.0, bao gồm layered architecture, event-driven design, và các thành phần chính của hệ thống với 5 mandatory modules.
+
+## 🔧 **Architecture v2.0 Features**
+- **5 Mandatory Modules:** Power, Safety, Travel Motor, Dock & Location, Master Control
+- **RS485 Communication:** Standardized cho tất cả modules
+- **LiDAR USB Integration:** RPLIDAR A1M8 qua USB 2.0
+- **24V System:** Power management với 24V nominal voltage
+- **Safety Integration:** E-Stop, safety zones, emergency procedures
+- **Mission Management:** Complete mission lifecycle
+- **State Machine:** System state management
+- **Real-time Coordination:** Master Control Module orchestration
 
 ---
 
@@ -31,6 +41,7 @@ graph TB
     end
     
     subgraph "Integration Layer"
+        MM[Module Management]
         FW[Firmware Integration]
         CT[Center Integration]
         EX[External Services]
@@ -47,6 +58,7 @@ graph TB
     UI --> BL
     BL --> SM
     BL --> VM
+    BL --> MM
     BL --> FW
     BL --> CT
     BL --> EX
@@ -185,7 +197,77 @@ class CenterClient:
 - **Message Queue:** Reliable message delivery
 - **Event Streaming:** Real-time event propagation
 
-### **3.2 Firmware Integration**
+### **3.2 Module Management Integration**
+
+#### **Module Management Service**
+```python
+class ModuleManagementService:
+    def __init__(self):
+        self.rs485_client = RS485Client()
+        self.module_registry = ModuleRegistry()
+        self.health_monitor = HealthMonitor()
+    
+    async def discover_modules(self) -> List[ModuleInfo]:
+        """Discover all modules on RS485 bus"""
+        pass
+    
+    async def get_module_status(self, module_id: str) -> ModuleStatus:
+        """Get status of specific module"""
+        pass
+    
+    async def send_command(self, module_id: str, command: ModuleCommand):
+        """Send command to specific module"""
+        pass
+    
+    async def monitor_health(self) -> Dict[str, HealthStatus]:
+        """Monitor health of all modules"""
+        pass
+```
+
+#### **5 Mandatory Modules Integration**
+```python
+class PowerModuleClient:
+    """Power Module (Address: 0x01) - 24V System"""
+    async def get_battery_status(self) -> BatteryStatus:
+        pass
+    
+    async def get_power_distribution(self) -> PowerDistribution:
+        pass
+
+class SafetyModuleClient:
+    """Safety Module (Address: 0x02) - E-Stop & Safety Zones"""
+    async def get_safety_status(self) -> SafetyStatus:
+        pass
+    
+    async def trigger_estop(self, reason: str):
+        pass
+
+class TravelMotorClient:
+    """Travel Motor Module (Address: 0x03) - 12V DC Motors"""
+    async def set_speed(self, speed: float):
+        pass
+    
+    async def get_motor_status(self) -> MotorStatus:
+        pass
+
+class DockLocationClient:
+    """Dock & Location Module (Address: 0x04) - LiDAR USB"""
+    async def get_position(self) -> Position:
+        pass
+    
+    async def get_lidar_scan(self) -> LidarScan:
+        pass
+
+class MasterControlClient:
+    """Master Control Module (Address: 0x05) - Coordination"""
+    async def get_system_state(self) -> SystemState:
+        pass
+    
+    async def coordinate_mission(self, mission: Mission):
+        pass
+```
+
+### **3.3 Firmware Integration**
 
 #### **Firmware Client**
 ```python
@@ -193,6 +275,7 @@ class FirmwareClient:
     def __init__(self):
         self.rs485_client = RS485Client()
         self.ethernet_client = EthernetClient()
+        self.module_manager = ModuleManagementService()
     
     async def send_command(self, command: FirmwareCommand):
         """Send command to firmware"""
@@ -208,10 +291,10 @@ class FirmwareClient:
 ```
 
 #### **Communication Protocols**
-- **RS485:** Modbus RTU cho motor control
-- **Ethernet:** TCP/IP cho high-level commands
-- **UART:** Serial communication cho debug
-- **GPIO:** Digital I/O cho sensors/actuators
+- **RS485:** Modbus RTU cho tất cả 5 mandatory modules
+- **USB 2.0:** LiDAR RPLIDAR A1M8 connection
+- **Ethernet:** TCP/IP cho Center integration
+- **WiFi:** Backup communication cho mobile app
 
 ---
 
@@ -219,36 +302,66 @@ class FirmwareClient:
 
 ### **4.1 Data Models**
 
-#### **Core Models**
+#### **Core Models v2.0**
 ```python
 class SystemConfig(BaseModel):
     id: str
     version: str
-    max_velocity: float
-    max_acceleration: float
-    safety_zones: List[SafetyZone]
+    modules: Dict[str, ModuleConfig]
+    rs485: RS485Config
+    safety: SafetyConfig
+    location: LocationConfig
+    comm: CommunicationConfig
     created_at: datetime
     updated_at: datetime
 
+class ModuleConfig(BaseModel):
+    module_type: str
+    address: str
+    enabled: bool
+    parameters: Dict[str, Any]
+
+class RS485Config(BaseModel):
+    baudrate: int = 115200
+    data_bits: int = 8
+    parity: str = "none"
+    stop_bits: int = 1
+    timeout: float = 1.0
+    module_addresses: Dict[str, str]
+
 class TelemetryData(BaseModel):
     timestamp: datetime
-    position: Position
-    velocity: Velocity
-    acceleration: Acceleration
-    battery_level: float
-    temperature: float
-    status: SystemStatus
+    system_state: SystemState
+    modules: Dict[str, ModuleTelemetry]
+    communication: CommunicationStatus
+    system_health: SystemHealth
+
+class ModuleTelemetry(BaseModel):
+    status: str
+    address: str
+    telemetry: Dict[str, Any]
 
 class Mission(BaseModel):
     id: str
+    mission_name: str
     mission_type: MissionType
-    start_position: Position
-    target_position: Position
+    waypoints: List[Waypoint]
     priority: Priority
     status: MissionStatus
+    progress: float
     created_at: datetime
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
+    estimated_completion: Optional[datetime]
+
+class Waypoint(BaseModel):
+    id: str
+    x: float
+    y: float
+    z: float = 0.0
+    action: str
+    status: str
+    completion_time: Optional[datetime]
 ```
 
 #### **Repository Pattern**
@@ -684,6 +797,22 @@ WantedBy=multi-user.target
 ### **10.1 Related Documents**
 - [Business Logic Specification](business/BUSINESS_LOGIC_SPEC.md) - Core business logic
 - [API Specifications](api-specs/README.md) - API documentation
+
+---
+
+**Changelog v2.0:**
+- ✅ Updated to Architecture v2.0
+- ✅ Added Module Management Integration
+- ✅ Added 5 mandatory modules clients
+- ✅ Updated communication protocols (RS485, USB 2.0)
+- ✅ Enhanced data models for v2.0
+- ✅ Added module configuration models
+- ✅ Added RS485 configuration
+- ✅ Updated telemetry data structure
+- ✅ Added waypoint-based mission model
+- ✅ Standardized to 24V nominal voltage
+- ✅ Added LiDAR USB integration
+- ✅ Enhanced deployment architecture
 - [Deployment Guide](DEPLOYMENT.md) - Deployment procedures
 
 ### **10.2 Technology Stack**

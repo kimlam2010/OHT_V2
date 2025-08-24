@@ -74,7 +74,7 @@ Register range: 0x0000-0x00FF (256 registers)
 Tính năng chính:
 ├── Battery monitoring (voltage, current, temperature, SoC)
 ├── Charging control (CC/CV, float charging)
-├── Power distribution (5V, 12V, 24V, 48V outputs)
+├── Power distribution (5V, 12V, 24V outputs)
 ├── Safety protection (overvoltage, overcurrent, overtemperature)
 └── Fault detection và reporting
 ```
