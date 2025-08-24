@@ -72,7 +72,7 @@ sudo udevadm trigger
 #### **Hardware Connection:**
 ```
 Power Module (0x01) -> RS485 Bus
-├── Power Supply: 48V DC from LiFePO4 battery
+├── Power Supply: 24V DC from LiFePO4 battery
 ├── BMS Interface: I2C communication
 ├── Charging Interface: 4-pin connector
 └── Status LEDs: Power, Charging, Fault

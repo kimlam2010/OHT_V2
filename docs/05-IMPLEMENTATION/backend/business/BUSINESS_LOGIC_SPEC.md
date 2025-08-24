@@ -1,14 +1,24 @@
-# BUSINESS LOGIC SPECIFICATION - OHT-50 Backend
+# BUSINESS LOGIC SPECIFICATION - OHT-50 Backend v2.0
 
-**Phiên bản:** v1.0  
-**Phạm vi:** Core business logic cho hệ thống OHT-50  
-**Cập nhật:** 2024-12-19
+**Phiên bản:** v2.0  
+**Phạm vi:** Core business logic cho hệ thống OHT-50 Architecture v2.0  
+**Cập nhật:** 2025-01-28
 
 ---
 
 ## 📋 **Tổng quan**
 
-Tài liệu này định nghĩa core business logic cho hệ thống OHT-50, bao gồm quản lý mission, safety management, movement control, và system state management.
+Tài liệu này định nghĩa core business logic cho hệ thống OHT-50 Architecture v2.0, bao gồm quản lý mission, safety management, movement control, system state management, và module coordination với 5 mandatory modules.
+
+## 🔧 **Architecture v2.0 Features**
+- **5 Mandatory Modules:** Power, Safety, Travel Motor, Dock & Location, Master Control
+- **RS485 Communication:** Standardized cho tất cả modules
+- **LiDAR USB Integration:** RPLIDAR A1M8 qua USB 2.0
+- **24V System:** Power management với 24V nominal voltage
+- **Safety Integration:** E-Stop, safety zones, emergency procedures
+- **Mission Management:** Complete mission lifecycle
+- **State Machine:** System state management
+- **Real-time Coordination:** Master Control Module orchestration
 
 ---
 
@@ -68,11 +78,132 @@ class MaintenanceMission:
 
 | Rule | Description | Validation |
 |------|-------------|------------|
-| **Position Validation** | Kiểm tra vị trí trong phạm vi hoạt động | `0 <= x <= max_x`, `y == 0`, `z == 0` |
+| **Position Validation** | Kiểm tra vị trí trong phạm vi hoạt động | `0 <= x <= max_x`, `0 <= y <= max_y`, `z == 0` |
 | **Safety Zone Check** | Đảm bảo không vi phạm safety zones | Kiểm tra collision với restricted zones |
 | **Payload Validation** | Kiểm tra payload capacity | `payload_weight <= max_capacity` |
 | **Battery Check** | Đảm bảo đủ pin cho mission | `estimated_consumption <= current_battery` |
 | **Time Validation** | Kiểm tra thời gian thực hiện | `estimated_duration <= max_mission_time` |
+| **Module Health Check** | Đảm bảo tất cả modules healthy | `all_modules_healthy == true` |
+| **Communication Check** | Đảm bảo RS485 communication | `rs485_status == "healthy"` |
+
+### **1.4 Module Coordination**
+
+#### **Module Health Validation**
+```python
+class ModuleHealthValidator:
+    def validate_power_module(self) -> bool:
+        """Validate Power Module (0x01) health"""
+        battery_status = self.get_battery_status()
+        return (
+            battery_status.voltage >= 20.0 and  # Min voltage
+            battery_status.voltage <= 28.8 and  # Max voltage
+            battery_status.soc >= 20 and        # Min SOC
+            battery_status.temperature <= 60    # Max temperature
+        )
+    
+    def validate_safety_module(self) -> bool:
+        """Validate Safety Module (0x02) health"""
+        safety_status = self.get_safety_status()
+        return (
+            safety_status.estop.status == "clear" and
+            safety_status.system_health.estop_circuit == "healthy" and
+            safety_status.system_health.safety_sensors == "healthy"
+        )
+    
+    def validate_travel_motor(self) -> bool:
+        """Validate Travel Motor Module (0x03) health"""
+        motor_status = self.get_motor_status()
+        return (
+            motor_status.motor.temperature <= 80 and  # Max motor temp
+            motor_status.encoder.health == "healthy" and
+            motor_status.controller.pid_status == "active"
+        )
+    
+    def validate_dock_location(self) -> bool:
+        """Validate Dock & Location Module (0x04) health"""
+        location_status = self.get_location_status()
+        return (
+            location_status.sensors.lidar.status == "active" and
+            location_status.sensors.imu.status == "active" and
+            location_status.position.confidence >= 0.8
+        )
+    
+    def validate_master_control(self) -> bool:
+        """Validate Master Control Module (0x05) health"""
+        master_status = self.get_master_control_status()
+        return (
+            master_status.coordination.modules_online >= 4 and
+            master_status.coordination.average_response_time <= 0.1 and
+            master_status.system_health.overall_health == "healthy"
+        )
+```
+
+#### **Mission Pre-flight Checklist**
+```python
+class MissionPreflightCheck:
+    def run_preflight_check(self, mission: Mission) -> PreflightResult:
+        """Run complete pre-flight check for mission"""
+        checks = {
+            "power": self.check_power_system(),
+            "safety": self.check_safety_system(),
+            "motors": self.check_motor_system(),
+            "location": self.check_location_system(),
+            "communication": self.check_communication_system(),
+            "mission_validation": self.validate_mission_parameters(mission)
+        }
+        
+        all_passed = all(checks.values())
+        return PreflightResult(
+            passed=all_passed,
+            checks=checks,
+            timestamp=datetime.now()
+        )
+    
+    def check_power_system(self) -> bool:
+        """Check Power Module readiness"""
+        power_status = self.get_power_status()
+        return (
+            power_status.battery.soc >= 30 and  # Min 30% battery
+            power_status.battery.voltage >= 22.0 and  # Min voltage
+            power_status.power_distribution["24v"].status == "normal"
+        )
+    
+    def check_safety_system(self) -> bool:
+        """Check Safety Module readiness"""
+        safety_status = self.get_safety_status()
+        return (
+            safety_status.estop.status == "clear" and
+            len(safety_status.safety_zones) > 0 and
+            safety_status.system_health.estop_circuit == "healthy"
+        )
+    
+    def check_motor_system(self) -> bool:
+        """Check Travel Motor Module readiness"""
+        motor_status = self.get_motor_status()
+        return (
+            motor_status.motor.status == "ready" and
+            motor_status.encoder.health == "healthy" and
+            motor_status.controller.pid_status == "active"
+        )
+    
+    def check_location_system(self) -> bool:
+        """Check Dock & Location Module readiness"""
+        location_status = self.get_location_status()
+        return (
+            location_status.sensors.lidar.status == "active" and
+            location_status.position.confidence >= 0.8 and
+            location_status.sensors.imu.calibration == "calibrated"
+        )
+    
+    def check_communication_system(self) -> bool:
+        """Check RS485 communication readiness"""
+        comm_status = self.get_communication_status()
+        return (
+            comm_status.rs485.status == "healthy" and
+            comm_status.rs485.error_rate <= 0.01 and  # Max 1% error rate
+            comm_status.rs485.response_time <= 0.1    # Max 100ms response
+        )
+```
 
 ---
 
@@ -329,6 +460,88 @@ class StateManager:
         pass
 ```
 
+### **5.4 Module State Coordination**
+
+#### **Module State Synchronization**
+```python
+class ModuleStateCoordinator:
+    def synchronize_module_states(self) -> Dict[str, ModuleState]:
+        """Synchronize states across all 5 mandatory modules"""
+        module_states = {
+            "power": self.get_power_module_state(),
+            "safety": self.get_safety_module_state(),
+            "travel_motor": self.get_travel_motor_state(),
+            "dock_location": self.get_dock_location_state(),
+            "master_control": self.get_master_control_state()
+        }
+        
+        # Validate state consistency
+        self.validate_state_consistency(module_states)
+        return module_states
+    
+    def validate_state_consistency(self, module_states: Dict[str, ModuleState]):
+        """Validate that all module states are consistent"""
+        # Check if all modules are online
+        online_modules = [state for state in module_states.values() if state.status == "online"]
+        if len(online_modules) < 5:
+            raise StateInconsistencyError("Not all mandatory modules are online")
+        
+        # Check communication health
+        for module_id, state in module_states.items():
+            if state.communication_health != "healthy":
+                raise StateInconsistencyError(f"Module {module_id} communication unhealthy")
+    
+    def get_system_overall_state(self) -> SystemOverallState:
+        """Get overall system state based on all modules"""
+        module_states = self.synchronize_module_states()
+        
+        # Determine overall state
+        if any(state.status == "offline" for state in module_states.values()):
+            return SystemOverallState.FAULT
+        elif any(state.safety_status == "violation" for state in module_states.values()):
+            return SystemOverallState.ESTOP
+        elif all(state.status == "ready" for state in module_states.values()):
+            return SystemOverallState.IDLE
+        else:
+            return SystemOverallState.INITIALIZING
+```
+
+### **5.5 Real-time State Monitoring**
+
+#### **State Change Detection**
+```python
+class StateChangeDetector:
+    def monitor_state_changes(self):
+        """Monitor real-time state changes across all modules"""
+        previous_states = {}
+        
+        while True:
+            current_states = self.get_current_module_states()
+            
+            for module_id, current_state in current_states.items():
+                if module_id in previous_states:
+                    previous_state = previous_states[module_id]
+                    if current_state != previous_state:
+                        self.handle_state_change(module_id, previous_state, current_state)
+                
+                previous_states[module_id] = current_state
+            
+            time.sleep(0.1)  # 10Hz monitoring
+    
+    def handle_state_change(self, module_id: str, old_state: ModuleState, new_state: ModuleState):
+        """Handle state change for specific module"""
+        # Log state change
+        self.log_state_change(module_id, old_state, new_state)
+        
+        # Trigger appropriate actions
+        if new_state.status == "offline":
+            self.handle_module_offline(module_id)
+        elif new_state.safety_status == "violation":
+            self.handle_safety_violation(module_id, new_state)
+        elif new_state.status == "ready":
+            self.handle_module_ready(module_id)
+```
+
 ---
 
 ## 📊 **6. Business Rules & Constraints**
@@ -472,12 +685,16 @@ def collect_firmware_data() -> TelemetryData:
 
 ---
 
-**Changelog v1.0:**
-- ✅ Created comprehensive business logic specification
-- ✅ Defined mission management lifecycle
-- ✅ Added safety management procedures
-- ✅ Included movement control algorithms
-- ✅ Added module coordination logic
-- ✅ Defined system state management
-- ✅ Added business rules and constraints
-- ✅ Referenced related documents and standards
+**Changelog v2.0:**
+- ✅ Updated to Architecture v2.0
+- ✅ Added Module Coordination business logic
+- ✅ Added Module Health Validation
+- ✅ Added Mission Pre-flight Checklist
+- ✅ Enhanced State Machine Management
+- ✅ Added Module State Coordination
+- ✅ Added Real-time State Monitoring
+- ✅ Standardized to 24V nominal voltage
+- ✅ Added RS485 communication validation
+- ✅ Added LiDAR USB integration validation
+- ✅ Enhanced mission validation rules
+- ✅ Added comprehensive module health checks

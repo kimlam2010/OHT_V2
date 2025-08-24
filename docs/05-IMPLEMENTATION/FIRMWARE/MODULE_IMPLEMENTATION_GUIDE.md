@@ -26,7 +26,7 @@ Hướng dẫn implementation chi tiết cho 5 module bắt buộc trong kiến 
 ```
 Module ID:          0x01
 Communication:      RS485/Modbus RTU
-Power Supply:       48V DC (LiFePO4 Battery)
+Power Supply:       24V DC (LiFePO4 Battery)
 BMS:                Integrated Battery Management System
 Charging:           External charging station
 Monitoring:         Voltage, Current, Temperature, SOC

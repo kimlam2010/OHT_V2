@@ -27,8 +27,8 @@ Specifications chi tiết cho 5 module bắt buộc trong kiến trúc OHT-50 v2
 #### **Battery System:**
 ```
 Type:               LiFePO4 Battery Pack
-Voltage:            48V DC (nominal)
-Capacity:           100Ah (configurable)
+Voltage:            24V DC (nominal)
+Capacity:           50Ah (configurable)
 Chemistry:          Lithium Iron Phosphate
 Cycle Life:         2000+ cycles
 Operating Temperature: -20°C to +60°C
@@ -57,7 +57,7 @@ Protection Features:
 ```
 Charging Method:    CC-CV (Constant Current - Constant Voltage)
 Charging Current:   20A maximum
-Charging Voltage:   54.6V (3.65V per cell)
+Charging Voltage:   28.8V (3.6V per cell)
 Charging Time:      5-6 hours (0-100%)
 Charging Efficiency: >95%
 Charging Interface: 4-pin connector (power, ground, communication, temperature)
