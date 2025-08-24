@@ -13,6 +13,10 @@ import time
 import yaml
 from datetime import datetime
 from typing import Dict, Any, Optional
+try:
+    from .firmware_integration import firmware_integration
+except ImportError:
+    from firmware_integration import firmware_integration
 
 try:
     import websockets
@@ -78,6 +82,9 @@ class OHT50CenterClient:
     async def connect_to_center(self) -> bool:
         """Connect to Center via WebSocket"""
         try:
+            # Initialize firmware integration first
+            await firmware_integration.initialize()
+            
             center_config = self.config.get('center', {})
             host = center_config.get('host', 'localhost')
             port = center_config.get('port', 8080)
@@ -115,32 +122,29 @@ class OHT50CenterClient:
     
     async def send_heartbeat(self):
         """Send heartbeat to Center"""
+        # Get real status from firmware
+        status = await firmware_integration.get_system_status()
+        
         heartbeat = {
             "type": "heartbeat",
             "device_id": self.device_id,
             "timestamp": datetime.utcnow().isoformat(),
-            "status": {
-                "state": "IDLE",  # TODO: Get from firmware
-                "safety": "NORMAL",  # TODO: Get from firmware
-                "modules_online": 4,  # TODO: Get from firmware
-                "uptime": int(time.time())
-            }
+            "status": status
         }
         await self.send_message(heartbeat)
         log_json("heartbeat_sent")
     
     async def send_telemetry(self):
         """Send telemetry data to Center"""
+        # Get real power data from firmware
+        power_data = await firmware_integration.get_power_data()
+        
         telemetry = {
             "type": "telemetry",
             "device_id": self.device_id,
             "timestamp": datetime.utcnow().isoformat(),
             "data": {
-                "power": {
-                    "voltage": 24.5,  # TODO: Get from power module
-                    "current": 3.2,
-                    "temperature": 42.1
-                },
+                "power": power_data,
                 "modules": {
                     "0x02": {"type": "power", "status": "online"},
                     "0x03": {"type": "motor", "status": "online"},
@@ -191,11 +195,13 @@ class OHT50CenterClient:
         
         log_json("command_execute", command=str(cmd), params=params)
         
-        # TODO: Send command to firmware via IPC/shared memory
+        # Send command to firmware via IPC/shared memory
+        success = await firmware_integration.send_command(cmd, params)
+        
         response = {
             "type": "command_response",
             "command": cmd,
-            "status": "executed",
+            "status": "executed" if success else "failed",
             "timestamp": datetime.utcnow().isoformat()
         }
         await self.send_message(response)
@@ -203,10 +209,13 @@ class OHT50CenterClient:
     async def handle_config(self, config: Dict[str, Any]):
         """Handle configuration update from Center"""
         log_json("config_update_received")
-        # TODO: Apply configuration to firmware
+        
+        # Apply configuration to firmware
+        success = await firmware_integration.apply_configuration(config)
+        
         response = {
             "type": "config_response",
-            "status": "applied",
+            "status": "applied" if success else "failed",
             "timestamp": datetime.utcnow().isoformat()
         }
         await self.send_message(response)

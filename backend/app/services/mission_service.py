@@ -407,8 +407,18 @@ class MissionService:
     
     async def _is_system_ready(self) -> bool:
         """Kiểm tra hệ thống có sẵn sàng không"""
-        # TODO: Integrate with StateManagementService
-        return True
+        try:
+            # Integrate with StateManagementService
+            from .state_management_service import StateManagementService
+            state_service = StateManagementService()
+            
+            # Check if system is in IDLE state and ready for missions
+            current_state = await state_service.get_current_state()
+            return current_state == "IDLE"
+            
+        except Exception as e:
+            logger.warning(f"Failed to check system readiness: {e}")
+            return True  # Fallback to allow missions
     
     async def cleanup_old_missions(self, max_age_hours: int = 24):
         """Dọn dẹp mission cũ"""
