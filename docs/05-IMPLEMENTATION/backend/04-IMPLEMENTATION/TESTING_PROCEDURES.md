@@ -229,12 +229,11 @@ def generate_performance_report():
 
 ---
 
-## 📚 **7. References**
+## 📚 **Tham chiếu**
 
-### **7.1 Related Documents**
 - [Module Integration Guide](MODULE_INTEGRATION_GUIDE.md)
 - [API Specifications](api-specs/README.md)
-- [Business Logic](business/BUSINESS_LOGIC_SPEC.md)
+- [Business Logic](../02-ARCHITECTURE/BUSINESS_LOGIC_SPEC.md)
 
 ---
 

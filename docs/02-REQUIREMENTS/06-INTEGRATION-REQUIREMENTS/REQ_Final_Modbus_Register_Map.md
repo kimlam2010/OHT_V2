@@ -2,6 +2,33 @@
 
 **📋 Dựa trên System Architecture v2.0 - CHUẨN HÓA CHO AUTO-DETECT**
 
+**🔗 Tích hợp với:** [KhaLin0401/Driver_2_Motor](https://github.com/KhaLin0401/Driver_2_Motor)
+
+---
+
+## **🚨 COMPATIBILITY ISSUES - GITHUB REPOSITORY**
+
+### **Critical Issues Identified:**
+- 🔴 **Auto-Detect Failure:** Master module không thể tự động phát hiện module
+- 🔴 **Module Identification Missing:** Không có cách xác định loại module và version
+- 🔴 **No Validation Mechanism:** Không có checksum để kiểm tra tính toàn vẹn
+- 🟡 **Address Conflict:** System registers ở địa chỉ khác nhau
+
+### **GitHub Repository Analysis:**
+- ✅ **Motor Control:** Cấu trúc tốt (0x0010-0x002D)
+- ✅ **Digital I/O:** 4 DI / 2 DO configuration
+- ✅ **PID Control:** Basic PID parameters
+- ❌ **Missing:** Auto-detection registers (0x00F0-0x00FF)
+- ❌ **Missing:** Module identification
+- ❌ **Address Conflict:** System registers at 0x0000-0x0006
+
+### **Required Updates:**
+1. **Add Auto-Detect Registers** (0x00F0-0x00FF)
+2. **Add Module_Type = 0x0004**
+3. **Add Module_Name = "TRVL"**
+4. **Add Checksum validation**
+5. **Standardize register addresses**
+
 ---
 
 ## **🔵 Motor 1 Registers (0x0000-0x000C):**
@@ -135,7 +162,7 @@
 ### **Quét register đầu tiên cho auto-detect:**
 1. **0x00F0** - Device_ID (xác nhận địa chỉ)
 2. **0x00F7** - Module_Type (xác định loại module = 0x0004)
-3. **0x00F8-0x00F9** - Module_Name (xác nhận "DCMO")
+3. **0x00F8-0x00F9** - Module_Name (xác nhận "TRVL")
 4. **0x00F1** - Firmware_Version (kiểm tra version)
 5. **0x00F2** - System_Status (kiểm tra trạng thái)
 
@@ -152,9 +179,32 @@
 
 ---
 
+## **🔗 GITHUB INTEGRATION STATUS:**
+
+### **Repository:** [KhaLin0401/Driver_2_Motor](https://github.com/KhaLin0401/Driver_2_Motor)
+### **Branch:** modify-4-channel-pwm
+### **File:** Docs/modbus_map.md
+
+### **Compatibility Status:**
+- ❌ **Auto-Detect:** Not implemented
+- ❌ **Module Identification:** Missing
+- ❌ **Validation:** No checksum
+- 🟡 **Address Layout:** Different structure
+- ✅ **Basic Motor Control:** Compatible
+- ✅ **Digital I/O:** Compatible
+
+### **Required Actions:**
+1. **Create Issue:** [GITHUB_ISSUE_AUTO_DETECT_COMPATIBILITY.md](GITHUB_ISSUE_AUTO_DETECT_COMPATIBILITY.md)
+2. **Update Repository:** Add auto-detect registers
+3. **Test Integration:** Validate compatibility
+4. **Document Changes:** Update documentation
+
+---
+
 **📝 Changelog:**
 - v1.0 (2025-01-27): Initial register map
 - v1.1 (2025-01-27): Enhanced with GitHub compatibility and extended features
 - v1.2 (2025-01-27): Simplified to match actual module specs (4 DI / 2 DO)
 - v1.3 (2025-01-27): Standardized to 256 registers (0x0000-0x00FF) for auto-detect compatibility
 - v1.4 (2025-01-27): Added complete auto-detect registers (0x00F7-0x00FF) for module identification
+- v1.5 (2025-01-27): Added GitHub repository integration analysis and compatibility issues

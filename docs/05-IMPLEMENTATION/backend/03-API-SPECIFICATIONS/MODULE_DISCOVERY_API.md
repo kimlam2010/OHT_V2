@@ -412,7 +412,7 @@ curl -X POST http://localhost:8000/api/v1/discovery/modules/0x01/health-check
 
 ## 🔗 RELATED DOCUMENTS
 
-- [Module Specifications](../FIRMWARE/MODULE_SPECIFICATIONS.md)
+- [Module Specifications](../02-ARCHITECTURE/MODULE_SPECIFICATIONS.md)
 - [RS485 Communication](../RS485_COMMUNICATION_API.md)
 - [System Status API](../SYSTEM_STATUS_API.md)
 
