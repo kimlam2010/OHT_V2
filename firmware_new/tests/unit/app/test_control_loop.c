@@ -119,16 +119,16 @@ void test_control_loop_data_structures(void)
 
 void test_control_loop_config_initialization(void)
 {
-    TEST_ASSERT_EQUAL_FLOAT(100.0f, test_config.control_frequency);
-    TEST_ASSERT_EQUAL_FLOAT(0.01f, test_config.sample_time);
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, test_config.position_pid.kp);
-    TEST_ASSERT_EQUAL_FLOAT(0.1f, test_config.position_pid.ki);
-    TEST_ASSERT_EQUAL_FLOAT(0.01f, test_config.position_pid.kd);
-    TEST_ASSERT_EQUAL_FLOAT(2000.0f, test_config.profile.max_velocity);
-    TEST_ASSERT_EQUAL_FLOAT(1000.0f, test_config.profile.max_acceleration);
-    TEST_ASSERT_EQUAL_FLOAT(500.0f, test_config.profile.max_jerk);
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, test_config.profile.position_tolerance);
-    TEST_ASSERT_EQUAL_FLOAT(10.0f, test_config.profile.velocity_tolerance);
+    TEST_ASSERT_EQUAL_FLOAT(100.0f, test_config.control_frequency, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.01f, test_config.sample_time, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, test_config.position_pid.kp, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.1f, test_config.position_pid.ki, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.01f, test_config.position_pid.kd, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(2000.0f, test_config.profile.max_velocity, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(1000.0f, test_config.profile.max_acceleration, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(500.0f, test_config.profile.max_jerk, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, test_config.profile.position_tolerance, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(10.0f, test_config.profile.velocity_tolerance, 0.001f);
     TEST_ASSERT_TRUE(test_config.enable_limits);
     TEST_ASSERT_TRUE(test_config.enable_safety);
 }
@@ -137,13 +137,13 @@ void test_control_loop_status_initialization(void)
 {
     TEST_ASSERT_EQUAL(0, test_status.state);
     TEST_ASSERT_EQUAL(0, test_status.mode);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.target_position);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.current_position);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.target_velocity);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.current_velocity);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.control_output);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.position_error);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.velocity_error);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.target_position, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.current_position, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.target_velocity, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.current_velocity, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.control_output, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.position_error, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_status.velocity_error, 0.001f);
     TEST_ASSERT_EQUAL(0, test_status.cycle_count);
     TEST_ASSERT_EQUAL(1640995200000000ULL, test_status.last_update_time);
     TEST_ASSERT_FALSE(test_status.limits_violated);
@@ -154,10 +154,10 @@ void test_control_loop_stats_initialization(void)
 {
     TEST_ASSERT_EQUAL(0, test_stats.total_cycles);
     TEST_ASSERT_EQUAL(0, test_stats.error_cycles);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_stats.max_position_error);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_stats.max_velocity_error);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_stats.avg_position_error);
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_stats.avg_velocity_error);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_stats.max_position_error, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_stats.max_velocity_error, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_stats.avg_position_error, 0.001f);
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, test_stats.avg_velocity_error, 0.001f);
     TEST_ASSERT_EQUAL(0, test_stats.total_runtime);
 }
 
