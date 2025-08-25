@@ -188,6 +188,43 @@ target_link_libraries(test_control_loop
     unity
 )
 
+# Application Communication Manager tests
+add_executable(test_communication_manager
+    app/test_communication_manager.c
+)
+
+target_include_directories(test_communication_manager PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_communication_manager
+    app_managers
+    hal_common
+    hal_communication
+    unity
+    pthread
+)
+
+# Application Module Manager tests
+add_executable(test_module_manager
+    app/test_module_manager.c
+)
+
+target_include_directories(test_module_manager PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_module_manager
+    app_managers
+    hal_common
+    unity
+    pthread
+)
+
 # Add tests to CTest
 add_test(NAME test_hal_common COMMAND test_hal_common)
 add_test(NAME test_hal_gpio COMMAND test_hal_gpio)
@@ -200,6 +237,8 @@ add_test(NAME test_hal_storage COMMAND test_hal_storage)
 add_test(NAME test_hal_usb COMMAND test_hal_usb)
 add_test(NAME test_system_state_machine COMMAND test_system_state_machine)
 add_test(NAME test_control_loop COMMAND test_control_loop)
+add_test(NAME test_communication_manager COMMAND test_communication_manager)
+add_test(NAME test_module_manager COMMAND test_module_manager)
 
 # Enable testing
 enable_testing()
