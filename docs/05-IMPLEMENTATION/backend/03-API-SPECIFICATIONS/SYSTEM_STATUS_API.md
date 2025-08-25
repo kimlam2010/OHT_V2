@@ -425,11 +425,11 @@ curl -X POST http://localhost:8000/api/v1/system/diagnostics/start \
 
 ---
 
-## 🔗 RELATED DOCUMENTS
+## 📚 **Tham chiếu**
 
 - [Module Discovery API](./MODULE_DISCOVERY_API.md)
-- [Module Specifications](../FIRMWARE/MODULE_SPECIFICATIONS.md)
-- [Business Logic](../business/BUSINESS_LOGIC_SPEC.md)
+- [Module Specifications](../02-ARCHITECTURE/MODULE_SPECIFICATIONS.md)
+- [Business Logic](../02-ARCHITECTURE/BUSINESS_LOGIC_SPEC.md)
 
 ---
 

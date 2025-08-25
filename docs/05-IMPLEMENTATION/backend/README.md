@@ -1,6 +1,6 @@
 # OHT-50 Backend Documentation - ISO Standard Structure
 
-**Phiên bản:** v2.0  
+**Phiên bản:** v2.1  
 **Chuẩn:** ISO 9001:2015 Documentation Management  
 **Cập nhật:** 2025-01-28
 
@@ -13,13 +13,13 @@
 **Nếu bạn là Developer mới:**
 1. **01-QUICK-START/** → `DEVELOPER_ONBOARDING.md` (Hướng dẫn nhanh)
 2. **02-ARCHITECTURE/** → `CORE_ARCHITECTURE.md` (Kiến trúc tổng thể)
-3. **03-API-SPECIFICATIONS/** → `API_OVERVIEW.md` (Tổng quan API)
+3. **03-API-SPECIFICATIONS/** → `README.md` (Tổng quan API)
 4. **04-IMPLEMENTATION/** → `SERVICES_IMPLEMENTATION.md` (Chi tiết implementation)
 
 **Nếu bạn là System Architect:**
 1. **02-ARCHITECTURE/** → `CORE_ARCHITECTURE.md` (Kiến trúc tổng thể)
 2. **02-ARCHITECTURE/** → `BUSINESS_LOGIC_SPEC.md` (Business logic)
-3. **03-API-SPECIFICATIONS/** → `API_OVERVIEW.md` (API specifications)
+3. **03-API-SPECIFICATIONS/** → `README.md` (API specifications)
 4. **05-DATA-MODELS/** → `DATA_MODELS.md` (Data models)
 
 **Nếu bạn là DevOps Engineer:**
@@ -29,7 +29,7 @@
 
 **Nếu bạn là QA Engineer:**
 1. **09-TESTING/** → `TESTING_GUIDE.md` (Hướng dẫn testing)
-2. **03-API-SPECIFICATIONS/** → `API_OVERVIEW.md` (API specifications)
+2. **03-API-SPECIFICATIONS/** → `README.md` (API specifications)
 3. **10-REPORTS/** → `TESTING_REPORTS.md` (Báo cáo testing)
 
 ---
@@ -41,25 +41,41 @@ docs/05-IMPLEMENTATION/backend/
 ├── 01-QUICK-START/                    # 🚀 Bắt đầu nhanh
 │   ├── DEVELOPER_ONBOARDING.md        # Hướng dẫn developer mới
 │   ├── SYSTEM_OVERVIEW.md             # Tổng quan hệ thống
-│   └── GETTING_STARTED.md             # Hướng dẫn cài đặt
+│   ├── GETTING_STARTED.md             # Hướng dẫn cài đặt
+│   ├── TROUBLESHOOTING_GUIDE.md       # Hướng dẫn xử lý sự cố
+│   └── FAQ.md                         # Câu hỏi thường gặp
 │
 ├── 02-ARCHITECTURE/                   # 🏗️ Kiến trúc hệ thống
 │   ├── CORE_ARCHITECTURE.md           # Kiến trúc tổng thể
 │   ├── BUSINESS_LOGIC_SPEC.md         # Business logic specification
 │   ├── SYSTEM_DESIGN.md               # Thiết kế hệ thống
-│   └── INTEGRATION_PATTERNS.md        # Mẫu tích hợp
+│   ├── INTEGRATION_PATTERNS.md        # Mẫu tích hợp
+│   ├── MODULE_ADDRESS_STANDARDIZATION.md # Chuẩn hóa địa chỉ module
+│   └── VOLTAGE_STANDARDIZATION_PLAN.md # Kế hoạch chuẩn hóa điện áp
 │
 ├── 03-API-SPECIFICATIONS/             # 🔌 API Specifications
-│   ├── API_OVERVIEW.md                # Tổng quan API
-│   ├── REST_API_SPECS.md              # REST API specifications
-│   ├── WEBSOCKET_API_SPECS.md         # WebSocket API specifications
-│   └── API_EXAMPLES.md                # Ví dụ sử dụng API
+│   ├── README.md                      # Tổng quan API
+│   ├── CONFIG_API.md                  # API cấu hình hệ thống
+│   ├── TELEMETRY_API.md               # API telemetry data
+│   ├── WEBSOCKET_EVENTS.md            # WebSocket events
+│   ├── SAFETY_API.md                  # API hệ thống an toàn
+│   ├── MASTER_CONTROL_API.md          # API điều khiển chính
+│   ├── POWER_API.md                   # API quản lý nguồn
+│   ├── DOCK_LOCATION_API.md           # API dock và định vị
+│   ├── DC_MOTOR_API.md                # API điều khiển motor DC
+│   ├── SYSTEM_STATUS_API.md           # API trạng thái hệ thống
+│   ├── MODULE_DISCOVERY_API.md        # API khám phá module
+│   └── INTEGRATION_CENTER.md          # Tích hợp với Center
 │
 ├── 04-IMPLEMENTATION/                 # 💻 Implementation Details
 │   ├── SERVICES_IMPLEMENTATION.md     # Chi tiết services
 │   ├── CODE_STRUCTURE.md              # Cấu trúc code
 │   ├── DEVELOPMENT_GUIDELINES.md      # Hướng dẫn development
-│   └── CODING_STANDARDS.md            # Tiêu chuẩn coding
+│   ├── CODING_STANDARDS.md            # Tiêu chuẩn coding
+│   ├── MODULE_INTEGRATION_GUIDE.md    # Hướng dẫn tích hợp module
+│   ├── TESTING_PROCEDURES.md          # Quy trình testing
+│   ├── ERRORS_CONVENTION.md           # Quy ước xử lý lỗi
+│   └── CI_DOCS_CHECK_GUIDE.md         # Hướng dẫn kiểm tra tài liệu CI
 │
 ├── 05-DATA-MODELS/                    # 📊 Data Models
 │   ├── DATA_MODELS.md                 # Data models tổng quan
@@ -77,7 +93,10 @@ docs/05-IMPLEMENTATION/backend/
 │   ├── OPERATIONAL_GUIDE.md           # Hướng dẫn vận hành
 │   ├── MAINTENANCE_PROCEDURES.md      # Quy trình bảo trì
 │   ├── TROUBLESHOOTING_GUIDE.md       # Hướng dẫn xử lý sự cố
-│   └── BACKUP_RESTORE.md              # Backup và restore
+│   ├── BACKUP_RESTORE.md              # Backup và restore
+│   ├── ERROR_MATRIX.md                # Ma trận lỗi
+│   ├── HARDENING_CHECKLIST.md         # Checklist bảo mật
+│   └── SECURITY_GUIDE.md              # Hướng dẫn bảo mật
 │
 ├── 08-MONITORING/                     # 📈 Monitoring & Analytics
 │   ├── MONITORING_GUIDE.md            # Hướng dẫn monitoring
@@ -96,25 +115,37 @@ docs/05-IMPLEMENTATION/backend/
 │   ├── IMPLEMENTATION_STATUS.md       # Trạng thái implementation
 │   ├── PERFORMANCE_REPORTS.md         # Báo cáo hiệu suất
 │   ├── QUALITY_METRICS.md             # Metrics chất lượng
-│   └── COMPLIANCE_REPORTS.md          # Báo cáo tuân thủ
+│   ├── COMPLIANCE_REPORTS.md          # Báo cáo tuân thủ
+│   ├── BACKEND_DOCUMENTATION_ANALYSIS_REPORT.md # Báo cáo phân tích tài liệu
+│   ├── BACKEND_DOCUMENTATION_REVIEW_PLAN.md # Kế hoạch review tài liệu
+│   ├── BACKEND_DOCUMENTATION_ANALYSIS_DETAILED.md # Phân tích chi tiết
+│   ├── BACKEND_DOCUMENTATION_COMPLETION_SUMMARY.md # Tóm tắt hoàn thành
+│   ├── PHASE_1_COMPLETION_SUMMARY.md  # Tóm tắt hoàn thành giai đoạn 1
+│   ├── PHASE_1_CRITICAL_FIXES_SUMMARY.md # Tóm tắt sửa lỗi quan trọng giai đoạn 1
+│   ├── PHASE_2_COMPLETION_SUMMARY.md  # Tóm tắt hoàn thành giai đoạn 2
+│   ├── PHASE_3_COMPLETION_SUMMARY.md  # Tóm tắt hoàn thành giai đoạn 3
+│   └── PHASE_4_COMPLETION_SUMMARY.md  # Tóm tắt hoàn thành giai đoạn 4
 │
 ├── 11-SECURITY/                       # 🔒 Security & Compliance
 │   ├── SECURITY_GUIDE.md              # Hướng dẫn bảo mật
 │   ├── AUTHENTICATION.md              # Xác thực
 │   ├── AUTHORIZATION.md               # Phân quyền
-│   └── COMPLIANCE_CHECKLIST.md        # Checklist tuân thủ
+│   ├── COMPLIANCE_CHECKLIST.md        # Checklist tuân thủ
+│   └── AUTH_SYSTEM.md                 # Hệ thống xác thực
 │
 ├── 12-CONFIGURATION/                  # ⚙️ Configuration Management
 │   ├── CONFIGURATION_GUIDE.md         # Hướng dẫn cấu hình
 │   ├── ENVIRONMENT_VARIABLES.md       # Biến môi trường
 │   ├── FEATURE_FLAGS.md               # Feature flags
-│   └── SECRETS_MANAGEMENT.md          # Quản lý secrets
+│   ├── SECRETS_MANAGEMENT.md          # Quản lý secrets
+│   └── ENVIRONMENT_CONFIG.md          # Cấu hình môi trường
 │
 └── 13-REFERENCES/                     # 📚 References & Resources
     ├── GLOSSARY.md                    # Từ điển thuật ngữ
     ├── ACRONYMS.md                    # Từ viết tắt
     ├── EXTERNAL_LINKS.md              # Liên kết ngoài
-    └── VERSION_HISTORY.md             # Lịch sử phiên bản
+    ├── VERSION_HISTORY.md             # Lịch sử phiên bản
+    └── README.md                      # Tổng quan references
 ```
 
 ---
@@ -216,6 +247,14 @@ docs/05-IMPLEMENTATION/backend/
 **Hệ thống tài liệu đã sẵn sàng cho production use và team collaboration.**
 
 ---
+
+**Changelog v2.1:**
+- ✅ Fixed broken links in API specifications
+- ✅ Added missing version headers to files
+- ✅ Updated navigation index with detailed file structure
+- ✅ Verified Mermaid diagrams functionality
+- ✅ Added comprehensive changelog tracking
+- ✅ Improved cross-references between documents
 
 **Changelog v2.0:**
 - ✅ Reorganized folder structure according to ISO 9001:2015

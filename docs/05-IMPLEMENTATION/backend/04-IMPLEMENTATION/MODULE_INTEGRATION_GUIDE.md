@@ -546,7 +546,7 @@ scrape_configs:
 
 ### **6.1 Related Documents**
 - [API Specifications](api-specs/README.md) - Complete API documentation
-- [Business Logic](business/BUSINESS_LOGIC_SPEC.md) - Business logic specification
+- [Business Logic](../02-ARCHITECTURE/BUSINESS_LOGIC_SPEC.md) - Business logic specification
 - [Architecture](architecture/SYSTEM_ARCHITECTURE.md) - System architecture
 
 ### **6.2 Hardware Documentation**
