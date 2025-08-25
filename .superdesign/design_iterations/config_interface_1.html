@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Configuration Interface - Robot Settings</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Flowbite -->
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>
+    
+    <!-- Custom Theme CSS -->
+    <link rel="stylesheet" href="theme_config_interface.css">
+    
+    <!-- Custom Animations -->
+    <style>
+        /* Additional custom animations */
+        @keyframes configShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+        
+        @keyframes configPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        @keyframes configDeploySpin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.05); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        @keyframes configTestPulse {
+            0%, 100% { background-color: var(--config-primary); }
+            50% { background-color: var(--config-valid); }
+        }
+        
+        .config-shake {
+            animation: configShake 0.6s ease-in-out;
+        }
+        
+        .config-pulse {
+            animation: configPulse 0.8s ease-in-out infinite;
+        }
+        
+        .config-deploy-spin {
+            animation: configDeploySpin 1s linear infinite;
+        }
+        
+        .config-test-pulse {
+            animation: configTestPulse 1.2s ease-in-out infinite;
+        }
+        
+        /* Sticky alert banner */
+        .alert-banner {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(8px);
+            background-color: hsl(var(--config-panel-bg) / 0.95);
+            box-shadow: var(--config-panel-shadow);
+        }
+    </style>
+</head>
+<body class="config-container">
+    <!-- Sticky Alert Banner -->
+    <div class="alert-banner bg-yellow-50 border-b border-yellow-200 px-4 py-3">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="settings" class="w-5 h-5 text-yellow-600"></i>
+                <span class="text-sm font-medium text-yellow-800">Configuration Mode Active</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-green-600"></i>
+                    <span class="text-xs text-green-700">Settings Valid</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i>
+                    <span class="text-xs text-blue-700">Last Save: 2m ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">OHT-50 Control</h2>
+                <p class="text-sm text-gray-600">Master Module</p>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="#" class="flex items-center px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="home" class="w-5 h-5 mr-3"></i>
+                    Dashboard
+                </a>
+                <a href="#" class="flex items-center px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="gamepad-2" class="w-5 h-5 mr-3"></i>
+                    Robot Control
+                </a>
+                <a href="#" class="flex items-center px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="map" class="w-5 h-5 mr-3"></i>
+                    Map & Navigation
+                </a>
+                <a href="#" class="flex items-center px-3 py-2 bg-orange-100 text-orange-700 rounded-lg font-medium">
+                    <i data-lucide="settings" class="w-5 h-5 mr-3"></i>
+                    Configuration
+                </a>
+                <a href="#" class="flex items-center px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="shield-alert" class="w-5 h-5 mr-3"></i>
+                    Safety & Alarms
+                </a>
+                <a href="#" class="flex items-center px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="activity" class="w-5 h-5 mr-3"></i>
+                    Monitoring
+                </a>
+                <a href="#" class="flex items-center px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 mr-3"></i>
+                    Analytics
+                </a>
+                <a href="#" class="flex items-center px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="list-todo" class="w-5 h-5 mr-3"></i>
+                    Missions
+                </a>
+                <a href="#" class="flex items-center px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-lucide="user" class="w-5 h-5 mr-3"></i>
+                    Authentication
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Configuration Header -->
+            <div class="config-header">
+                <h1 class="config-title">Configuration Interface</h1>
+                <p class="text-sm text-gray-600 mt-1">Configure robot settings, system parameters, and operational modes</p>
+            </div>
+
+            <!-- Configuration Tabs -->
+            <div class="config-tabs">
+                <button class="config-tab active" data-tab="safety">
+                    <i data-lucide="shield" class="w-4 h-4 mr-2"></i>
+                    Safety
+                </button>
+                <button class="config-tab" data-tab="operational">
+                    <i data-lucide="settings" class="w-4 h-4 mr-2"></i>
+                    Operational
+                </button>
+                <button class="config-tab" data-tab="system">
+                    <i data-lucide="cpu" class="w-4 h-4 mr-2"></i>
+                    System
+                </button>
+                <button class="config-tab" data-tab="interface">
+                    <i data-lucide="monitor" class="w-4 h-4 mr-2"></i>
+                    Interface
+                </button>
+            </div>
+
+            <!-- Configuration Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- Safety Configuration -->
+                <div id="safety" class="config-tab-content active">
+                    <div class="config-grid">
+                        <!-- Robot Settings Panel -->
+                        <div class="config-panel">
+                            <h3 class="config-panel-title">
+                                <i data-lucide="robot" class="w-5 h-5"></i>
+                                Robot Safety Settings
+                            </h3>
+                            
+                            <div class="config-grid-2">
+                                <div class="config-form-group">
+                                    <label class="config-label">Maximum Speed Limit</label>
+                                    <input type="number" class="config-input" value="0.5" min="0.1" max="2.0" step="0.1">
+                                    <span class="text-xs text-gray-500 mt-1">m/s (0.1 - 2.0)</span>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Emergency Stop Distance</label>
+                                    <input type="number" class="config-input" value="0.5" min="0.1" max="1.0" step="0.1">
+                                    <span class="text-xs text-gray-500 mt-1">meters (0.1 - 1.0)</span>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Safety Zone Radius</label>
+                                    <input type="number" class="config-input" value="2.0" min="1.0" max="5.0" step="0.5">
+                                    <span class="text-xs text-gray-500 mt-1">meters (1.0 - 5.0)</span>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Obstacle Detection Range</label>
+                                    <input type="number" class="config-input" value="3.0" min="1.0" max="10.0" step="0.5">
+                                    <span class="text-xs text-gray-500 mt-1">meters (1.0 - 10.0)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Parameters Panel -->
+                        <div class="config-panel">
+                            <h3 class="config-panel-title">
+                                <i data-lucide="cpu" class="w-5 h-5"></i>
+                                System Safety Parameters
+                            </h3>
+                            
+                            <div class="config-grid-2">
+                                <div class="config-form-group">
+                                    <label class="config-label">E-Stop Response Time</label>
+                                    <select class="config-select">
+                                        <option value="50">50ms (Ultra Fast)</option>
+                                        <option value="100" selected>100ms (Fast)</option>
+                                        <option value="200">200ms (Normal)</option>
+                                        <option value="500">500ms (Slow)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Safety System Status</label>
+                                    <div class="flex items-center space-x-4">
+                                        <label class="config-toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="config-toggle-slider"></span>
+                                        </label>
+                                        <span class="text-sm font-medium text-green-600">Active</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Dual-Channel Safety</label>
+                                    <div class="flex items-center space-x-4">
+                                        <label class="config-toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="config-toggle-slider"></span>
+                                        </label>
+                                        <span class="text-sm font-medium text-green-600">Enabled</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Safety Validation</label>
+                                    <select class="config-select">
+                                        <option value="strict" selected>Strict (SIL2)</option>
+                                        <option value="normal">Normal (SIL1)</option>
+                                        <option value="relaxed">Relaxed (Basic)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operational Configuration -->
+                <div id="operational" class="config-tab-content hidden">
+                    <div class="config-grid">
+                        <div class="config-panel">
+                            <h3 class="config-panel-title">
+                                <i data-lucide="settings" class="w-5 h-5"></i>
+                                Operational Parameters
+                            </h3>
+                            
+                            <div class="config-grid-2">
+                                <div class="config-form-group">
+                                    <label class="config-label">Operating Mode</label>
+                                    <select class="config-select">
+                                        <option value="auto" selected>Autonomous</option>
+                                        <option value="manual">Manual Control</option>
+                                        <option value="semi">Semi-Autonomous</option>
+                                        <option value="maintenance">Maintenance</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Update Frequency</label>
+                                    <select class="config-select">
+                                        <option value="50">50ms (High)</option>
+                                        <option value="100" selected>100ms (Normal)</option>
+                                        <option value="200">200ms (Low)</option>
+                                        <option value="500">500ms (Minimal)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Battery Threshold</label>
+                                    <input type="number" class="config-input" value="20" min="10" max="50" step="5">
+                                    <span class="text-xs text-gray-500 mt-1">% (10 - 50)</span>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Temperature Limit</label>
+                                    <input type="number" class="config-input" value="60" min="40" max="80" step="5">
+                                    <span class="text-xs text-gray-500 mt-1">°C (40 - 80)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Configuration -->
+                <div id="system" class="config-tab-content hidden">
+                    <div class="config-grid">
+                        <div class="config-panel">
+                            <h3 class="config-panel-title">
+                                <i data-lucide="cpu" class="w-5 h-5"></i>
+                                System Configuration
+                            </h3>
+                            
+                            <div class="config-grid-2">
+                                <div class="config-form-group">
+                                    <label class="config-label">Communication Protocol</label>
+                                    <select class="config-select">
+                                        <option value="rs485" selected>RS485 (Modbus RTU)</option>
+                                        <option value="ethernet">Ethernet (TCP/IP)</option>
+                                        <option value="wifi">WiFi (802.11)</option>
+                                        <option value="usb">USB (Debug)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Baud Rate</label>
+                                    <select class="config-select">
+                                        <option value="9600">9600 bps</option>
+                                        <option value="19200">19200 bps</option>
+                                        <option value="38400">38400 bps</option>
+                                        <option value="115200" selected>115200 bps</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Timeout Settings</label>
+                                    <input type="number" class="config-input" value="5000" min="1000" max="30000" step="1000">
+                                    <span class="text-xs text-gray-500 mt-1">ms (1000 - 30000)</span>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Retry Attempts</label>
+                                    <input type="number" class="config-input" value="3" min="1" max="10" step="1">
+                                    <span class="text-xs text-gray-500 mt-1">attempts (1 - 10)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interface Configuration -->
+                <div id="interface" class="config-tab-content hidden">
+                    <div class="config-grid">
+                        <div class="config-panel">
+                            <h3 class="config-panel-title">
+                                <i data-lucide="monitor" class="w-5 h-5"></i>
+                                Interface Settings
+                            </h3>
+                            
+                            <div class="config-grid-2">
+                                <div class="config-form-group">
+                                    <label class="config-label">Theme</label>
+                                    <select class="config-select">
+                                        <option value="light" selected>Light Theme</option>
+                                        <option value="dark">Dark Theme</option>
+                                        <option value="auto">Auto (System)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Language</label>
+                                    <select class="config-select">
+                                        <option value="vi" selected>Tiếng Việt</option>
+                                        <option value="en">English</option>
+                                        <option value="zh">中文</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Auto-Save</label>
+                                    <div class="flex items-center space-x-4">
+                                        <label class="config-toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="config-toggle-slider"></span>
+                                        </label>
+                                        <span class="text-sm font-medium text-green-600">Enabled</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="config-form-group">
+                                    <label class="config-label">Notifications</label>
+                                    <div class="flex items-center space-x-4">
+                                        <label class="config-toggle">
+                                            <input type="checkbox" checked>
+                                            <span class="config-toggle-slider"></span>
+                                        </label>
+                                        <span class="text-sm font-medium text-green-600">Enabled</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="config-actions">
+                    <button class="config-btn config-btn-secondary" onclick="resetConfiguration()">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        Reset
+                    </button>
+                    <button class="config-btn config-btn-secondary" onclick="testConfiguration()">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        Test
+                    </button>
+                    <button class="config-btn config-btn-primary" onclick="saveConfiguration()">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        Save
+                    </button>
+                    <button class="config-btn config-btn-danger" onclick="deployConfiguration()">
+                        <i data-lucide="upload" class="w-4 h-4"></i>
+                        Deploy
+                    </button>
+                </div>
+
+                <!-- Validation Status -->
+                <div class="config-validation success">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                            <span class="font-medium text-green-800">Configuration Valid</span>
+                        </div>
+                        <div class="flex items-center space-x-4 text-sm text-green-700">
+                            <span>All settings validated</span>
+                            <span>•</span>
+                            <span>No conflicts detected</span>
+                            <span>•</span>
+                            <span>Ready to deploy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Tab switching functionality
+        document.querySelectorAll('.config-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.config-tab-content').forEach(c => c.classList.add('hidden'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.remove('hidden');
+            });
+        });
+
+        // Real-time validation
+        document.querySelectorAll('.config-input, .config-select').forEach(input => {
+            input.addEventListener('input', () => {
+                validateInput(input);
+            });
+            
+            input.addEventListener('blur', () => {
+                validateInput(input);
+            });
+        });
+
+        function validateInput(input) {
+            const value = input.value;
+            const type = input.type;
+            const min = input.min;
+            const max = input.max;
+            
+            // Remove existing validation classes
+            input.classList.remove('valid', 'warning', 'error');
+            
+            // Basic validation
+            if (type === 'number') {
+                const numValue = parseFloat(value);
+                if (numValue >= parseFloat(min) && numValue <= parseFloat(max)) {
+                    input.classList.add('valid');
+                } else {
+                    input.classList.add('error');
+                }
+            } else if (value.trim() !== '') {
+                input.classList.add('valid');
+            }
+        }
+
+        // Configuration actions
+        function saveConfiguration() {
+            const btn = event.target.closest('.config-btn');
+            btn.classList.add('config-loading');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...';
+            
+            // Simulate save process
+            setTimeout(() => {
+                btn.classList.remove('config-loading');
+                btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Save';
+                
+                // Show success message
+                showNotification('Configuration saved successfully!', 'success');
+                
+                // Update last save time
+                const lastSaveElement = document.querySelector('.text-blue-700');
+                if (lastSaveElement) {
+                    lastSaveElement.textContent = 'Last Save: Just now';
+                }
+            }, 2000);
+        }
+
+        function testConfiguration() {
+            const btn = event.target.closest('.config-btn');
+            btn.classList.add('config-test-pulse');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Testing...';
+            
+            // Simulate test process
+            setTimeout(() => {
+                btn.classList.remove('config-test-pulse');
+                btn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i> Test';
+                
+                showNotification('Configuration test completed successfully!', 'success');
+            }, 3000);
+        }
+
+        function deployConfiguration() {
+            const btn = event.target.closest('.config-btn');
+            btn.classList.add('config-deploy-spin');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Deploying...';
+            
+            // Simulate deploy process
+            setTimeout(() => {
+                btn.classList.remove('config-deploy-spin');
+                btn.innerHTML = '<i data-lucide="upload" class="w-4 h-4"></i> Deploy';
+                
+                showNotification('Configuration deployed to robot successfully!', 'success');
+            }, 4000);
+        }
+
+        function resetConfiguration() {
+            if (confirm('Are you sure you want to reset all configuration changes?')) {
+                // Reset all form inputs
+                document.querySelectorAll('.config-input').forEach(input => {
+                    input.value = input.defaultValue || '';
+                    input.classList.remove('valid', 'warning', 'error');
+                });
+                
+                document.querySelectorAll('.config-select').forEach(select => {
+                    select.selectedIndex = 0;
+                });
+                
+                showNotification('Configuration reset to defaults!', 'info');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : type === 'warning' ? 'alert-triangle' : 'info'}" class="w-5 h-5"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            lucide.createIcons();
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Simulate real-time validation updates
+        setInterval(() => {
+            const validationElement = document.querySelector('.config-validation');
+            if (validationElement) {
+                const statusElement = validationElement.querySelector('.text-green-800');
+                if (statusElement) {
+                    const statuses = [
+                        'Configuration Valid',
+                        'All settings validated',
+                        'No conflicts detected',
+                        'Ready to deploy'
+                    ];
+                    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                    statusElement.textContent = randomStatus;
+                }
+            }
+        }, 5000);
+
+        // Initialize validation on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.config-input, .config-select').forEach(input => {
+                validateInput(input);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Real-time Alerts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme_1.css">
+    <style>
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--background);
+            color: var(--foreground);
+        }
+        
+        .sidebar {
+            background-color: var(--sidebar);
+            border-right: 1px solid var(--sidebar-border);
+        }
+        
+        .main-content {
+            background-color: var(--background);
+        }
+        
+        .alert-banner {
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        .alert-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .alert-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .alert-critical {
+            border-left: 4px solid #ef4444;
+            background-color: #fef2f2;
+        }
+        
+        .alert-warning {
+            border-left: 4px solid #f59e0b;
+            background-color: #fffbeb;
+        }
+        
+        .alert-info {
+            border-left: 4px solid #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .alert-success {
+            border-left: 4px solid #10b981;
+            background-color: #f0fdf4;
+        }
+        
+        .notification-item {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .notification-item:hover {
+            background-color: var(--muted);
+        }
+        
+        .notification-unread {
+            background-color: #eff6ff;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+    <!-- Sidebar -->
+    <div class="sidebar w-64 flex-shrink-0 flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <h1 class="text-xl font-semibold text-gray-900">OHT-50</h1>
+            <button class="p-2 rounded-lg hover:bg-gray-100">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg">
+                <i data-lucide="home" class="w-5 h-5 mr-3"></i>
+                Dashboard
+            </a>
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100">
+                <i data-lucide="gamepad-2" class="w-5 h-5 mr-3"></i>
+                Robot Control
+            </a>
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100">
+                <i data-lucide="target" class="w-5 h-5 mr-3"></i>
+                Missions
+            </a>
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100">
+                <i data-lucide="map" class="w-5 h-5 mr-3"></i>
+                Map & Navigation
+            </a>
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100">
+                <i data-lucide="activity" class="w-5 h-5 mr-3"></i>
+                Monitoring
+            </a>
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100">
+                <i data-lucide="alert-triangle" class="w-5 h-5 mr-3"></i>
+                Safety & Alarms
+            </a>
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100">
+                <i data-lucide="settings" class="w-5 h-5 mr-3"></i>
+                Configuration
+            </a>
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 mr-3"></i>
+                Analytics
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-200">
+            <div class="flex items-center">
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">A</span>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-700">Admin User</p>
+                    <p class="text-xs text-gray-500">admin@oht50.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content flex-1 flex flex-col overflow-hidden">
+        <!-- Alert Banner -->
+        <div class="alert-banner px-6 py-3 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 mr-2"></i>
+                        <span class="text-sm font-medium text-gray-900">Active Alerts:</span>
+                        <span class="ml-2 text-sm text-red-600 font-semibold" id="activeAlertCount">3</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-lucide="clock" class="w-4 h-4 text-gray-400 mr-1"></i>
+                        <span class="text-sm text-gray-500" id="lastUpdate">Last Update: 2 seconds ago</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="text-sm text-blue-600 hover:text-blue-700 font-medium" onclick="markAllAsRead()">
+                        Mark All as Read
+                    </button>
+                    <button class="text-sm text-gray-600 hover:text-gray-700 font-medium" onclick="clearAllAlerts()">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <nav class="flex" aria-label="Breadcrumb">
+                        <ol class="flex items-center space-x-4">
+                            <li>
+                                <a href="#" class="text-gray-400 hover:text-gray-500">
+                                    <i data-lucide="home" class="w-5 h-5"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                                    <span class="ml-4 text-sm font-medium text-gray-500">Real-time Alerts</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                    <h1 class="mt-2 text-2xl font-bold text-gray-900">Real-time Alerts</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <i data-lucide="filter" class="w-4 h-4 mr-2"></i>
+                        Filter
+                    </button>
+                    <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        <i data-lucide="settings" class="w-4 h-4 mr-2"></i>
+                        Alert Settings
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-auto">
+            <div class="p-6">
+                <!-- Alert Statistics -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i data-lucide="alert-triangle" class="w-8 h-8 text-red-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Critical Alerts</p>
+                                <p class="text-2xl font-bold text-red-600" id="criticalCount">1</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-yellow-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Warnings</p>
+                                <p class="text-2xl font-bold text-yellow-600" id="warningCount">2</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i data-lucide="info" class="w-8 h-8 text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Info Alerts</p>
+                                <p class="text-2xl font-bold text-blue-600" id="infoCount">5</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg border border-gray-200">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i data-lucide="check-circle" class="w-8 h-8 text-green-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Resolved Today</p>
+                                <p class="text-2xl font-bold text-green-600" id="resolvedCount">12</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Alerts -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Active Alerts</h2>
+                    <div class="space-y-4">
+                        <!-- Critical Alert -->
+                        <div class="alert-card alert-critical p-4 slide-in" style="animation-delay: 0.1s;">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-sm font-medium text-red-800">Emergency Stop Activated</h3>
+                                        <p class="text-sm text-red-700 mt-1">Emergency stop button was pressed in Zone C. Robot has been safely stopped.</p>
+                                        <div class="flex items-center mt-2 space-x-4 text-xs text-red-600">
+                                            <span>Location: Zone C</span>
+                                            <span>Time: 2 minutes ago</span>
+                                            <span>Priority: Critical</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button class="text-sm text-red-600 hover:text-red-700 font-medium">Acknowledge</button>
+                                    <button class="text-sm text-gray-600 hover:text-gray-700">Dismiss</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning Alert -->
+                        <div class="alert-card alert-warning p-4 slide-in" style="animation-delay: 0.2s;">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <i data-lucide="alert-circle" class="w-6 h-6 text-yellow-500"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-sm font-medium text-yellow-800">Battery Level Low</h3>
+                                        <p class="text-sm text-yellow-700 mt-1">Battery level has dropped below 20%. Consider returning to charging station.</p>
+                                        <div class="flex items-center mt-2 space-x-4 text-xs text-yellow-600">
+                                            <span>Battery: 18%</span>
+                                            <span>Time: 5 minutes ago</span>
+                                            <span>Priority: Warning</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button class="text-sm text-yellow-600 hover:text-yellow-700 font-medium">Acknowledge</button>
+                                    <button class="text-sm text-gray-600 hover:text-gray-700">Dismiss</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning Alert 2 -->
+                        <div class="alert-card alert-warning p-4 slide-in" style="animation-delay: 0.3s;">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <i data-lucide="alert-circle" class="w-6 h-6 text-yellow-500"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-sm font-medium text-yellow-800">Obstacle Detected</h3>
+                                        <p class="text-sm text-yellow-700 mt-1">Obstacle detected in path. Robot has paused for safety assessment.</p>
+                                        <div class="flex items-center mt-2 space-x-4 text-xs text-yellow-600">
+                                            <span>Location: Zone A</span>
+                                            <span>Time: 8 minutes ago</span>
+                                            <span>Priority: Warning</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button class="text-sm text-yellow-600 hover:text-yellow-700 font-medium">Acknowledge</button>
+                                    <button class="text-sm text-gray-600 hover:text-gray-700">Dismiss</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Notifications -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Notifications</h3>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            <div class="notification-item notification-unread p-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <i data-lucide="info" class="w-5 h-5 text-blue-500"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">Mission Completed</p>
+                                        <p class="text-sm text-gray-500">Transport mission to Zone B completed successfully.</p>
+                                        <p class="text-xs text-gray-400 mt-1">10 minutes ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification-item p-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">System Check Complete</p>
+                                        <p class="text-sm text-gray-500">Routine system health check completed. All systems operational.</p>
+                                        <p class="text-xs text-gray-400 mt-1">15 minutes ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification-item p-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <i data-lucide="download" class="w-5 h-5 text-purple-500"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">Data Upload Complete</p>
+                                        <p class="text-sm text-gray-500">Sensor data upload to central server completed.</p>
+                                        <p class="text-xs text-gray-400 mt-1">25 minutes ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification-item p-4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <i data-lucide="refresh-cw" class="w-5 h-5 text-gray-500"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">Connection Restored</p>
+                                        <p class="text-sm text-gray-500">Network connection to central server has been restored.</p>
+                                        <p class="text-xs text-gray-400 mt-1">1 hour ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Alert History</h3>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            <div class="p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">Emergency Stop</p>
+                                            <p class="text-xs text-gray-500">Zone C - 2 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-400">Resolved</span>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">Low Battery</p>
+                                            <p class="text-xs text-gray-500">Battery - 3 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-400">Resolved</span>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">Network Disconnect</p>
+                                            <p class="text-xs text-gray-500">Network - 4 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-400">Resolved</span>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">System Startup</p>
+                                            <p class="text-xs text-gray-500">System - 6 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-400">Info</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Alert management functions
+        function markAllAsRead() {
+            const unreadNotifications = document.querySelectorAll('.notification-unread');
+            unreadNotifications.forEach(notification => {
+                notification.classList.remove('notification-unread');
+            });
+            
+            // Update alert count
+            const activeAlertCount = document.getElementById('activeAlertCount');
+            if (activeAlertCount) {
+                activeAlertCount.textContent = '0';
+            }
+            
+            // Show success message
+            showNotification('All alerts marked as read', 'success');
+        }
+        
+        function clearAllAlerts() {
+            const alertCards = document.querySelectorAll('.alert-card');
+            alertCards.forEach(card => {
+                card.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => {
+                    card.remove();
+                }, 300);
+            });
+            
+            // Update alert count
+            const activeAlertCount = document.getElementById('activeAlertCount');
+            if (activeAlertCount) {
+                activeAlertCount.textContent = '0';
+            }
+            
+            // Update statistics
+            updateAlertStatistics();
+            
+            showNotification('All alerts cleared', 'success');
+        }
+        
+        function updateAlertStatistics() {
+            const criticalCount = document.getElementById('criticalCount');
+            const warningCount = document.getElementById('warningCount');
+            const infoCount = document.getElementById('infoCount');
+            const resolvedCount = document.getElementById('resolvedCount');
+            
+            if (criticalCount) criticalCount.textContent = '0';
+            if (warningCount) warningCount.textContent = '0';
+            if (infoCount) infoCount.textContent = '5';
+            if (resolvedCount) resolvedCount.textContent = '15';
+        }
+        
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Real-time updates simulation
+        function updateLastUpdate() {
+            const lastUpdate = document.getElementById('lastUpdate');
+            if (lastUpdate) {
+                const seconds = Math.floor(Math.random() * 10) + 1;
+                lastUpdate.textContent = `Last Update: ${seconds} second${seconds > 1 ? 's' : ''} ago`;
+            }
+        }
+        
+        // Initialize real-time updates
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update every 5 seconds
+            setInterval(updateLastUpdate, 5000);
+            
+            // Add click handlers for alert cards
+            const alertCards = document.querySelectorAll('.alert-card');
+            alertCards.forEach(card => {
+                const acknowledgeBtn = card.querySelector('button');
+                if (acknowledgeBtn && acknowledgeBtn.textContent.includes('Acknowledge')) {
+                    acknowledgeBtn.addEventListener('click', function() {
+                        card.style.animation = 'slideOut 0.3s ease-out forwards';
+                        setTimeout(() => {
+                            card.remove();
+                            updateAlertCount();
+                        }, 300);
+                    });
+                }
+            });
+        });
+        
+        function updateAlertCount() {
+            const activeAlerts = document.querySelectorAll('.alert-card');
+            const activeAlertCount = document.getElementById('activeAlertCount');
+            if (activeAlertCount) {
+                activeAlertCount.textContent = activeAlerts.length;
+            }
+        }
+        
+        // Add CSS for slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                to {
+                    opacity: 0;
+                    transform: translateX(100%);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

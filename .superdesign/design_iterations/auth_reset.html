@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt lại mật khẩu - OHT-50 Robot Control System</title>
+    <meta name="description" content="Đặt lại mật khẩu cho hệ thống điều khiển robot OHT-50 - Industrial Safety System">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="auth_theme.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div class="auth-container">
+        <!-- Header -->
+        <header class="auth-header">
+            <div class="auth-header-content">
+                <a href="#" class="auth-logo">
+                    <span class="auth-logo-icon">🤖</span>
+                    <div>
+                        <div class="auth-logo-text">OHT-50</div>
+                        <div class="auth-subtitle">Robot Control System</div>
+                    </div>
+                </a>
+                
+                <div class="auth-header-actions">
+                    <a href="#" class="auth-header-btn">📞 Emergency Contact</a>
+                    <a href="#" class="auth-header-btn">📊 System Status</a>
+                    <a href="#" class="auth-header-btn emergency">🚨 E-STOP</a>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="auth-main" id="main-content">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    <span class="auth-card-icon">🔑</span>
+                    <h1 class="auth-card-title">Đặt lại mật khẩu</h1>
+                    <p class="auth-card-subtitle">Nhập email của bạn để nhận link đặt lại mật khẩu</p>
+                </div>
+                
+                <!-- Alert Messages -->
+                <div class="auth-alert auth-alert-info" id="infoAlert" style="display: none;">
+                    <span>ℹ️</span>
+                    <span>Link đặt lại mật khẩu sẽ được gửi đến email của bạn</span>
+                </div>
+                
+                <div class="auth-alert auth-alert-success" id="successAlert" style="display: none;">
+                    <span>✅</span>
+                    <span>Email đã được gửi thành công! Vui lòng kiểm tra hộp thư của bạn.</span>
+                </div>
+                
+                <div class="auth-alert auth-alert-error" id="errorAlert" style="display: none;">
+                    <span>❌</span>
+                    <span>Lỗi: Không thể gửi email. Vui lòng thử lại sau.</span>
+                </div>
+                
+                <!-- Reset Form -->
+                <form class="auth-form" id="resetForm" novalidate>
+                    <div class="form-group">
+                        <label for="email" class="form-label">Địa chỉ Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-input" 
+                            placeholder="Nhập địa chỉ email của bạn"
+                            required
+                            autocomplete="email"
+                            aria-describedby="email-error"
+                        >
+                        <div id="email-error" class="error-message" style="display: none;"></div>
+                    </div>
+                    
+                    <button type="submit" class="auth-btn auth-btn-primary" id="resetBtn">
+                        <span>📧 Gửi link đặt lại</span>
+                        <span class="auth-loading" id="resetLoading" style="display: none;"></span>
+                    </button>
+                </form>
+                
+                <!-- Additional Links -->
+                <div style="text-align: center; margin-top: var(--space-lg);">
+                    <a href="auth_login.html" class="auth-link-secondary">← Quay lại đăng nhập</a>
+                </div>
+                
+                <!-- Security Notice -->
+                <div style="margin-top: var(--space-xl); padding: var(--space-md); background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                    <h3 style="font-size: var(--text-sm); color: var(--industrial-gray-700); margin-bottom: var(--space-sm);">
+                        🔒 Hướng dẫn bảo mật
+                    </h3>
+                    <ul style="font-size: var(--text-xs); color: var(--industrial-gray-600); margin: 0; padding-left: var(--space-lg); line-height: 1.4;">
+                        <li>Link đặt lại mật khẩu có hiệu lực trong 24 giờ</li>
+                        <li>Chỉ sử dụng link trên thiết bị tin cậy</li>
+                        <li>Không chia sẻ link với người khác</li>
+                        <li>Liên hệ admin nếu không nhận được email</li>
+                    </ul>
+                </div>
+                
+                <!-- Contact Information -->
+                <div style="margin-top: var(--space-lg); padding: var(--space-md); background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-lg);">
+                    <h3 style="font-size: var(--text-sm); color: var(--info-blue); margin-bottom: var(--space-sm);">
+                        📞 Cần hỗ trợ?
+                    </h3>
+                    <p style="font-size: var(--text-xs); color: var(--industrial-gray-600); margin: 0; line-height: 1.4;">
+                        Liên hệ ngay với đội ngũ kỹ thuật:<br>
+                        <strong>Hotline:</strong> 1900-xxxx | <strong>Email:</strong> support@oht50.com
+                    </p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="auth-footer">
+            <div class="auth-footer-content">
+                <div class="auth-footer-links">
+                    <a href="#" class="auth-footer-link">📋 Hướng dẫn sử dụng</a>
+                    <a href="#" class="auth-footer-link">🔧 Hỗ trợ kỹ thuật</a>
+                    <a href="#" class="auth-footer-link">📞 Liên hệ</a>
+                    <a href="#" class="auth-footer-link">📄 Chính sách bảo mật</a>
+                </div>
+                
+                <div class="auth-footer-status">
+                    <span class="status-indicator"></span>
+                    <span>Hệ thống hoạt động bình thường</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Form validation and submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const resetForm = document.getElementById('resetForm');
+            const resetBtn = document.getElementById('resetBtn');
+            const resetLoading = document.getElementById('resetLoading');
+            const emailInput = document.getElementById('email');
+            
+            // Show/hide alerts
+            function showAlert(type, message) {
+                const alerts = document.querySelectorAll('.auth-alert');
+                alerts.forEach(alert => alert.style.display = 'none');
+                
+                const alert = document.getElementById(type + 'Alert');
+                if (alert) {
+                    alert.querySelector('span:last-child').textContent = message;
+                    alert.style.display = 'flex';
+                }
+            }
+            
+            // Email validation
+            function validateEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+            
+            // Form validation
+            function validateForm() {
+                let isValid = true;
+                
+                // Email validation
+                if (!emailInput.value.trim()) {
+                    showFieldError('email', 'Vui lòng nhập địa chỉ email');
+                    isValid = false;
+                } else if (!validateEmail(emailInput.value.trim())) {
+                    showFieldError('email', 'Vui lòng nhập địa chỉ email hợp lệ');
+                    isValid = false;
+                } else {
+                    clearFieldError('email');
+                }
+                
+                return isValid;
+            }
+            
+            function showFieldError(fieldName, message) {
+                const field = document.getElementById(fieldName);
+                const errorDiv = document.getElementById(fieldName + '-error');
+                
+                field.classList.add('error');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+            
+            function clearFieldError(fieldName) {
+                const field = document.getElementById(fieldName);
+                const errorDiv = document.getElementById(fieldName + '-error');
+                
+                field.classList.remove('error');
+                errorDiv.style.display = 'none';
+            }
+            
+            // Form submission
+            resetForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!validateForm()) {
+                    return;
+                }
+                
+                // Show loading state
+                resetBtn.disabled = true;
+                resetLoading.style.display = 'inline-block';
+                resetBtn.querySelector('span:first-child').textContent = 'Đang gửi...';
+                
+                // Simulate API call
+                setTimeout(() => {
+                    // Simulate success
+                    showAlert('success', 'Email đã được gửi thành công! Vui lòng kiểm tra hộp thư của bạn.');
+                    
+                    // Reset form
+                    resetForm.reset();
+                    
+                    // Reset button state
+                    resetBtn.disabled = false;
+                    resetLoading.style.display = 'none';
+                    resetBtn.querySelector('span:first-child').textContent = '📧 Gửi link đặt lại';
+                    
+                    // Auto-hide success message after 5 seconds
+                    setTimeout(() => {
+                        document.getElementById('successAlert').style.display = 'none';
+                    }, 5000);
+                    
+                }, 2000);
+            });
+            
+            // Real-time validation
+            emailInput.addEventListener('blur', function() {
+                if (this.value.trim() && validateEmail(this.value.trim())) {
+                    clearFieldError('email');
+                }
+            });
+            
+            emailInput.addEventListener('input', function() {
+                if (this.value.trim() && validateEmail(this.value.trim())) {
+                    clearFieldError('email');
+                }
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl + Enter to submit
+                if (e.ctrlKey && e.key === 'Enter') {
+                    resetForm.dispatchEvent(new Event('submit'));
+                }
+                
+                // Escape to clear form
+                if (e.key === 'Escape') {
+                    resetForm.reset();
+                    document.querySelectorAll('.auth-alert').forEach(alert => {
+                        alert.style.display = 'none';
+                    });
+                }
+            });
+            
+            // Emergency button
+            document.querySelector('.auth-header-btn.emergency').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('🚨 Bạn có chắc chắn muốn kích hoạt E-STOP?\n\nHành động này sẽ dừng tất cả robot đang hoạt động.')) {
+                    alert('E-STOP đã được kích hoạt! Liên hệ ngay với kỹ sư để xử lý.');
+                }
+            });
+            
+            // Show info alert on page load
+            setTimeout(() => {
+                showAlert('info', 'Link đặt lại mật khẩu sẽ được gửi đến email của bạn');
+            }, 1000);
+        });
+    </script>
+    
+    <!-- Additional CSS for form validation -->
+    <style>
+        .form-input.error {
+            border-color: var(--error-red);
+            box-shadow: var(--shadow-focus-error);
+        }
+        
+        .error-message {
+            color: var(--error-red);
+            font-size: var(--text-sm);
+            margin-top: var(--space-xs);
+        }
+        
+        .auth-alert {
+            animation: slideInDown 0.3s ease-out;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Focus management */
+        .form-input:focus {
+            transform: scale(1.02);
+        }
+        
+        /* Button press animation */
+        .auth-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Loading state */
+        .auth-btn:disabled {
+            cursor: not-allowed;
+        }
+        
+        /* Success animation */
+        .auth-alert-success {
+            animation: slideInDown 0.3s ease-out, pulse 2s ease-in-out 0.3s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        /* High contrast mode enhancements */
+        @media (prefers-contrast: high) {
+            .form-input.error {
+                border-width: 3px;
+            }
+            
+            .auth-btn {
+                border-width: 2px;
+            }
+        }
+        
+        /* List styling */
+        ul {
+            list-style-type: none;
+        }
+        
+        ul li {
+            position: relative;
+            padding-left: var(--space-md);
+        }
+        
+        ul li::before {
+            content: "•";
+            color: var(--primary-orange);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</body>
+</html>

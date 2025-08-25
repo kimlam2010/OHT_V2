@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng xuất - OHT-50 Robot Control System</title>
+    <meta name="description" content="Xác nhận đăng xuất khỏi hệ thống điều khiển robot OHT-50 - Industrial Safety System">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="auth_theme.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div class="auth-container">
+        <!-- Header -->
+        <header class="auth-header">
+            <div class="auth-header-content">
+                <a href="#" class="auth-logo">
+                    <span class="auth-logo-icon">🤖</span>
+                    <div>
+                        <div class="auth-logo-text">OHT-50</div>
+                        <div class="auth-subtitle">Robot Control System</div>
+                    </div>
+                </a>
+                
+                <div class="auth-header-actions">
+                    <a href="#" class="auth-header-btn">📞 Emergency Contact</a>
+                    <a href="#" class="auth-header-btn">📊 System Status</a>
+                    <a href="#" class="auth-header-btn emergency">🚨 E-STOP</a>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="auth-main" id="main-content">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    <span class="auth-card-icon">👋</span>
+                    <h1 class="auth-card-title">Xác nhận đăng xuất</h1>
+                    <p class="auth-card-subtitle">Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?</p>
+                </div>
+                
+                <!-- User Session Info -->
+                <div style="margin-bottom: var(--space-xl); padding: var(--space-lg); background: var(--bg-secondary); border-radius: var(--radius-lg); border-left: 4px solid var(--primary-orange);">
+                    <h3 style="font-size: var(--text-sm); color: var(--industrial-gray-700); margin-bottom: var(--space-md);">
+                        👤 Thông tin phiên làm việc
+                    </h3>
+                    <div style="display: grid; gap: var(--space-sm);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: var(--text-sm); color: var(--industrial-gray-600);">Người dùng:</span>
+                            <span style="font-weight: var(--font-semibold); color: var(--industrial-gray-700);">Nguyễn Văn A</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: var(--text-sm); color: var(--industrial-gray-600);">Vai trò:</span>
+                            <span style="font-weight: var(--font-semibold); color: var(--primary-orange);">Kỹ sư điều khiển</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: var(--text-sm); color: var(--industrial-gray-600);">Thời gian đăng nhập:</span>
+                            <span style="font-size: var(--text-sm); color: var(--industrial-gray-700);">2 giờ 15 phút trước</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: var(--text-sm); color: var(--industrial-gray-600);">Hoạt động cuối:</span>
+                            <span style="font-size: var(--text-sm); color: var(--industrial-gray-700);">5 phút trước</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warning Message -->
+                <div style="margin-bottom: var(--space-xl); padding: var(--space-md); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-lg);">
+                    <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+                        <span style="font-size: var(--text-lg);">⚠️</span>
+                        <h3 style="font-size: var(--text-sm); color: var(--warning-yellow); margin: 0;">Lưu ý quan trọng</h3>
+                    </div>
+                    <p style="font-size: var(--text-xs); color: var(--industrial-gray-600); margin: 0; line-height: 1.4;">
+                        Đăng xuất sẽ kết thúc phiên làm việc hiện tại. Mọi thay đổi chưa lưu sẽ bị mất. 
+                        Đảm bảo bạn đã lưu tất cả công việc quan trọng trước khi đăng xuất.
+                    </p>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: var(--space-md); margin-bottom: var(--space-lg);">
+                    <button type="button" class="auth-btn auth-btn-secondary" id="cancelBtn" style="flex: 1;">
+                        <span>❌ Hủy bỏ</span>
+                    </button>
+                    <button type="button" class="auth-btn auth-btn-danger" id="logoutBtn" style="flex: 1;">
+                        <span>✅ Đăng xuất</span>
+                        <span class="auth-loading" id="logoutLoading" style="display: none;"></span>
+                    </button>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div style="margin-top: var(--space-xl); padding: var(--space-md); background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                    <h3 style="font-size: var(--text-sm); color: var(--industrial-gray-700); margin-bottom: var(--space-md);">
+                        ⚡ Thao tác nhanh
+                    </h3>
+                    <div style="display: grid; gap: var(--space-sm);">
+                        <button type="button" class="auth-btn auth-btn-secondary" style="justify-content: flex-start; text-align: left;">
+                            <span>💾 Lưu phiên làm việc</span>
+                        </button>
+                        <button type="button" class="auth-btn auth-btn-secondary" style="justify-content: flex-start; text-align: left;">
+                            <span>📊 Xuất báo cáo</span>
+                        </button>
+                        <button type="button" class="auth-btn auth-btn-secondary" style="justify-content: flex-start; text-align: left;">
+                            <span>⚙️ Cài đặt hệ thống</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Session Summary -->
+                <div style="margin-top: var(--space-lg); padding: var(--space-md); background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-lg);">
+                    <h3 style="font-size: var(--text-sm); color: var(--success-green); margin-bottom: var(--space-sm);">
+                        📈 Tóm tắt phiên làm việc
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-sm);">
+                        <div style="text-align: center;">
+                            <div style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--success-green);">12</div>
+                            <div style="font-size: var(--text-xs); color: var(--industrial-gray-600);">Nhiệm vụ hoàn thành</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--info-blue);">2h 15m</div>
+                            <div style="font-size: var(--text-xs); color: var(--industrial-gray-600);">Thời gian hoạt động</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--warning-yellow);">0</div>
+                            <div style="font-size: var(--text-xs); color: var(--industrial-gray-600);">Cảnh báo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="auth-footer">
+            <div class="auth-footer-content">
+                <div class="auth-footer-links">
+                    <a href="#" class="auth-footer-link">📋 Hướng dẫn sử dụng</a>
+                    <a href="#" class="auth-footer-link">🔧 Hỗ trợ kỹ thuật</a>
+                    <a href="#" class="auth-footer-link">📞 Liên hệ</a>
+                    <a href="#" class="auth-footer-link">📄 Chính sách bảo mật</a>
+                </div>
+                
+                <div class="auth-footer-status">
+                    <span class="status-indicator"></span>
+                    <span>Hệ thống hoạt động bình thường</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cancelBtn = document.getElementById('cancelBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const logoutLoading = document.getElementById('logoutLoading');
+            
+            // Cancel logout
+            cancelBtn.addEventListener('click', function() {
+                // Go back to previous page or dashboard
+                if (document.referrer) {
+                    window.history.back();
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+            });
+            
+            // Confirm logout
+            logoutBtn.addEventListener('click', function() {
+                if (confirm('🚨 Bạn có chắc chắn muốn đăng xuất?\n\nMọi thay đổi chưa lưu sẽ bị mất.')) {
+                    // Show loading state
+                    logoutBtn.disabled = true;
+                    logoutLoading.style.display = 'inline-block';
+                    logoutBtn.querySelector('span:first-child').textContent = 'Đang đăng xuất...';
+                    
+                    // Simulate logout process
+                    setTimeout(() => {
+                        // Clear session data (in real app)
+                        localStorage.removeItem('userSession');
+                        sessionStorage.clear();
+                        
+                        // Show success message
+                        showLogoutSuccess();
+                        
+                        // Redirect to login page after delay
+                        setTimeout(() => {
+                            window.location.href = 'auth_login.html';
+                        }, 2000);
+                        
+                    }, 1500);
+                }
+            });
+            
+            function showLogoutSuccess() {
+                // Create success message
+                const successDiv = document.createElement('div');
+                successDiv.className = 'auth-alert auth-alert-success';
+                successDiv.style.display = 'flex';
+                successDiv.innerHTML = `
+                    <span>✅</span>
+                    <span>Đăng xuất thành công! Đang chuyển hướng...</span>
+                `;
+                
+                // Insert after card header
+                const cardHeader = document.querySelector('.auth-card-header');
+                cardHeader.parentNode.insertBefore(successDiv, cardHeader.nextSibling);
+                
+                // Animate the message
+                successDiv.style.animation = 'slideInDown 0.3s ease-out, pulse 2s ease-in-out 0.3s';
+            }
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Escape to cancel
+                if (e.key === 'Escape') {
+                    cancelBtn.click();
+                }
+                
+                // Enter to confirm logout
+                if (e.key === 'Enter') {
+                    logoutBtn.click();
+                }
+            });
+            
+            // Emergency button
+            document.querySelector('.auth-header-btn.emergency').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('🚨 Bạn có chắc chắn muốn kích hoạt E-STOP?\n\nHành động này sẽ dừng tất cả robot đang hoạt động.')) {
+                    alert('E-STOP đã được kích hoạt! Liên hệ ngay với kỹ sư để xử lý.');
+                }
+            });
+            
+            // Auto-save session data
+            function autoSaveSession() {
+                const sessionData = {
+                    lastActivity: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    timestamp: Date.now()
+                };
+                
+                localStorage.setItem('sessionBackup', JSON.stringify(sessionData));
+            }
+            
+            // Auto-save every 30 seconds
+            setInterval(autoSaveSession, 30000);
+            
+            // Save on page unload
+            window.addEventListener('beforeunload', function(e) {
+                autoSaveSession();
+                
+                // Show warning if there are unsaved changes
+                if (hasUnsavedChanges()) {
+                    e.preventDefault();
+                    e.returnValue = 'Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?';
+                }
+            });
+            
+            function hasUnsavedChanges() {
+                // Check for unsaved changes (implement based on your app logic)
+                return false; // Placeholder
+            }
+            
+            // Quick action buttons
+            document.querySelectorAll('.auth-btn-secondary').forEach(btn => {
+                if (btn.textContent.includes('Lưu phiên')) {
+                    btn.addEventListener('click', function() {
+                        autoSaveSession();
+                        this.innerHTML = '<span>✅ Đã lưu</span>';
+                        setTimeout(() => {
+                            this.innerHTML = '<span>💾 Lưu phiên làm việc</span>';
+                        }, 2000);
+                    });
+                }
+                
+                if (btn.textContent.includes('Xuất báo cáo')) {
+                    btn.addEventListener('click', function() {
+                        this.innerHTML = '<span>📊 Đang xuất...</span>';
+                        setTimeout(() => {
+                            alert('Báo cáo đã được xuất thành công!');
+                            this.innerHTML = '<span>📊 Xuất báo cáo</span>';
+                        }, 2000);
+                    });
+                }
+                
+                if (btn.textContent.includes('Cài đặt')) {
+                    btn.addEventListener('click', function() {
+                        window.open('settings.html', '_blank');
+                    });
+                }
+            });
+        });
+    </script>
+    
+    <!-- Additional CSS for logout page -->
+    <style>
+        .auth-alert {
+            animation: slideInDown 0.3s ease-out;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        /* Button hover effects */
+        .auth-btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .auth-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        /* Session info styling */
+        .session-info {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            border-left: 4px solid var(--primary-orange);
+        }
+        
+        /* Warning styling */
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md);
+        }
+        
+        /* Success styling */
+        .success-box {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md);
+        }
+        
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--space-sm);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: var(--text-lg);
+            font-weight: var(--font-bold);
+        }
+        
+        .stat-label {
+            font-size: var(--text-xs);
+            color: var(--industrial-gray-600);
+        }
+        
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            .auth-btn {
+                border-width: 2px;
+            }
+            
+            .warning-box,
+            .success-box {
+                border-width: 2px;
+            }
+        }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .auth-btn:hover {
+                transform: none;
+            }
+            
+            .auth-alert {
+                animation: none;
+            }
+        }
+    </style>
+</body>
+</html>

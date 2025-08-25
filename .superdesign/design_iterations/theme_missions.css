@@ -1,0 +1,231 @@
+/* Missions Interface Theme - OHT-50 */
+:root {
+  /* Base Colors - Consistent with other interfaces */
+  --background: oklch(0.9851 0 0);
+  --foreground: oklch(0.1448 0 0);
+  --card: oklch(1.0000 0 0);
+  --card-foreground: oklch(0.1448 0 0);
+  --popover: oklch(1.0000 0 0);
+  --popover-foreground: oklch(0.1448 0 0);
+  --primary: oklch(0.6489 0.2370 26.9728);
+  --primary-foreground: oklch(1.0000 0 0);
+  --secondary: oklch(0.9680 0.2110 109.7692);
+  --secondary-foreground: oklch(0.1448 0 0);
+  --muted: oklch(0.9702 0 0);
+  --muted-foreground: oklch(0.5486 0 0);
+  --accent: oklch(0.9702 0 0);
+  --accent-foreground: oklch(0.2046 0 0);
+  --destructive: oklch(0.5830 0.2387 28.4765);
+  --destructive-foreground: oklch(1.0000 0 0);
+  --border: oklch(0.9219 0 0);
+  --input: oklch(0.9219 0 0);
+  --ring: oklch(0.7090 0 0);
+  
+  /* Mission-specific Colors */
+  --mission-active: oklch(0.7323 0.2492 142.4953);
+  --mission-pending: oklch(0.5931 0.2726 328.3634);
+  --mission-completed: oklch(0.6200 0.1900 260.0000);
+  --mission-failed: oklch(0.5770 0.2450 27.3250);
+  --mission-priority-high: oklch(0.5830 0.2387 28.4765);
+  --mission-priority-medium: oklch(0.6489 0.2370 26.9728);
+  --mission-priority-low: oklch(0.6200 0.1900 260.0000);
+  
+  /* Sidebar Colors */
+  --sidebar: oklch(0.9851 0 0);
+  --sidebar-foreground: oklch(0.1448 0 0);
+  --sidebar-primary: oklch(0.2046 0 0);
+  --sidebar-primary-foreground: oklch(0.9851 0 0);
+  --sidebar-accent: oklch(0.9702 0 0);
+  --sidebar-accent-foreground: oklch(0.2046 0 0);
+  --sidebar-border: oklch(0.9219 0 0);
+  --sidebar-ring: oklch(0.7090 0 0);
+  
+  /* Mission Card Colors */
+  --mission-card-bg: oklch(1.0000 0 0);
+  --mission-card-border: oklch(0.9219 0 0);
+  --mission-card-hover: oklch(0.9702 0 0);
+  --mission-progress-bg: oklch(0.9702 0 0);
+  --mission-progress-fill: oklch(0.7323 0.2492 142.4953);
+  
+  /* Typography */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  
+  /* Spacing & Layout */
+  --radius: 0.625rem;
+  --spacing: 0.25rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+}
+
+/* Mission Status Badges */
+.mission-status-active {
+  background-color: var(--mission-active) !important;
+  color: white !important;
+}
+
+.mission-status-pending {
+  background-color: var(--mission-pending) !important;
+  color: white !important;
+}
+
+.mission-status-completed {
+  background-color: var(--mission-completed) !important;
+  color: white !important;
+}
+
+.mission-status-failed {
+  background-color: var(--mission-failed) !important;
+  color: white !important;
+}
+
+/* Mission Priority Badges */
+.mission-priority-high {
+  background-color: var(--mission-priority-high) !important;
+  color: white !important;
+}
+
+.mission-priority-medium {
+  background-color: var(--mission-priority-medium) !important;
+  color: white !important;
+}
+
+.mission-priority-low {
+  background-color: var(--mission-priority-low) !important;
+  color: white !important;
+}
+
+/* Mission Cards */
+.mission-card {
+  background-color: var(--mission-card-bg) !important;
+  border: 1px solid var(--mission-card-border) !important;
+  border-radius: var(--radius) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.mission-card:hover {
+  background-color: var(--mission-card-hover) !important;
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Progress Bars */
+.mission-progress {
+  background-color: var(--mission-progress-bg) !important;
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+}
+
+.mission-progress-fill {
+  background-color: var(--mission-progress-fill) !important;
+  transition: width 0.3s ease-in-out !important;
+}
+
+/* Mission Timeline */
+.mission-timeline {
+  border-left: 2px solid var(--border) !important;
+  padding-left: 1.5rem !important;
+}
+
+.mission-timeline-item {
+  position: relative !important;
+  margin-bottom: 1rem !important;
+}
+
+.mission-timeline-item::before {
+  content: '' !important;
+  position: absolute !important;
+  left: -1.75rem !important;
+  top: 0.5rem !important;
+  width: 0.5rem !important;
+  height: 0.5rem !important;
+  border-radius: 50% !important;
+  background-color: var(--primary) !important;
+}
+
+/* Mission Form */
+.mission-form {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  padding: 1.5rem !important;
+}
+
+.mission-form input,
+.mission-form select,
+.mission-form textarea {
+  background-color: var(--input) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  padding: 0.5rem 0.75rem !important;
+  transition: border-color 0.2s ease-in-out !important;
+}
+
+.mission-form input:focus,
+.mission-form select:focus,
+.mission-form textarea:focus {
+  outline: none !important;
+  border-color: var(--ring) !important;
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.1) !important;
+}
+
+/* Mission Stats */
+.mission-stats {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  padding: 1rem !important;
+}
+
+.mission-stats-number {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: var(--primary) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mission-card {
+    margin-bottom: 1rem !important;
+  }
+  
+  .mission-timeline {
+    padding-left: 1rem !important;
+  }
+  
+  .mission-timeline-item::before {
+    left: -1.25rem !important;
+  }
+}
+
+/* Animation Classes */
+.mission-card-enter {
+  opacity: 0 !important;
+  transform: translateY(20px) !important;
+  animation: missionCardEnter 0.3s ease-out forwards !important;
+}
+
+@keyframes missionCardEnter {
+  to {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+}
+
+.mission-progress-animate {
+  animation: progressPulse 2s ease-in-out infinite !important;
+}
+
+@keyframes progressPulse {
+  0%, 100% {
+    opacity: 1 !important;
+  }
+  50% {
+    opacity: 0.8 !important;
+  }
+}

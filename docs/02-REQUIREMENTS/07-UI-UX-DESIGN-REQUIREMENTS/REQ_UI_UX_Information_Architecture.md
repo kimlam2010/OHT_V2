@@ -425,6 +425,71 @@ Filters: [All] [Active] [Completed] [Failed]
 - Added user flows
 - Added data architecture
 
+---
+
+## 🎯 **PHẠM VI OHT-50 - THEO UI/UX REQUIREMENTS**
+
+### **Dashboard Requirements (theo REQ_UI_UX_Dashboard_Design.md):**
+- **Layout Structure:** Multi-panel dashboard với 12-column grid system
+- **Status Panel:** Robot status overview với real-time indicators
+- **Control Panel:** Manual control interface với emergency controls
+- **Map Interface:** LiDAR 360° visualization với interactive controls
+
+### **UI Components (theo các tài liệu UI/UX):**
+
+#### **1. Core Dashboard Components (theo REQ_UI_UX_Dashboard_Design.md):**
+- **Robot Status Card:** Operating mode, battery, speed, position, connection, temperature
+- **Manual Control Panel:** Movement controls, speed control, emergency controls
+- **LiDAR Map Interface:** Real-time 360° visualization, obstacle detection, path planning
+
+#### **2. Control Panel Components (theo REQ_UI_UX_Control_Panel.md):**
+- **Control Mode Selector:** AUTO/MANUAL/SEMI/MAINT modes
+- **Movement Controls:** Directional buttons (forward, backward, left, right, stop)
+- **Speed Control:** Slider và presets (Slow, Normal, Fast, Max)
+- **Emergency Controls:** E-Stop, Pause, Reset, Home buttons
+
+#### **3. Alert System Components (theo REQ_UI_UX_Alert_System.md):**
+- **Alert Banner System:** Critical, Warning, Info, Success alerts
+- **Notification Center:** Filterable notifications với actions
+- **Audio Notifications:** Configurable audio alerts với volume control
+
+#### **4. Configuration Interface (theo REQ_UI_UX_Configuration_Interface.md):**
+- **Configuration Categories:** Safety, Operational, System, Interface
+- **Configuration Panel:** Sidebar navigation với form controls
+- **Validation System:** Real-time validation với safety checks
+
+#### **5. Map Interface Components (theo REQ_UI_UX_Map_Interface.md):**
+- **LiDAR Visualization:** Real-time point cloud rendering
+- **Navigation Path:** Path planning với waypoints và safety corridor
+- **Obstacle Detection:** Clustering algorithm với classification
+- **Interactive Controls:** Zoom, pan, reset view, fullscreen
+
+#### **6. Accessibility Features (theo REQ_UI_UX_Accessibility.md):**
+- **Visual Accessibility:** Color contrast, typography, focus indicators
+- **Motor Accessibility:** Keyboard navigation, touch targets
+- **Cognitive Accessibility:** Clear hierarchy, consistent patterns
+- **Assistive Technology:** Screen reader support, semantic HTML
+
+### **Design System Integration (theo REQ_UI_UX_Design_System.md):**
+- **Design Tokens:** Color system, typography, spacing, shadows
+- **Component Library:** Button, Form, Data Display, Navigation, Feedback components
+- **Responsive Design:** Mobile-first approach với breakpoints
+- **Accessibility Guidelines:** WCAG 2.1 AA compliance
+
+### **Information Architecture (theo REQ_UI_UX_Information_Architecture.md):**
+- **Site Map:** 9 main sections từ Authentication đến Documentation
+- **Content Hierarchy:** 4 levels từ Critical đến Supporting information
+- **Navigation Structure:** Primary navigation + Secondary sidebar
+- **User Flows:** 4 main flows (Daily Monitoring, Emergency Response, Manual Control, Configuration)
+
+### **Interaction Design (theo REQ_UI_UX_Interaction_Design.md):**
+- **Emergency Controls:** Safety-first với immediate response
+- **Manual Control Panel:** Intuitive movement controls với real-time feedback
+- **Voice Commands:** Voice control interface với command recognition
+- **Visual Feedback:** Loading states, status indicators, alert notifications
+
+---
+
 **Next Steps:**
 - Create wireframes based on this architecture
 - Implement navigation structure
