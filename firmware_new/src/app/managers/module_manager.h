@@ -24,17 +24,10 @@ extern "C" {
 // Module Types (Unified from module_registry.h and module_manager.h)
 typedef enum {
     MODULE_TYPE_UNKNOWN = 0,
-    MODULE_TYPE_MOTOR,             // Motor modules
-    MODULE_TYPE_IO,                // I/O modules
-    MODULE_TYPE_DOCK,              // Docking modules
-    MODULE_TYPE_SENSOR,            // Sensor modules (LiDAR, encoders, etc.)
-    MODULE_TYPE_POWER,             // Power modules
-    MODULE_TYPE_ACTUATOR,          // Actuator modules (motors, relays, etc.)
-    MODULE_TYPE_CONTROLLER,        // Controller modules (PID, motion, etc.)
-    MODULE_TYPE_SAFETY,            // Safety modules (E-Stop, interlocks, etc.)
-    MODULE_TYPE_COMMUNICATION,     // Communication modules (RS485, CAN, etc.)
-    MODULE_TYPE_STORAGE,           // Storage modules (SD card, flash, etc.)
-    MODULE_TYPE_DISPLAY,           // Display modules (LCD, LED, etc.)
+    MODULE_TYPE_POWER = 0x02,        // Power module (0x02)
+    MODULE_TYPE_SAFETY = 0x03,       // Safety module (0x03)
+    MODULE_TYPE_TRAVEL_MOTOR = 0x04, // Travel Motor module (0x04)
+    MODULE_TYPE_DOCK = 0x05,         // Dock & Location module (0x05)
     MODULE_TYPE_MAX
 } module_type_t;
 

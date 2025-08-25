@@ -7,7 +7,7 @@
  * @task FW-29 (Motor Module Implementation)
  */
 
-#include "motor_module_handler.h"
+#include "travel_motor_module_handler.h"
 #include "hal_common.h"
 #include <string.h>
 #include <stdio.h>
@@ -685,7 +685,7 @@ hal_status_t motor_module_read_registers(motor_module_handler_t *handler, uint16
     comm_mgr_modbus_response_t response;
     hal_status_t status = comm_manager_modbus_send_request(&request, &response);
     if (status != HAL_STATUS_OK) {
-        printf("[MOTOR] Modbus read failed for registers 0x%04X-%0x%04X\n", start_register, start_register + count - 1);
+        printf("[MOTOR] Modbus read failed for registers 0x%04X-0x%04X\n", start_register, start_register + count - 1);
         return status;
     }
     
@@ -732,7 +732,7 @@ hal_status_t motor_module_write_registers(motor_module_handler_t *handler, uint1
     free(modbus_data);
     
     if (status != HAL_STATUS_OK) {
-        printf("[MOTOR] Modbus write failed for registers 0x%04X-%0x%04X\n", start_register, start_register + count - 1);
+        printf("[MOTOR] Modbus write failed for registers 0x%04X-0x%04X\n", start_register, start_register + count - 1);
         return status;
     }
     

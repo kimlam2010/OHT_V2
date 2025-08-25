@@ -1,18 +1,19 @@
 /**
- * @file motor_module_handler.h
- * @brief Motor Module Handler for OHT-50 Master Module
+ * @file travel_motor_module_handler.h
+ * @brief Travel Motor Module Handler for OHT-50 Master Module
  * @version 1.0.0
- * @date 2025-01-27
+ * @date 2025-01-28
  * @team FW
- * @task FW-29 (Motor Module Implementation)
+ * @task FW-Phase3-1 (Travel Motor Module Implementation)
  */
 
-#ifndef MOTOR_MODULE_HANDLER_H
-#define MOTOR_MODULE_HANDLER_H
+#ifndef TRAVEL_MOTOR_MODULE_HANDLER_H
+#define TRAVEL_MOTOR_MODULE_HANDLER_H
 
 #include "hal_common.h"
 #include "communication_manager.h"
 #include "safety_manager.h"
+#include "register_map.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -486,4 +487,4 @@ hal_status_t motor_module_get_statistics(motor_module_handler_t *handler, uint32
                                        uint32_t *successful_moves, uint32_t *failed_moves, 
                                        uint64_t *total_runtime);
 
-#endif // MOTOR_MODULE_HANDLER_H
+#endif // TRAVEL_MOTOR_MODULE_HANDLER_H

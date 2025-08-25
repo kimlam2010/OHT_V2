@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hal_common.h"
+#include "register_map.h"
 
 // Power module capabilities
 #define POWER_CAP_VOLTAGE_MONITOR     (1 << 0)

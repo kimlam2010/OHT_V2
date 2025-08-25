@@ -81,17 +81,10 @@ void test_module_type_constants(void)
 {
     // Test module type constants
     TEST_ASSERT_EQUAL(0, MODULE_TYPE_UNKNOWN);
-    TEST_ASSERT_EQUAL(1, MODULE_TYPE_MOTOR);
-    TEST_ASSERT_EQUAL(2, MODULE_TYPE_IO);
-    TEST_ASSERT_EQUAL(3, MODULE_TYPE_DOCK);
-    TEST_ASSERT_EQUAL(4, MODULE_TYPE_SENSOR);
-    TEST_ASSERT_EQUAL(5, MODULE_TYPE_POWER);
-    TEST_ASSERT_EQUAL(6, MODULE_TYPE_ACTUATOR);
-    TEST_ASSERT_EQUAL(7, MODULE_TYPE_CONTROLLER);
-    TEST_ASSERT_EQUAL(8, MODULE_TYPE_SAFETY);
-    TEST_ASSERT_EQUAL(9, MODULE_TYPE_COMMUNICATION);
-    TEST_ASSERT_EQUAL(10, MODULE_TYPE_STORAGE);
-    TEST_ASSERT_EQUAL(11, MODULE_TYPE_DISPLAY);
+    TEST_ASSERT_EQUAL(0x02, MODULE_TYPE_POWER);
+    TEST_ASSERT_EQUAL(0x03, MODULE_TYPE_SAFETY);
+    TEST_ASSERT_EQUAL(0x04, MODULE_TYPE_TRAVEL_MOTOR);
+    TEST_ASSERT_EQUAL(0x05, MODULE_TYPE_DOCK);
 }
 
 void test_module_status_constants(void)
@@ -329,7 +322,7 @@ void test_module_manager_type_names(void)
     type_name = module_manager_get_type_name(MODULE_TYPE_POWER);
     TEST_ASSERT_NOT_NULL(type_name);
     
-    type_name = module_manager_get_type_name(MODULE_TYPE_MOTOR);
+            type_name = module_manager_get_type_name(MODULE_TYPE_TRAVEL_MOTOR);
     TEST_ASSERT_NOT_NULL(type_name);
 }
 

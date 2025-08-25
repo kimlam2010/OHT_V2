@@ -107,19 +107,19 @@ hal_status_t power_module_handler_init(const power_module_config_t *config)
  */
 hal_status_t power_module_handler_deinit(void)
 {
-    pthread_mutex_lock(&power_module_state.mutex);
-    
     if (!power_module_state.initialized) {
-        pthread_mutex_unlock(&power_module_state.mutex);
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    // Cleanup mutex
-    pthread_mutex_destroy(&power_module_state.mutex);
+    pthread_mutex_lock(&power_module_state.mutex);
     
+    // Mark as not initialized first
     power_module_state.initialized = false;
     
     pthread_mutex_unlock(&power_module_state.mutex);
+    
+    // Destroy mutex after unlocking
+    pthread_mutex_destroy(&power_module_state.mutex);
     
     printf("Power module handler deinitialized\n");
     return HAL_STATUS_OK;
@@ -732,40 +732,53 @@ static hal_status_t power_module_read_system_info(void)
 static hal_status_t power_module_validate_config(const power_module_config_t *config)
 {
     if (!config) {
+        printf("Validation failed: NULL config\n");
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     // Validate Modbus configuration
     if (config->slave_id < 1 || config->slave_id > 247) {
+        printf("Validation failed: invalid slave_id %d\n", config->slave_id);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     if (config->baudrate_code < 1 || config->baudrate_code > 5) {
+        printf("Validation failed: invalid baudrate_code %d\n", config->baudrate_code);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     if (config->parity > 2) {
+        printf("Validation failed: invalid parity %d\n", config->parity);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     if (config->stop_bits < 1 || config->stop_bits > 2) {
+        printf("Validation failed: invalid stop_bits %d\n", config->stop_bits);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     // Validate battery thresholds
     if (config->max_cell_threshold_1 < config->min_cell_threshold_1) {
+        printf("Validation failed: max_cell_threshold_1 (%d) < min_cell_threshold_1 (%d)\n", 
+               config->max_cell_threshold_1, config->min_cell_threshold_1);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     if (config->max_cell_threshold_2 < config->min_cell_threshold_2) {
+        printf("Validation failed: max_cell_threshold_2 (%d) < min_cell_threshold_2 (%d)\n", 
+               config->max_cell_threshold_2, config->min_cell_threshold_2);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     if (config->max_pack_threshold_1 < config->min_pack_threshold_1) {
+        printf("Validation failed: max_pack_threshold_1 (%d) < min_pack_threshold_1 (%d)\n", 
+               config->max_pack_threshold_1, config->min_pack_threshold_1);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     if (config->max_pack_threshold_2 < config->min_pack_threshold_2) {
+        printf("Validation failed: max_pack_threshold_2 (%d) < min_pack_threshold_2 (%d)\n", 
+               config->max_pack_threshold_2, config->min_pack_threshold_2);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     

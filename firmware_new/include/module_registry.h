@@ -15,11 +15,10 @@
 
 typedef enum {
     MODULE_TYPE_UNKNOWN = 0,
-    MODULE_TYPE_MOTOR,
-    MODULE_TYPE_IO,
-    MODULE_TYPE_DOCK,
-    MODULE_TYPE_SENSOR,
-    MODULE_TYPE_POWER,  // Power module (0x02)
+    MODULE_TYPE_POWER = 0x02,        // Power module (0x02)
+    MODULE_TYPE_SAFETY = 0x03,       // Safety module (0x03)
+    MODULE_TYPE_TRAVEL_MOTOR = 0x04, // Travel Motor module (0x04)
+    MODULE_TYPE_DOCK = 0x05,         // Dock & Location module (0x05)
 } module_type_t;
 
 typedef enum {

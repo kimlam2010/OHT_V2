@@ -175,10 +175,9 @@ static module_type_t probe_module_type(uint8_t addr) {
             // Map module type register values to our enum (per integration doc)
             switch (module_type) {
                 case 0x0002: return MODULE_TYPE_POWER;   // Power module
-                case 0x0003: return MODULE_TYPE_MOTOR;   // Motor module (placeholder)
-                case 0x0004: return MODULE_TYPE_IO;      // IO module (placeholder)
-                case 0x0005: return MODULE_TYPE_DOCK;    // Dock module (placeholder)
-                case 0x0006: return MODULE_TYPE_SENSOR;  // Sensor module (placeholder)
+                case 0x0003: return MODULE_TYPE_SAFETY;  // Safety module
+                case 0x0004: return MODULE_TYPE_TRAVEL_MOTOR; // Travel Motor module
+                case 0x0005: return MODULE_TYPE_DOCK;    // Dock & Location module
                 default: break;
             }
         }
@@ -187,9 +186,9 @@ static module_type_t probe_module_type(uint8_t addr) {
     // Fallback: identify by address if module type register not available/invalid
     switch (addr) {
         case 0x02: return MODULE_TYPE_POWER;   // Power module (0x02)
-        case 0x03: return MODULE_TYPE_MOTOR;   // Motor module (0x03)
-        case 0x04: return MODULE_TYPE_IO;      // IO module (0x04)
-        case 0x05: return MODULE_TYPE_DOCK;    // Dock module (0x05)
+        case 0x03: return MODULE_TYPE_SAFETY;  // Safety module (0x03)
+        case 0x04: return MODULE_TYPE_TRAVEL_MOTOR; // Travel Motor module (0x04)
+        case 0x05: return MODULE_TYPE_DOCK;    // Dock & Location module (0x05)
         default: return MODULE_TYPE_UNKNOWN;
     }
 }
