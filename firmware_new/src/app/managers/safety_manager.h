@@ -14,77 +14,18 @@
 #include "hal_estop.h"
 #include "hal_led.h"
 #include "system_state_machine.h"
+#include "safety_types.h"
 #include <stdint.h>
 #include <stdbool.h>
 
-// Safety Levels
-typedef enum {
-    SAFETY_LEVEL_NORMAL = 0,     // Normal operation
-    SAFETY_LEVEL_WARNING,        // Warning condition
-    SAFETY_LEVEL_CRITICAL,       // Critical condition
-    SAFETY_LEVEL_EMERGENCY       // Emergency stop
-} safety_level_t;
+// Safety Levels - Using unified safety_level_t from safety_types.h
+// Safety Events - Using unified safety_event_t from safety_types.h
+// Safety Fault Types - Using unified safety_fault_t from safety_types.h
 
-// Safety Events
-typedef enum {
-    SAFETY_EVENT_NONE = 0,
-    SAFETY_EVENT_ESTOP_TRIGGERED,    // E-Stop button pressed
-    SAFETY_EVENT_ESTOP_RESET,        // E-Stop reset
-    SAFETY_EVENT_SAFETY_FAULT,       // Safety fault detected
-    SAFETY_EVENT_SAFETY_CLEARED,     // Safety fault cleared
-    SAFETY_EVENT_EMERGENCY_STOP,     // Emergency stop triggered
-    SAFETY_EVENT_SAFETY_TIMEOUT,     // Safety timeout
-    SAFETY_EVENT_SYSTEM_FAULT,       // System fault
-    SAFETY_EVENT_INTERLOCK_TRIGGERED, // Interlock triggered
-    SAFETY_EVENT_INTERLOCK_RELEASED  // Interlock released
-} safety_event_t;
+// Safety Status Structure - Using unified safety_status_info_t from safety_types.h
+// Safety Configuration Structure - Using unified safety_config_t from safety_types.h
 
-// Safety Fault Types
-typedef enum {
-    SAFETY_FAULT_NONE = 0,
-    SAFETY_FAULT_ESTOP_HARDWARE,     // E-Stop hardware fault
-    SAFETY_FAULT_ESTOP_SOFTWARE,     // E-Stop software fault
-    SAFETY_FAULT_SAFETY_CIRCUIT,     // Safety circuit fault
-    SAFETY_FAULT_SENSOR_FAILURE,     // Sensor failure
-    SAFETY_FAULT_COMMUNICATION,      // Communication fault
-    SAFETY_FAULT_POWER_FAILURE,      // Power failure
-    SAFETY_FAULT_OVERTEMPERATURE,    // Over-temperature
-    SAFETY_FAULT_OVERCURRENT,        // Over-current
-    SAFETY_FAULT_MECHANICAL_FAULT    // Mechanical fault
-} safety_fault_t;
-
-// Safety Status Structure
-typedef struct {
-    safety_level_t current_level;
-    safety_event_t last_event;
-    safety_fault_t current_fault;
-    bool estop_triggered;
-    bool interlock_triggered;
-    bool safety_circuit_ok;
-    bool sensors_ok;
-    bool communication_ok;
-    bool power_ok;
-    uint64_t last_safety_check;
-    uint32_t fault_count;
-    uint32_t estop_count;
-    uint32_t interlock_count;
-    uint64_t uptime_seconds;
-} safety_status_t;
-
-// Safety Configuration Structure
-typedef struct {
-    uint32_t safety_check_interval_ms;
-    uint32_t estop_response_timeout_ms;
-    uint32_t safety_circuit_timeout_ms;
-    uint32_t sensor_timeout_ms;
-    bool enable_auto_recovery;
-    bool enable_safety_monitoring;
-    bool enable_estop_monitoring;
-    bool enable_sensor_monitoring;
-} safety_config_t;
-
-// Safety Event Callback
-typedef void (*safety_event_callback_t)(safety_event_t event, safety_fault_t fault);
+// Safety Event Callback - Using unified safety_event_callback_t from safety_types.h
 
 // Function Prototypes
 
@@ -119,7 +60,7 @@ hal_status_t safety_manager_process_event(safety_event_t event);
  * @param status Pointer to store safety status
  * @return HAL status
  */
-hal_status_t safety_manager_get_status(safety_status_t *status);
+hal_status_t safety_manager_get_status(safety_status_info_t *status);
 
 /**
  * @brief Check if system is safe

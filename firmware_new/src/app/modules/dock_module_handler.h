@@ -21,6 +21,7 @@ typedef struct dock_module_handler dock_module_handler_t;
 #define DOCK_FINAL_SPEED_REG              0x7003  // Final docking speed (mm/s)
 #define DOCK_ACCURACY_THRESHOLD_REG       0x7004  // Docking accuracy threshold (mm)
 #define DOCK_STATUS_REG                   0x7005  // Dock status flags
+#define DOCK_REG_IMU_STATUS               0x7005  // IMU status register
 #define DOCK_DISTANCE_TO_DOCK_REG         0x7006  // Distance to dock (mm)
 #define DOCK_ALIGNMENT_ANGLE_REG          0x7007  // Alignment angle (degrees * 10)
 
