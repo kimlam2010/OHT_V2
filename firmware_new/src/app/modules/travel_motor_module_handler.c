@@ -9,6 +9,7 @@
 
 #include "travel_motor_module_handler.h"
 #include "hal_common.h"
+#include "safety_types.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -568,14 +569,14 @@ hal_status_t motor_module_check_safety(motor_module_handler_t *handler) {
     }
     
     // Check E-Stop status
-    safety_status_t safety_status;
+    safety_status_info_t safety_status;
     hal_status_t status = safety_manager_get_status(&safety_status);
     if (status != HAL_STATUS_OK) {
         printf("[MOTOR] Failed to get safety status\n");
         return status;
     }
     
-    if (!safety_status.safety_circuit_ok) {
+    if (safety_status.status != SAFETY_STATUS_OK) {
         printf("[MOTOR] Safety violation detected\n");
         motor_module_emergency_stop(handler);
         return HAL_STATUS_ERROR;

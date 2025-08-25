@@ -55,6 +55,7 @@ typedef struct motor_module_handler motor_module_handler_t;
 #define MOTOR_FAULT_STATUS_REG          0x3000
 #define MOTOR_CURRENT_POSITION_REG      0x3001
 #define MOTOR_CURRENT_VELOCITY_REG      0x3002
+#define MOTOR_REG_MOTOR1_SPEED          0x3002  // Motor 1 speed register
 #define MOTOR_CURRENT_ACCELERATION_REG  0x3003
 #define MOTOR_TARGET_REACHED_REG        0x3004
 #define MOTOR_MOTION_COMPLETE_REG       0x3005

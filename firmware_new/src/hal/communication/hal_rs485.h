@@ -20,6 +20,9 @@
 #define RS485_DATA_BITS          8
 #define RS485_STOP_BITS          1
 #define RS485_PARITY             0  // No parity
+#define RS485_PARITY_NONE        0  // No parity
+#define RS485_PARITY_EVEN        1  // Even parity
+#define RS485_PARITY_ODD         2  // Odd parity
 
 // Modbus Configuration
 #define MODBUS_SLAVE_ID          1

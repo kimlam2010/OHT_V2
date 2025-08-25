@@ -8,17 +8,26 @@
  */
 
 #include "safety_manager.h"
+#include "safety_types.h"
 #include <string.h>
 #include <stdio.h>
 
 // Internal safety manager structure
 typedef struct {
     safety_config_t config;
-    safety_status_t status;
+    safety_status_info_t status;
     safety_event_callback_t event_callback;
     bool initialized;
     uint64_t last_update_time;
     uint64_t start_time;
+    // Additional internal state
+    bool estop_triggered;
+    bool safety_circuit_ok;
+    bool sensors_ok;
+    uint32_t estop_count;
+    uint32_t interlock_count;
+    uint64_t last_safety_check;
+    uint64_t uptime_seconds;
 } safety_manager_t;
 
 // Global safety manager instance
@@ -43,20 +52,23 @@ hal_status_t safety_manager_init(const safety_config_t *config) {
     memcpy(&g_safety_manager.config, config, sizeof(safety_config_t));
     
     // Initialize status
-    g_safety_manager.status.current_level = SAFETY_LEVEL_NORMAL;
+    g_safety_manager.status.initialized = true;
+    g_safety_manager.status.status = SAFETY_STATUS_OK;
+    g_safety_manager.status.level = SAFETY_LEVEL_NORMAL;
     g_safety_manager.status.last_event = SAFETY_EVENT_NONE;
     g_safety_manager.status.current_fault = SAFETY_FAULT_NONE;
-    g_safety_manager.status.estop_triggered = false;
-    g_safety_manager.status.interlock_triggered = false;
-    g_safety_manager.status.safety_circuit_ok = true;
-    g_safety_manager.status.sensors_ok = true;
-    g_safety_manager.status.communication_ok = true;
-    g_safety_manager.status.power_ok = true;
-    g_safety_manager.status.last_safety_check = hal_get_timestamp_us();
+    g_safety_manager.status.last_event_time = hal_get_timestamp_us();
     g_safety_manager.status.fault_count = 0;
-    g_safety_manager.status.estop_count = 0;
-    g_safety_manager.status.interlock_count = 0;
-    g_safety_manager.status.uptime_seconds = 0;
+    g_safety_manager.status.event_count = 0;
+    
+    // Initialize internal state
+    g_safety_manager.estop_triggered = false;
+    g_safety_manager.safety_circuit_ok = true;
+    g_safety_manager.sensors_ok = true;
+    g_safety_manager.estop_count = 0;
+    g_safety_manager.interlock_count = 0;
+    g_safety_manager.last_safety_check = hal_get_timestamp_us();
+    g_safety_manager.uptime_seconds = 0;
     
     // Set start time
     g_safety_manager.start_time = hal_get_timestamp_us();
@@ -95,37 +107,28 @@ hal_status_t safety_manager_update(void) {
     g_safety_manager.last_update_time = current_time;
     
     // Update uptime
-    g_safety_manager.status.uptime_seconds = (current_time - g_safety_manager.start_time) / 1000000ULL;
+    g_safety_manager.uptime_seconds = (current_time - g_safety_manager.start_time) / 1000000ULL;
     
     // Check if it's time for safety check
-    uint64_t time_since_last_check = (current_time - g_safety_manager.status.last_safety_check) / 1000ULL;
+    uint64_t time_since_last_check = (current_time - g_safety_manager.last_safety_check) / 1000ULL;
+    
     if (time_since_last_check >= g_safety_manager.config.safety_check_interval_ms) {
+        g_safety_manager.last_safety_check = current_time;
+        
+        // Perform safety checks
         update_safety_status();
         check_safety_conditions();
-        g_safety_manager.status.last_safety_check = current_time;
     }
     
     return HAL_STATUS_OK;
 }
 
-hal_status_t safety_manager_process_event(safety_event_t event) {
-    if (!g_safety_manager.initialized) {
-        return HAL_STATUS_NOT_INITIALIZED;
-    }
-    
-    if (event == SAFETY_EVENT_NONE) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    return handle_safety_event(event);
-}
-
-hal_status_t safety_manager_get_status(safety_status_t *status) {
+hal_status_t safety_manager_get_status(safety_status_info_t *status) {
     if (!g_safety_manager.initialized || status == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    memcpy(status, &g_safety_manager.status, sizeof(safety_status_t));
+    *status = g_safety_manager.status;
     return HAL_STATUS_OK;
 }
 
@@ -134,8 +137,8 @@ hal_status_t safety_manager_is_safe(bool *safe) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    *safe = (g_safety_manager.status.current_level == SAFETY_LEVEL_NORMAL) &&
-            !g_safety_manager.status.estop_triggered &&
+    *safe = (g_safety_manager.status.level == SAFETY_LEVEL_NORMAL) &&
+            !g_safety_manager.estop_triggered &&
             (g_safety_manager.status.current_fault == SAFETY_FAULT_NONE);
     
     return HAL_STATUS_OK;
@@ -149,7 +152,7 @@ hal_status_t safety_manager_trigger_fault(safety_fault_t fault) {
     g_safety_manager.status.current_fault = fault;
     g_safety_manager.status.fault_count++;
     
-    return safety_manager_process_event(SAFETY_EVENT_SAFETY_FAULT);
+    return safety_manager_process_event(SAFETY_EVENT_FAULT_DETECTED);
 }
 
 hal_status_t safety_manager_clear_fault(void) {
@@ -159,7 +162,7 @@ hal_status_t safety_manager_clear_fault(void) {
     
     g_safety_manager.status.current_fault = SAFETY_FAULT_NONE;
     
-    return safety_manager_process_event(SAFETY_EVENT_SAFETY_CLEARED);
+    return safety_manager_process_event(SAFETY_EVENT_FAULT_CLEARED);
 }
 
 hal_status_t safety_manager_get_fault(safety_fault_t *fault) {
@@ -171,7 +174,15 @@ hal_status_t safety_manager_get_fault(safety_fault_t *fault) {
     return HAL_STATUS_OK;
 }
 
-hal_status_t safety_manager_set_callback(safety_event_callback_t callback) {
+hal_status_t safety_manager_process_event(safety_event_t event) {
+    if (!g_safety_manager.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    return handle_safety_event(event);
+}
+
+hal_status_t safety_manager_set_event_callback(safety_event_callback_t callback) {
     if (!g_safety_manager.initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
@@ -180,41 +191,20 @@ hal_status_t safety_manager_set_callback(safety_event_callback_t callback) {
     return HAL_STATUS_OK;
 }
 
-hal_status_t safety_manager_set_config(const safety_config_t *config) {
-    if (!g_safety_manager.initialized || config == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    memcpy(&g_safety_manager.config, config, sizeof(safety_config_t));
-    return HAL_STATUS_OK;
-}
-
-hal_status_t safety_manager_get_config(safety_config_t *config) {
-    if (!g_safety_manager.initialized || config == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    memcpy(config, &g_safety_manager.config, sizeof(safety_config_t));
-    return HAL_STATUS_OK;
-}
-
-// E-Stop Integration Functions
 hal_status_t safety_manager_handle_estop_trigger(void) {
     if (!g_safety_manager.initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    g_safety_manager.status.estop_triggered = true;
-    g_safety_manager.status.estop_count++;
-    g_safety_manager.status.current_level = SAFETY_LEVEL_EMERGENCY;
+    g_safety_manager.estop_triggered = true;
+    g_safety_manager.estop_count++;
+    g_safety_manager.status.level = SAFETY_LEVEL_EMERGENCY;
     
-    // Set error LED
+    // Update LED pattern
     hal_led_error_set(LED_STATE_ON);
+    hal_led_system_set(LED_STATE_BLINK_FAST);
     
-    // Trigger emergency stop
-    safety_manager_emergency_stop();
-    
-    return safety_manager_process_event(SAFETY_EVENT_ESTOP_TRIGGERED);
+    return safety_manager_process_event(SAFETY_EVENT_EMERGENCY_STOP);
 }
 
 hal_status_t safety_manager_handle_estop_reset(void) {
@@ -222,11 +212,14 @@ hal_status_t safety_manager_handle_estop_reset(void) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    g_safety_manager.status.estop_triggered = false;
-    g_safety_manager.status.last_event = SAFETY_EVENT_ESTOP_RESET;
+    g_safety_manager.estop_triggered = false;
+    g_safety_manager.status.last_event = SAFETY_EVENT_ESTOP_RELEASED;
     
-    // Clear emergency stop
-    handle_safety_event(SAFETY_EVENT_SAFETY_CLEARED);
+    // Update LED pattern
+    hal_led_error_set(LED_STATE_OFF);
+    hal_led_system_set(LED_STATE_ON);
+    
+    handle_safety_event(SAFETY_EVENT_FAULT_CLEARED);
     
     return HAL_STATUS_OK;
 }
@@ -236,12 +229,10 @@ hal_status_t safety_manager_trigger_interlock(void) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    g_safety_manager.status.interlock_triggered = true;
-    g_safety_manager.status.interlock_count++;
-    g_safety_manager.status.last_event = SAFETY_EVENT_INTERLOCK_TRIGGERED;
+    g_safety_manager.interlock_count++;
+    g_safety_manager.status.last_event = SAFETY_EVENT_SAFETY_ZONE_VIOLATION;
     
-    // Trigger safety fault
-    handle_safety_event(SAFETY_EVENT_SAFETY_FAULT);
+    handle_safety_event(SAFETY_EVENT_FAULT_DETECTED);
     
     return HAL_STATUS_OK;
 }
@@ -251,11 +242,9 @@ hal_status_t safety_manager_reset_interlock(void) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    g_safety_manager.status.interlock_triggered = false;
-    g_safety_manager.status.last_event = SAFETY_EVENT_INTERLOCK_RELEASED;
+    g_safety_manager.status.last_event = SAFETY_EVENT_SAFETY_ZONE_CLEAR;
     
-    // Clear safety fault
-    handle_safety_event(SAFETY_EVENT_SAFETY_CLEARED);
+    handle_safety_event(SAFETY_EVENT_FAULT_CLEARED);
     
     return HAL_STATUS_OK;
 }
@@ -265,20 +254,18 @@ hal_status_t safety_manager_check_estop(bool *triggered) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    *triggered = g_safety_manager.status.estop_triggered;
+    *triggered = g_safety_manager.estop_triggered;
     return HAL_STATUS_OK;
 }
 
-// Safety Circuit Functions
 hal_status_t safety_manager_check_safety_circuit(bool *ok) {
     if (!g_safety_manager.initialized || ok == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    // TODO: Implement actual safety circuit check
-    // For now, assume safety circuit is OK
-    g_safety_manager.status.safety_circuit_ok = true;
-    *ok = g_safety_manager.status.safety_circuit_ok;
+    // Simulate safety circuit check
+    g_safety_manager.safety_circuit_ok = true;
+    *ok = g_safety_manager.safety_circuit_ok;
     
     return HAL_STATUS_OK;
 }
@@ -296,81 +283,20 @@ hal_status_t safety_manager_validate_safety_circuit(void) {
     }
     
     if (!circuit_ok) {
-        return safety_manager_trigger_fault(SAFETY_FAULT_SAFETY_CIRCUIT);
+        return safety_manager_trigger_fault(SAFETY_FAULT_SYSTEM_FAILURE);
     }
     
     return HAL_STATUS_OK;
 }
 
-// Sensor Monitoring Functions
 hal_status_t safety_manager_check_sensors(bool *ok) {
     if (!g_safety_manager.initialized || ok == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    // TODO: Implement actual sensor check
-    // For now, assume sensors are OK
-    g_safety_manager.status.sensors_ok = true;
-    *ok = g_safety_manager.status.sensors_ok;
-    
-    return HAL_STATUS_OK;
-}
-
-hal_status_t safety_manager_validate_sensors(void) {
-    if (!g_safety_manager.initialized) {
-        return HAL_STATUS_NOT_INITIALIZED;
-    }
-    
-    bool sensors_ok;
-    hal_status_t status = safety_manager_check_sensors(&sensors_ok);
-    
-    if (status != HAL_STATUS_OK) {
-        return status;
-    }
-    
-    if (!sensors_ok) {
-        return safety_manager_trigger_fault(SAFETY_FAULT_SENSOR_FAILURE);
-    }
-    
-    return HAL_STATUS_OK;
-}
-
-// Emergency Procedures
-hal_status_t safety_manager_emergency_stop(void) {
-    if (!g_safety_manager.initialized) {
-        return HAL_STATUS_NOT_INITIALIZED;
-    }
-    
-    // Set emergency LED pattern
-    hal_led_error_set(LED_STATE_BLINK_FAST);
-    hal_led_system_set(LED_STATE_OFF);
-    hal_led_comm_set(LED_STATE_OFF);
-    hal_led_network_set(LED_STATE_OFF);
-    
-    // TODO: Implement actual emergency stop procedures
-    // - Stop all motors
-    // - Disable power outputs
-    // - Activate brakes
-    // - Send emergency stop signal to all modules
-    
-    return HAL_STATUS_OK;
-}
-
-hal_status_t safety_manager_safety_shutdown(void) {
-    if (!g_safety_manager.initialized) {
-        return HAL_STATUS_NOT_INITIALIZED;
-    }
-    
-    // Set shutdown LED pattern
-    hal_led_error_set(LED_STATE_ON);
-    hal_led_system_set(LED_STATE_BLINK_SLOW);
-    hal_led_comm_set(LED_STATE_OFF);
-    hal_led_network_set(LED_STATE_OFF);
-    
-    // TODO: Implement actual safety shutdown procedures
-    // - Graceful shutdown of all systems
-    // - Save critical data
-    // - Disable all outputs
+    // Simulate sensor check
+    g_safety_manager.sensors_ok = true;
+    *ok = g_safety_manager.sensors_ok;
     
     return HAL_STATUS_OK;
 }
@@ -382,18 +308,13 @@ hal_status_t safety_manager_safety_recovery(void) {
     
     // Clear all safety faults
     g_safety_manager.status.current_fault = SAFETY_FAULT_NONE;
-    g_safety_manager.status.current_level = SAFETY_LEVEL_NORMAL;
+    g_safety_manager.status.level = SAFETY_LEVEL_NORMAL;
     
     // Reset LED patterns
     hal_led_error_set(LED_STATE_OFF);
     hal_led_system_set(LED_STATE_ON);
     hal_led_comm_set(LED_STATE_BLINK_SLOW);
     hal_led_network_set(LED_STATE_ON);
-    
-    // TODO: Implement actual safety recovery procedures
-    // - Re-enable systems
-    // - Perform self-tests
-    // - Restore normal operation
     
     return HAL_STATUS_OK;
 }
@@ -412,15 +333,14 @@ const char* safety_manager_get_level_name(safety_level_t level) {
 const char* safety_manager_get_event_name(safety_event_t event) {
     switch (event) {
         case SAFETY_EVENT_NONE: return "NONE";
-        case SAFETY_EVENT_ESTOP_TRIGGERED: return "ESTOP_TRIGGERED";
-        case SAFETY_EVENT_ESTOP_RESET: return "ESTOP_RESET";
-        case SAFETY_EVENT_SAFETY_FAULT: return "SAFETY_FAULT";
-        case SAFETY_EVENT_SAFETY_CLEARED: return "SAFETY_CLEARED";
+        case SAFETY_EVENT_ESTOP_PRESSED: return "ESTOP_PRESSED";
+        case SAFETY_EVENT_ESTOP_RELEASED: return "ESTOP_RELEASED";
+        case SAFETY_EVENT_SAFETY_ZONE_VIOLATION: return "SAFETY_ZONE_VIOLATION";
+        case SAFETY_EVENT_SAFETY_ZONE_CLEAR: return "SAFETY_ZONE_CLEAR";
+        case SAFETY_EVENT_FAULT_DETECTED: return "FAULT_DETECTED";
+        case SAFETY_EVENT_FAULT_CLEARED: return "FAULT_CLEARED";
         case SAFETY_EVENT_EMERGENCY_STOP: return "EMERGENCY_STOP";
-        case SAFETY_EVENT_SAFETY_TIMEOUT: return "SAFETY_TIMEOUT";
-        case SAFETY_EVENT_SYSTEM_FAULT: return "SYSTEM_FAULT";
-        case SAFETY_EVENT_INTERLOCK_TRIGGERED: return "INTERLOCK_TRIGGERED";
-        case SAFETY_EVENT_INTERLOCK_RELEASED: return "INTERLOCK_RELEASED";
+        case SAFETY_EVENT_SAFETY_RESET: return "SAFETY_RESET";
         default: return "UNKNOWN";
     }
 }
@@ -428,15 +348,16 @@ const char* safety_manager_get_event_name(safety_event_t event) {
 const char* safety_manager_get_fault_name(safety_fault_t fault) {
     switch (fault) {
         case SAFETY_FAULT_NONE: return "NONE";
-        case SAFETY_FAULT_ESTOP_HARDWARE: return "ESTOP_HARDWARE";
-        case SAFETY_FAULT_ESTOP_SOFTWARE: return "ESTOP_SOFTWARE";
-        case SAFETY_FAULT_SAFETY_CIRCUIT: return "SAFETY_CIRCUIT";
-        case SAFETY_FAULT_SENSOR_FAILURE: return "SENSOR_FAILURE";
-        case SAFETY_FAULT_COMMUNICATION: return "COMMUNICATION";
-        case SAFETY_FAULT_POWER_FAILURE: return "POWER_FAILURE";
+        case SAFETY_FAULT_ESTOP_ACTIVATED: return "ESTOP_ACTIVATED";
+        case SAFETY_FAULT_SAFETY_ZONE_VIOLATION: return "SAFETY_ZONE_VIOLATION";
         case SAFETY_FAULT_OVERTEMPERATURE: return "OVERTEMPERATURE";
         case SAFETY_FAULT_OVERCURRENT: return "OVERCURRENT";
-        case SAFETY_FAULT_MECHANICAL_FAULT: return "MECHANICAL_FAULT";
+        case SAFETY_FAULT_OVERVOLTAGE: return "OVERVOLTAGE";
+        case SAFETY_FAULT_UNDERVOLTAGE: return "UNDERVOLTAGE";
+        case SAFETY_FAULT_COMMUNICATION_LOSS: return "COMMUNICATION_LOSS";
+        case SAFETY_FAULT_SENSOR_FAILURE: return "SENSOR_FAILURE";
+        case SAFETY_FAULT_ACTUATOR_FAILURE: return "ACTUATOR_FAILURE";
+        case SAFETY_FAULT_SYSTEM_FAILURE: return "SYSTEM_FAILURE";
         default: return "UNKNOWN";
     }
 }
@@ -454,59 +375,23 @@ hal_status_t safety_manager_get_diagnostics(char *info, size_t max_len) {
         "E-Stop Triggered: %s\n"
         "Safety Circuit OK: %s\n"
         "Sensors OK: %s\n"
-        "Communication OK: %s\n"
-        "Power OK: %s\n"
         "Last Safety Check: %lu ms ago\n"
         "Fault Count: %u\n"
         "E-Stop Count: %u\n"
         "Uptime: %lu seconds\n",
-        safety_manager_get_level_name(g_safety_manager.status.current_level),
+        safety_manager_get_level_name(g_safety_manager.status.level),
         safety_manager_get_event_name(g_safety_manager.status.last_event),
         safety_manager_get_fault_name(g_safety_manager.status.current_fault),
-        g_safety_manager.status.estop_triggered ? "YES" : "NO",
-        g_safety_manager.status.safety_circuit_ok ? "YES" : "NO",
-        g_safety_manager.status.sensors_ok ? "YES" : "NO",
-        g_safety_manager.status.communication_ok ? "YES" : "NO",
-        g_safety_manager.status.power_ok ? "YES" : "NO",
-        (unsigned long)((hal_get_timestamp_us() - g_safety_manager.status.last_safety_check) / 1000),
+        g_safety_manager.estop_triggered ? "YES" : "NO",
+        g_safety_manager.safety_circuit_ok ? "YES" : "NO",
+        g_safety_manager.sensors_ok ? "YES" : "NO",
+        (unsigned long)((hal_get_timestamp_us() - g_safety_manager.last_safety_check) / 1000),
         g_safety_manager.status.fault_count,
-        g_safety_manager.status.estop_count,
-        (unsigned long)g_safety_manager.status.uptime_seconds
+        g_safety_manager.estop_count,
+        (unsigned long)g_safety_manager.uptime_seconds
     );
     
     return HAL_STATUS_OK;
-}
-
-hal_status_t safety_manager_self_test(void) {
-    if (!g_safety_manager.initialized) {
-        return HAL_STATUS_NOT_INITIALIZED;
-    }
-    
-    // Perform safety self-test
-    hal_status_t status = HAL_STATUS_OK;
-    
-    // Test E-Stop
-    bool estop_ok;
-    hal_estop_is_triggered(&estop_ok);
-    if (estop_ok) {
-        status = HAL_STATUS_ERROR;
-    }
-    
-    // Test safety circuit
-    bool circuit_ok;
-    safety_manager_check_safety_circuit(&circuit_ok);
-    if (!circuit_ok) {
-        status = HAL_STATUS_ERROR;
-    }
-    
-    // Test sensors
-    bool sensors_ok;
-    safety_manager_check_sensors(&sensors_ok);
-    if (!sensors_ok) {
-        status = HAL_STATUS_ERROR;
-    }
-    
-    return status;
 }
 
 hal_status_t safety_manager_validate_compliance(bool *compliant) {
@@ -514,145 +399,130 @@ hal_status_t safety_manager_validate_compliance(bool *compliant) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    // Check safety compliance
-    *compliant = (g_safety_manager.status.current_level == SAFETY_LEVEL_NORMAL) &&
-                 !g_safety_manager.status.estop_triggered &&
+    *compliant = (g_safety_manager.status.level == SAFETY_LEVEL_NORMAL) &&
+                 !g_safety_manager.estop_triggered &&
                  (g_safety_manager.status.current_fault == SAFETY_FAULT_NONE) &&
-                 g_safety_manager.status.safety_circuit_ok &&
-                 g_safety_manager.status.sensors_ok;
+                 g_safety_manager.safety_circuit_ok &&
+                 g_safety_manager.sensors_ok;
     
     return HAL_STATUS_OK;
 }
 
-// Internal helper functions
+// Private Functions
 static hal_status_t update_safety_status(void) {
-    // Update E-Stop status
-    bool estop_triggered;
-    hal_estop_is_triggered(&estop_triggered);
-    g_safety_manager.status.estop_triggered = estop_triggered;
+    // Update safety status based on current conditions
+    estop_state_t estop_state;
+    bool circuit_ok = true;
+    bool sensors_ok = true;
+    
+    // Check E-Stop status
+    hal_estop_get_state(&estop_state);
+    g_safety_manager.estop_triggered = (estop_state == ESTOP_STATE_TRIGGERED);
     
     // Update safety circuit status
-    bool circuit_ok;
-    safety_manager_check_safety_circuit(&circuit_ok);
-    g_safety_manager.status.safety_circuit_ok = circuit_ok;
+    g_safety_manager.safety_circuit_ok = circuit_ok;
     
     // Update sensor status
-    bool sensors_ok;
-    safety_manager_check_sensors(&sensors_ok);
-    g_safety_manager.status.sensors_ok = sensors_ok;
+    g_safety_manager.sensors_ok = sensors_ok;
     
     return HAL_STATUS_OK;
 }
 
 static hal_status_t check_safety_conditions(void) {
     // Check for safety violations
-    if (g_safety_manager.status.estop_triggered) {
-        g_safety_manager.status.current_level = SAFETY_LEVEL_EMERGENCY;
-        return safety_manager_process_event(SAFETY_EVENT_ESTOP_TRIGGERED);
+    if (g_safety_manager.estop_triggered) {
+        g_safety_manager.status.level = SAFETY_LEVEL_EMERGENCY;
+        return safety_manager_process_event(SAFETY_EVENT_EMERGENCY_STOP);
     }
     
+    // Check for faults
     if (g_safety_manager.status.current_fault != SAFETY_FAULT_NONE) {
-        g_safety_manager.status.current_level = SAFETY_LEVEL_CRITICAL;
-        return safety_manager_process_event(SAFETY_EVENT_SAFETY_FAULT);
+        g_safety_manager.status.level = SAFETY_LEVEL_CRITICAL;
+        return safety_manager_process_event(SAFETY_EVENT_FAULT_DETECTED);
     }
     
-    if (!g_safety_manager.status.safety_circuit_ok || 
-        !g_safety_manager.status.sensors_ok) {
-        g_safety_manager.status.current_level = SAFETY_LEVEL_WARNING;
-        return safety_manager_process_event(SAFETY_EVENT_SAFETY_FAULT);
+    // Check for warnings
+    if (!g_safety_manager.safety_circuit_ok ||
+        !g_safety_manager.sensors_ok) {
+        g_safety_manager.status.level = SAFETY_LEVEL_WARNING;
+        return HAL_STATUS_OK;
     }
     
-    // All conditions OK
-    g_safety_manager.status.current_level = SAFETY_LEVEL_NORMAL;
+    // All conditions normal
+    g_safety_manager.status.level = SAFETY_LEVEL_NORMAL;
+    
     return HAL_STATUS_OK;
 }
 
 static hal_status_t handle_safety_event(safety_event_t event) {
-    // Store last event
     g_safety_manager.status.last_event = event;
+    g_safety_manager.status.last_event_time = hal_get_timestamp_us();
+    g_safety_manager.status.event_count++;
     
-    // Handle event based on type
     switch (event) {
-        case SAFETY_EVENT_ESTOP_TRIGGERED:
-            safety_manager_emergency_stop();
-            break;
-            
-        case SAFETY_EVENT_ESTOP_RESET:
-            safety_manager_safety_recovery();
-            break;
-            
-        case SAFETY_EVENT_SAFETY_FAULT:
-            g_safety_manager.status.current_level = SAFETY_LEVEL_CRITICAL;
-            safety_manager_safety_shutdown();
-            break;
-            
-        case SAFETY_EVENT_SAFETY_CLEARED:
-            safety_manager_safety_recovery();
-            break;
-            
         case SAFETY_EVENT_EMERGENCY_STOP:
-            safety_manager_emergency_stop();
+            // Emergency stop event
             break;
             
-        case SAFETY_EVENT_SAFETY_TIMEOUT:
-            // Handle safety timeout
+        case SAFETY_EVENT_ESTOP_RELEASED:
+            // E-Stop released event
             break;
             
-        case SAFETY_EVENT_SYSTEM_FAULT:
-            g_safety_manager.status.current_level = SAFETY_LEVEL_CRITICAL;
-            safety_manager_safety_shutdown();
+        case SAFETY_EVENT_FAULT_DETECTED:
+            g_safety_manager.status.level = SAFETY_LEVEL_CRITICAL;
             break;
             
-        case SAFETY_EVENT_INTERLOCK_TRIGGERED:
-            g_safety_manager.status.current_level = SAFETY_LEVEL_CRITICAL;
-            safety_manager_safety_shutdown();
+        case SAFETY_EVENT_FAULT_CLEARED:
+            // Fault cleared event
             break;
             
-        case SAFETY_EVENT_INTERLOCK_RELEASED:
-            safety_manager_safety_recovery();
+        case SAFETY_EVENT_SAFETY_RESET:
+            // Safety reset event
             break;
             
         default:
+            // Unknown event
             break;
     }
     
     // Call event callback if set
-    if (g_safety_manager.event_callback != NULL) {
+    if (g_safety_manager.event_callback) {
         g_safety_manager.event_callback(event, g_safety_manager.status.current_fault);
     }
     
     return HAL_STATUS_OK;
 }
 
-// E-Stop callback function
 static void estop_callback(estop_state_t state, estop_fault_t fault) {
     (void)fault; // Unused parameter
+    
     if (!g_safety_manager.initialized) {
         return;
     }
     
     switch (state) {
-        case ESTOP_STATE_SAFE:
-            if (g_safety_manager.status.estop_triggered) {
-                safety_manager_handle_estop_reset();
+        case ESTOP_STATE_TRIGGERED:
+            if (g_safety_manager.estop_triggered) {
+                // E-Stop already triggered, ignore
+                return;
             }
+            safety_manager_handle_estop_trigger();
             break;
             
-        case ESTOP_STATE_TRIGGERED:
-            if (!g_safety_manager.status.estop_triggered) {
-                safety_manager_handle_estop_trigger();
+        case ESTOP_STATE_SAFE:
+            if (!g_safety_manager.estop_triggered) {
+                // E-Stop already released, ignore
+                return;
             }
+            safety_manager_handle_estop_reset();
             break;
             
         case ESTOP_STATE_FAULT:
-            safety_manager_trigger_fault(SAFETY_FAULT_ESTOP_HARDWARE);
-            break;
-            
-        case ESTOP_STATE_RESETTING:
-            // E-Stop is being reset
+            safety_manager_trigger_fault(SAFETY_FAULT_ESTOP_ACTIVATED);
             break;
             
         default:
+            // Unknown state
             break;
     }
 }

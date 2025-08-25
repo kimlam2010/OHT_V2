@@ -104,8 +104,8 @@ hal_status_t safety_module_enable(safety_module_handler_t *handler, bool enable)
     
     // Emit event
     if (g_event_callback) {
-        safety_event_t event = enable ? SAFETY_EVENT_ENABLED : SAFETY_EVENT_DISABLED;
-        g_event_callback(event, handler);
+        safety_event_t event = enable ? SAFETY_EVENT_SAFETY_RESET : SAFETY_EVENT_NONE;
+        g_event_callback(event, SAFETY_FAULT_NONE);
     }
     
     printf("Safety Module %s\n", enable ? "enabled" : "disabled");
@@ -314,8 +314,8 @@ hal_status_t safety_module_set_relay(safety_module_handler_t *handler, uint8_t r
     
     // Emit event
     if (g_event_callback) {
-        safety_event_t event = state ? SAFETY_EVENT_RELAY_ACTIVATED : SAFETY_EVENT_RELAY_DEACTIVATED;
-        g_event_callback(event, handler);
+        safety_event_t event = state ? SAFETY_EVENT_FAULT_DETECTED : SAFETY_EVENT_FAULT_CLEARED;
+        g_event_callback(event, SAFETY_FAULT_NONE);
     }
     
     handler->statistics.relay_activations++;
@@ -517,7 +517,7 @@ hal_status_t safety_module_test_emergency_stop(safety_module_handler_t *handler)
     
     // Emit event
     if (g_event_callback) {
-        g_event_callback(SAFETY_EVENT_EMERGENCY_STOP_TRIGGERED, handler);
+        g_event_callback(SAFETY_EVENT_EMERGENCY_STOP, SAFETY_FAULT_ESTOP_ACTIVATED);
     }
     
     handler->statistics.emergency_stop_events++;
@@ -528,7 +528,7 @@ hal_status_t safety_module_test_emergency_stop(safety_module_handler_t *handler)
 // FAULT MANAGEMENT
 // ============================================================================
 
-hal_status_t safety_module_get_fault_code(safety_module_handler_t *handler, safety_fault_code_t *fault_code) {
+hal_status_t safety_module_get_fault_code(safety_module_handler_t *handler, safety_fault_t *fault_code) {
     if (!handler || !fault_code) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
@@ -555,7 +555,7 @@ hal_status_t safety_module_clear_faults(safety_module_handler_t *handler) {
     
     // Emit event
     if (g_event_callback) {
-        g_event_callback(SAFETY_EVENT_FAULT_CLEARED, handler);
+        g_event_callback(SAFETY_EVENT_FAULT_CLEARED, SAFETY_FAULT_NONE);
     }
     
     return HAL_STATUS_OK;
@@ -961,26 +961,19 @@ safety_zone_level_t safety_module_distance_to_zone_level(uint16_t distance, uint
     }
 }
 
-const char* safety_module_get_fault_name(safety_fault_code_t fault_code) {
+const char* safety_module_get_fault_name(safety_fault_t fault_code) {
     switch (fault_code) {
         case SAFETY_FAULT_NONE: return "None";
-        case SAFETY_FAULT_ANALOG_SENSOR_1_ERROR: return "Analog Sensor 1 Error";
-        case SAFETY_FAULT_ANALOG_SENSOR_2_ERROR: return "Analog Sensor 2 Error";
-        case SAFETY_FAULT_ANALOG_SENSOR_3_ERROR: return "Analog Sensor 3 Error";
-        case SAFETY_FAULT_ANALOG_SENSOR_4_ERROR: return "Analog Sensor 4 Error";
-        case SAFETY_FAULT_DIGITAL_SENSOR_1_ERROR: return "Digital Sensor 1 Error";
-        case SAFETY_FAULT_DIGITAL_SENSOR_2_ERROR: return "Digital Sensor 2 Error";
-        case SAFETY_FAULT_DIGITAL_SENSOR_3_ERROR: return "Digital Sensor 3 Error";
-        case SAFETY_FAULT_DIGITAL_SENSOR_4_ERROR: return "Digital Sensor 4 Error";
-        case SAFETY_FAULT_RELAY_1_ERROR: return "Relay 1 Error";
-        case SAFETY_FAULT_RELAY_2_ERROR: return "Relay 2 Error";
-        case SAFETY_FAULT_RELAY_3_ERROR: return "Relay 3 Error";
-        case SAFETY_FAULT_RELAY_4_ERROR: return "Relay 4 Error";
-        case SAFETY_FAULT_COMMUNICATION_ERROR: return "Communication Error";
+        case SAFETY_FAULT_ESTOP_ACTIVATED: return "E-Stop Activated";
+        case SAFETY_FAULT_SAFETY_ZONE_VIOLATION: return "Safety Zone Violation";
         case SAFETY_FAULT_OVERTEMPERATURE: return "Over Temperature";
+        case SAFETY_FAULT_OVERCURRENT: return "Over Current";
         case SAFETY_FAULT_OVERVOLTAGE: return "Over Voltage";
         case SAFETY_FAULT_UNDERVOLTAGE: return "Under Voltage";
-        case SAFETY_FAULT_EMERGENCY_STOP_ACTIVATED: return "Emergency Stop Activated";
+        case SAFETY_FAULT_COMMUNICATION_LOSS: return "Communication Loss";
+        case SAFETY_FAULT_SENSOR_FAILURE: return "Sensor Failure";
+        case SAFETY_FAULT_ACTUATOR_FAILURE: return "Actuator Failure";
+        case SAFETY_FAULT_SYSTEM_FAILURE: return "System Failure";
         default: return "Unknown";
     }
 }
@@ -1001,21 +994,14 @@ const char* safety_module_get_state_name(safety_state_t state) {
 const char* safety_module_get_event_name(safety_event_t event) {
     switch (event) {
         case SAFETY_EVENT_NONE: return "None";
-        case SAFETY_EVENT_ENABLED: return "Enabled";
-        case SAFETY_EVENT_DISABLED: return "Disabled";
-        case SAFETY_EVENT_WARNING_TRIGGERED: return "Warning Triggered";
-        case SAFETY_EVENT_CRITICAL_TRIGGERED: return "Critical Triggered";
-        case SAFETY_EVENT_EMERGENCY_STOP_TRIGGERED: return "Emergency Stop Triggered";
+        case SAFETY_EVENT_ESTOP_PRESSED: return "E-Stop Pressed";
+        case SAFETY_EVENT_ESTOP_RELEASED: return "E-Stop Released";
+        case SAFETY_EVENT_SAFETY_ZONE_VIOLATION: return "Safety Zone Violation";
+        case SAFETY_EVENT_SAFETY_ZONE_CLEAR: return "Safety Zone Clear";
         case SAFETY_EVENT_FAULT_DETECTED: return "Fault Detected";
         case SAFETY_EVENT_FAULT_CLEARED: return "Fault Cleared";
-        case SAFETY_EVENT_SENSOR_ACTIVATED: return "Sensor Activated";
-        case SAFETY_EVENT_SENSOR_DEACTIVATED: return "Sensor Deactivated";
-        case SAFETY_EVENT_RELAY_ACTIVATED: return "Relay Activated";
-        case SAFETY_EVENT_RELAY_DEACTIVATED: return "Relay Deactivated";
-        case SAFETY_EVENT_ZONE_VIOLATION: return "Zone Violation";
-        case SAFETY_EVENT_ZONE_CLEARED: return "Zone Cleared";
-        case SAFETY_EVENT_PROXIMITY_ALERT: return "Proximity Alert";
-        case SAFETY_EVENT_PROXIMITY_CLEARED: return "Proximity Cleared";
+        case SAFETY_EVENT_EMERGENCY_STOP: return "Emergency Stop";
+        case SAFETY_EVENT_SAFETY_RESET: return "Safety Reset";
         default: return "Unknown";
     }
 }

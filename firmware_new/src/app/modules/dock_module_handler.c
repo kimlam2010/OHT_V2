@@ -2,6 +2,7 @@
 #include "communication_manager.h"
 #include "safety_manager.h"
 #include "hal_common.h"
+#include "safety_types.h"
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -74,7 +75,7 @@ static hal_status_t check_safety_conditions(dock_module_handler_t *handler) {
         return HAL_STATUS_ERROR;
     }
     
-    safety_status_t safety_status;
+    safety_status_info_t safety_status;
     
     // Try to get safety status, but don't fail if safety manager is not available
     hal_status_t safety_result = safety_manager_get_status(&safety_status);
@@ -85,7 +86,7 @@ static hal_status_t check_safety_conditions(dock_module_handler_t *handler) {
         return HAL_STATUS_OK;
     }
     
-    if (!safety_status.safety_circuit_ok) {
+    if (safety_status.status != SAFETY_STATUS_OK) {
         printf("[DOCK] Safety circuit not OK, cannot proceed\n");
         return HAL_STATUS_ERROR;
     }

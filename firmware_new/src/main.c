@@ -72,12 +72,12 @@ int main(int argc, char **argv) {
         // Print planned initialization without touching hardware
         printf("[OHT-50] DRY-RUN: Initialization plan:\n");
         printf("  - HAL: LED → E-Stop(pin=%d) → RS485(device=%s, %u baud)\n", ESTOP_PIN, RS485_DEVICE_PATH, RS485_BAUD_RATE);
-        printf("  - Safety: interval=%ums, estop_timeout=%ums\n", SAFETY_CHECK_INTERVAL_MS, ESTOP_RESPONSE_TIME_MS);
+        printf("  - Safety: interval=%ums, estop_timeout=%ums\n", SAFETY_CHECK_INTERVAL_MS, 50);
         printf("  - State Machine: update_period=%ums (skipped in dry-run)\n", UPDATE_PERIOD_MS);
         printf("[OHT-50] DRY-RUN: Simulating main loop...\n");
         fflush(stdout);
-        for (int i = 1; i <= LED_COUNT; ++i) {
-            printf("[OHT-50] DRY-RUN tick %d/%d\n", i, LED_COUNT);
+        for (int i = 1; i <= 5; ++i) { // LED_COUNT = 5
+            printf("[OHT-50] DRY-RUN tick %d/5\n", i);
             if (g_debug_mode) {
                 // Simulated diagnostics
                 printf("[OHT-50][DEBUG] diag: state=IDLE safety=NORMAL estop=SAFE\n");
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
         estop_config_t estop_cfg = {
             .channel1_pin = ESTOP_PIN,
             .channel2_pin = 0U,
-            .response_timeout_ms = ESTOP_RESPONSE_TIME_MS,
+            .response_timeout_ms = 50,
             .debounce_time_ms = ESTOP_DEBOUNCE_TIME_MS,
             .dual_channel_required = false,
             .auto_reset_enabled = false
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
             .data_bits = RS485_DATA_BITS,
             .stop_bits = RS485_STOP_BITS,
             .parity = RS485_PARITY,
-            .timeout_ms = RS485_TIMEOUT_MS
+            .timeout_ms = MODBUS_TIMEOUT_MS
         };
         strcpy(test_rs485_cfg.device_path, "/dev/ttyOHT485");
         hal_status_t rs485_status = hal_rs485_init(&test_rs485_cfg);
@@ -158,9 +158,9 @@ int main(int argc, char **argv) {
             .data_bits = RS485_DATA_BITS,
             .stop_bits = RS485_STOP_BITS,
             .parity = RS485_PARITY,
-            .timeout_ms = RS485_TIMEOUT_MS,
-            .retry_count = RS485_RETRY_COUNT,
-            .retry_delay_ms = RS485_RETRY_DELAY_MS,
+            .timeout_ms = MODBUS_TIMEOUT_MS,
+            .retry_count = MODBUS_RETRY_COUNT,
+            .retry_delay_ms = 100, // Default retry delay
             .modbus_slave_id = MODBUS_SLAVE_ID,
             .enable_crc_check = false,  // Disable CRC check temporarily
             .enable_echo_suppression = true,
@@ -178,14 +178,12 @@ int main(int argc, char **argv) {
 
     // 2) Initialize Safety Manager
     safety_config_t safety_cfg = {
+        .estop_pin = ESTOP_PIN,
+        .response_time_ms = 50,
+        .debounce_time_ms = 10,
         .safety_check_interval_ms = SAFETY_CHECK_INTERVAL_MS,
-        .estop_response_timeout_ms = ESTOP_RESPONSE_TIME_MS,
-        .safety_circuit_timeout_ms = SAFETY_CIRCUIT_TIMEOUT_MS,
-        .sensor_timeout_ms = SENSOR_TIMEOUT_MS,
-        .enable_auto_recovery = true,
-        .enable_safety_monitoring = true,
-        .enable_estop_monitoring = true,
-        .enable_sensor_monitoring = true
+        .fault_clear_timeout_ms = 5000,
+        .event_callback = NULL
     };
     if (!g_dry_run) {
         if (safety_manager_init(&safety_cfg) != HAL_STATUS_OK) {
@@ -337,7 +335,7 @@ int main(int argc, char **argv) {
         // Periodic diagnostics in debug mode
         if (g_debug_mode && (t - last_diag_ms) >= DIAGNOSTICS_INTERVAL_MS) {
             system_status_t sys_status;
-            safety_status_t safe_status;
+            safety_status_info_t safe_status;
             estop_status_t est_status;
             if (system_state_machine_get_status(&sys_status) == HAL_STATUS_OK) {
                 printf("[OHT-50][DEBUG] state=%s prev=%s trans=%u ready=%s safe=%s comm=%s\n",
@@ -349,9 +347,9 @@ int main(int argc, char **argv) {
                        sys_status.communication_ok ? "YES" : "NO");
             }
             if (safety_manager_get_status(&safe_status) == HAL_STATUS_OK) {
-                printf("[OHT-50][DEBUG] safety-level=%d estop=%s faults=%u\n",
-                       (int)safe_status.current_level,
-                       safe_status.estop_triggered ? "TRIGGERED" : "OK",
+                printf("[OHT-50][DEBUG] safety-level=%d status=%d faults=%u\n",
+                       (int)safe_status.level,
+                       (int)safe_status.status,
                        safe_status.fault_count);
             }
             if (hal_estop_get_status(&est_status) == HAL_STATUS_OK) {

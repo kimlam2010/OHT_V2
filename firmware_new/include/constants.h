@@ -9,38 +9,17 @@
 
 #include <stdint.h>
 
+// HAL Status constants - Using values from hal_common.h
+
 // ============================================================================
 // SYSTEM CONSTANTS
 // ============================================================================
 
-// LED Configuration
-#define LED_COUNT                          5U
-#define LED_POWER_PIN                      1U
-#define LED_SYSTEM_PIN                     2U
-#define LED_COMM_PIN                       3U
-#define LED_NETWORK_PIN                    4U
-#define LED_ERROR_PIN                      5U
+// LED Configuration - Moved to hal_led.h
+// E-Stop Configuration - Moved to hal_estop.h  
+// RS485 Configuration - Moved to hal_rs485.h
 
-// E-Stop Configuration
-#define ESTOP_PIN                          6U
-#define ESTOP_RESPONSE_TIME_MS             100U
-#define ESTOP_DEBOUNCE_TIME_MS             50U
-
-// RS485 Configuration
-#define RS485_DEVICE_PATH                  "/dev/ttyOHT485"
-#define RS485_BAUD_RATE                    115200U
-#define RS485_DATA_BITS                    8U
-#define RS485_STOP_BITS                    1U
-#define RS485_PARITY                       0U
-#define RS485_TIMEOUT_MS                   1500U
-#define RS485_RETRY_COUNT                  2U
-#define RS485_RETRY_DELAY_MS               100U
-#define RS485_BUFFER_SIZE                  256U
-
-// Modbus Configuration
-#define MODBUS_TIMEOUT_MS                  1500U
-#define MODBUS_RETRY_COUNT                 2U
-#define MODBUS_SLAVE_ID                    1U
+// Modbus Configuration - Using values from hal_rs485.h
 
 // Module Addresses
 #define MODULE_ADDR_POWER                  0x02U
@@ -64,8 +43,7 @@
 #define STATE_TIMEOUT_MS                   5000U
 #define UPDATE_PERIOD_MS                   50U
 #define SAFETY_CHECK_INTERVAL_MS           50U
-#define SAFETY_CIRCUIT_TIMEOUT_MS          100U
-#define SENSOR_TIMEOUT_MS                  100U
+// Safety timeouts moved to safety_types.h
 
 // ============================================================================
 // API CONFIGURATION
@@ -120,11 +98,7 @@
 // SAFETY CONSTANTS
 // ============================================================================
 
-// Safety Levels
-#define SAFETY_LEVEL_NORMAL                0U
-#define SAFETY_LEVEL_WARNING               1U
-#define SAFETY_LEVEL_CRITICAL              2U
-#define SAFETY_LEVEL_EMERGENCY             3U
+// Safety Levels - Using values from safety_types.h
 
 // Safety Timeouts
 #define SAFETY_AUTO_RECOVERY_TIMEOUT_MS    5000U
@@ -134,20 +108,8 @@
 // POWER MODULE CONSTANTS
 // ============================================================================
 
-// Power Module Registers
-#define POWER_REG_VOLTAGE_MAIN             0x0000U
-#define POWER_REG_CURRENT_MAIN             0x0001U
-#define POWER_REG_TEMP_MAIN                0x0002U
-#define POWER_REG_RELAY1_STATUS            0x0004U
-#define POWER_REG_RELAY2_STATUS            0x0005U
-#define POWER_REG_RELAY1_CONTROL           0x0006U
-#define POWER_REG_RELAY2_CONTROL           0x0007U
-#define POWER_REG_ALARM_STATUS             0x0008U
-#define POWER_REG_DEVICE_ID                0x00F0U
-#define POWER_REG_MODULE_TYPE              0x00F7U
-
-// Power Module Type
-#define POWER_MODULE_TYPE                  0x0002U
+// Power Module Registers - Moved to power_module_handler.h
+// Power Module Type - Moved to power_module_handler.h
 
 // ============================================================================
 // MOTOR MODULE CONSTANTS
@@ -194,13 +156,7 @@
 // ERROR CODES
 // ============================================================================
 
-// HAL Status Codes
-#define HAL_STATUS_OK                      0
-#define HAL_STATUS_ERROR                   -1
-#define HAL_STATUS_INVALID_PARAMETER       -2
-#define HAL_STATUS_NOT_INITIALIZED         -3
-#define HAL_STATUS_TIMEOUT                 -4
-#define HAL_STATUS_BUSY                    -5
+// HAL Status Codes - Using values from hal_common.h
 
 // ============================================================================
 // DEBUG CONSTANTS

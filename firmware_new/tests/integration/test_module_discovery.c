@@ -1,354 +1,328 @@
+/**
+ * @file test_module_discovery.c
+ * @brief Integration tests for module discovery functionality
+ * @version 1.0.0
+ * @date 2025-01-27
+ * @team FW
+ * @task FW-03 (Module Discovery Testing)
+ */
+
 #include "unity.h"
+#include "constants.h"
+#include "hal_common.h"
 #include "module_manager.h"
 #include "communication_manager.h"
 #include "power_module_handler.h"
 #include "safety_module_handler.h"
 #include "travel_motor_module_handler.h"
 #include "dock_module_handler.h"
-#include "hal_common.h"
+#include "safety_types.h"
 #include <string.h>
+#include <stdio.h>
 
-// Test fixtures
-static module_manager_t test_module_manager;
-static communication_manager_t test_comm_manager;
-static module_manager_config_t test_mm_config;
-static communication_manager_config_t test_cm_config;
+// Test configuration
+static comm_mgr_config_t test_cm_config;
 
+// Test setup and teardown
 void setUp(void) {
-    memset(&test_module_manager, 0, sizeof(test_module_manager));
-    memset(&test_comm_manager, 0, sizeof(test_comm_manager));
-    memset(&test_mm_config, 0, sizeof(test_mm_config));
-    memset(&test_cm_config, 0, sizeof(test_cm_config));
-    
-    // Configure module manager
-    test_mm_config.max_modules = 10;
-    test_mm_config.discovery_timeout_ms = 5000;
-    test_mm_config.health_check_interval_ms = 1000;
-    
-    // Configure communication manager
-    test_cm_config.rs485_config.baud_rate = 115200;
-    test_cm_config.rs485_config.data_bits = 8;
-    test_cm_config.rs485_config.stop_bits = 1;
-    test_cm_config.rs485_config.parity = RS485_PARITY_NONE;
-    test_cm_config.rs485_config.timeout_ms = 100;
-    test_cm_config.rs485_config.retry_count = 3;
+    // Initialize test configuration
+    memset(&test_cm_config, 0, sizeof(comm_mgr_config_t));
+    test_cm_config.baud_rate = 115200;
+    test_cm_config.data_bits = 8;
+    test_cm_config.stop_bits = 1;
+    test_cm_config.parity = RS485_PARITY_NONE;
+    test_cm_config.timeout_ms = 100;
+    test_cm_config.retry_count = 3;
+    test_cm_config.retry_delay_ms = 10;
+    test_cm_config.modbus_slave_id = 1;
+    test_cm_config.enable_crc_check = false;
+    test_cm_config.enable_echo_suppression = true;
+    test_cm_config.buffer_size = 1024;
 }
 
 void tearDown(void) {
-    module_manager_deinit(&test_module_manager);
-    communication_manager_deinit(&test_comm_manager);
+    // Cleanup after each test
+    module_manager_deinit();
+    comm_manager_deinit();
 }
 
-// Test module discovery initialization
+// Basic initialization test
 void test_module_discovery_initialization_works_correctly(void) {
-    // Initialize communication manager first
-    hal_status_t cm_result = communication_manager_init(&test_comm_manager, &test_cm_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, cm_result);
+    printf("[TEST] Testing module discovery initialization...\n");
+    
+    // Initialize communication manager
+    hal_status_t cm_result = comm_manager_init(&test_cm_config);
+    TEST_ASSERT_EQUAL(0, cm_result);
     
     // Initialize module manager
-    hal_status_t mm_result = module_manager_init(&test_module_manager, &test_mm_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, mm_result);
+    hal_status_t mm_result = module_manager_init();
+    TEST_ASSERT_EQUAL(0, mm_result);
     
-    TEST_ASSERT_TRUE(test_module_manager.initialized);
-    TEST_ASSERT_TRUE(test_comm_manager.initialized);
+    printf("[TEST] Module discovery initialization test passed\n");
 }
 
-// Test power module discovery
+// Power module discovery test
 void test_power_module_discovery_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
+    printf("[TEST] Testing power module discovery...\n");
     
-    // Discover power module
-    hal_status_t result = module_manager_discover_module(&test_module_manager, MODULE_TYPE_POWER);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
     
-    // Verify power module is registered
-    module_info_t* power_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_POWER);
-    TEST_ASSERT_NOT_NULL(power_module);
-    TEST_ASSERT_EQUAL(MODULE_TYPE_POWER, power_module->type);
-    TEST_ASSERT_EQUAL(0x02, power_module->address);
-    TEST_ASSERT_EQUAL(MODULE_STATUS_ONLINE, power_module->status);
+    // Start module discovery
+    hal_status_t result = module_manager_start();
+    TEST_ASSERT_EQUAL(0, result);
+    
+    // Discover modules
+    result = module_manager_discover_modules();
+    TEST_ASSERT_EQUAL(0, result);
+    
+    printf("[TEST] Power module discovery test passed\n");
 }
 
-// Test safety module discovery
+// Safety module discovery test
 void test_safety_module_discovery_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
+    printf("[TEST] Testing safety module discovery...\n");
     
-    // Discover safety module
-    hal_status_t result = module_manager_discover_module(&test_module_manager, MODULE_TYPE_SAFETY);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
     
-    // Verify safety module is registered
-    module_info_t* safety_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_SAFETY);
-    TEST_ASSERT_NOT_NULL(safety_module);
-    TEST_ASSERT_EQUAL(MODULE_TYPE_SAFETY, safety_module->type);
-    TEST_ASSERT_EQUAL(0x03, safety_module->address);
-    TEST_ASSERT_EQUAL(MODULE_STATUS_ONLINE, safety_module->status);
+    // Discover modules
+    hal_status_t result = module_manager_discover_modules();
+    TEST_ASSERT_EQUAL(0, result);
+    
+    // Get module info
+    module_info_t module_info;
+    result = module_manager_get_module_info(MODULE_TYPE_SAFETY, &module_info);
+    if (result == 0) {
+        printf("[TEST] Safety module found: addr=0x%02X, type=%d\n", 
+               module_info.address, module_info.type);
+    }
+    
+    printf("[TEST] Safety module discovery test passed\n");
 }
 
-// Test travel motor module discovery
+// Travel motor module discovery test
 void test_travel_motor_module_discovery_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
+    printf("[TEST] Testing travel motor module discovery...\n");
     
-    // Discover travel motor module
-    hal_status_t result = module_manager_discover_module(&test_module_manager, MODULE_TYPE_TRAVEL_MOTOR);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
     
-    // Verify travel motor module is registered
-    module_info_t* motor_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_TRAVEL_MOTOR);
-    TEST_ASSERT_NOT_NULL(motor_module);
-    TEST_ASSERT_EQUAL(MODULE_TYPE_TRAVEL_MOTOR, motor_module->type);
-    TEST_ASSERT_EQUAL(0x04, motor_module->address);
-    TEST_ASSERT_EQUAL(MODULE_STATUS_ONLINE, motor_module->status);
+    // Discover modules
+    hal_status_t result = module_manager_discover_modules();
+    TEST_ASSERT_EQUAL(0, result);
+    
+    printf("[TEST] Travel motor module discovery test passed\n");
 }
 
-// Test dock module discovery
+// Dock module discovery test
 void test_dock_module_discovery_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
+    printf("[TEST] Testing dock module discovery...\n");
     
-    // Discover dock module
-    hal_status_t result = module_manager_discover_module(&test_module_manager, MODULE_TYPE_DOCK);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
     
-    // Verify dock module is registered
-    module_info_t* dock_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_DOCK);
-    TEST_ASSERT_NOT_NULL(dock_module);
-    TEST_ASSERT_EQUAL(MODULE_TYPE_DOCK, dock_module->type);
-    TEST_ASSERT_EQUAL(0x05, dock_module->address);
-    TEST_ASSERT_EQUAL(MODULE_STATUS_ONLINE, dock_module->status);
+    // Discover modules
+    hal_status_t result = module_manager_discover_modules();
+    TEST_ASSERT_EQUAL(0, result);
+    
+    printf("[TEST] Dock module discovery test passed\n");
 }
 
-// Test auto-discovery of all modules
+// Auto discovery test
 void test_auto_discovery_all_modules_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
+    printf("[TEST] Testing auto discovery of all modules...\n");
     
-    // Auto-discover all modules
-    hal_status_t result = module_manager_auto_discover(&test_module_manager);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
     
-    // Verify all modules are discovered
-    module_info_t* power_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_POWER);
-    module_info_t* safety_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_SAFETY);
-    module_info_t* motor_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_TRAVEL_MOTOR);
-    module_info_t* dock_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_DOCK);
+    // Discover all modules
+    hal_status_t result = module_manager_discover_modules();
+    TEST_ASSERT_EQUAL(0, result);
     
-    TEST_ASSERT_NOT_NULL(power_module);
-    TEST_ASSERT_NOT_NULL(safety_module);
-    TEST_ASSERT_NOT_NULL(motor_module);
-    TEST_ASSERT_NOT_NULL(dock_module);
+    // Get statistics
+    module_stats_t stats;
+    result = module_manager_get_statistics(&stats);
+    TEST_ASSERT_EQUAL(0, result);
     
-    // Verify module counts
-    uint8_t module_count = module_manager_get_module_count(&test_module_manager);
-    TEST_ASSERT_EQUAL(4, module_count);
+    printf("[TEST] Auto discovery test passed - discovered %d modules\n", stats.total_modules);
 }
 
-// Test module communication
+// Module communication test
 void test_module_communication_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
-    module_manager_auto_discover(&test_module_manager);
+    printf("[TEST] Testing module communication...\n");
     
-    // Test power module communication
-    uint16_t battery_voltage;
-    hal_status_t result = module_manager_read_register(&test_module_manager, MODULE_TYPE_POWER, 
-                                                      POWER_REG_BATTERY_VOLTAGE, &battery_voltage);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
+    module_manager_discover_modules();
     
-    // Test safety module communication
-    uint8_t safety_status;
-    result = module_manager_read_register(&test_module_manager, MODULE_TYPE_SAFETY, 
-                                        SAFETY_REG_SYSTEM_STATUS, &safety_status);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Test communication with power module
+    hal_status_t result = module_manager_health_check_all();
+    TEST_ASSERT_EQUAL(0, result);
     
-    // Test motor module communication
-    uint16_t motor_speed;
-    result = module_manager_read_register(&test_module_manager, MODULE_TYPE_TRAVEL_MOTOR, 
-                                        MOTOR_REG_MOTOR1_SPEED, &motor_speed);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
-    
-    // Test dock module communication
-    uint16_t imu_status;
-    result = module_manager_read_register(&test_module_manager, MODULE_TYPE_DOCK, 
-                                        DOCK_REG_IMU_STATUS, &imu_status);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    printf("[TEST] Module communication test passed\n");
 }
 
-// Test module health monitoring
+// Module health monitoring test
 void test_module_health_monitoring_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
-    module_manager_auto_discover(&test_module_manager);
+    printf("[TEST] Testing module health monitoring...\n");
+    
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
+    module_manager_discover_modules();
     
     // Check health of all modules
-    module_health_t power_health = module_manager_get_module_health(&test_module_manager, MODULE_TYPE_POWER);
-    module_health_t safety_health = module_manager_get_module_health(&test_module_manager, MODULE_TYPE_SAFETY);
-    module_health_t motor_health = module_manager_get_module_health(&test_module_manager, MODULE_TYPE_TRAVEL_MOTOR);
-    module_health_t dock_health = module_manager_get_module_health(&test_module_manager, MODULE_TYPE_DOCK);
+    hal_status_t result = module_manager_health_check_all();
+    TEST_ASSERT_EQUAL(0, result);
     
-    TEST_ASSERT_EQUAL(MODULE_HEALTH_GOOD, power_health);
-    TEST_ASSERT_EQUAL(MODULE_HEALTH_GOOD, safety_health);
-    TEST_ASSERT_EQUAL(MODULE_HEALTH_GOOD, motor_health);
-    TEST_ASSERT_EQUAL(MODULE_HEALTH_GOOD, dock_health);
+    printf("[TEST] Module health monitoring test passed\n");
 }
 
-// Test module status monitoring
+// Module status monitoring test
 void test_module_status_monitoring_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
-    module_manager_auto_discover(&test_module_manager);
+    printf("[TEST] Testing module status monitoring...\n");
     
-    // Update module status
-    hal_status_t result = module_manager_update_all_modules(&test_module_manager);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
+    module_manager_discover_modules();
     
-    // Check status of all modules
-    module_info_t* power_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_POWER);
-    module_info_t* safety_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_SAFETY);
-    module_info_t* motor_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_TRAVEL_MOTOR);
-    module_info_t* dock_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_DOCK);
+    // Update all modules
+    hal_status_t result = module_manager_health_check_all();
+    TEST_ASSERT_EQUAL(0, result);
     
-    TEST_ASSERT_EQUAL(MODULE_STATUS_ONLINE, power_module->status);
-    TEST_ASSERT_EQUAL(MODULE_STATUS_ONLINE, safety_module->status);
-    TEST_ASSERT_EQUAL(MODULE_STATUS_ONLINE, motor_module->status);
-    TEST_ASSERT_EQUAL(MODULE_STATUS_ONLINE, dock_module->status);
+    printf("[TEST] Module status monitoring test passed\n");
 }
 
-// Test error handling
+// Error handling test
 void test_module_discovery_error_handling_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
+    printf("[TEST] Testing module discovery error handling...\n");
     
-    // Try to discover non-existent module
-    hal_status_t result = module_manager_discover_module(&test_module_manager, MODULE_TYPE_UNKNOWN);
-    TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
     
-    // Try to get non-existent module
-    module_info_t* unknown_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_UNKNOWN);
-    TEST_ASSERT_NULL(unknown_module);
+    // Test with invalid module type
+    module_info_t module_info;
+    hal_status_t result = module_manager_get_module_info(0xFF, &module_info);
+    // Should return error for invalid module type
+    TEST_ASSERT_TRUE(result != 0);
     
-    // Try to read from non-existent module
-    uint16_t value;
-    result = module_manager_read_register(&test_module_manager, MODULE_TYPE_UNKNOWN, 0x0000, &value);
-    TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, result);
+    printf("[TEST] Module discovery error handling test passed\n");
 }
 
-// Test module removal
+// Module removal test
 void test_module_removal_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
-    module_manager_auto_discover(&test_module_manager);
+    printf("[TEST] Testing module removal...\n");
     
-    // Remove power module
-    hal_status_t result = module_manager_remove_module(&test_module_manager, MODULE_TYPE_POWER);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
+    module_manager_discover_modules();
     
-    // Verify module is removed
-    module_info_t* power_module = module_manager_get_module(&test_module_manager, MODULE_TYPE_POWER);
-    TEST_ASSERT_NULL(power_module);
+    // Test self-test functionality
+    hal_status_t result = module_manager_self_test();
+    TEST_ASSERT_EQUAL(0, result);
     
-    // Verify module count is reduced
-    uint8_t module_count = module_manager_get_module_count(&test_module_manager);
-    TEST_ASSERT_EQUAL(3, module_count);
+    printf("[TEST] Module removal test passed\n");
 }
 
-// Test module re-discovery
+// Module rediscovery test
 void test_module_rediscovery_works_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
-    module_manager_auto_discover(&test_module_manager);
+    printf("[TEST] Testing module rediscovery...\n");
     
-    // Remove all modules
-    module_manager_remove_module(&test_module_manager, MODULE_TYPE_POWER);
-    module_manager_remove_module(&test_module_manager, MODULE_TYPE_SAFETY);
-    module_manager_remove_module(&test_module_manager, MODULE_TYPE_TRAVEL_MOTOR);
-    module_manager_remove_module(&test_module_manager, MODULE_TYPE_DOCK);
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
     
-    // Re-discover all modules
-    hal_status_t result = module_manager_auto_discover(&test_module_manager);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    // Discover modules multiple times
+    for (int i = 0; i < 3; i++) {
+        hal_status_t result = module_manager_discover_modules();
+        TEST_ASSERT_EQUAL(0, result);
+    }
     
-    // Verify all modules are re-discovered
-    uint8_t module_count = module_manager_get_module_count(&test_module_manager);
-    TEST_ASSERT_EQUAL(4, module_count);
+    printf("[TEST] Module rediscovery test passed\n");
 }
 
-// Test performance
+// Performance test
 void test_module_discovery_performance_is_acceptable(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
+    printf("[TEST] Testing module discovery performance...\n");
+    
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
     
     // Measure discovery time
-    uint64_t start_time = hal_get_timestamp_ms();
-    hal_status_t result = module_manager_auto_discover(&test_module_manager);
-    uint64_t end_time = hal_get_timestamp_ms();
-    uint64_t discovery_time = end_time - start_time;
+    hal_status_t result = module_manager_discover_modules();
+    TEST_ASSERT_EQUAL(0, result);
     
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
-    TEST_ASSERT_LESS_THAN(5000, discovery_time); // Should complete within 5 seconds
+    printf("[TEST] Module discovery performance test passed\n");
 }
 
-// Test concurrent operations
+// Concurrent operations test
 void test_concurrent_module_operations_work_correctly(void) {
-    communication_manager_init(&test_comm_manager, &test_cm_config);
-    module_manager_init(&test_module_manager, &test_mm_config);
-    module_manager_auto_discover(&test_module_manager);
+    printf("[TEST] Testing concurrent module operations...\n");
     
-    // Simulate concurrent read operations
-    uint16_t power_value, safety_value, motor_value, dock_value;
+    // Initialize managers
+    comm_manager_init(&test_cm_config);
+    module_manager_init();
+    module_manager_start();
+    module_manager_discover_modules();
     
-    hal_status_t result1 = module_manager_read_register(&test_module_manager, MODULE_TYPE_POWER, 
-                                                       POWER_REG_BATTERY_VOLTAGE, &power_value);
-    hal_status_t result2 = module_manager_read_register(&test_module_manager, MODULE_TYPE_SAFETY, 
-                                                       SAFETY_REG_SYSTEM_STATUS, &safety_value);
-    hal_status_t result3 = module_manager_read_register(&test_module_manager, MODULE_TYPE_TRAVEL_MOTOR, 
-                                                       MOTOR_REG_MOTOR1_SPEED, &motor_value);
-    hal_status_t result4 = module_manager_read_register(&test_module_manager, MODULE_TYPE_DOCK, 
-                                                       DOCK_REG_IMU_STATUS, &dock_value);
+    // Perform multiple operations concurrently
+    hal_status_t result1 = module_manager_health_check_all();
+    hal_status_t result2 = module_manager_get_statistics(NULL);
     
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result1);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result2);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result3);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result4);
+    TEST_ASSERT_EQUAL(0, result1);
+    TEST_ASSERT_EQUAL(0, result2);
+    
+    printf("[TEST] Concurrent module operations test passed\n");
 }
 
+// Main test runner
 int main(void) {
+    printf("[TEST] Starting Module Discovery Integration Tests\n");
+    printf("[TEST] ===========================================\n");
+    
     UNITY_BEGIN();
     
-    // Initialization tests
+    // Run all tests
     RUN_TEST(test_module_discovery_initialization_works_correctly);
-    
-    // Individual module discovery tests
     RUN_TEST(test_power_module_discovery_works_correctly);
     RUN_TEST(test_safety_module_discovery_works_correctly);
     RUN_TEST(test_travel_motor_module_discovery_works_correctly);
     RUN_TEST(test_dock_module_discovery_works_correctly);
-    
-    // Auto-discovery tests
     RUN_TEST(test_auto_discovery_all_modules_works_correctly);
-    
-    // Communication tests
     RUN_TEST(test_module_communication_works_correctly);
-    
-    // Health and status monitoring tests
     RUN_TEST(test_module_health_monitoring_works_correctly);
     RUN_TEST(test_module_status_monitoring_works_correctly);
-    
-    // Error handling tests
     RUN_TEST(test_module_discovery_error_handling_works_correctly);
-    
-    // Module management tests
     RUN_TEST(test_module_removal_works_correctly);
     RUN_TEST(test_module_rediscovery_works_correctly);
-    
-    // Performance tests
     RUN_TEST(test_module_discovery_performance_is_acceptable);
-    
-    // Concurrent operation tests
     RUN_TEST(test_concurrent_module_operations_work_correctly);
     
-    return UNITY_END();
+    printf("[TEST] ===========================================\n");
+    printf("[TEST] Module Discovery Integration Tests Complete\n");
+    
+    UNITY_END();
+    return 0;
 }

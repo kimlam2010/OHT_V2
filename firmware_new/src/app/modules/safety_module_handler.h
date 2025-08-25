@@ -13,6 +13,7 @@
 #include "hal_common.h"
 #include "communication_manager.h"
 #include "register_map.h"
+#include "safety_types.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -71,6 +72,7 @@ typedef struct safety_module_handler safety_module_handler_t;
 #define SAFETY_DEVICE_ID_REG             0x00F0
 #define SAFETY_FIRMWARE_VERSION_REG      0x00F1
 #define SAFETY_SYSTEM_STATUS_REG         0x00F2  // Auto-detect system status
+#define SAFETY_REG_SYSTEM_STATUS         0x00F2  // System status register
 #define SAFETY_SYSTEM_ERROR_REG          0x00F3
 #define SAFETY_RESET_ERROR_CMD_REG       0x00F4
 #define SAFETY_CONFIG_BAUDRATE_REG       0x00F5
@@ -85,27 +87,7 @@ typedef struct safety_module_handler safety_module_handler_t;
 #define SAFETY_BUILD_DATE_HIGH_REG       0x00FE
 #define SAFETY_CHECKSUM_REG              0x00FF
 
-// Safety Module Fault Codes
-typedef enum {
-    SAFETY_FAULT_NONE = 0,
-    SAFETY_FAULT_ANALOG_SENSOR_1_ERROR,
-    SAFETY_FAULT_ANALOG_SENSOR_2_ERROR,
-    SAFETY_FAULT_ANALOG_SENSOR_3_ERROR,
-    SAFETY_FAULT_ANALOG_SENSOR_4_ERROR,
-    SAFETY_FAULT_DIGITAL_SENSOR_1_ERROR,
-    SAFETY_FAULT_DIGITAL_SENSOR_2_ERROR,
-    SAFETY_FAULT_DIGITAL_SENSOR_3_ERROR,
-    SAFETY_FAULT_DIGITAL_SENSOR_4_ERROR,
-    SAFETY_FAULT_RELAY_1_ERROR,
-    SAFETY_FAULT_RELAY_2_ERROR,
-    SAFETY_FAULT_RELAY_3_ERROR,
-    SAFETY_FAULT_RELAY_4_ERROR,
-    SAFETY_FAULT_COMMUNICATION_ERROR,
-    SAFETY_FAULT_OVERTEMPERATURE,
-    SAFETY_FAULT_OVERVOLTAGE,
-    SAFETY_FAULT_UNDERVOLTAGE,
-    SAFETY_FAULT_EMERGENCY_STOP_ACTIVATED
-} safety_fault_code_t;
+// Safety Module Fault Codes - Using unified safety_fault_t from safety_types.h
 
 // Safety Module States
 typedef enum {
@@ -118,25 +100,7 @@ typedef enum {
     SAFETY_STATE_MAINTENANCE
 } safety_state_t;
 
-// Safety Module Events
-typedef enum {
-    SAFETY_EVENT_NONE = 0,
-    SAFETY_EVENT_ENABLED,
-    SAFETY_EVENT_DISABLED,
-    SAFETY_EVENT_WARNING_TRIGGERED,
-    SAFETY_EVENT_CRITICAL_TRIGGERED,
-    SAFETY_EVENT_EMERGENCY_STOP_TRIGGERED,
-    SAFETY_EVENT_FAULT_DETECTED,
-    SAFETY_EVENT_FAULT_CLEARED,
-    SAFETY_EVENT_SENSOR_ACTIVATED,
-    SAFETY_EVENT_SENSOR_DEACTIVATED,
-    SAFETY_EVENT_RELAY_ACTIVATED,
-    SAFETY_EVENT_RELAY_DEACTIVATED,
-    SAFETY_EVENT_ZONE_VIOLATION,
-    SAFETY_EVENT_ZONE_CLEARED,
-    SAFETY_EVENT_PROXIMITY_ALERT,
-    SAFETY_EVENT_PROXIMITY_CLEARED
-} safety_event_t;
+// Safety Module Events - Using unified safety_event_t from safety_types.h
 
 // Safety Zone Levels
 typedef enum {
@@ -162,7 +126,7 @@ typedef struct {
 // Safety Module Status Structure
 typedef struct {
     safety_state_t state;               // Current state
-    safety_fault_code_t fault_code;     // Current fault code
+    safety_fault_t fault_code;     // Current fault code
     uint8_t fault_count;                // Fault count
     uint64_t last_update_time;          // Last update timestamp
     uint32_t response_time_ms;          // Response time
@@ -211,8 +175,7 @@ typedef struct safety_module_handler {
     uint64_t last_response_time;        // Last response timestamp
 } safety_module_handler_t;
 
-// Event callback function type
-typedef void (*safety_event_callback_t)(safety_event_t event, const safety_module_handler_t *handler);
+// Event callback function type - Using unified safety_event_callback_t from safety_types.h
 
 // Function Prototypes
 
@@ -254,7 +217,7 @@ hal_status_t safety_module_clear_emergency_stop(safety_module_handler_t *handler
 hal_status_t safety_module_test_emergency_stop(safety_module_handler_t *handler);
 
 // Fault Management
-hal_status_t safety_module_get_fault_code(safety_module_handler_t *handler, safety_fault_code_t *fault_code);
+hal_status_t safety_module_get_fault_code(safety_module_handler_t *handler, safety_fault_t *fault_code);
 hal_status_t safety_module_clear_faults(safety_module_handler_t *handler);
 hal_status_t safety_module_get_fault_count(safety_module_handler_t *handler, uint8_t *fault_count);
 
@@ -286,7 +249,7 @@ hal_status_t safety_module_validate_zone_number(uint8_t zone_number);
 
 // Conversion Functions
 safety_zone_level_t safety_module_distance_to_zone_level(uint16_t distance, uint16_t threshold);
-const char* safety_module_get_fault_name(safety_fault_code_t fault_code);
+const char* safety_module_get_fault_name(safety_fault_t fault_code);
 const char* safety_module_get_state_name(safety_state_t state);
 const char* safety_module_get_event_name(safety_event_t event);
 const char* safety_module_get_zone_level_name(safety_zone_level_t level);
