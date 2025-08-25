@@ -4,7 +4,8 @@
 # Create library
 add_library(app_modules STATIC
     power_module_handler.c
-    motor_module_handler.c
+    travel_motor_module_handler.c
+    safety_module_handler.c
     dock_module_handler.c
     module_registry.c
 )

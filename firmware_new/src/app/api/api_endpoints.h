@@ -29,6 +29,16 @@
 #define API_CONFIG            "/config"
 #define API_DIAGNOSTICS       "/diagnostics"
 
+// Module-specific endpoints
+#define API_POWER_STATUS      "/modules/power/status"
+#define API_POWER_CONTROL     "/modules/power/control"
+#define API_SAFETY_SENSORS    "/modules/safety/sensors"
+#define API_SAFETY_RELAYS     "/modules/safety/relays"
+#define API_MOTOR_STATUS      "/modules/motor/status"
+#define API_MOTOR_CONTROL     "/modules/motor/control"
+#define API_DOCK_STATUS       "/modules/dock/status"
+#define API_DOCK_CONTROL      "/modules/dock/control"
+
 // API Response Structures
 typedef struct {
     char system_name[64];
@@ -177,6 +187,72 @@ hal_status_t api_handle_config_set(const api_mgr_http_request_t *request, api_mg
  * @return HAL status
  */
 hal_status_t api_handle_diagnostics(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+// Module-specific endpoint handlers
+
+/**
+ * @brief Handle GET /api/v1/modules/power/status
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_power_status(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle POST /api/v1/modules/power/control
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_power_control(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle GET /api/v1/modules/safety/sensors
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_safety_sensors(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle POST /api/v1/modules/safety/relays
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_safety_relays(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle GET /api/v1/modules/motor/status
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_motor_status(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle POST /api/v1/modules/motor/control
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_motor_control(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle GET /api/v1/modules/dock/status
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_dock_status(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle POST /api/v1/modules/dock/control
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_dock_control(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 // API Utility Functions
 

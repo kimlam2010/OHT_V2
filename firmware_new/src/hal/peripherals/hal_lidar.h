@@ -97,7 +97,16 @@ typedef struct {
 
 // HAL function prototypes
 hal_status_t hal_lidar_init(const lidar_config_t *config);
+/**
+ * @brief Deinitialize LiDAR HAL
+ * @return HAL status
+ */
 hal_status_t hal_lidar_deinit(void);
+/**
+ * @brief Reset LiDAR state completely (for testing purposes)
+ * @return HAL status
+ */
+hal_status_t hal_lidar_reset_state(void);
 hal_status_t hal_lidar_configure(const lidar_config_t *config);
 hal_status_t hal_lidar_start_scanning(void);
 hal_status_t hal_lidar_stop_scanning(void);

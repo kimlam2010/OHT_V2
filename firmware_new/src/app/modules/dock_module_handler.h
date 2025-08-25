@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "hal_common.h"
+#include "register_map.h"
 
 // Forward declaration
 typedef struct dock_module_handler dock_module_handler_t;

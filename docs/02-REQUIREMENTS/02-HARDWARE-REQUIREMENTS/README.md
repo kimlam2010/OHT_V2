@@ -10,6 +10,7 @@
 - **REQ_Hardware_Specification.md** - Đặc tả phần cứng tổng thể
 - **REQ_Motor_Control_Module.md** - Module điều khiển động cơ
 - **REQ_Hardware_Implementation_Plan.md** - Kế hoạch triển khai phần cứng
+- **REQ_Safety_Module_Hardware.md** - Safety Module phần cứng (4 Analog + 4 Digital + 4 Relay)
 - **REQ_Power_Management.md** - Quản lý nguồn điện
 - **REQ_Safety_Hardware.md** - Phần cứng an toàn (E-Stop, Sensors)
 - **REQ_Communication_Hardware.md** - Phần cứng giao tiếp (RS485, Ethernet)
@@ -35,7 +36,8 @@
 ### **Cho EMBED Team:**
 1. Đọc **REQ_Hardware_Implementation_Plan.md**
 2. Xem **REQ_Communication_Hardware.md** cho interface design
-3. Tham khảo **REQ_Safety_Hardware.md** cho E-Stop implementation
+3. Tham khảo **REQ_Safety_Module_Hardware.md** cho Safety Module implementation
+4. Tham khảo **REQ_Safety_Hardware.md** cho E-Stop implementation
 
 ---
 
@@ -51,6 +53,7 @@
 - ✅ **REQ_Hardware_Specification.md** - Hoàn thành
 - ✅ **REQ_Motor_Control_Module.md** - Hoàn thành
 - ✅ **REQ_Hardware_Implementation_Plan.md** - Hoàn thành
+- ✅ **REQ_Safety_Module_Hardware.md** - Hoàn thành
 - ⏳ **REQ_Power_Management.md** - Đang tạo
 - ⏳ **REQ_Safety_Hardware.md** - Đang tạo
 - ⏳ **REQ_Communication_Hardware.md** - Đang tạo

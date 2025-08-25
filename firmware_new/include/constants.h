@@ -44,11 +44,10 @@
 
 // Module Addresses
 #define MODULE_ADDR_POWER                  0x02U
-#define MODULE_ADDR_MOTOR                  0x03U
-#define MODULE_ADDR_IO                     0x04U
+#define MODULE_ADDR_SAFETY                 0x03U
+#define MODULE_ADDR_TRAVEL_MOTOR           0x04U
 #define MODULE_ADDR_DOCK                   0x05U
-#define MODULE_ADDR_SENSOR                 0x06U
-#define MODULE_ADDR_MAX                    0x07U
+#define MODULE_ADDR_MAX                    0x06U
 
 // ============================================================================
 // TIMING CONSTANTS

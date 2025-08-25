@@ -225,6 +225,76 @@ target_link_libraries(test_module_manager
     pthread
 )
 
+# Safety Module Handler tests
+add_executable(test_safety_module_handler
+    app/test_safety_module_handler.c
+)
+
+target_include_directories(test_safety_module_handler PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_safety_module_handler
+    app_modules
+    hal_common
+    unity
+)
+
+# Travel Motor Module Handler tests
+add_executable(test_travel_motor_module_handler
+    app/test_travel_motor_module_handler.c
+)
+
+target_include_directories(test_travel_motor_module_handler PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_travel_motor_module_handler
+    app_modules
+    hal_common
+    unity
+)
+
+# Dock Module Handler tests
+add_executable(test_dock_module_handler
+    app/test_dock_module_handler.c
+)
+
+target_include_directories(test_dock_module_handler PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_dock_module_handler
+    app_modules
+    hal_common
+    unity
+)
+
+# Power Module Handler tests
+add_executable(test_power_module_handler
+    app/test_power_module_handler.c
+)
+
+target_include_directories(test_power_module_handler PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_power_module_handler
+    app_modules
+    hal_common
+    hal_communication
+    unity
+    pthread
+)
+
 # Add tests to CTest
 add_test(NAME test_hal_common COMMAND test_hal_common)
 add_test(NAME test_hal_gpio COMMAND test_hal_gpio)
@@ -239,6 +309,10 @@ add_test(NAME test_system_state_machine COMMAND test_system_state_machine)
 add_test(NAME test_control_loop COMMAND test_control_loop)
 add_test(NAME test_communication_manager COMMAND test_communication_manager)
 add_test(NAME test_module_manager COMMAND test_module_manager)
+add_test(NAME test_safety_module_handler COMMAND test_safety_module_handler)
+add_test(NAME test_travel_motor_module_handler COMMAND test_travel_motor_module_handler)
+add_test(NAME test_dock_module_handler COMMAND test_dock_module_handler)
+add_test(NAME test_power_module_handler COMMAND test_power_module_handler)
 
 # Enable testing
 enable_testing()

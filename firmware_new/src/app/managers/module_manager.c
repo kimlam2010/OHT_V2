@@ -351,17 +351,10 @@ hal_status_t module_manager_reset_statistics(void) {
 const char* module_manager_get_type_name(module_type_t type) {
     switch (type) {
         case MODULE_TYPE_UNKNOWN: return "Unknown";
-        case MODULE_TYPE_MOTOR: return "Motor";
-        case MODULE_TYPE_IO: return "I/O";
-        case MODULE_TYPE_DOCK: return "Dock";
-        case MODULE_TYPE_SENSOR: return "Sensor";
         case MODULE_TYPE_POWER: return "Power";
-        case MODULE_TYPE_ACTUATOR: return "Actuator";
-        case MODULE_TYPE_CONTROLLER: return "Controller";
         case MODULE_TYPE_SAFETY: return "Safety";
-        case MODULE_TYPE_COMMUNICATION: return "Communication";
-        case MODULE_TYPE_STORAGE: return "Storage";
-        case MODULE_TYPE_DISPLAY: return "Display";
+        case MODULE_TYPE_TRAVEL_MOTOR: return "Travel Motor";
+        case MODULE_TYPE_DOCK: return "Dock & Location";
         default: return "Invalid";
     }
 }
