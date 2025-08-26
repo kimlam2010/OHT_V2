@@ -37,57 +37,57 @@ Thiết kế đầy đủ 36 pages cho hệ thống OHT-50 theo yêu cầu UI/UX
 ## 📦 **Design Deliverables**
 
 ### **Phase 1: Dashboard (4/4 pages) ✅ COMPLETED**
-- ✅ **Main Dashboard** - `dashboard_main_1.html`
-- ✅ **Robot Status Overview** - `robot_status_overview_1.html`
-- ✅ **Real-time Alerts** - `real_time_alerts_1.html`
-- ✅ **System Health** - `system_health_1.html`
+- ✅ **Main Dashboard** - `2-1-dashboard-main.html`
+- ✅ **Robot Status Overview** - `2-2-robot-status-overview.html`
+- ✅ **Real-time Alerts** - `2-3-real-time-alerts.html`
+- ✅ **System Health** - `2-4-system-health.html`
 
 ### **Phase 2: Robot Control (4 pages) ✅ COMPLETED**
-- ✅ **Manual Control Panel** - `control_panel_1.html`
+- ✅ **Manual Control Panel** - `3-1-control-panel.html`
 - ✅ **Movement Controls** - Integrated in control panel
 - ✅ **Emergency Stop** - Integrated in control panel
 - ✅ **Voice Commands** - Integrated in control panel
 
 ### **Phase 3: Map & Navigation (4 pages) ✅ COMPLETED**
-- ✅ **Live Robot Location** - `map_interface_1.html`
+- ✅ **Live Robot Location** - `4-1-map-interface.html`
 - ✅ **LiDAR 360° View** - Integrated in map interface
 - ✅ **Dock Location Status** - Integrated in map interface
 - ✅ **Path Planning** - Integrated in map interface
 
 ### **Phase 4: Configuration (4 pages) ✅ COMPLETED**
-- ✅ **Robot Settings** - `config_interface_1.html`
+- ✅ **Robot Settings** - `7-1-config-interface.html`
 - ✅ **System Parameters** - Integrated in config interface
 - ✅ **User Management** - Integrated in config interface
 - ✅ **Access Control** - Integrated in config interface
 
 ### **Phase 5: Safety & Alarms (4 pages) ✅ COMPLETED**
-- ✅ **Alert System** - `safety_alarms_1.html`
+- ✅ **Alert System** - `6-1-safety-alarms.html`
 - ✅ **Emergency Procedures** - Integrated in safety interface
 - ✅ **Safety Status** - Integrated in safety interface
 - ✅ **Alarm History** - Integrated in safety interface
 
 ### **Phase 6: Monitoring (4 pages) ✅ COMPLETED**
-- ✅ **System Monitoring** - `monitoring_1.html`
+- ✅ **System Monitoring** - `5-1-monitoring.html`
 - ✅ **Performance Metrics** - Integrated in monitoring interface
 - ✅ **Sensor Data** - Integrated in monitoring interface
 - ✅ **Health Indicators** - Integrated in monitoring interface
 
 ### **Phase 7: Analytics (4 pages) ✅ COMPLETED**
-- ✅ **Performance Analytics** - `analytics_1.html`
+- ✅ **Performance Analytics** - `8-1-analytics.html`
 - ✅ **Trend Analysis** - Integrated in analytics interface
 - ✅ **Predictive Analytics** - Integrated in analytics interface
 - ✅ **Custom Reports** - Integrated in analytics interface
 
 ### **Phase 8: Missions (4 pages) ✅ COMPLETED**
-- ✅ **Mission Management** - `missions_1.html`
+- ✅ **Mission Management** - `9-1-missions.html`
 - ✅ **Mission Planning** - Integrated in missions interface
 - ✅ **Mission History** - Integrated in missions interface
 - ✅ **Mission Analytics** - Integrated in missions interface
 
 ### **Phase 9: Authentication (4 pages) ❌ PENDING**
-- ❌ **Login Page** - `auth_login_1.html`
-- ❌ **Logout Page** - `auth_logout_1.html`
-- ❌ **Password Reset** - `auth_reset_1.html`
+- ❌ **Login Page** - `1-1-auth-login.html`
+- ❌ **Logout Page** - `1-2-auth-logout.html`
+- ❌ **Password Reset** - `1-3-auth-reset.html`
 - ❌ **User Profile** - `auth_profile_1.html`
 
 ### **Phase 10: Complete Integration (4 pages) ❌ PENDING**

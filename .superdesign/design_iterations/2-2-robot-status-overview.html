@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Robot Status Overview - Master Module</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Flowbite -->
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>
+    
+    <!-- Custom Theme CSS -->
+    <link rel="stylesheet" href="theme_1.css">
+    
+    <!-- Custom Animations -->
+    <style>
+        /* Animation Keyframes */
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes statusPulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+            50% { 
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+        }
+        
+        @keyframes batteryPulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            50% { 
+                box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+            }
+        }
+        
+        /* Animation Classes */
+        .animate-slide-in-left {
+            animation: slideInLeft 0.3s ease-out;
+        }
+        
+        .animate-slide-in-up {
+            animation: slideInUp 0.3s ease-out;
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .status-pulse {
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+        
+        .battery-pulse {
+            animation: batteryPulse 2s ease-in-out infinite;
+        }
+        
+        /* Custom Status Indicators */
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-online {
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+        }
+        
+        .status-warning {
+            background: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+        }
+        
+        .status-error {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+        
+        .status-offline {
+            background: #6b7280;
+            box-shadow: 0 0 8px rgba(107, 114, 128, 0.5);
+        }
+        
+        /* Battery Indicator */
+        .battery-container {
+            width: 60px;
+            height: 30px;
+            border: 2px solid #e5e7eb;
+            border-radius: 4px;
+            position: relative;
+            background: #f9fafb;
+        }
+        
+        .battery-level {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .battery-high {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        
+        .battery-medium {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        
+        .battery-low {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        
+        .battery-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Progress Bars */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .progress-excellent {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        
+        .progress-good {
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+        }
+        
+        .progress-warning {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        
+        .progress-critical {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        
+        /* Card Hover Effects */
+        .status-card {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Emergency Alert */
+        .emergency-alert {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: 2px solid #fca5a5;
+        }
+        
+        .emergency-alert:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">🤖</span>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-900">OHT-50</h1>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-1">
+                        <span class="text-gray-500">|</span>
+                        <span class="text-sm text-gray-600">Robot Status Overview</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Real-time Status -->
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-online status-pulse"></div>
+                        <span class="text-sm font-medium text-green-600">Online</span>
+                    </div>
+                    
+                    <!-- Last Update -->
+                    <div class="flex items-center space-x-1">
+                        <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
+                        <span class="text-sm text-gray-500">Last Update: <span id="lastUpdate">2s ago</span></span>
+                    </div>
+                    
+                    <!-- Emergency Stop -->
+                    <button class="emergency-alert px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center space-x-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        <span>E-STOP</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Status Overview Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Operating Status -->
+            <div class="status-card bg-white rounded-lg border border-gray-200 p-6 animate-slide-in-left">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Operating Status</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="text-center">
+                    <p class="text-3xl font-bold text-green-600 mb-2">AUTO</p>
+                    <p class="text-sm text-gray-500">Autonomous Mode Active</p>
+                    <div class="mt-4">
+                        <div class="flex items-center justify-center space-x-2">
+                            <span class="text-xs text-gray-500">Mission:</span>
+                            <span class="text-sm font-medium text-blue-600">Dock Navigation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Battery Level -->
+            <div class="status-card bg-white rounded-lg border border-gray-200 p-6 animate-slide-in-left" style="animation-delay: 0.1s;">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Battery Level</h3>
+                    <i data-lucide="battery" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <div class="text-center">
+                    <div class="flex justify-center mb-3">
+                        <div class="battery-container">
+                            <div class="battery-level battery-high" style="width: 87%;"></div>
+                            <span class="battery-text">87%</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500">Estimated: 4h 23m remaining</p>
+                    <div class="mt-2">
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-excellent" style="width: 87%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Speed -->
+            <div class="status-card bg-white rounded-lg border border-gray-200 p-6 animate-slide-in-left" style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Current Speed</h3>
+                    <i data-lucide="gauge" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <div class="text-center">
+                    <p class="text-3xl font-bold text-blue-600 mb-2">2.4</p>
+                    <p class="text-sm text-gray-500">m/s (Max: 5.0 m/s)</p>
+                    <div class="mt-4">
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-good" style="width: 48%;"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">48% of max speed</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temperature -->
+            <div class="status-card bg-white rounded-lg border border-gray-200 p-6 animate-slide-in-left" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Temperature</h3>
+                    <i data-lucide="thermometer" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <div class="text-center">
+                    <p class="text-3xl font-bold text-orange-600 mb-2">42°C</p>
+                    <p class="text-sm text-gray-500">Normal Range: 20-60°C</p>
+                    <div class="mt-4">
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-warning" style="width: 55%;"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">55% of max temp</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Status Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Position & Navigation -->
+            <div class="status-card bg-white rounded-lg border border-gray-200 p-6 animate-slide-in-up">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Position & Navigation</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">Current Position</span>
+                        <span class="text-sm font-medium font-mono">X: 125.4m, Y: 89.2m</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">Target Position</span>
+                        <span class="text-sm font-medium font-mono">X: 180.0m, Y: 120.0m</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">Distance to Target</span>
+                        <span class="text-sm font-medium text-blue-600">45.6m</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">Heading</span>
+                        <span class="text-sm font-medium">245°</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">Navigation Mode</span>
+                        <span class="text-sm font-medium text-green-600">LiDAR + GPS</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-600">GPS Satellites</span>
+                        <span class="text-sm font-medium">8 satellites</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="status-card bg-white rounded-lg border border-gray-200 p-6 animate-slide-in-up" style="animation-delay: 0.1s;">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">System Health</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">CPU Usage</span>
+                            <span class="text-sm font-medium">35%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-good" style="width: 35%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">Memory Usage</span>
+                            <span class="text-sm font-medium">28%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-excellent" style="width: 28%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">Storage Usage</span>
+                            <span class="text-sm font-medium">67%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-warning" style="width: 67%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">Network Status</span>
+                            <span class="text-sm font-medium text-green-600">Connected</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-excellent" style="width: 95%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">Signal Strength</span>
+                            <span class="text-sm font-medium">-45 dBm</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-excellent" style="width: 92%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Status -->
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Component Status</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- LiDAR Sensor -->
+                <div class="status-card bg-white rounded-lg border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-medium text-gray-900">LiDAR Sensor</h4>
+                        <div class="status-indicator status-online"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">360° coverage, 10Hz update rate</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-excellent" style="width: 98%;"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">98% operational</p>
+                </div>
+
+                <!-- GPS Module -->
+                <div class="status-card bg-white rounded-lg border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-medium text-gray-900">GPS Module</h4>
+                        <div class="status-indicator status-online"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">High precision, 8 satellites</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-excellent" style="width: 95%;"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">95% operational</p>
+                </div>
+
+                <!-- IMU Sensor -->
+                <div class="status-card bg-white rounded-lg border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-medium text-gray-900">IMU Sensor</h4>
+                        <div class="status-indicator status-online"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">Stable readings, calibrated</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-excellent" style="width: 97%;"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">97% operational</p>
+                </div>
+
+                <!-- Motor Controllers -->
+                <div class="status-card bg-white rounded-lg border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-medium text-gray-900">Motor Controllers</h4>
+                        <div class="status-indicator status-online"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">Synchronized, optimal performance</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-good" style="width: 89%;"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">89% operational</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastUpdate').textContent = timeString;
+        }
+
+        // Update every second
+        setInterval(updateTimestamp, 1000);
+        updateTimestamp();
+
+        // Simulate real-time data updates
+        function updateBatteryLevel() {
+            const batteryLevel = document.querySelector('.battery-level');
+            const batteryText = document.querySelector('.battery-text');
+            const currentLevel = parseInt(batteryText.textContent);
+            
+            // Simulate battery drain
+            const newLevel = Math.max(0, currentLevel - 0.1);
+            batteryLevel.style.width = newLevel + '%';
+            batteryText.textContent = Math.round(newLevel) + '%';
+            
+            // Update battery color based on level
+            batteryLevel.className = 'battery-level';
+            if (newLevel > 60) {
+                batteryLevel.classList.add('battery-high');
+            } else if (newLevel > 30) {
+                batteryLevel.classList.add('battery-medium');
+            } else {
+                batteryLevel.classList.add('battery-low');
+            }
+        }
+
+        // Update battery every 30 seconds
+        setInterval(updateBatteryLevel, 30000);
+
+        // Emergency stop functionality
+        document.querySelector('.emergency-alert').addEventListener('click', function() {
+            if (confirm('🚨 Bạn có chắc chắn muốn kích hoạt E-STOP?\n\nHành động này sẽ dừng tất cả robot đang hoạt động.')) {
+                alert('E-STOP đã được kích hoạt! Liên hệ ngay với kỹ sư để xử lý.');
+                // Add emergency stop logic here
+            }
+        });
+
+        // Add hover effects to status cards
+        document.querySelectorAll('.status-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+            });
+        });
+
+        // Simulate component status updates
+        function updateComponentStatus() {
+            const components = document.querySelectorAll('.status-card .progress-fill');
+            components.forEach(component => {
+                const currentWidth = parseInt(component.style.width);
+                const variation = (Math.random() - 0.5) * 2; // ±1% variation
+                const newWidth = Math.max(85, Math.min(100, currentWidth + variation));
+                component.style.width = newWidth + '%';
+            });
+        }
+
+        // Update component status every 10 seconds
+        setInterval(updateComponentStatus, 10000);
+    </script>
+</body>
+</html>
