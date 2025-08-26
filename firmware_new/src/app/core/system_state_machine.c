@@ -139,11 +139,9 @@ hal_status_t system_state_machine_init(const system_config_t *config) {
     
     // Initialize E-Stop
     estop_config_t estop_config = {
-        .channel1_pin = ESTOP_CHANNEL1_PIN,
-        .channel2_pin = ESTOP_CHANNEL2_PIN,
+        .pin = ESTOP_PIN,
         .response_timeout_ms = ESTOP_RESPONSE_TIME_MS,
         .debounce_time_ms = ESTOP_DEBOUNCE_TIME_MS,
-        .dual_channel_required = true,
         .auto_reset_enabled = false
     };
     status = hal_estop_init(&estop_config);

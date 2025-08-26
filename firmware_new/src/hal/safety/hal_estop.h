@@ -24,20 +24,16 @@ typedef enum {
 // E-Stop Fault Types
 typedef enum {
     ESTOP_FAULT_NONE = 0,
-    ESTOP_FAULT_CHANNEL1_OPEN,    // Channel 1 open circuit
-    ESTOP_FAULT_CHANNEL2_OPEN,    // Channel 2 open circuit
-    ESTOP_FAULT_CHANNEL_MISMATCH, // Channel mismatch
+    ESTOP_FAULT_PIN_OPEN,         // Pin open circuit
     ESTOP_FAULT_RESPONSE_TIMEOUT, // Response timeout
     ESTOP_FAULT_HARDWARE_ERROR    // Hardware error
 } estop_fault_t;
 
 // E-Stop Configuration Structure
 typedef struct {
-    uint8_t channel1_pin;
-    uint8_t channel2_pin;
+    uint8_t pin;
     uint32_t response_timeout_ms;
     uint32_t debounce_time_ms;
-    bool dual_channel_required;
     bool auto_reset_enabled;
 } estop_config_t;
 
@@ -45,8 +41,7 @@ typedef struct {
 typedef struct {
     estop_state_t state;
     estop_fault_t fault;
-    bool channel1_status;
-    bool channel2_status;
+    bool pin_status;
     uint64_t last_trigger_time;
     uint64_t last_reset_time;
     uint32_t trigger_count;
@@ -125,12 +120,11 @@ hal_status_t hal_estop_set_callback(estop_event_callback_t callback);
 hal_status_t hal_estop_update(void);
 
 /**
- * @brief Test E-Stop channels
- * @param channel1_status Pointer to store channel 1 status
- * @param channel2_status Pointer to store channel 2 status
+ * @brief Test E-Stop pin
+ * @param pin_status Pointer to store pin status
  * @return HAL status
  */
-hal_status_t hal_estop_test_channels(bool *channel1_status, bool *channel2_status);
+hal_status_t hal_estop_test_pin(bool *pin_status);
 
 /**
  * @brief Validate E-Stop safety system
@@ -180,33 +174,14 @@ hal_status_t hal_estop_check_safety_compliance(bool *compliant);
  */
 hal_status_t hal_estop_self_test(void);
 
-// Channel-specific Functions
+// Pin-specific Functions
 
 /**
- * @brief Get channel 1 status
- * @param status Pointer to store channel 1 status
+ * @brief Get E-Stop pin status
+ * @param status Pointer to store pin status
  * @return HAL status
  */
-hal_status_t hal_estop_get_channel1_status(bool *status);
-
-/**
- * @brief Get channel 2 status
- * @param status Pointer to store channel 2 status
- * @return HAL status
- */
-hal_status_t hal_estop_get_channel2_status(bool *status);
-
-/**
- * @brief Test channel 1
- * @return HAL status
- */
-hal_status_t hal_estop_test_channel1(void);
-
-/**
- * @brief Test channel 2
- * @return HAL status
- */
-hal_status_t hal_estop_test_channel2(void);
+hal_status_t hal_estop_get_pin_status(bool *status);
 
 // Statistics Functions
 

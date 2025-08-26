@@ -3,8 +3,38 @@
 ## 📋 **Tổng quan**
 Folder EMBED chứa tất cả file liên quan đến phần cứng và driver cấp thấp cho OHT-50.
 
-**Vị trí:** `/home/orangepi/OHT-50/EMBED/`  
+**Vị trí:** `/home/orangepi/Desktop/OHT_V2/EMBED/`  
 **Trách nhiệm:** Hardware bring-up, UART1 RS485, GPIO control, HAL interface, Modbus RTU
+
+---
+
+## 🔧 **GPIO Mapping (CORRECTED)**
+
+### **🔴 LED Status Indicators (5 LEDs):**
+| **Chân GPIO** | **GPIO Name** | **Chức năng** | **Mode** | **Trạng thái** |
+|---------------|---------------|---------------|----------|----------------|
+| **GPIO 54** | GPIO1_D6 | Power LED (Green) | OUTPUT | ✅ Đang sử dụng |
+| **GPIO 35** | GPIO1_A3 | System LED (Blue) | OUTPUT | ✅ Đang sử dụng |
+| **GPIO 28** | GPIO0_D4 | Communication LED (Yellow) | OUTPUT | ✅ Đang sử dụng |
+| **GPIO 29** | GPIO0_D5 | Network LED (Green) | OUTPUT | ✅ Đang sử dụng |
+| **GPIO 58** | GPIO1_D2 | Error LED (Red) | OUTPUT | ✅ Đang sử dụng |
+
+### **🛑 E-Stop Safety System (Dual-channel):**
+| **Chân GPIO** | **GPIO Name** | **Chức năng** | **Mode** | **Trạng thái** |
+|---------------|---------------|---------------|----------|----------------|
+| **GPIO 59** | GPIO1_D3 | E-Stop Channel 1 | INPUT (Pull-up) | ✅ Đang sử dụng |
+
+### **⚡ Relay Output (2x):**
+| **Chân GPIO** | **GPIO Name** | **Chức năng** | **Mode** | **Trạng thái** |
+|---------------|---------------|---------------|----------|----------------|
+| **GPIO 131** | GPIO4_A3 | Relay 1 Output | OUTPUT | ✅ Đang sử dụng |
+| **GPIO 132** | GPIO4_A4 | Relay 2 Output | OUTPUT | ✅ Đang sử dụng |
+
+### **📡 RS485 Communication:**
+| **Chân GPIO** | **GPIO Name** | **Chức năng** | **Mode** | **Trạng thái** |
+|---------------|---------------|---------------|----------|----------------|
+| **GPIO 46** | UART1_TX | RS485 TX Control | OUTPUT | ✅ Đang sử dụng |
+| **GPIO 47** | UART1_RX | RS485 RX Control | INPUT | ✅ Đang sử dụng |
 
 ---
 

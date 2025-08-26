@@ -30,7 +30,7 @@
 #define MODBUS_RETRY_COUNT       3
 
 // RS485 uses UART1 directly (no separate DE/RE pins needed)
-// UART1 pins: GPIO1_D3 (TX), GPIO1_D4 (RX)
+// UART1 pins: GPIO1_D1 (TX), GPIO1_D0 (RX) - Updated per EMBED test
 
 // Buffer sizes
 #define RS485_BUFFER_SIZE        1024

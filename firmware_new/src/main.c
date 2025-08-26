@@ -102,11 +102,9 @@ int main(int argc, char **argv) {
 
         // E-Stop subsystem
         estop_config_t estop_cfg = {
-            .channel1_pin = ESTOP_PIN,
-            .channel2_pin = 0U,
+            .pin = ESTOP_PIN,
             .response_timeout_ms = 50,
             .debounce_time_ms = ESTOP_DEBOUNCE_TIME_MS,
-            .dual_channel_required = false,
             .auto_reset_enabled = false
         };
         if (hal_estop_init(&estop_cfg) != HAL_STATUS_OK) {
@@ -353,10 +351,9 @@ int main(int argc, char **argv) {
                        safe_status.fault_count);
             }
             if (hal_estop_get_status(&est_status) == HAL_STATUS_OK) {
-                printf("[OHT-50][DEBUG] estop state=%d fault=%d ch1=%s ch2=%s\n",
+                printf("[OHT-50][DEBUG] estop state=%d fault=%d pin=%s\n",
                        (int)est_status.state, (int)est_status.fault,
-                       est_status.channel1_status ? "ON" : "OFF",
-                       est_status.channel2_status ? "ON" : "OFF");
+                       est_status.pin_status ? "ON" : "OFF");
             }
             fflush(stdout);
             last_diag_ms = t;

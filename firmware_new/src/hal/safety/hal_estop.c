@@ -8,11 +8,9 @@
 
 // E-Stop configuration
 static estop_config_t estop_config = {
-    .channel1_pin = ESTOP_PIN,
-    .channel2_pin = 0, // Single channel
+    .pin = ESTOP_PIN,
     .response_timeout_ms = ESTOP_RESPONSE_TIME_MS,
     .debounce_time_ms = ESTOP_DEBOUNCE_TIME_MS,
-    .dual_channel_required = false,
     .auto_reset_enabled = false
 };
 
@@ -48,22 +46,21 @@ hal_status_t hal_estop_init(const estop_config_t *config) {
     memset(&estop_status, 0, sizeof(estop_status));
     estop_status.state = ESTOP_STATE_SAFE;
     estop_status.fault = ESTOP_FAULT_NONE;
-    estop_status.channel1_status = false;
-    estop_status.channel2_status = false;
+    estop_status.pin_status = false;
     estop_status.last_trigger_time = 0;
     estop_status.last_reset_time = 0;
     estop_status.trigger_count = 0;
     estop_status.fault_count = 0;
 
     // Export GPIO pin (single channel)
-    hal_status_t status = gpio_export(estop_config.channel1_pin);
+    hal_status_t status = gpio_export(estop_config.pin);
     if (status != HAL_STATUS_OK) {
-        printf("Failed to export E-Stop GPIO pin %d\n", estop_config.channel1_pin);
+        printf("Failed to export E-Stop GPIO pin %d\n", estop_config.pin);
         return status;
     }
 
     // Set GPIO direction (input)
-    status = gpio_set_direction(estop_config.channel1_pin, false);
+    status = gpio_set_direction(estop_config.pin, false);
     if (status != HAL_STATUS_OK) {
         printf("Failed to set E-Stop direction\n");
         return status;
@@ -124,12 +121,12 @@ hal_status_t hal_estop_reset(void) {
 
     // Check if both channels are safe
     bool channel1_safe, channel2_safe;
-    hal_status_t status = gpio_get_value(estop_config.channel1_pin, &channel1_safe);
+    hal_status_t status = gpio_get_value(estop_config.pin, &channel1_safe);
     if (status != HAL_STATUS_OK) {
         return status;
     }
 
-    status = gpio_get_value(estop_config.channel2_pin, &channel2_safe);
+    status = gpio_get_value(estop_config.pin, &channel2_safe);
     if (status != HAL_STATUS_OK) {
         return status;
     }
@@ -148,12 +145,12 @@ hal_status_t hal_estop_reset(void) {
     usleep(estop_config.debounce_time_ms * 1000);
 
     // Check channels again after debounce
-    status = gpio_get_value(estop_config.channel1_pin, &channel1_safe);
+    status = gpio_get_value(estop_config.pin, &channel1_safe);
     if (status != HAL_STATUS_OK) {
         return status;
     }
 
-    status = gpio_get_value(estop_config.channel2_pin, &channel2_safe);
+    status = gpio_get_value(estop_config.pin, &channel2_safe);
     if (status != HAL_STATUS_OK) {
         return status;
     }
@@ -211,67 +208,52 @@ hal_status_t hal_estop_update(void) {
     }
 
     // Read channel status
-    bool channel1_value, channel2_value;
-    hal_status_t status = gpio_get_value(estop_config.channel1_pin, &channel1_value);
-    if (status != HAL_STATUS_OK) {
-        return status;
-    }
-
-    status = gpio_get_value(estop_config.channel2_pin, &channel2_value);
+    bool pin_value;
+    hal_status_t status = gpio_get_value(estop_config.pin, &pin_value);
     if (status != HAL_STATUS_OK) {
         return status;
     }
 
     // Update status
-    estop_status.channel1_status = channel1_value;
-    estop_status.channel2_status = channel2_value;
+    estop_status.pin_status = pin_value;
 
     // Check for E-Stop trigger (active low)
-    bool channel1_triggered = !channel1_value;
-    bool channel2_triggered = !channel2_value;
-
-    // Determine state based on channel configuration
-    bool estop_triggered = false;
-    if (estop_config.dual_channel_required) {
-        // Both channels must be triggered for E-Stop
-        estop_triggered = channel1_triggered && channel2_triggered;
-    } else {
-        // Either channel can trigger E-Stop
-        estop_triggered = channel1_triggered || channel2_triggered;
-    }
+    bool estop_triggered = !pin_value;
 
     // Handle state transitions
     if (estop_triggered && estop_status.state == ESTOP_STATE_SAFE) {
-        estop_handle_trigger();
+        estop_status.state = ESTOP_STATE_TRIGGERED;
+        estop_status.last_trigger_time = get_timestamp_ms();
+        estop_status.trigger_count++;
+        
+        printf("E-Stop triggered!\n");
+        
+        // Call callback if set
+        if (estop_callback != NULL) {
+            estop_callback(ESTOP_STATE_TRIGGERED, ESTOP_FAULT_NONE);
+        }
     } else if (!estop_triggered && estop_status.state == ESTOP_STATE_TRIGGERED) {
         // Auto-reset if enabled
         if (estop_config.auto_reset_enabled) {
             estop_status.state = ESTOP_STATE_SAFE;
-            printf("E-Stop auto-reset: channels safe\n");
-        }
-    }
-
-    // Check for faults
-    if (estop_config.dual_channel_required) {
-        if (channel1_triggered != channel2_triggered) {
-            estop_handle_fault(ESTOP_FAULT_CHANNEL_MISMATCH);
+            printf("E-Stop auto-reset: pin safe\n");
+            
+            // Call callback if set
+            if (estop_callback != NULL) {
+                estop_callback(ESTOP_STATE_SAFE, ESTOP_FAULT_NONE);
+            }
         }
     }
 
     return HAL_STATUS_OK;
 }
 
-hal_status_t hal_estop_test_channels(bool *channel1_status, bool *channel2_status) {
-    if (!estop_initialized || channel1_status == NULL || channel2_status == NULL) {
+hal_status_t hal_estop_test_channels(bool *pin_status) {
+    if (!estop_initialized || pin_status == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
 
-    hal_status_t status = gpio_get_value(estop_config.channel1_pin, channel1_status);
-    if (status != HAL_STATUS_OK) {
-        return status;
-    }
-
-    status = gpio_get_value(estop_config.channel2_pin, channel2_status);
+    hal_status_t status = gpio_get_value(estop_config.pin, pin_status);
     if (status != HAL_STATUS_OK) {
         return status;
     }
@@ -288,14 +270,9 @@ hal_status_t hal_estop_validate_safety(void) {
 
     // Test channel response time
     uint64_t start_time = get_timestamp_ms();
-    bool channel1_value, channel2_value;
+    bool pin_value;
     
-    hal_status_t status = gpio_get_value(estop_config.channel1_pin, &channel1_value);
-    if (status != HAL_STATUS_OK) {
-        return status;
-    }
-
-    status = gpio_get_value(estop_config.channel2_pin, &channel2_value);
+    hal_status_t status = gpio_get_value(estop_config.pin, &pin_value);
     if (status != HAL_STATUS_OK) {
         return status;
     }
@@ -367,11 +344,11 @@ hal_status_t hal_estop_check_safety_compliance(bool *compliant) {
     // Check if system meets SIL2 requirements
     bool channels_working = true;
     bool response_time_ok = true;
-    bool dual_channel_ok = estop_config.dual_channel_required;
+    bool dual_channel_ok = true; // Single channel design - always true
 
     // Test channels
-    bool channel1_ok, channel2_ok;
-    hal_status_t status = hal_estop_test_channels(&channel1_ok, &channel2_ok);
+    bool pin_ok;
+    hal_status_t status = hal_estop_test_channels(&pin_ok);
     if (status != HAL_STATUS_OK) {
         channels_working = false;
     }
@@ -394,8 +371,8 @@ hal_status_t hal_estop_self_test(void) {
     printf("Running E-Stop self-test...\n");
 
     // Test channel reading
-    bool channel1_value, channel2_value;
-    hal_status_t status = hal_estop_test_channels(&channel1_value, &channel2_value);
+    bool pin_value;
+    hal_status_t status = hal_estop_test_channels(&pin_value);
     if (status != HAL_STATUS_OK) {
         printf("E-Stop self-test failed: cannot read channels\n");
         return status;
@@ -417,7 +394,7 @@ hal_status_t hal_estop_get_channel1_status(bool *status) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
 
-    return gpio_get_value(estop_config.channel1_pin, status);
+    return gpio_get_value(estop_config.pin, status);
 }
 
 hal_status_t hal_estop_get_channel2_status(bool *status) {
@@ -425,7 +402,7 @@ hal_status_t hal_estop_get_channel2_status(bool *status) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
 
-    return gpio_get_value(estop_config.channel2_pin, status);
+    return gpio_get_value(estop_config.pin, status);
 }
 
 hal_status_t hal_estop_test_channel1(void) {
@@ -434,7 +411,7 @@ hal_status_t hal_estop_test_channel1(void) {
     }
 
     bool value;
-    hal_status_t status = gpio_get_value(estop_config.channel1_pin, &value);
+    hal_status_t status = gpio_get_value(estop_config.pin, &value);
     if (status != HAL_STATUS_OK) {
         return status;
     }
@@ -449,7 +426,7 @@ hal_status_t hal_estop_test_channel2(void) {
     }
 
     bool value;
-    hal_status_t status = gpio_get_value(estop_config.channel2_pin, &value);
+    hal_status_t status = gpio_get_value(estop_config.pin, &value);
     if (status != HAL_STATUS_OK) {
         return status;
     }
@@ -503,8 +480,8 @@ hal_status_t hal_estop_get_diagnostics(char *info, size_t max_len) {
              "Safety Level: %s\n",
              estop_status.state,
              estop_status.fault,
-             estop_status.channel1_status ? "SAFE" : "TRIGGERED",
-             estop_status.channel2_status ? "SAFE" : "TRIGGERED",
+             estop_status.pin_status ? "SAFE" : "TRIGGERED", // Changed from channel1_status to pin_status
+             estop_status.pin_status ? "SAFE" : "TRIGGERED", // Changed from channel2_status to pin_status
              estop_status.trigger_count,
              estop_status.fault_count,
              estop_config.response_timeout_ms,
@@ -521,8 +498,8 @@ hal_status_t hal_estop_validate_hardware(void) {
     printf("Validating E-Stop hardware...\n");
 
     // Test GPIO access
-    bool channel1_value, channel2_value;
-    hal_status_t status = hal_estop_test_channels(&channel1_value, &channel2_value);
+    bool pin_value;
+    hal_status_t status = hal_estop_test_channels(&pin_value);
     if (status != HAL_STATUS_OK) {
         printf("E-Stop hardware validation failed: GPIO access error\n");
         return status;

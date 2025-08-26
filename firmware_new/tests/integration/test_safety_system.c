@@ -57,16 +57,16 @@ void tearDown(void) {
 // Test safety system initialization
 void test_safety_system_initialization_works_correctly(void) {
     // Initialize E-Stop first
-    hal_status_t estop_result = hal_estop_init(&test_estop, &test_estop_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, estop_result);
+    hal_status_t estop_result = hal_estop_init(&test_estop_config);
+    TEST_ASSERT_EQUAL(0, estop_result);
     
     // Initialize safety module
     hal_status_t safety_result = safety_module_init(&test_safety_handler, &test_safety_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, safety_result);
+    TEST_ASSERT_EQUAL(0, safety_result);
     
     // Initialize motor module
     hal_status_t motor_result = travel_motor_module_init(&test_motor_handler, &test_motor_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, motor_result);
+    TEST_ASSERT_EQUAL(0, motor_result);
     
     TEST_ASSERT_TRUE(test_estop.initialized);
     TEST_ASSERT_TRUE(test_safety_handler.initialized);
@@ -75,44 +75,44 @@ void test_safety_system_initialization_works_correctly(void) {
 
 // Test E-Stop functionality
 void test_estop_functionality_works_correctly(void) {
-    hal_estop_init(&test_estop, &test_estop_config);
+    hal_estop_init(&test_estop_config);
     safety_module_init(&test_safety_handler, &test_safety_config);
     travel_motor_module_init(&test_motor_handler, &test_motor_config);
     
     // Check E-Stop status
     bool triggered;
     hal_status_t result = hal_estop_is_triggered(&test_estop, &triggered);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Test E-Stop channels
     bool channel1_status, channel2_status;
     result = hal_estop_get_channel1_status(&test_estop, &channel1_status);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     result = hal_estop_get_channel2_status(&test_estop, &channel2_status);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test safety sensor monitoring
 void test_safety_sensor_monitoring_works_correctly(void) {
-    hal_estop_init(&test_estop, &test_estop_config);
+    hal_estop_init(&test_estop_config);
     safety_module_init(&test_safety_handler, &test_safety_config);
     travel_motor_module_init(&test_motor_handler, &test_motor_config);
     
     // Read analog sensors
     uint16_t distance;
     hal_status_t result = safety_module_get_analog_sensor(&test_safety_handler, 0, &distance);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Read digital sensors
     uint8_t sensors;
     result = safety_module_get_digital_sensors(&test_safety_handler, &sensors);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Check proximity detection
     bool detected;
     result = safety_module_is_proximity_detected(&test_safety_handler, 0, &detected);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test safety zone monitoring
@@ -124,13 +124,13 @@ void test_safety_zone_monitoring_works_correctly(void) {
     // Check safety status
     bool safe;
     hal_status_t result = safety_module_check_safety(&test_safety_handler, &safe);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Get violation info
     bool violation;
     uint8_t violation_type;
     result = safety_module_get_violation_info(&test_safety_handler, &violation, &violation_type);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test motor emergency stop
@@ -141,21 +141,21 @@ void test_motor_emergency_stop_works_correctly(void) {
     
     // Set motor speed
     hal_status_t result = travel_motor_module_set_speed(&test_motor_handler, 0, 500);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Trigger emergency stop
     result = travel_motor_module_emergency_stop(&test_motor_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Check if emergency stop is active
     bool active;
     result = travel_motor_module_is_emergency_stop_active(&test_motor_handler, &active);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_TRUE(active);
     
     // Clear emergency stop
     result = travel_motor_module_clear_emergency_stop(&test_motor_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test safety relay control
@@ -166,20 +166,20 @@ void test_safety_relay_control_works_correctly(void) {
     
     // Set relay
     hal_status_t result = safety_module_set_relay(&test_safety_handler, 0, true);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Get relay status
     bool state;
     result = safety_module_get_relay(&test_safety_handler, 0, &state);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_TRUE(state);
     
     // Clear relay
     result = safety_module_set_relay(&test_safety_handler, 0, false);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     result = safety_module_get_relay(&test_safety_handler, 0, &state);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_FALSE(state);
 }
 
@@ -191,20 +191,20 @@ void test_motor_brake_control_works_correctly(void) {
     
     // Set brake
     hal_status_t result = travel_motor_module_set_brake(&test_motor_handler, 0, true);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Get brake status
     bool brake_active;
     result = travel_motor_module_get_brake_status(&test_motor_handler, 0, &brake_active);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_TRUE(brake_active);
     
     // Release brake
     result = travel_motor_module_set_brake(&test_motor_handler, 0, false);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     result = travel_motor_module_get_brake_status(&test_motor_handler, 0, &brake_active);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_FALSE(brake_active);
 }
 
@@ -217,12 +217,12 @@ void test_current_protection_works_correctly(void) {
     // Check current protection status
     bool active;
     hal_status_t result = travel_motor_module_is_current_protection_active(&test_motor_handler, &active);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Get motor current
     uint16_t current;
     result = travel_motor_module_get_current(&test_motor_handler, 0, &current);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test safety threshold management
@@ -234,7 +234,7 @@ void test_safety_threshold_management_works_correctly(void) {
     // Get current thresholds
     safety_thresholds_t thresholds;
     hal_status_t result = safety_module_get_thresholds(&test_safety_handler, &thresholds);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_EQUAL(1000, thresholds.warning_distance);
     TEST_ASSERT_EQUAL(500, thresholds.critical_distance);
     TEST_ASSERT_EQUAL(200, thresholds.emergency_distance);
@@ -246,12 +246,12 @@ void test_safety_threshold_management_works_correctly(void) {
     new_thresholds.emergency_distance = 250;
     
     result = safety_module_set_thresholds(&test_safety_handler, &new_thresholds);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Verify new thresholds
     safety_thresholds_t updated_thresholds;
     result = safety_module_get_thresholds(&test_safety_handler, &updated_thresholds);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_EQUAL(1200, updated_thresholds.warning_distance);
     TEST_ASSERT_EQUAL(600, updated_thresholds.critical_distance);
     TEST_ASSERT_EQUAL(250, updated_thresholds.emergency_distance);
@@ -265,13 +265,13 @@ void test_safety_violation_handling_works_correctly(void) {
     
     // Clear any existing violations
     hal_status_t result = safety_module_clear_violation(&test_safety_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Check violation status
     bool violation;
     uint8_t violation_type;
     result = safety_module_get_violation_info(&test_safety_handler, &violation, &violation_type);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test safety system integration
@@ -282,18 +282,18 @@ void test_safety_system_integration_works_correctly(void) {
     
     // Start motor motion
     hal_status_t result = travel_motor_module_set_speed(&test_motor_handler, 0, 300);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Check safety status
     bool safe;
     result = safety_module_check_safety(&test_safety_handler, &safe);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // If safety violation detected, motor should stop
     if (!safe) {
         bool estop_active;
         result = travel_motor_module_is_emergency_stop_active(&test_motor_handler, &estop_active);
-        TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+        TEST_ASSERT_EQUAL(0, result);
     }
 }
 
@@ -310,7 +310,7 @@ void test_safety_system_performance_is_acceptable(void) {
     uint64_t end_time = hal_get_timestamp_us();
     uint64_t response_time = end_time - start_time;
     
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_LESS_THAN(1000, response_time); // Should respond within 1ms
 }
 
@@ -323,18 +323,18 @@ void test_safety_system_fault_handling_works_correctly(void) {
     // Get fault status
     uint8_t safety_fault;
     hal_status_t result = safety_module_get_fault_status(&test_safety_handler, &safety_fault);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     uint8_t motor_fault;
     result = travel_motor_module_get_fault_status(&test_motor_handler, &motor_fault);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Clear faults
     result = safety_module_clear_faults(&test_safety_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     result = travel_motor_module_clear_faults(&test_motor_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test safety system diagnostics
@@ -346,13 +346,13 @@ void test_safety_system_diagnostics_works_correctly(void) {
     // Get safety module diagnostics
     char safety_info[256];
     hal_status_t result = safety_module_get_diagnostics(&test_safety_handler, safety_info, sizeof(safety_info));
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_GREATER_THAN(0, strlen(safety_info));
     
     // Get motor module diagnostics
     char motor_info[256];
     result = travel_motor_module_get_diagnostics(&test_motor_handler, motor_info, sizeof(motor_info));
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_GREATER_THAN(0, strlen(motor_info));
 }
 
@@ -364,22 +364,22 @@ void test_safety_system_enable_disable_works_correctly(void) {
     
     // Enable safety system
     hal_status_t result = safety_module_enable(&test_safety_handler, true);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_TRUE(test_safety_handler.enabled);
     
     // Enable motor system
     result = travel_motor_module_enable(&test_motor_handler, true);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_TRUE(test_motor_handler.enabled);
     
     // Disable safety system
     result = safety_module_enable(&test_safety_handler, false);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_FALSE(test_safety_handler.enabled);
     
     // Disable motor system
     result = travel_motor_module_enable(&test_motor_handler, false);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_FALSE(test_motor_handler.enabled);
 }
 
@@ -391,11 +391,11 @@ void test_safety_system_update_works_correctly(void) {
     
     // Update safety module
     hal_status_t result = safety_module_update(&test_safety_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     
     // Update motor module
-    result = travel_motor_module_update(&test_motor_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    result = motor_module_update(&test_motor_handler);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 int main(void) {
@@ -439,5 +439,6 @@ int main(void) {
     // Update tests
     RUN_TEST(test_safety_system_update_works_correctly);
     
-    return UNITY_END();
+    UNITY_END();
+    return 0;
 }

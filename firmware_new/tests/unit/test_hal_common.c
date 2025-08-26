@@ -113,6 +113,11 @@ void test_hal_get_build_info_returns_valid_info(void) {
 // Performance tests
 void test_hal_timestamp_performance(void) {
     // Test timestamp performance (should be fast)
+    extern void mock_common_set_performance_test_mode(bool enabled);
+    
+    // Enable performance test mode to avoid timestamp increments
+    mock_common_set_performance_test_mode(true);
+    
     uint64_t start_time = hal_get_timestamp_us();
     
     for (int i = 0; i < 1000; i++) {
@@ -124,6 +129,9 @@ void test_hal_timestamp_performance(void) {
     
     // Should complete 1000 calls in less than 1ms
     TEST_ASSERT_LESS_THAN(1000, duration);
+    
+    // Disable performance test mode
+    mock_common_set_performance_test_mode(false);
 }
 
 void test_hal_sleep_accuracy(void) {

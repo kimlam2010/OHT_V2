@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhal_storage.a CMakeFiles/hal_storage.dir/hal_config_persistence.c.o
+/usr/bin/ranlib libhal_storage.a
