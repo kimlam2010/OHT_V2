@@ -12,10 +12,10 @@
 
 ### **Mục tiêu:**
 - Kết nối Master Module (Orange Pi 5B) với Sensor Module qua RS485
-- Thu thập dữ liệu từ cảm biến IMU và Magnetic sensors
-- Xử lý dữ liệu cảm biến cho navigation và safety
-- Cung cấp thông tin định hướng và vị trí cho robot
-- **Lưu ý:** LiDAR đã kết nối qua USB, không qua RS485
+- Thu thập dữ liệu từ cảm biến gia tốc 3 trục (MMA7660FC)
+- Xử lý dữ liệu từ 4x DI công tắc từ
+- Xử lý dữ liệu RFID/NFC reader
+- **Lưu ý:** LiDAR kết nối qua USB trực tiếp Master Module, không qua RS485
 
 ---
 
@@ -129,57 +129,30 @@ echo 'KERNEL=="ttyS1", SYMLINK+="ttyOHT485"' > /etc/udev/rules.d/99-oht-rs485.ru
 
 | **Register Address** | **Tên Register** | **Loại** | **Đơn vị** | **Mô tả** | **Access** | **Trạng thái** |
 |---------------------|------------------|----------|------------|-----------|------------|----------------|
-| **0x0000** | IMU Accelerometer X | Input | mg | Gia tốc X (mg) | R | ✅ Hoàn thành |
-| **0x0001** | IMU Accelerometer Y | Input | mg | Gia tốc Y (mg) | R | ✅ Hoàn thành |
-| **0x0002** | IMU Accelerometer Z | Input | mg | Gia tốc Z (mg) | R | ✅ Hoàn thành |
-| **0x0003** | IMU Gyroscope X | Input | mdps | Góc quay X (mdps) | R | ✅ Hoàn thành |
-| **0x0004** | IMU Gyroscope Y | Input | mdps | Góc quay Y (mdps) | R | ✅ Hoàn thành |
-| **0x0005** | IMU Gyroscope Z | Input | mdps | Góc quay Z (mdps) | R | ✅ Hoàn thành |
-| **0x0006** | IMU Magnetometer X | Input | mgauss | Từ trường X (mgauss) | R | ✅ Hoàn thành |
-| **0x0007** | IMU Magnetometer Y | Input | mgauss | Từ trường Y (mgauss) | R | ✅ Hoàn thành |
-| **0x0008** | IMU Magnetometer Z | Input | mgauss | Từ trường Z (mgauss) | R | ✅ Hoàn thành |
-| **0x0009** | IMU Temperature | Input | °C × 10 | Nhiệt độ IMU (°C) | R | ✅ Hoàn thành |
-| **0x000A** | IMU Status | Input | - | Trạng thái IMU | R | ✅ Hoàn thành |
-| **0x000B** | IMU Error Code | Input | - | Mã lỗi IMU | R | ✅ Hoàn thành |
-| **0x0010** | Magnetic Sensor 1 | Input | mgauss | Cảm biến từ 1 (mgauss) | R | ✅ Hoàn thành |
-| **0x0011** | Magnetic Sensor 2 | Input | mgauss | Cảm biến từ 2 (mgauss) | R | ✅ Hoàn thành |
-| **0x0012** | Magnetic Sensor 3 | Input | mgauss | Cảm biến từ 3 (mgauss) | R | ✅ Hoàn thành |
-| **0x0013** | Magnetic Sensor 4 | Input | mgauss | Cảm biến từ 4 (mgauss) | R | ✅ Hoàn thành |
-| **0x0014** | Magnetic Status | Input | - | Trạng thái cảm biến từ | R | ✅ Hoàn thành |
-| **0x0015** | Magnetic Error Code | Input | - | Mã lỗi cảm biến từ | R | ✅ Hoàn thành |
-| **0x0020** | Limit Switch 1 | Input | - | Trạng thái limit switch 1 | R | ✅ Hoàn thành |
-| **0x0021** | Limit Switch 2 | Input | - | Trạng thái limit switch 2 | R | ✅ Hoàn thành |
-| **0x0022** | Limit Switch 3 | Input | - | Trạng thái limit switch 3 | R | ✅ Hoàn thành |
-| **0x0023** | Limit Switch 4 | Input | - | Trạng thái limit switch 4 | R | ✅ Hoàn thành |
-| **0x0024** | Limit Switch Status | Input | - | Trạng thái tổng hợp limit switch | R | ✅ Hoàn thành |
-| **0x0025** | Limit Switch Error | Input | - | Mã lỗi limit switch | R | ✅ Hoàn thành |
-| **0x0030** | Position X | Input | mm × 10 | Vị trí X (mm) | R | ✅ Hoàn thành |
-| **0x0031** | Position Y | Input | mm × 10 | Vị trí Y (mm) | R | ✅ Hoàn thành |
-| **0x0032** | Position Z | Input | mm × 10 | Vị trí Z (mm) | R | ✅ Hoàn thành |
-| **0x0033** | Orientation Roll | Input | deg × 10 | Góc roll (độ) | R | ✅ Hoàn thành |
-| **0x0034** | Orientation Pitch | Input | deg × 10 | Góc pitch (độ) | R | ✅ Hoàn thành |
-| **0x0035** | Orientation Yaw | Input | deg × 10 | Góc yaw (độ) | R | ✅ Hoàn thành |
-| **0x0036** | Position Status | Input | - | Trạng thái vị trí | R | ✅ Hoàn thành |
-| **0x0037** | Position Accuracy | Input | mm × 10 | Độ chính xác vị trí | R | ✅ Hoàn thành |
-| **0x0040** | Velocity X | Input | m/s × 100 | Vận tốc X (m/s) | R | ✅ Hoàn thành |
-| **0x0041** | Velocity Y | Input | m/s × 100 | Vận tốc Y (m/s) | R | ✅ Hoàn thành |
-| **0x0042** | Velocity Z | Input | m/s × 100 | Vận tốc Z (m/s) | R | ✅ Hoàn thành |
-| **0x0043** | Angular Velocity X | Input | rad/s × 1000 | Vận tốc góc X (rad/s) | R | ✅ Hoàn thành |
-| **0x0044** | Angular Velocity Y | Input | rad/s × 1000 | Vận tốc góc Y (rad/s) | R | ✅ Hoàn thành |
-| **0x0045** | Angular Velocity Z | Input | rad/s × 1000 | Vận tốc góc Z (rad/s) | R | ✅ Hoàn thành |
-| **0x0046** | Velocity Status | Input | - | Trạng thái vận tốc | R | ✅ Hoàn thành |
-| **0x0047** | Velocity Accuracy | Input | m/s × 100 | Độ chính xác vận tốc | R | ✅ Hoàn thành |
-| **0x0050** | System Temperature | Input | °C × 10 | Nhiệt độ hệ thống | R | ✅ Hoàn thành |
-| **0x0051** | System Status | Input | - | Trạng thái hệ thống | R | ✅ Hoàn thành |
-| **0x0052** | System Error | Input | - | Mã lỗi hệ thống | R | ✅ Hoàn thành |
-| **0x0053** | Safety Status | Input | - | Trạng thái an toàn | R | ✅ Hoàn thành |
-| **0x0054** | Emergency Stop | Input | - | Trạng thái E-Stop | R | ✅ Hoàn thành |
-| **0x0060** | IMU Sample Rate | Holding | Hz | Tần suất lấy mẫu IMU | R/W | ✅ Hoàn thành |
-| **0x0061** | Magnetic Threshold | Holding | mgauss | Ngưỡng cảm biến từ | R/W | ✅ Hoàn thành |
-| **0x0062** | Position Update Rate | Holding | Hz | Tần suất cập nhật vị trí | R/W | ✅ Hoàn thành |
-| **0x0063** | Safety Enable | Holding | - | Bật/tắt an toàn | R/W | ✅ Hoàn thành |
-| **0x0064** | Data Validation | Holding | - | Xác thực dữ liệu | R/W | ✅ Hoàn thành |
-| **0x0065** | Fault Reporting | Holding | - | Báo cáo lỗi | R/W | ✅ Hoàn thành |
+| **0x0000** | Accelerometer X | Input | mg | Gia tốc X (mg) | R | ✅ Hoàn thành |
+| **0x0001** | Accelerometer Y | Input | mg | Gia tốc Y (mg) | R | ✅ Hoàn thành |
+| **0x0002** | Accelerometer Z | Input | mg | Gia tốc Z (mg) | R | ✅ Hoàn thành |
+| **0x0003** | Accelerometer Status | Input | - | Trạng thái cảm biến gia tốc | R | ✅ Hoàn thành |
+| **0x0004** | Accelerometer Error Code | Input | - | Mã lỗi cảm biến gia tốc | R | ✅ Hoàn thành |
+| **0x0010** | DI 1 (Magnetic Switch) | Input | - | Trạng thái công tắc từ 1 | R | ✅ Hoàn thành |
+| **0x0011** | DI 2 (Magnetic Switch) | Input | - | Trạng thái công tắc từ 2 | R | ✅ Hoàn thành |
+| **0x0012** | DI 3 (Magnetic Switch) | Input | - | Trạng thái công tắc từ 3 | R | ✅ Hoàn thành |
+| **0x0013** | DI 4 (Magnetic Switch) | Input | - | Trạng thái công tắc từ 4 | R | ✅ Hoàn thành |
+| **0x0014** | DI Status | Input | - | Trạng thái tổng hợp DI | R | ✅ Hoàn thành |
+| **0x0015** | DI Error Code | Input | - | Mã lỗi DI | R | ✅ Hoàn thành |
+| **0x0020** | RFID/NFC Data Low | Input | - | Dữ liệu RFID/NFC (word thấp) | R | ✅ Hoàn thành |
+| **0x0021** | RFID/NFC Data High | Input | - | Dữ liệu RFID/NFC (word cao) | R | ✅ Hoàn thành |
+| **0x0022** | RFID/NFC Status | Input | - | Trạng thái RFID/NFC | R | ✅ Hoàn thành |
+| **0x0023** | RFID/NFC Error Code | Input | - | Mã lỗi RFID/NFC | R | ✅ Hoàn thành |
+| **0x0024** | RFID/NFC Card Type | Input | - | Loại thẻ RFID/NFC | R | ✅ Hoàn thành |
+| **0x0025** | RFID/NFC Card ID | Input | - | ID thẻ RFID/NFC | R | ✅ Hoàn thành |
+| **0x0030** | System Status | Input | - | Trạng thái hệ thống | R | ✅ Hoàn thành |
+| **0x0031** | System Error | Input | - | Mã lỗi hệ thống | R | ✅ Hoàn thành |
+| **0x0060** | Accelerometer Sample Rate | Holding | Hz | Tần suất lấy mẫu gia tốc | R/W | ✅ Hoàn thành |
+| **0x0061** | DI Debounce Time | Holding | ms | Thời gian debounce DI | R/W | ✅ Hoàn thành |
+| **0x0062** | RFID Read Timeout | Holding | ms | Timeout đọc RFID | R/W | ✅ Hoàn thành |
+| **0x0063** | Data Validation | Holding | - | Xác thực dữ liệu | R/W | ✅ Hoàn thành |
+| **0x0064** | Fault Reporting | Holding | - | Báo cáo lỗi | R/W | ✅ Hoàn thành |
 | **0x00F0** | Device ID | Input | - | ID thiết bị (Modbus slave address) | R | ✅ Hoàn thành |
 | **0x00F1** | Firmware Version | Input | - | Phiên bản firmware | R | ✅ Hoàn thành |
 | **0x00F2** | System Status | Input | - | Trạng thái hệ thống (bit field) | R | ✅ Hoàn thành |
@@ -209,15 +182,14 @@ echo 'KERNEL=="ttyS1", SYMLINK+="ttyOHT485"' > /etc/udev/rules.d/99-oht-rs485.ru
 
 #### **Core Functions:**
 ```c
-// Sensor Module specific functions (IMU + Magnetic)
+// Sensor Module specific functions (Accelerometer + DI + RFID/NFC)
 hal_status_t sensor_module_init(void);
-hal_status_t sensor_module_read_imu_data(imu_data_t *data);
-hal_status_t sensor_module_read_magnetic_data(magnetic_data_t *data);
-hal_status_t sensor_module_read_limit_switches(limit_switch_data_t *data);
-hal_status_t sensor_module_get_position_data(position_data_t *data);
+hal_status_t sensor_module_read_accelerometer_data(accelerometer_data_t *data);
+hal_status_t sensor_module_read_di_data(di_data_t *data);
+hal_status_t sensor_module_read_rfid_data(rfid_data_t *data);
 hal_status_t sensor_module_read_status(sensor_status_t *status);
 
-// Note: LiDAR data is handled via USB interface, not RS485
+// Note: LiDAR data is handled via USB interface directly to Master Module, not RS485
 ```
 
 ### **2. Sensor Manager Application (`sensor_manager.c`)**
@@ -433,28 +405,28 @@ hal_status_t sensor_manager_load_config(void);
     "type": "sensor",
     "version": "1.0",
     "enabled": true,
-    "imu_config": {
+    "accelerometer_config": {
       "enabled": true,
       "sample_rate": 100,
-      "accelerometer_range": 2,
-      "gyroscope_range": 250,
-      "temperature_monitoring": true
+      "range": 1.5,
+      "sensitivity": 21,
+      "ic": "MMA7660FC"
     },
-    "magnetic_config": {
+    "di_config": {
       "enabled": true,
-      "sensors": [
-        {"id": 1, "enabled": true, "threshold": 100, "type": "hall_effect"},
-        {"id": 2, "enabled": true, "threshold": 100, "type": "hall_effect"}
+      "inputs": [
+        {"id": 1, "enabled": true, "type": "magnetic_switch", "function": "docking_detect"},
+        {"id": 2, "enabled": true, "type": "magnetic_switch", "function": "safety_stop"},
+        {"id": 3, "enabled": true, "type": "magnetic_switch", "function": "emergency_stop"},
+        {"id": 4, "enabled": true, "type": "magnetic_switch", "function": "manual_override"}
       ]
     },
-    "limit_switch_config": {
+    "rfid_config": {
       "enabled": true,
-      "switches": [
-        {"id": 1, "enabled": true, "normally_open": true, "function": "safety_stop"},
-        {"id": 2, "enabled": true, "normally_open": true, "function": "docking_detect"},
-        {"id": 3, "enabled": true, "normally_open": true, "function": "emergency_stop"},
-        {"id": 4, "enabled": true, "normally_open": true, "function": "manual_override"}
-      ]
+      "reader_type": "rfid_nfc",
+      "supported_cards": ["ISO14443A", "ISO14443B", "ISO15693"],
+      "read_timeout": 1000,
+      "auto_read": true
     },
     "position_config": {
       "enabled": true,
@@ -494,14 +466,14 @@ typedef struct {
     uint8_t ultrasonic_sensor_count;
     uint16_t ultrasonic_range_min;
     uint16_t ultrasonic_range_max;
-    bool imu_enabled;
-    uint16_t imu_sample_rate;
-    uint8_t imu_accel_range;
-    uint8_t imu_gyro_range;
-    bool magnetic_enabled;
-    uint8_t magnetic_sensor_count;
-    bool limit_switch_enabled;
-    uint8_t limit_switch_count;
+    bool accelerometer_enabled;
+    uint16_t accelerometer_sample_rate;
+    uint8_t accelerometer_range;
+    uint8_t accelerometer_sensitivity;
+    bool di_enabled;
+    uint8_t di_input_count;
+    bool rfid_enabled;
+    uint8_t rfid_reader_type;
     bool position_enabled;
     uint16_t position_update_rate;
     uint16_t position_accuracy_threshold;
@@ -665,3 +637,6 @@ hal_status_t sensor_module_get_fault_status(sensor_fault_status_t *status);
 - v1.1 (2025-01-27): Focused on IMU and Magnetic sensors (LiDAR via USB)
 - v1.2 (2025-01-27): Removed GPIO_DE pin (not needed for RS485)
 - v1.3 (2025-01-27): Added System Registers (0x00F0-0x00FF) for auto-detect compatibility
+- v1.4 (2025-01-27): Updated hardware requirements - IMU + 4x DI magnetic switches + RFID/NFC reader (LiDAR via USB direct to Master)
+- v1.5 (2025-01-27): Simplified to 1x Accelerometer (MMA7660FC) + 4x DI magnetic switches + 1x RFID/NFC reader
+- v1.6 (2025-01-28): Removed System Temperature register (0x0030) - not needed for real-time operation

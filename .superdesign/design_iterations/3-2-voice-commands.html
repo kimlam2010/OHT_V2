@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Voice Commands - Master Module</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Flowbite -->
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.0.0/dist/flowbite.min.js"></script>
+    
+    <!-- Custom Theme CSS -->
+    <link rel="stylesheet" href="theme_1.css">
+    
+    <!-- Custom Animations -->
+    <style>
+        /* Animation Keyframes */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes voicePulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            50% { 
+                box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+            }
+        }
+        
+        @keyframes listeningPulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            50% { 
+                box-shadow: 0 0 0 25px rgba(239, 68, 68, 0);
+            }
+        }
+        
+        /* Animation Classes */
+        .animate-slide-in-up {
+            animation: slideInUp 0.3s ease-out;
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .voice-pulse {
+            animation: voicePulse 2s ease-in-out infinite;
+        }
+        
+        .listening-pulse {
+            animation: listeningPulse 1.5s ease-in-out infinite;
+        }
+        
+        /* Voice Control Styles */
+        .voice-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .voice-button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+        
+        .voice-button:active {
+            transform: scale(0.95);
+        }
+        
+        .voice-button.listening {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .voice-button.listening:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+        
+        .voice-button i {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        /* Command History */
+        .command-item {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .command-item:hover {
+            background: #f8fafc;
+        }
+        
+        .command-success {
+            border-left: 4px solid #22c55e;
+            background: #f0fdf4;
+        }
+        
+        .command-error {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+        
+        .command-pending {
+            border-left: 4px solid #f59e0b;
+            background: #fffbeb;
+        }
+        
+        /* Status Indicators */
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-listening {
+            background: #ef4444;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        .status-ready {
+            background: #22c55e;
+        }
+        
+        .status-error {
+            background: #ef4444;
+        }
+        
+        /* Waveform Animation */
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            height: 40px;
+        }
+        
+        .waveform-bar {
+            width: 3px;
+            background: #3b82f6;
+            border-radius: 2px;
+            animation: waveform 1s ease-in-out infinite;
+        }
+        
+        .waveform-bar:nth-child(1) { animation-delay: 0s; }
+        .waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+        .waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+        .waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+        .waveform-bar:nth-child(5) { animation-delay: 0.4s; }
+        .waveform-bar:nth-child(6) { animation-delay: 0.5s; }
+        .waveform-bar:nth-child(7) { animation-delay: 0.6s; }
+        .waveform-bar:nth-child(8) { animation-delay: 0.7s; }
+        
+        @keyframes waveform {
+            0%, 100% { height: 8px; }
+            50% { height: 32px; }
+        }
+        
+        /* Card Hover Effects */
+        .voice-card {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .voice-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">🤖</span>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-900">OHT-50</h1>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-1">
+                        <span class="text-gray-500">|</span>
+                        <span class="text-sm text-gray-600">Voice Commands</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Voice Status -->
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-ready"></div>
+                        <span class="text-sm font-medium text-green-600">Voice Ready</span>
+                    </div>
+                    
+                    <!-- Microphone Status -->
+                    <div class="flex items-center space-x-1">
+                        <i data-lucide="mic" class="w-4 h-4 text-gray-400"></i>
+                        <span class="text-sm text-gray-500">Microphone: <span id="micStatus">Active</span></span>
+                    </div>
+                    
+                    <!-- Settings -->
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center space-x-2">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        <span>Settings</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Voice Control Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Voice Recognition -->
+            <div class="voice-card bg-white rounded-lg border border-gray-200 p-8 animate-slide-in-up">
+                <h3 class="text-xl font-semibold text-gray-900 mb-6 text-center">Voice Recognition</h3>
+                
+                <!-- Voice Button -->
+                <div class="flex justify-center mb-6">
+                    <button id="voiceButton" class="voice-button voice-pulse">
+                        <i data-lucide="mic" class="w-8 h-8"></i>
+                        <span>Nhấn để nói</span>
+                    </button>
+                </div>
+                
+                <!-- Status Display -->
+                <div class="text-center mb-6">
+                    <div id="voiceStatus" class="text-lg font-medium text-gray-700 mb-2">Sẵn sàng nhận lệnh</div>
+                    <div id="waveform" class="waveform hidden">
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                        <div class="waveform-bar"></div>
+                    </div>
+                </div>
+                
+                <!-- Recognized Text -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Lệnh được nhận:</label>
+                    <div id="recognizedText" class="text-gray-900 font-medium min-h-[40px] flex items-center">
+                        Chưa có lệnh nào...
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex space-x-3">
+                    <button id="executeBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Thực thi lệnh
+                    </button>
+                    <button id="clearBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                        Xóa
+                    </button>
+                </div>
+            </div>
+
+            <!-- Available Commands -->
+            <div class="voice-card bg-white rounded-lg border border-gray-200 p-6 animate-slide-in-up" style="animation-delay: 0.1s;">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Lệnh có sẵn</h3>
+                
+                <div class="space-y-4">
+                    <!-- Movement Commands -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">🚗 Di chuyển</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-blue-50 p-2 rounded text-xs">
+                                <strong>"Tiến lên"</strong> - Di chuyển về phía trước
+                            </div>
+                            <div class="bg-blue-50 p-2 rounded text-xs">
+                                <strong>"Lùi lại"</strong> - Di chuyển về phía sau
+                            </div>
+                            <div class="bg-blue-50 p-2 rounded text-xs">
+                                <strong>"Rẽ trái"</strong> - Rẽ sang trái
+                            </div>
+                            <div class="bg-blue-50 p-2 rounded text-xs">
+                                <strong>"Rẽ phải"</strong> - Rẽ sang phải
+                            </div>
+                            <div class="bg-blue-50 p-2 rounded text-xs">
+                                <strong>"Dừng lại"</strong> - Dừng di chuyển
+                            </div>
+                            <div class="bg-blue-50 p-2 rounded text-xs">
+                                <strong>"Về nhà"</strong> - Trở về vị trí ban đầu
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Control Commands -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">⚙️ Điều khiển</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-green-50 p-2 rounded text-xs">
+                                <strong>"Bật chế độ tự động"</strong> - Kích hoạt AUTO mode
+                            </div>
+                            <div class="bg-green-50 p-2 rounded text-xs">
+                                <strong>"Bật chế độ thủ công"</strong> - Kích hoạt MANUAL mode
+                            </div>
+                            <div class="bg-red-50 p-2 rounded text-xs">
+                                <strong>"Dừng khẩn cấp"</strong> - Kích hoạt E-STOP
+                            </div>
+                            <div class="bg-yellow-50 p-2 rounded text-xs">
+                                <strong>"Tạm dừng"</strong> - Tạm dừng hoạt động
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Commands -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">📊 Trạng thái</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-purple-50 p-2 rounded text-xs">
+                                <strong>"Báo cáo trạng thái"</strong> - Hiển thị thông tin robot
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded text-xs">
+                                <strong>"Mức pin"</strong> - Kiểm tra pin
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded text-xs">
+                                <strong>"Vị trí hiện tại"</strong> - Hiển thị tọa độ
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded text-xs">
+                                <strong>"Tốc độ"</strong> - Hiển thị tốc độ hiện tại
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Command History -->
+        <div class="voice-card bg-white rounded-lg border border-gray-200 p-6 animate-slide-in-up" style="animation-delay: 0.2s;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Lịch sử lệnh</h3>
+                <button id="clearHistoryBtn" class="text-sm text-gray-500 hover:text-gray-700">
+                    Xóa lịch sử
+                </button>
+            </div>
+            
+            <div id="commandHistory" class="space-y-2 max-h-64 overflow-y-auto">
+                <!-- Command history items will be added here -->
+            </div>
+        </div>
+
+        <!-- Voice Settings -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <!-- Sensitivity Settings -->
+            <div class="voice-card bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Cài đặt độ nhạy</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Độ nhạy microphone</label>
+                        <input type="range" id="sensitivity" min="0" max="100" value="75" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Thấp</span>
+                            <span id="sensitivityValue">75%</span>
+                            <span>Cao</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Thời gian timeout</label>
+                        <input type="range" id="timeout" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>1s</span>
+                            <span id="timeoutValue">5s</span>
+                            <span>10s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language Settings -->
+            <div class="voice-card bg-white rounded-lg border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Cài đặt ngôn ngữ</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ngôn ngữ nhận dạng</label>
+                        <select id="languageSelect" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="vi-VN">Tiếng Việt</option>
+                            <option value="en-US">English (US)</option>
+                            <option value="en-GB">English (UK)</option>
+                            <option value="ja-JP">日本語</option>
+                            <option value="ko-KR">한국어</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tốc độ phản hồi</label>
+                        <select id="responseSpeed" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="fast">Nhanh</option>
+                            <option value="normal" selected>Bình thường</option>
+                            <option value="slow">Chậm</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="voiceFeedback" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" checked>
+                        <label for="voiceFeedback" class="ml-2 text-sm text-gray-700">Phản hồi bằng giọng nói</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Voice recognition variables
+        let recognition;
+        let isListening = false;
+        let commandHistory = [];
+
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'vi-VN';
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    updateVoiceButton(true);
+                    updateStatus('Đang lắng nghe...', 'listening');
+                    showWaveform(true);
+                };
+
+                recognition.onresult = function(event) {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    document.getElementById('recognizedText').textContent = finalTranscript || interimTranscript;
+                };
+
+                recognition.onend = function() {
+                    isListening = false;
+                    updateVoiceButton(false);
+                    updateStatus('Sẵn sàng nhận lệnh', 'ready');
+                    showWaveform(false);
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    updateStatus('Lỗi nhận dạng giọng nói', 'error');
+                    showWaveform(false);
+                };
+            } else {
+                alert('Trình duyệt không hỗ trợ nhận dạng giọng nói');
+            }
+        }
+
+        // Update voice button state
+        function updateVoiceButton(listening) {
+            const button = document.getElementById('voiceButton');
+            const icon = button.querySelector('i');
+            const text = button.querySelector('span');
+
+            if (listening) {
+                button.classList.add('listening');
+                button.classList.remove('voice-pulse');
+                button.classList.add('listening-pulse');
+                icon.setAttribute('data-lucide', 'square');
+                text.textContent = 'Đang lắng nghe...';
+            } else {
+                button.classList.remove('listening');
+                button.classList.add('voice-pulse');
+                button.classList.remove('listening-pulse');
+                icon.setAttribute('data-lucide', 'mic');
+                text.textContent = 'Nhấn để nói';
+            }
+            lucide.createIcons();
+        }
+
+        // Update status display
+        function updateStatus(message, type) {
+            const statusElement = document.getElementById('voiceStatus');
+            const statusIndicator = document.querySelector('.status-indicator');
+            
+            statusElement.textContent = message;
+            statusElement.className = 'text-lg font-medium mb-2';
+            
+            if (type === 'listening') {
+                statusElement.classList.add('text-red-600');
+                statusIndicator.className = 'status-indicator status-listening';
+            } else if (type === 'ready') {
+                statusElement.classList.add('text-green-600');
+                statusIndicator.className = 'status-indicator status-ready';
+            } else if (type === 'error') {
+                statusElement.classList.add('text-red-600');
+                statusIndicator.className = 'status-indicator status-error';
+            }
+        }
+
+        // Show/hide waveform
+        function showWaveform(show) {
+            const waveform = document.getElementById('waveform');
+            if (show) {
+                waveform.classList.remove('hidden');
+            } else {
+                waveform.classList.add('hidden');
+            }
+        }
+
+        // Execute command
+        function executeCommand(command) {
+            const commandText = command.toLowerCase();
+            let response = '';
+
+            // Movement commands
+            if (commandText.includes('tiến lên') || commandText.includes('forward')) {
+                response = 'Đang di chuyển về phía trước';
+            } else if (commandText.includes('lùi lại') || commandText.includes('backward')) {
+                response = 'Đang di chuyển về phía sau';
+            } else if (commandText.includes('rẽ trái') || commandText.includes('turn left')) {
+                response = 'Đang rẽ sang trái';
+            } else if (commandText.includes('rẽ phải') || commandText.includes('turn right')) {
+                response = 'Đang rẽ sang phải';
+            } else if (commandText.includes('dừng lại') || commandText.includes('stop')) {
+                response = 'Đã dừng di chuyển';
+            } else if (commandText.includes('về nhà') || commandText.includes('go home')) {
+                response = 'Đang trở về vị trí ban đầu';
+            }
+            // Control commands
+            else if (commandText.includes('bật chế độ tự động') || commandText.includes('auto mode')) {
+                response = 'Đã kích hoạt chế độ tự động';
+            } else if (commandText.includes('bật chế độ thủ công') || commandText.includes('manual mode')) {
+                response = 'Đã kích hoạt chế độ thủ công';
+            } else if (commandText.includes('dừng khẩn cấp') || commandText.includes('emergency stop')) {
+                response = 'E-STOP đã được kích hoạt!';
+            } else if (commandText.includes('tạm dừng') || commandText.includes('pause')) {
+                response = 'Đã tạm dừng hoạt động';
+            }
+            // Status commands
+            else if (commandText.includes('báo cáo trạng thái') || commandText.includes('status')) {
+                response = 'Trạng thái: Online, Pin: 87%, Tốc độ: 2.4 m/s';
+            } else if (commandText.includes('mức pin') || commandText.includes('battery')) {
+                response = 'Mức pin hiện tại: 87%';
+            } else if (commandText.includes('vị trí hiện tại') || commandText.includes('position')) {
+                response = 'Vị trí: X=125.4m, Y=89.2m';
+            } else if (commandText.includes('tốc độ') || commandText.includes('speed')) {
+                response = 'Tốc độ hiện tại: 2.4 m/s';
+            } else {
+                response = 'Không hiểu lệnh. Vui lòng thử lại.';
+            }
+
+            // Add to command history
+            addToHistory(command, response, response.includes('Không hiểu') ? 'error' : 'success');
+            
+            // Show response
+            alert(response);
+            
+            // Clear recognized text
+            document.getElementById('recognizedText').textContent = 'Chưa có lệnh nào...';
+        }
+
+        // Add command to history
+        function addToHistory(command, response, status) {
+            const historyItem = {
+                command: command,
+                response: response,
+                status: status,
+                timestamp: new Date().toLocaleTimeString('vi-VN')
+            };
+            
+            commandHistory.unshift(historyItem);
+            if (commandHistory.length > 20) {
+                commandHistory.pop();
+            }
+            
+            updateHistoryDisplay();
+        }
+
+        // Update history display
+        function updateHistoryDisplay() {
+            const historyContainer = document.getElementById('commandHistory');
+            historyContainer.innerHTML = '';
+            
+            commandHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = `command-item command-${item.status}`;
+                historyItem.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">"${item.command}"</div>
+                            <div class="text-sm text-gray-600">${item.response}</div>
+                        </div>
+                        <div class="text-xs text-gray-500 ml-2">${item.timestamp}</div>
+                    </div>
+                `;
+                historyContainer.appendChild(historyItem);
+            });
+        }
+
+        // Event listeners
+        document.getElementById('voiceButton').addEventListener('click', function() {
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+
+        document.getElementById('executeBtn').addEventListener('click', function() {
+            const command = document.getElementById('recognizedText').textContent;
+            if (command && command !== 'Chưa có lệnh nào...') {
+                executeCommand(command);
+            }
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            document.getElementById('recognizedText').textContent = 'Chưa có lệnh nào...';
+        });
+
+        document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+            commandHistory = [];
+            updateHistoryDisplay();
+        });
+
+        // Settings event listeners
+        document.getElementById('sensitivity').addEventListener('input', function() {
+            document.getElementById('sensitivityValue').textContent = this.value + '%';
+        });
+
+        document.getElementById('timeout').addEventListener('input', function() {
+            document.getElementById('timeoutValue').textContent = this.value + 's';
+        });
+
+        // Initialize speech recognition
+        initSpeechRecognition();
+
+        // Add some sample history items
+        addToHistory('Báo cáo trạng thái', 'Trạng thái: Online, Pin: 87%, Tốc độ: 2.4 m/s', 'success');
+        addToHistory('Tiến lên', 'Đang di chuyển về phía trước', 'success');
+        addToHistory('Dừng lại', 'Đã dừng di chuyển', 'success');
+    </script>
+</body>
+</html>

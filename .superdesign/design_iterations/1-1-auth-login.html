@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - OHT-50 Robot Control System</title>
+    <meta name="description" content="Đăng nhập vào hệ thống điều khiển robot OHT-50 - Industrial Safety System">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="theme_auth.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div class="auth-container">
+        <!-- Header -->
+        <header class="auth-header">
+            <div class="auth-header-content">
+                <a href="#" class="auth-logo">
+                    <span class="auth-logo-icon">🤖</span>
+                    <div>
+                        <div class="auth-logo-text">OHT-50</div>
+                        <div class="auth-subtitle">Robot Control System</div>
+                    </div>
+                </a>
+                
+                <div class="auth-header-actions">
+                    <a href="#" class="auth-header-btn">📞 Emergency Contact</a>
+                    <a href="#" class="auth-header-btn">📊 System Status</a>
+                    <a href="#" class="auth-header-btn emergency">🚨 E-STOP</a>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="auth-main" id="main-content">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    <span class="auth-card-icon">🔐</span>
+                    <h1 class="auth-card-title">Đăng nhập hệ thống</h1>
+                    <p class="auth-card-subtitle">Nhập thông tin đăng nhập để truy cập hệ thống điều khiển robot OHT-50</p>
+                </div>
+                
+                <!-- Alert Messages -->
+                <div class="auth-alert auth-alert-info" id="infoAlert" style="display: none;">
+                    <span>ℹ️</span>
+                    <span>Hệ thống đang hoạt động bình thường</span>
+                </div>
+                
+                <div class="auth-alert auth-alert-warning" id="warningAlert" style="display: none;">
+                    <span>⚠️</span>
+                    <span>Cảnh báo: Hệ thống cần bảo trì</span>
+                </div>
+                
+                <div class="auth-alert auth-alert-error" id="errorAlert" style="display: none;">
+                    <span>❌</span>
+                    <span>Lỗi: Thông tin đăng nhập không chính xác</span>
+                </div>
+                
+                <!-- Login Form -->
+                <form class="auth-form" id="loginForm" novalidate>
+                    <div class="form-group">
+                        <label for="username" class="form-label">Tên đăng nhập hoặc Email</label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="form-input" 
+                            placeholder="Nhập tên đăng nhập hoặc email"
+                            required
+                            autocomplete="username"
+                            aria-describedby="username-error"
+                        >
+                        <div id="username-error" class="error-message" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Mật khẩu</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            placeholder="Nhập mật khẩu"
+                            required
+                            autocomplete="current-password"
+                            aria-describedby="password-error"
+                        >
+                        <div id="password-error" class="error-message" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="form-checkbox-group">
+                        <input type="checkbox" id="remember" name="remember" class="form-checkbox">
+                        <label for="remember" class="form-checkbox-label">Ghi nhớ đăng nhập</label>
+                    </div>
+                    
+                    <button type="submit" class="auth-btn auth-btn-primary" id="loginBtn">
+                        <span>🚀 Đăng nhập</span>
+                        <span class="auth-loading" id="loginLoading" style="display: none;"></span>
+                    </button>
+                </form>
+                
+                <!-- Additional Links -->
+                <div style="text-align: center; margin-top: var(--space-lg);">
+                    <a href="1-3-auth-reset.html" class="auth-link">🔑 Quên mật khẩu?</a>
+                </div>
+                
+                <!-- Security Notice -->
+                <div style="margin-top: var(--space-xl); padding: var(--space-md); background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                    <h3 style="font-size: var(--text-sm); color: var(--industrial-gray-700); margin-bottom: var(--space-sm);">
+                        🔒 Thông tin bảo mật
+                    </h3>
+                    <p style="font-size: var(--text-xs); color: var(--industrial-gray-600); margin: 0; line-height: 1.4;">
+                        Hệ thống này được bảo vệ bởi các biện pháp bảo mật tiên tiến. 
+                        Mọi hoạt động đăng nhập đều được ghi lại để đảm bảo an toàn.
+                    </p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="auth-footer">
+            <div class="auth-footer-content">
+                <div class="auth-footer-links">
+                    <a href="#" class="auth-footer-link">📋 Hướng dẫn sử dụng</a>
+                    <a href="#" class="auth-footer-link">🔧 Hỗ trợ kỹ thuật</a>
+                    <a href="#" class="auth-footer-link">📞 Liên hệ</a>
+                    <a href="#" class="auth-footer-link">📄 Chính sách bảo mật</a>
+                </div>
+                
+                <div class="auth-footer-status">
+                    <span class="status-indicator"></span>
+                    <span>Hệ thống hoạt động bình thường</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Form validation and submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginLoading = document.getElementById('loginLoading');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            
+            // Show/hide alerts
+            function showAlert(type, message) {
+                const alerts = document.querySelectorAll('.auth-alert');
+                alerts.forEach(alert => alert.style.display = 'none');
+                
+                const alert = document.getElementById(type + 'Alert');
+                if (alert) {
+                    alert.querySelector('span:last-child').textContent = message;
+                    alert.style.display = 'flex';
+                }
+            }
+            
+            // Form validation
+            function validateForm() {
+                let isValid = true;
+                
+                // Username validation
+                if (!usernameInput.value.trim()) {
+                    showFieldError('username', 'Vui lòng nhập tên đăng nhập');
+                    isValid = false;
+                } else {
+                    clearFieldError('username');
+                }
+                
+                // Password validation
+                if (!passwordInput.value.trim()) {
+                    showFieldError('password', 'Vui lòng nhập mật khẩu');
+                    isValid = false;
+                } else if (passwordInput.value.length < 6) {
+                    showFieldError('password', 'Mật khẩu phải có ít nhất 6 ký tự');
+                    isValid = false;
+                } else {
+                    clearFieldError('password');
+                }
+                
+                return isValid;
+            }
+            
+            function showFieldError(fieldName, message) {
+                const field = document.getElementById(fieldName);
+                const errorDiv = document.getElementById(fieldName + '-error');
+                
+                field.classList.add('error');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+            
+            function clearFieldError(fieldName) {
+                const field = document.getElementById(fieldName);
+                const errorDiv = document.getElementById(fieldName + '-error');
+                
+                field.classList.remove('error');
+                errorDiv.style.display = 'none';
+            }
+            
+            // Form submission
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!validateForm()) {
+                    return;
+                }
+                
+                // Show loading state
+                loginBtn.disabled = true;
+                loginLoading.style.display = 'inline-block';
+                loginBtn.querySelector('span:first-child').textContent = 'Đang đăng nhập...';
+                
+                // Simulate API call
+                setTimeout(() => {
+                    // Simulate success
+                    showAlert('success', 'Đăng nhập thành công! Đang chuyển hướng...');
+                    
+                    // Redirect to dashboard (in real app)
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                    
+                }, 2000);
+            });
+            
+            // Real-time validation
+            usernameInput.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    clearFieldError('username');
+                }
+            });
+            
+            passwordInput.addEventListener('blur', function() {
+                if (this.value.trim() && this.value.length >= 6) {
+                    clearFieldError('password');
+                }
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl + Enter to submit
+                if (e.ctrlKey && e.key === 'Enter') {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+                
+                // Escape to clear form
+                if (e.key === 'Escape') {
+                    loginForm.reset();
+                    document.querySelectorAll('.auth-alert').forEach(alert => {
+                        alert.style.display = 'none';
+                    });
+                }
+            });
+            
+            // Emergency button
+            document.querySelector('.auth-header-btn.emergency').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('🚨 Bạn có chắc chắn muốn kích hoạt E-STOP?\n\nHành động này sẽ dừng tất cả robot đang hoạt động.')) {
+                    alert('E-STOP đã được kích hoạt! Liên hệ ngay với kỹ sư để xử lý.');
+                }
+            });
+        });
+    </script>
+    
+    <!-- Additional CSS for form validation -->
+    <style>
+        .form-input.error {
+            border-color: var(--error-red);
+            box-shadow: var(--shadow-focus-error);
+        }
+        
+        .error-message {
+            color: var(--error-red);
+            font-size: var(--text-sm);
+            margin-top: var(--space-xs);
+        }
+        
+        .auth-alert {
+            animation: slideInDown 0.3s ease-out;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Focus management */
+        .form-input:focus {
+            transform: scale(1.02);
+        }
+        
+        /* Button press animation */
+        .auth-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Loading state */
+        .auth-btn:disabled {
+            cursor: not-allowed;
+        }
+        
+        /* High contrast mode enhancements */
+        @media (prefers-contrast: high) {
+            .form-input.error {
+                border-width: 3px;
+            }
+            
+            .auth-btn {
+                border-width: 2px;
+            }
+        }
+    </style>
+</body>
+</html>
