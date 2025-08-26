@@ -18,9 +18,9 @@
 #define GPIO_MAX_PINS             64
 #define GPIO_CHIP_NAME            "gpiochip1"
 
-// Relay Configuration
-#define RELAY_CHANNEL_1           "GPIO1_D3"  // Relay 1
-#define RELAY_CHANNEL_2           "GPIO1_D2"  // Relay 2
+// Relay Configuration (Updated per EMBED test)
+#define RELAY_CHANNEL_1           "GPIO4_A3"  // Relay 1 - GPIO131
+#define RELAY_CHANNEL_2           "GPIO4_A4"  // Relay 2 - GPIO132
 #define RELAY_MAX_CHANNELS        2
 
 // GPIO direction

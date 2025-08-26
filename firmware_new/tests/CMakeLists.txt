@@ -1,8 +1,8 @@
 # Tests CMakeLists.txt
 # ISO/IEC/IEEE 29119 Testing Framework
 
-# Include unit tests - DISABLED due to API changes
-# add_subdirectory(unit)
+# Include unit tests - ENABLED for HAL testing
+add_subdirectory(unit)
 
 # Integration tests
 add_executable(test_basic_integration
@@ -52,14 +52,14 @@ target_link_libraries(test_module_discovery
 # Add module discovery test to CTest
 add_test(NAME test_module_discovery COMMAND test_module_discovery)
 
-# Safety system integration test - DISABLED due to API changes
+# Safety system integration test - DISABLED due to API incompatibility
 # add_executable(test_safety_system
 #     integration/test_safety_system.c
 # )
 # 
 # target_include_directories(test_safety_system PRIVATE
 #     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/estop
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/safety
 #     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
 #     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 #     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
@@ -67,7 +67,7 @@ add_test(NAME test_module_discovery COMMAND test_module_discovery)
 # 
 # target_link_libraries(test_safety_system
 #     hal_common
-#     hal_estop
+#     hal_safety
 #     app_modules
 #     unity
 # )

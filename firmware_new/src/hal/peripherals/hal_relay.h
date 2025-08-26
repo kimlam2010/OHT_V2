@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 // Relay GPIO Pin Definitions (updated for available pins)
-#define RELAY1_OUTPUT_PIN      131 // GPIO4_A3 - Relay 1 output
+#define RELAY1_OUTPUT_PIN      131 // GPIO4_A3 - Relay 1 output (freed from E-Stop)
 #define RELAY2_OUTPUT_PIN      132 // GPIO4_A4 - Relay 2 output
 
 // Relay Specifications

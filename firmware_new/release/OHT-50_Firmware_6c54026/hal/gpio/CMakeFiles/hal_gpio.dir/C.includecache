@@ -1,0 +1,44 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../src/hal/common/hal_common.h
+stdint.h
+-
+stdbool.h
+-
+stddef.h
+-
+
+/home/orangepi/Desktop/OHT_V2/firmware_new/src/hal/gpio/hal_gpio.c
+hal_gpio.h
+/home/orangepi/Desktop/OHT_V2/firmware_new/src/hal/gpio/hal_gpio.h
+hal_common.h
+/home/orangepi/Desktop/OHT_V2/firmware_new/src/hal/gpio/hal_common.h
+stdio.h
+-
+string.h
+-
+unistd.h
+-
+fcntl.h
+-
+errno.h
+-
+sys/time.h
+-
+pthread.h
+-
+
+/home/orangepi/Desktop/OHT_V2/firmware_new/src/hal/gpio/hal_gpio.h
+stdint.h
+-
+stdbool.h
+-
+hal_common.h
+/home/orangepi/Desktop/OHT_V2/firmware_new/src/hal/gpio/hal_common.h
+

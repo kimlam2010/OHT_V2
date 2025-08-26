@@ -32,7 +32,7 @@ void tearDown(void) {
 // Test initialization
 void test_safety_module_init_returns_success(void) {
     hal_status_t result = safety_module_init(&test_handler, &test_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_TRUE(test_handler.initialized);
     TEST_ASSERT_EQUAL(0x03, test_handler.address);
 }
@@ -57,7 +57,7 @@ void test_safety_module_init_invalid_address_returns_error(void) {
 void test_safety_module_deinit_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     hal_status_t result = safety_module_deinit(&test_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_FALSE(test_handler.initialized);
 }
 
@@ -71,7 +71,7 @@ void test_safety_module_read_sensors_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     safety_sensor_data_t sensor_data;
     hal_status_t result = safety_module_read_sensors(&test_handler, &sensor_data);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_read_sensors_null_data_returns_error(void) {
@@ -91,7 +91,7 @@ void test_safety_module_get_analog_sensor_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     uint16_t distance;
     hal_status_t result = safety_module_get_analog_sensor(&test_handler, 0, &distance);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_get_analog_sensor_invalid_sensor_returns_error(void) {
@@ -106,14 +106,14 @@ void test_safety_module_get_digital_sensors_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     uint8_t sensors;
     hal_status_t result = safety_module_get_digital_sensors(&test_handler, &sensors);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test relay control
 void test_safety_module_set_relay_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     hal_status_t result = safety_module_set_relay(&test_handler, 0, true);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_set_relay_invalid_relay_returns_error(void) {
@@ -126,7 +126,7 @@ void test_safety_module_get_relay_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     bool state;
     hal_status_t result = safety_module_get_relay(&test_handler, 0, &state);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test safety checking
@@ -134,7 +134,7 @@ void test_safety_module_check_safety_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     bool safe;
     hal_status_t result = safety_module_check_safety(&test_handler, &safe);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_check_safety_null_safe_returns_error(void) {
@@ -149,13 +149,13 @@ void test_safety_module_get_violation_info_returns_success(void) {
     bool violation;
     uint8_t type;
     hal_status_t result = safety_module_get_violation_info(&test_handler, &violation, &type);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_clear_violation_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     hal_status_t result = safety_module_clear_violation(&test_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test threshold management
@@ -164,14 +164,14 @@ void test_safety_module_set_thresholds_returns_success(void) {
     safety_thresholds_t new_thresholds = test_config.thresholds;
     new_thresholds.warning_distance = 1200;
     hal_status_t result = safety_module_set_thresholds(&test_handler, &new_thresholds);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_get_thresholds_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     safety_thresholds_t thresholds;
     hal_status_t result = safety_module_get_thresholds(&test_handler, &thresholds);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_EQUAL(1000, thresholds.warning_distance);
 }
 
@@ -180,13 +180,13 @@ void test_safety_module_read_register_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     uint16_t value;
     hal_status_t result = safety_module_read_register(&test_handler, SAFETY_REG_SYSTEM_STATUS, &value);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_write_register_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     hal_status_t result = safety_module_write_register(&test_handler, SAFETY_REG_RELAY_CONTROL, 0x01);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test utility functions
@@ -194,20 +194,20 @@ void test_safety_module_get_fault_status_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     uint8_t fault_status;
     hal_status_t result = safety_module_get_fault_status(&test_handler, &fault_status);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_clear_faults_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     hal_status_t result = safety_module_clear_faults(&test_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 void test_safety_module_get_diagnostics_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     char info[256];
     hal_status_t result = safety_module_get_diagnostics(&test_handler, info, sizeof(info));
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_GREATER_THAN(0, strlen(info));
 }
 
@@ -215,7 +215,7 @@ void test_safety_module_get_diagnostics_returns_success(void) {
 void test_safety_module_enable_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     hal_status_t result = safety_module_enable(&test_handler, true);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_TRUE(test_handler.enabled);
 }
 
@@ -223,7 +223,7 @@ void test_safety_module_disable_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     safety_module_enable(&test_handler, true);
     hal_status_t result = safety_module_enable(&test_handler, false);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
     TEST_ASSERT_FALSE(test_handler.enabled);
 }
 
@@ -231,7 +231,7 @@ void test_safety_module_disable_returns_success(void) {
 void test_safety_module_update_returns_success(void) {
     safety_module_init(&test_handler, &test_config);
     hal_status_t result = safety_module_update(&test_handler);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test constants

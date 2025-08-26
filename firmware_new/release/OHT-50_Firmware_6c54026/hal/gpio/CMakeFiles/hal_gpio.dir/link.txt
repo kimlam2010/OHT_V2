@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhal_gpio.a CMakeFiles/hal_gpio.dir/hal_gpio.c.o
+/usr/bin/ranlib libhal_gpio.a

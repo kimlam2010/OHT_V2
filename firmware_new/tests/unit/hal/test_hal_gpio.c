@@ -8,6 +8,7 @@
 
 #include "unity.h"
 #include "hal_gpio.h"
+#include "mock_gpio.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -16,6 +17,9 @@ static gpio_config_t test_config;
 static uint32_t test_pin;
 
 void setUp(void) {
+    // Reset mock GPIO state
+    mock_gpio_reset();
+    
     // Initialize test configuration
     test_config.pin_number = 1;
     test_config.direction = GPIO_DIRECTION_OUT;

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libapp_managers.a CMakeFiles/app_managers.dir/safety_manager.c.o CMakeFiles/app_managers.dir/communication_manager.c.o CMakeFiles/app_managers.dir/module_manager.c.o
+/usr/bin/ranlib libapp_managers.a

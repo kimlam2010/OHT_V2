@@ -46,12 +46,12 @@ typedef enum {
 #define LED_NETWORK_PIN        29  // GPIO0_D5 - Network LED (Green)
 #define LED_ERROR_PIN          58  // GPIO1_D2 - Error LED (Red)
 
-// E-Stop Safety System (Dual-channel)
-#define ESTOP_CHANNEL1_PIN     59  // GPIO1_D3 - E-Stop Channel 1
-#define ESTOP_CHANNEL2_PIN     131 // GPIO4_A3 - E-Stop Channel 2
+// E-Stop Safety System (Single-channel)
+#define ESTOP_PIN              59  // GPIO1_D3 - E-Stop (Single channel)
 
-// Relay Output
-#define RELAY_OUTPUT_PIN       132 // GPIO4_A4 - Relay Output (24V DC, 2A max)
+// Relay Outputs (Dual-channel)
+#define RELAY1_OUTPUT_PIN      131 // GPIO4_A3 - Relay 1 Output (24V DC, 2A max)
+#define RELAY2_OUTPUT_PIN      132 // GPIO4_A4 - Relay 2 Output (24V DC, 2A max)
 
 // Network Interfaces
 #define NETWORK_ETH_INTERFACE  "eth0"

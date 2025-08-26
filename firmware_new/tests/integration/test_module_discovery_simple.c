@@ -16,11 +16,11 @@ void tearDown(void) {
 void test_module_discovery_initialization_works_correctly(void) {
     // Initialize module manager
     hal_status_t mm_result = module_manager_init();
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, mm_result);
+    TEST_ASSERT_EQUAL(0, mm_result);
     
     // Start module manager
     hal_status_t start_result = module_manager_start();
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, start_result);
+    TEST_ASSERT_EQUAL(0, start_result);
 }
 
 // Test module discovery
@@ -30,7 +30,7 @@ void test_module_discovery_works_correctly(void) {
     
     // Discover all modules
     hal_status_t result = module_manager_discover_modules();
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test module health check
@@ -40,7 +40,7 @@ void test_module_health_check_works_correctly(void) {
     
     // Health check all modules
     hal_status_t result = module_manager_health_check_all();
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test module statistics
@@ -51,7 +51,7 @@ void test_module_statistics_works_correctly(void) {
     // Get statistics
     module_stats_t stats;
     hal_status_t result = module_manager_get_statistics(&stats);
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test module manager self test
@@ -60,7 +60,7 @@ void test_module_manager_self_test_works_correctly(void) {
     
     // Run self test
     hal_status_t result = module_manager_self_test();
-    TEST_ASSERT_EQUAL(HAL_STATUS_SUCCESS, result);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 // Test utility functions

@@ -10,6 +10,7 @@
 #include "unity.h"
 #include "hal_estop.h"
 #include "hal_common.h"
+#include "mock_estop.h"
 #include <string.h>
 #include <stdbool.h>
 
@@ -19,13 +20,14 @@ static estop_status_t test_status;
 
 void setUp(void)
 {
+    // Reset mock state
+    mock_estop_reset();
+    
     // Initialize test configuration
     memset(&test_config, 0, sizeof(estop_config_t));
-    test_config.channel1_pin = 59; // ESTOP_PIN
-    test_config.channel2_pin = 0;  // Single channel
+    test_config.pin = 59; // ESTOP_PIN
     test_config.response_timeout_ms = ESTOP_RESPONSE_TIME_MS;
     test_config.debounce_time_ms = ESTOP_DEBOUNCE_TIME_MS;
-    test_config.dual_channel_required = false;
     test_config.auto_reset_enabled = true;
     
     // Initialize test status
@@ -57,7 +59,7 @@ void test_hal_estop_init_null_config(void)
 void test_hal_estop_init_invalid_pin(void)
 {
     estop_config_t invalid_config = test_config;
-    invalid_config.channel1_pin = 255; // Invalid pin
+    invalid_config.pin = 255; // Invalid pin
     
     hal_status_t status = hal_estop_init(&invalid_config);
     TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, status);
@@ -117,8 +119,7 @@ void test_hal_estop_get_config_success(void)
     estop_config_t retrieved_config;
     hal_status_t status2 = hal_estop_get_config(&retrieved_config);
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, status2);
-    TEST_ASSERT_EQUAL(test_config.channel1_pin, retrieved_config.channel1_pin);
-    TEST_ASSERT_EQUAL(test_config.channel2_pin, retrieved_config.channel2_pin);
+    TEST_ASSERT_EQUAL(test_config.pin, retrieved_config.pin);
     TEST_ASSERT_EQUAL(test_config.debounce_time_ms, retrieved_config.debounce_time_ms);
 }
 
@@ -201,65 +202,43 @@ void test_hal_estop_is_triggered_not_initialized(void)
 // CHANNEL MONITORING TESTS
 // ============================================================================
 
-void test_hal_estop_get_channel1_status_success(void)
+void test_hal_estop_get_pin_status_success(void)
 {
     hal_status_t status1 = hal_estop_init(&test_config);
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, status1);
     
-    bool channel1_status = false;
-    hal_status_t status2 = hal_estop_get_channel1_status(&channel1_status);
+    bool pin_status = false;
+    hal_status_t status2 = hal_estop_get_pin_status(&pin_status);
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, status2);
-    TEST_ASSERT_TRUE(channel1_status);
+    TEST_ASSERT_TRUE(pin_status);
 }
 
-void test_hal_estop_get_channel1_status_null_pointer(void)
+void test_hal_estop_get_pin_status_null_pointer(void)
 {
     hal_status_t status1 = hal_estop_init(&test_config);
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, status1);
     
-    hal_status_t status2 = hal_estop_get_channel1_status(NULL);
+    hal_status_t status2 = hal_estop_get_pin_status(NULL);
     TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, status2);
 }
 
-void test_hal_estop_get_channel2_status_success(void)
+void test_hal_estop_test_pin_success(void)
 {
     hal_status_t status1 = hal_estop_init(&test_config);
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, status1);
     
-    bool channel2_status = false;
-    hal_status_t status2 = hal_estop_get_channel2_status(&channel2_status);
+    bool pin_status = false;
+    hal_status_t status2 = hal_estop_test_pin(&pin_status);
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, status2);
-    TEST_ASSERT_TRUE(channel2_status);
+    TEST_ASSERT_TRUE(pin_status);
 }
 
-void test_hal_estop_get_channel2_status_null_pointer(void)
+void test_hal_estop_test_pin_null_pointer(void)
 {
     hal_status_t status1 = hal_estop_init(&test_config);
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, status1);
     
-    hal_status_t status2 = hal_estop_get_channel2_status(NULL);
-    TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, status2);
-}
-
-void test_hal_estop_test_channels_success(void)
-{
-    hal_status_t status1 = hal_estop_init(&test_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_OK, status1);
-    
-    bool channel1_status = false;
-    bool channel2_status = false;
-    hal_status_t status2 = hal_estop_test_channels(&channel1_status, &channel2_status);
-    TEST_ASSERT_EQUAL(HAL_STATUS_OK, status2);
-    TEST_ASSERT_TRUE(channel1_status);
-    TEST_ASSERT_TRUE(channel2_status);
-}
-
-void test_hal_estop_test_channels_null_pointer(void)
-{
-    hal_status_t status1 = hal_estop_init(&test_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_OK, status1);
-    
-    hal_status_t status2 = hal_estop_test_channels(NULL, NULL);
+    hal_status_t status2 = hal_estop_test_pin(NULL);
     TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, status2);
 }
 
@@ -487,13 +466,11 @@ int main(void)
     RUN_TEST(test_hal_estop_is_triggered_null_pointer);
     RUN_TEST(test_hal_estop_is_triggered_not_initialized);
     
-    // Channel monitoring tests
-    RUN_TEST(test_hal_estop_get_channel1_status_success);
-    RUN_TEST(test_hal_estop_get_channel1_status_null_pointer);
-    RUN_TEST(test_hal_estop_get_channel2_status_success);
-    RUN_TEST(test_hal_estop_get_channel2_status_null_pointer);
-    RUN_TEST(test_hal_estop_test_channels_success);
-    RUN_TEST(test_hal_estop_test_channels_null_pointer);
+    // Pin monitoring tests
+    RUN_TEST(test_hal_estop_get_pin_status_success);
+    RUN_TEST(test_hal_estop_get_pin_status_null_pointer);
+    RUN_TEST(test_hal_estop_test_pin_success);
+    RUN_TEST(test_hal_estop_test_pin_null_pointer);
     
     // Event handling tests
     RUN_TEST(test_hal_estop_set_callback_success);

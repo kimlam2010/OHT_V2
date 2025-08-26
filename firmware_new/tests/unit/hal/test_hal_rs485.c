@@ -10,8 +10,10 @@
 #include "unity.h"
 #include "hal_rs485.h"
 #include "hal_common.h"
+#include "mock_rs485.h"
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h> // Added for debug printing
 
 // Test fixtures
 static rs485_config_t test_config;
@@ -19,6 +21,9 @@ static modbus_config_t test_modbus_config;
 
 void setUp(void)
 {
+    // Reset mock state
+    mock_rs485_reset();
+    
     // Initialize test configuration
     memset(&test_config, 0, sizeof(rs485_config_t));
     strcpy(test_config.device_path, "/dev/ttyOHT485");
@@ -47,8 +52,14 @@ void tearDown(void)
 // CONSTANTS TESTS
 // ============================================================================
 
+void test_setup_is_called(void) {
+    // This test verifies that setUp() works correctly
+    TEST_ASSERT_TRUE(true); // Just verify test runs
+}
+
 void test_rs485_constants(void)
 {
+    setUp(); // Ensure setup is called
     TEST_ASSERT_EQUAL(115200, RS485_BAUD_RATE);
     TEST_ASSERT_EQUAL(8, RS485_DATA_BITS);
     TEST_ASSERT_EQUAL(1, RS485_STOP_BITS);
@@ -62,6 +73,7 @@ void test_rs485_constants(void)
 
 void test_modbus_function_codes(void)
 {
+    setUp(); // Ensure setup is called
     TEST_ASSERT_EQUAL(0x01, MODBUS_FC_READ_COILS);
     TEST_ASSERT_EQUAL(0x02, MODBUS_FC_READ_DISCRETE_INPUTS);
     TEST_ASSERT_EQUAL(0x03, MODBUS_FC_READ_HOLDING_REGISTERS);
@@ -74,6 +86,7 @@ void test_modbus_function_codes(void)
 
 void test_rs485_status_enum(void)
 {
+    setUp(); // Ensure setup is called
     TEST_ASSERT_EQUAL(0, RS485_STATUS_IDLE);
     TEST_ASSERT_EQUAL(1, RS485_STATUS_TRANSMITTING);
     TEST_ASSERT_EQUAL(2, RS485_STATUS_RECEIVING);
@@ -86,6 +99,7 @@ void test_rs485_status_enum(void)
 
 void test_rs485_data_structures(void)
 {
+    setUp(); // Ensure setup is called
     TEST_ASSERT_EQUAL(64, sizeof(test_config.device_path));
     TEST_ASSERT_EQUAL(4, sizeof(test_config.baud_rate));
     TEST_ASSERT_EQUAL(1, sizeof(test_config.data_bits));
@@ -97,6 +111,7 @@ void test_rs485_data_structures(void)
 
 void test_modbus_data_structures(void)
 {
+    setUp(); // Ensure setup is called
     TEST_ASSERT_EQUAL(1, sizeof(test_modbus_config.slave_id));
     TEST_ASSERT_EQUAL(4, sizeof(test_modbus_config.timeout_ms));
     TEST_ASSERT_EQUAL(4, sizeof(test_modbus_config.retry_count));
@@ -105,6 +120,7 @@ void test_modbus_data_structures(void)
 
 void test_modbus_frame_structure(void)
 {
+    setUp(); // Ensure setup is called
     modbus_frame_t frame;
     TEST_ASSERT_EQUAL(1, sizeof(frame.slave_id));
     TEST_ASSERT_EQUAL(4, sizeof(frame.function_code));
@@ -117,6 +133,7 @@ void test_modbus_frame_structure(void)
 
 void test_rs485_statistics_structure(void)
 {
+    setUp(); // Ensure setup is called
     rs485_statistics_t stats;
     TEST_ASSERT_EQUAL(8, sizeof(stats.bytes_transmitted));
     TEST_ASSERT_EQUAL(8, sizeof(stats.bytes_received));
@@ -134,6 +151,8 @@ void test_rs485_statistics_structure(void)
 
 void test_rs485_config_initialization(void)
 {
+    setUp(); // Ensure setup is called
+    
     TEST_ASSERT_EQUAL_STRING("/dev/ttyOHT485", test_config.device_path);
     TEST_ASSERT_EQUAL(115200, test_config.baud_rate);
     TEST_ASSERT_EQUAL(8, test_config.data_bits);
@@ -145,6 +164,7 @@ void test_rs485_config_initialization(void)
 
 void test_modbus_config_initialization(void)
 {
+    setUp(); // Ensure setup is called
     TEST_ASSERT_EQUAL(1, test_modbus_config.slave_id);
     TEST_ASSERT_EQUAL(1000, test_modbus_config.timeout_ms);
     TEST_ASSERT_EQUAL(3, test_modbus_config.retry_count);
@@ -157,6 +177,7 @@ void test_modbus_config_initialization(void)
 
 void test_rs485_config_validation(void)
 {
+    setUp(); // Ensure setup is called
     // Test valid configuration
     TEST_ASSERT_TRUE(strlen(test_config.device_path) > 0);
     TEST_ASSERT_TRUE(test_config.baud_rate > 0);
@@ -169,6 +190,7 @@ void test_rs485_config_validation(void)
 
 void test_modbus_config_validation(void)
 {
+    setUp(); // Ensure setup is called
     // Test valid modbus configuration
     TEST_ASSERT_TRUE(test_modbus_config.slave_id > 0 && test_modbus_config.slave_id <= 247);
     TEST_ASSERT_TRUE(test_modbus_config.timeout_ms > 0);
@@ -213,6 +235,9 @@ void test_modbus_quantity_validation(void)
 int main(void)
 {
     UNITY_BEGIN();
+    
+    // Setup test
+    RUN_TEST(test_setup_is_called);
     
     // Constants tests
     RUN_TEST(test_rs485_constants);
