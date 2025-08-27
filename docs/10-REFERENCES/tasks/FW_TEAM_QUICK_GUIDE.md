@@ -1,9 +1,9 @@
 # FIRMWARE TEAM QUICK GUIDE - OHT-50 Master Module
 
-**Phiên bản:** v2.4  
+**Phiên bản:** v2.5  
 **Ngày cập nhật:** 2025-01-28  
 **Team:** FW Team  
-**Trạng thái:** 🎯 PHASE 1 EXECUTION  
+**Trạng thái:** 🎯 PHASE 1 EXECUTION - SIMPLIFIED ARCHITECTURE  
 **Tiến độ:** 61% Complete
 
 ---
@@ -11,7 +11,7 @@
 ## 🎯 **TỔNG QUAN**
 
 ### **Mục tiêu hiện tại:**
-- **Phase 1-2 (Week 1-2):** HAL Layer + Safety System Implementation
+- **Phase 1-2 (Week 1-2):** HAL Layer + Basic Safety System Implementation
 - **Phase 3 (Week 2-3):** Communication System Implementation  
 - **Phase 4-5 (Week 3-4):** State Machine + Module Management Implementation
 - **Phase 6-8 (Week 4):** System Integration + API Layer + Documentation
@@ -24,6 +24,7 @@
 - ✅ Gate C - COMPLETED (72/72 tests PASS)
 - 🔧 **CRITICAL:** Module handlers missing (5/6 modules chưa implement)
 - 🎯 **NEW:** 8-Phase Implementation Plan theo CTO
+- 🎯 **SIMPLIFIED:** Architecture v2.1 - Removed unnecessary features
 
 ---
 
@@ -53,47 +54,42 @@
 // Core HAL Drivers
 ✅ hal_led.c/h - LED control (GPIO 54, 35, 28, 29, 58)
 ✅ hal_estop.c/h - E-Stop single-channel (GPIO 59)
-✅ hal_relay.c/h - Relay control (GPIO 131, 132)
-✅ hal_rs485.c/h - RS485 communication (GPIO 46, 47)
-✅ hal_network.c/h - Ethernet/WiFi communication
-✅ hal_gpio.c/h - GPIO abstraction layer
+✅ hal_relay.c/h - Relay control (GPIO 59, 58)
+✅ hal_rs485.c/h - RS485 communication (UART1)
+✅ hal_network.c/h - Network interface management
+✅ hal_lidar.c/h - LiDAR integration via USB
+✅ hal_ota_update.c/h - OTA firmware updates
+✅ hal_gpio.c/h - GPIO management
 ```
 
-#### **1.2 HAL Integration & Testing**
+#### **1.2 Simplified HAL Features**
+- **Removed:** USB Debug interface (không cần)
+- **Removed:** Config Persistence (không cần)
+- **Simplified:** E-Stop single-channel (không cần dual-channel)
+- **Simplified:** Basic safety system (không cần location-based)
+
+#### **1.3 HAL Integration**
+- **GPIO Management:** LED, E-Stop, Relay control
+- **Communication:** RS485/Modbus RTU standard
+- **Network:** Ethernet/WiFi redundancy
+- **LiDAR:** USB integration cho Dock & Location module
+
+### **🎯 PHASE 2: BASIC SAFETY SYSTEM (Week 1-2)**
+
+#### **2.1 Safety System Implementation**
 ```c
-// HAL Integration
-✅ hal_init() - Initialize all HAL modules
-✅ hal_deinit() - Deinitialize all HAL modules
-✅ hal_get_status() - Get HAL status
-✅ hal_error_handling() - HAL error management
-
-// Unit Tests
-✅ test_hal_led.c - LED HAL tests
-✅ test_hal_estop.c - E-Stop HAL tests
-✅ test_hal_relay.c - Relay HAL tests
-✅ test_hal_rs485.c - RS485 HAL tests
-✅ test_hal_integration.c - HAL integration tests
+// Simplified Safety System
+✅ safety_manager.c/h - Basic safety management
+✅ hal_estop.c/h - Single-channel E-Stop
+✅ safety_levels.c/h - Basic safety levels
 ```
 
----
-
-### **🛡️ PHASE 2: SAFETY SYSTEM IMPLEMENTATION (Week 1-2)**
-
-#### **2.1 Safety Core System**
-```c
-// Safety State Machine
-✅ safety_state_machine.c/h - Safety state management
-✅ safety_monitor.c/h - Safety monitoring
-✅ safety_fault_detection.c/h - Fault detection
-✅ safety_logging.c/h - Safety logging
-
-// Safety Functions
-✅ safety_init() - Initialize safety system
-✅ safety_check_estop() - E-Stop monitoring
-✅ safety_check_interlock() - Interlock monitoring
-✅ safety_check_relays() - Relay monitoring
-✅ safety_emergency_stop() - Emergency stop
-```
+#### **2.2 Safety Features**
+- **Single-channel E-Stop:** Basic compliance
+- **Safety Levels:** Normal, Warning, Critical, Emergency
+- **Basic Safety:** Light curtain, safety mats
+- **Removed:** Location-based safety (không cần)
+- **Removed:** Dual-channel E-Stop (không cần)
 
 #### **2.2 Safety Integration & Testing**
 ```c
@@ -475,3 +471,24 @@
 **Phiên bản:** v2.4
 
 **🎯 Status:** Phase 1 core complete, critical module handlers missing - immediate action required!
+
+---
+
+### **🚨 SIMPLIFIED ARCHITECTURE CHANGES**
+
+#### **Removed Features:**
+1. **USB Debug Interface:** Không cần debug console
+2. **Config Persistence:** Không cần configuration storage
+3. **Location-based Safety:** Không cần location-based safety
+4. **Dual-channel E-Stop:** Chỉ cần single-channel
+
+#### **Simplified Features:**
+1. **Basic Safety System:** Đơn giản hóa safety system
+2. **Single-channel E-Stop:** Chỉ 1 kênh E-Stop
+3. **Basic Compliance:** Không cần SIL2 compliance
+
+---
+
+**Báo cáo bởi:** FW Team Lead  
+**Ngày cập nhật:** 2025-01-28  
+**Status:** SIMPLIFIED ARCHITECTURE v2.1 - READY FOR IMPLEMENTATION ✅

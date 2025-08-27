@@ -1,19 +1,19 @@
 ---
 alwaysApply: true
 ---
+
 ## 🔧 **Master Module Specification**
 
 ### **Hardware Requirements:**
-- **USB Debug (1x):** USB 2.0 Type-C, debug console, firmware update
 - **RS485 (1x):** Modbus RTU, slave modules communication
 - **LAN (1x):** Ethernet 10/100/1000 Mbps, Center connection
 - **Wireless 5G/2.4G:** WiFi 6, backup connection, mobile app
 - **LED Status (5x):** Power, System, Communication, Network, Error
-- **Emergency Stop (E-Stop):** Dual-channel safety, SIL2 compliance
+- **Emergency Stop (E-Stop):** Single-channel safety, basic compliance
 - **Relay Output (1x):** 24V DC, 2A, external device control
 
 ### **Software Requirements:**
-- **Multi-protocol communication:** RS485, Ethernet, WiFi, USB
+- **Multi-protocol communication:** RS485, Ethernet, WiFi
 - **Safety system:** E-Stop handling, emergency procedures
 - **Status monitoring:** LED indicators, system health
 - **Network redundancy:** Ethernet → WiFi failover
@@ -112,9 +112,8 @@ alwaysApply: true
   - UART1 RS485 configuration và testing
   - Ethernet/WiFi network setup
   - GPIO LED control (5 LEDs)
-  - E-Stop dual-channel safety implementation
+  - E-Stop single-channel safety implementation
   - Relay output control
-  - USB debug interface setup
 - **Đầu ra bắt buộc:**
   - Hardware validation tests
   - HAL drivers (GPIO, RS485, Network)
@@ -385,5 +384,8 @@ alwaysApply: true
 - ✅ Added escalation matrix
 - ✅ Enhanced technical leadership guidelines
 - ✅ Added related documents section
+
+**🚨 Lưu ý:** Luôn tuân thủ rules này để tránh can thiệp không cần thiết và bảo vệ hệ thống.
+
 
 **🚨 Lưu ý:** Luôn tuân thủ rules này để tránh can thiệp không cần thiết và bảo vệ hệ thống.

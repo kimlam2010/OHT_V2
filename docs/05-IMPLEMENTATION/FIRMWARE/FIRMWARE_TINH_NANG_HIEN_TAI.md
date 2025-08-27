@@ -1,20 +1,20 @@
 # FIRMWARE TÍNH NĂNG HIỆN TẠI - OHT-50 MASTER MODULE
 
-**Phiên bản:** 2.0.0  
-**Ngày cập nhật:** 2025-01-27  
+**Phiên bản:** 2.1.0  
+**Ngày cập nhật:** 2025-01-28  
 **Team:** FW  
-**Trạng thái:** Updated for New Architecture v2.0 - Ready for Implementation
+**Trạng thái:** Updated for Simplified Architecture v2.1 - Ready for Implementation
 
 ---
 
 ## 📋 TỔNG QUAN
 
-Firmware OHT-50 Master Module hiện tại đã triển khai một hệ thống hoàn chỉnh với các tính năng chính sau, được cập nhật cho kiến trúc mới v2.0:
+Firmware OHT-50 Master Module hiện tại đã triển khai một hệ thống hoàn chỉnh với các tính năng chính sau, được cập nhật cho kiến trúc đơn giản hóa v2.1:
 
 ### 🏗️ Kiến trúc tổng thể
 - **HAL (Hardware Abstraction Layer):** Tách biệt phần cứng và phần mềm
 - **State Machine:** Quản lý trạng thái hệ thống + Navigation states
-- **Safety System:** Hệ thống an toàn SIL2 + Location-based safety
+- **Safety System:** Hệ thống an toàn cơ bản + Single-channel E-Stop
 - **Communication:** RS485/Modbus RTU standard cho tất cả modules
 - **API Management:** HTTP/WebSocket server
 - **Module Management:** Quản lý 5 module bắt buộc + Auto-discovery + Hot-swap
@@ -87,9 +87,7 @@ Firmware OHT-50 Master Module hiện tại đã triển khai một hệ thống 
 
 #### 1.3 Advanced HAL Features
 - **LiDAR Integration:** RPLIDAR A1M8 via USB
-- **USB Debug:** Debug console interface
 - **OTA Updates:** Over-the-air firmware updates
-- **Config Persistence:** Configuration storage
 
 ### 2. SYSTEM STATE MACHINE
 
@@ -135,26 +133,23 @@ typedef enum {
 } safety_level_t;
 ```
 
-#### 3.2 Location-based Safety (NEW)
+#### 3.2 Basic Safety System
 ```c
 typedef struct {
-    bool enabled;                // Location-based safety enabled
-    float current_x;             // Current X position (mm)
-    float current_y;             // Current Y position (mm)
-    float current_zone;          // Current safety zone
-    float speed_limit;           // Speed limit for current zone
-    bool in_safe_zone;           // Robot in safe zone
-} location_safety_t;
+    bool estop_active;           // E-Stop active
+    bool estop_ok;               // E-Stop status
+    safety_level_t level;        // Safety level
+    bool light_curtain_ok;       // Light curtain status
+    bool safety_mats_ok;         // Safety mats status
+} safety_telemetry_t;
 ```
 
-#### 3.3 Dual-channel E-Stop (UPGRADE NEEDED)
+#### 3.3 Single-channel E-Stop (SIMPLIFIED)
 ```c
 typedef struct {
-    bool channel_1_ok;           // Channel 1 status
-    bool channel_2_ok;           // Channel 2 status
-    bool dual_channel_ok;        // Both channels OK
+    bool channel_ok;             // Single channel status
     uint32_t last_check;         // Last check timestamp
-} dual_channel_estop_t;
+} single_channel_estop_t;
 ```
 
 ### 4. MODULE MANAGEMENT
@@ -323,17 +318,17 @@ typedef struct {
 
 ### **Critical Upgrades (Week 1-2):**
 
-#### 1. **Dual-channel E-Stop System**
+#### 1. **Single-channel E-Stop System**
 - **Current:** Single-channel implementation
-- **Required:** Dual-channel for SIL2 compliance
+- **Required:** Single-channel for basic compliance
 - **Files:** `hal_estop.c`, `safety_manager.c`
 - **Priority:** Critical
 - **Timeline:** Week 1
 
-#### 2. **Location-based Safety**
+#### 2. **Basic Safety System**
 - **Current:** Basic safety system
-- **Required:** Integration với Dock & Location module
-- **Files:** `safety_manager.c`, `dock_module_handler.c`
+- **Required:** Basic safety integration
+- **Files:** `safety_manager.c`
 - **Priority:** Critical
 - **Timeline:** Week 1-2
 
@@ -380,7 +375,7 @@ typedef struct {
 - ✅ **Module Management:** Ready for production
 
 ### **Needs Upgrade Before Production:**
-- 🔄 **Safety Module:** Dual-channel E-Stop upgrade required
+- 🔄 **Safety Module:** Single-channel E-Stop upgrade required
 - 🔄 **Dock & Location Module:** LiDAR USB integration required
 - 🔄 **Navigation States:** Implementation required
 
@@ -394,8 +389,8 @@ typedef struct {
 ## 📋 NEXT STEPS
 
 ### **Immediate Actions (Week 1):**
-1. **Upgrade E-Stop system** lên dual-channel
-2. **Implement location-based safety** integration
+1. **Upgrade E-Stop system** lên single-channel
+2. **Implement basic safety** integration
 3. **Update navigation states** trong state machine
 4. **Test RS485 standard** cho tất cả modules
 
@@ -413,5 +408,5 @@ typedef struct {
 
 ---
 
-**Status:** Updated for New Architecture v2.0 - Ready for Implementation  
+**Status:** Updated for Simplified Architecture v2.1 - Ready for Implementation  
 **Next Steps:** Begin critical upgrades for production readiness
