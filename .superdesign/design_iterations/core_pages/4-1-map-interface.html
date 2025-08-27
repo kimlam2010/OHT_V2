@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Map & Navigation Interface</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* Map Interface specific styles */
+        .map-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            height: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .map-viewport {
+            width: 100%;
+            height: 100%;
+            background: var(--industrial-gray-50);
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .map-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .robot-position {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-orange);
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .robot-position::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .safety-zone {
+            position: absolute;
+            border: 2px dashed var(--safety-red);
+            background: rgba(220, 38, 38, 0.1);
+            border-radius: var(--radius-md);
+        }
+        
+        .path-line {
+            position: absolute;
+            height: 3px;
+            background: var(--primary-orange);
+            border-radius: var(--radius-full);
+            z-index: 5;
+        }
+        
+        .waypoint {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--info-blue);
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 8;
+            cursor: pointer;
+        }
+        
+        .obstacle {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--safety-red);
+            border-radius: var(--radius-sm);
+            transform: translate(-50%, -50%);
+            z-index: 9;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            z-index: 20;
+        }
+        
+        .map-control-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .map-control-btn:hover {
+            background: var(--primary-orange);
+            color: white;
+            border-color: var(--primary-orange);
+        }
+        
+        .navigation-panel {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+        }
+        
+        .navigation-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+        
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--primary-orange);
+            color: white;
+            border-color: var(--primary-orange);
+        }
+        
+        .nav-btn.active {
+            background: var(--primary-orange);
+            color: white;
+            border-color: var(--primary-orange);
+        }
+        
+        .path-planning {
+            background: var(--bg-secondary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+        
+        .path-points {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .path-point {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm);
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: var(--radius-sm);
+        }
+        
+        .path-point-number {
+            width: 24px;
+            height: 24px;
+            background: var(--primary-orange);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-xs);
+            font-weight: var(--font-semibold);
+        }
+        
+        .path-point-coords {
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-700);
+        }
+        
+        .safety-indicators {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-md);
+        }
+        
+        .safety-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm);
+            background: var(--bg-secondary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+        }
+        
+        .safety-indicator.safe {
+            border-color: var(--success-green);
+            background: var(--success-green-light);
+        }
+        
+        .safety-indicator.warning {
+            border-color: var(--warning-yellow);
+            background: var(--warning-yellow-light);
+        }
+        
+        .safety-indicator.danger {
+            border-color: var(--safety-red);
+            background: var(--error-red-light);
+        }
+        
+        .safety-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .safety-dot.safe { background: var(--success-green); }
+        .safety-dot.warning { background: var(--warning-yellow); }
+        .safety-dot.danger { background: var(--safety-red); }
+        
+        /* Responsive breakpoints */
+        @media (max-width: 1024px) {
+            .map-container {
+                height: 400px;
+            }
+            
+            .navigation-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .map-container {
+                height: 300px;
+            }
+            
+            .map-controls {
+                top: var(--space-sm);
+                right: var(--space-sm);
+            }
+            
+            .map-control-btn {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .safety-indicators {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .map-container {
+                height: 250px;
+            }
+            
+            .navigation-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="flex items-center gap-4">
+                <i data-lucide="map" class="w-6 h-6 text-primary-orange" aria-hidden="true"></i>
+                <h1 class="text-2xl font-bold text-industrial-gray-900">Map & Navigation</h1>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-success-green rounded-full animate-pulse"></div>
+                    <span class="text-sm text-industrial-gray-600">Navigation Active</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary" aria-label="Map Settings">
+                    <i data-lucide="settings" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-secondary" aria-label="Fullscreen Map">
+                    <i data-lucide="maximize" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="main-content" class="page-main">
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Map Interface -->
+                <section class="col-span-8">
+                    <div class="map-container">
+                        <div class="map-viewport">
+                            <!-- Grid Background -->
+                            <div class="map-grid"></div>
+                            
+                            <!-- Safety Zone -->
+                            <div class="safety-zone" style="top: 50px; left: 50px; width: 200px; height: 150px;"></div>
+                            
+                            <!-- Path Line -->
+                            <div class="path-line" style="top: 100px; left: 100px; width: 300px; transform: rotate(45deg);"></div>
+                            
+                            <!-- Waypoints -->
+                            <div class="waypoint" style="top: 100px; left: 100px;" title="Waypoint 1"></div>
+                            <div class="waypoint" style="top: 200px; left: 300px;" title="Waypoint 2"></div>
+                            <div class="waypoint" style="top: 150px; left: 400px;" title="Waypoint 3"></div>
+                            
+                            <!-- Obstacles -->
+                            <div class="obstacle" style="top: 120px; left: 250px;" title="Obstacle 1"></div>
+                            <div class="obstacle" style="top: 180px; left: 350px;" title="Obstacle 2"></div>
+                            
+                            <!-- Robot Position -->
+                            <div class="robot-position" id="robot-position" style="top: 150px; left: 200px;" title="Robot Position"></div>
+                            
+                            <!-- Map Controls -->
+                            <div class="map-controls">
+                                <button class="map-control-btn" id="zoom-in" aria-label="Zoom In">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                                <button class="map-control-btn" id="zoom-out" aria-label="Zoom Out">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </button>
+                                <button class="map-control-btn" id="reset-view" aria-label="Reset View">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                </button>
+                                <button class="map-control-btn" id="fullscreen" aria-label="Fullscreen">
+                                    <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Navigation Panel -->
+                <section class="col-span-4">
+                    <div class="navigation-panel">
+                        <h3 class="text-lg font-semibold mb-4">Navigation Controls</h3>
+                        
+                        <!-- Navigation Controls -->
+                        <div class="navigation-controls">
+                            <button class="nav-btn" id="nav-forward" aria-label="Navigate Forward">
+                                <i data-lucide="arrow-up" class="w-6 h-6"></i>
+                                <span>Forward</span>
+                            </button>
+                            <button class="nav-btn" id="nav-backward" aria-label="Navigate Backward">
+                                <i data-lucide="arrow-down" class="w-6 h-6"></i>
+                                <span>Backward</span>
+                            </button>
+                            <button class="nav-btn" id="nav-left" aria-label="Navigate Left">
+                                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                                <span>Left</span>
+                            </button>
+                            <button class="nav-btn" id="nav-right" aria-label="Navigate Right">
+                                <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                                <span>Right</span>
+                            </button>
+                            <button class="nav-btn" id="nav-stop" aria-label="Stop Navigation">
+                                <i data-lucide="square" class="w-6 h-6"></i>
+                                <span>Stop</span>
+                            </button>
+                            <button class="nav-btn" id="nav-home" aria-label="Go Home">
+                                <i data-lucide="home" class="w-6 h-6"></i>
+                                <span>Home</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Path Planning -->
+                        <div class="path-planning">
+                            <h4 class="font-semibold mb-3">Path Planning</h4>
+                            <div class="flex gap-2 mb-3">
+                                <button class="btn btn-primary btn-sm" id="add-waypoint">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    Add Point
+                                </button>
+                                <button class="btn btn-secondary btn-sm" id="clear-path">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    Clear
+                                </button>
+                                <button class="btn btn-success btn-sm" id="execute-path">
+                                    <i data-lucide="play" class="w-4 h-4"></i>
+                                    Execute
+                                </button>
+                            </div>
+                            <div class="path-points" id="path-points">
+                                <div class="path-point">
+                                    <div class="path-point-number">1</div>
+                                    <div class="path-point-coords">X: 100, Y: 100</div>
+                                </div>
+                                <div class="path-point">
+                                    <div class="path-point-number">2</div>
+                                    <div class="path-point-coords">X: 300, Y: 200</div>
+                                </div>
+                                <div class="path-point">
+                                    <div class="path-point-number">3</div>
+                                    <div class="path-point-coords">X: 400, Y: 150</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Safety Indicators -->
+                        <div class="safety-indicators">
+                            <div class="safety-indicator safe">
+                                <div class="safety-dot safe"></div>
+                                <div>
+                                    <div class="font-medium">Safety Zone</div>
+                                    <div class="text-sm text-industrial-gray-600">Clear</div>
+                                </div>
+                            </div>
+                            <div class="safety-indicator warning">
+                                <div class="safety-dot warning"></div>
+                                <div>
+                                    <div class="font-medium">Obstacles</div>
+                                    <div class="text-sm text-industrial-gray-600">2 detected</div>
+                                </div>
+                            </div>
+                            <div class="safety-indicator safe">
+                                <div class="safety-dot safe"></div>
+                                <div>
+                                    <div class="font-medium">Path Clear</div>
+                                    <div class="text-sm text-industrial-gray-600">Safe</div>
+                                </div>
+                            </div>
+                            <div class="safety-indicator safe">
+                                <div class="safety-dot safe"></div>
+                                <div>
+                                    <div class="font-medium">Navigation</div>
+                                    <div class="text-sm text-industrial-gray-600">Active</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Map & Navigation Interface | Version 1.0.0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Position: <span id="current-position">X: 200, Y: 150</span></span>
+                <span class="text-sm text-industrial-gray-600">Last Update: <span id="last-update">2025-01-27 14:32:30</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Map & Navigation Controller
+        class MapNavigationController {
+            constructor() {
+                this.initializeEventListeners();
+                this.startRealTimeUpdates();
+                this.initializeAccessibility();
+                this.waypoints = [];
+                this.currentPosition = { x: 200, y: 150 };
+            }
+            
+            initializeEventListeners() {
+                // Navigation controls
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.handleNavigationAction(e.currentTarget.id);
+                    });
+                });
+                
+                // Map controls
+                document.getElementById('zoom-in').addEventListener('click', () => this.zoomIn());
+                document.getElementById('zoom-out').addEventListener('click', () => this.zoomOut());
+                document.getElementById('reset-view').addEventListener('click', () => this.resetView());
+                document.getElementById('fullscreen').addEventListener('click', () => this.toggleFullscreen());
+                
+                // Path planning
+                document.getElementById('add-waypoint').addEventListener('click', () => this.addWaypoint());
+                document.getElementById('clear-path').addEventListener('click', () => this.clearPath());
+                document.getElementById('execute-path').addEventListener('click', () => this.executePath());
+                
+                // Map interaction
+                const mapViewport = document.querySelector('.map-viewport');
+                mapViewport.addEventListener('click', (e) => {
+                    this.handleMapClick(e);
+                });
+            }
+            
+            initializeAccessibility() {
+                // Add keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            this.handleNavigationAction('nav-forward');
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            this.handleNavigationAction('nav-backward');
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            this.handleNavigationAction('nav-left');
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            this.handleNavigationAction('nav-right');
+                            break;
+                        case ' ':
+                            e.preventDefault();
+                            this.handleNavigationAction('nav-stop');
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            this.handleNavigationAction('nav-home');
+                            break;
+                    }
+                });
+            }
+            
+            handleNavigationAction(action) {
+                const btn = document.getElementById(action);
+                btn.classList.add('active');
+                
+                setTimeout(() => {
+                    btn.classList.remove('active');
+                }, 200);
+                
+                // Update robot position based on action
+                switch(action) {
+                    case 'nav-forward':
+                        this.currentPosition.y -= 20;
+                        break;
+                    case 'nav-backward':
+                        this.currentPosition.y += 20;
+                        break;
+                    case 'nav-left':
+                        this.currentPosition.x -= 20;
+                        break;
+                    case 'nav-right':
+                        this.currentPosition.x += 20;
+                        break;
+                    case 'nav-stop':
+                        // Stop movement
+                        break;
+                    case 'nav-home':
+                        this.currentPosition = { x: 100, y: 100 };
+                        break;
+                }
+                
+                this.updateRobotPosition();
+                this.updatePositionDisplay();
+            }
+            
+            updateRobotPosition() {
+                const robot = document.getElementById('robot-position');
+                robot.style.left = this.currentPosition.x + 'px';
+                robot.style.top = this.currentPosition.y + 'px';
+            }
+            
+            updatePositionDisplay() {
+                document.getElementById('current-position').textContent = 
+                    `X: ${this.currentPosition.x}, Y: ${this.currentPosition.y}`;
+            }
+            
+            handleMapClick(e) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Add waypoint at click position
+                this.addWaypointAtPosition(x, y);
+            }
+            
+            addWaypoint() {
+                // Add waypoint at current robot position
+                this.addWaypointAtPosition(this.currentPosition.x, this.currentPosition.y);
+            }
+            
+            addWaypointAtPosition(x, y) {
+                const waypoint = document.createElement('div');
+                waypoint.className = 'waypoint';
+                waypoint.style.left = x + 'px';
+                waypoint.style.top = y + 'px';
+                waypoint.title = `Waypoint ${this.waypoints.length + 1}`;
+                
+                document.querySelector('.map-viewport').appendChild(waypoint);
+                
+                this.waypoints.push({ x, y });
+                this.updatePathPoints();
+            }
+            
+            clearPath() {
+                // Remove all waypoints except the first one
+                document.querySelectorAll('.waypoint').forEach((wp, index) => {
+                    if (index > 0) wp.remove();
+                });
+                
+                this.waypoints = this.waypoints.slice(0, 1);
+                this.updatePathPoints();
+            }
+            
+            executePath() {
+                if (this.waypoints.length < 2) {
+                    alert('Add at least 2 waypoints to execute path');
+                    return;
+                }
+                
+                // Simulate path execution
+                this.simulatePathExecution();
+            }
+            
+            simulatePathExecution() {
+                let currentIndex = 0;
+                const interval = setInterval(() => {
+                    if (currentIndex >= this.waypoints.length) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    
+                    const waypoint = this.waypoints[currentIndex];
+                    this.currentPosition = waypoint;
+                    this.updateRobotPosition();
+                    this.updatePositionDisplay();
+                    currentIndex++;
+                }, 1000);
+            }
+            
+            updatePathPoints() {
+                const container = document.getElementById('path-points');
+                container.innerHTML = '';
+                
+                this.waypoints.forEach((point, index) => {
+                    const pointElement = document.createElement('div');
+                    pointElement.className = 'path-point';
+                    pointElement.innerHTML = `
+                        <div class="path-point-number">${index + 1}</div>
+                        <div class="path-point-coords">X: ${point.x}, Y: ${point.y}</div>
+                    `;
+                    container.appendChild(pointElement);
+                });
+            }
+            
+            zoomIn() {
+                // Implement zoom in functionality
+                console.log('Zoom in');
+            }
+            
+            zoomOut() {
+                // Implement zoom out functionality
+                console.log('Zoom out');
+            }
+            
+            resetView() {
+                // Reset map view
+                console.log('Reset view');
+            }
+            
+            toggleFullscreen() {
+                const mapContainer = document.querySelector('.map-container');
+                if (!document.fullscreenElement) {
+                    mapContainer.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
+            startRealTimeUpdates() {
+                // Update timestamp
+                setInterval(() => {
+                    document.getElementById('last-update').textContent = 
+                        new Date().toLocaleString();
+                }, 60000);
+            }
+        }
+        
+        // Initialize controller when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new MapNavigationController();
+        });
+    </script>
+</body>
+</html>

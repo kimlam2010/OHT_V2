@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Card System - Design System</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../themes/theme_components.css">
+    
+    <style>
+        .card-showcase {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-primary);
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .card-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--industrial-gray-200);
+        }
+        
+        .card-code {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--industrial-gray-900);
+            color: var(--industrial-gray-100);
+            border-radius: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+        
+        .interactive-demo {
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--industrial-gray-200);
+            margin: 1rem 0;
+        }
+        
+        .demo-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--industrial-gray-100);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--primary-orange);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-online { background: var(--success-green); }
+        .status-offline { background: var(--industrial-gray-400); }
+        .status-warning { background: var(--warning-yellow); }
+        .status-error { background: var(--error-red); }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-orange);
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--industrial-gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Header -->
+    <header class="page-header bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <i data-lucide="credit-card" class="w-8 h-8 text-orange-500 mr-3"></i>
+                        OHT-50 Card System
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Design System v1.0</span>
+                    <button class="btn btn-danger btn-sm">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        E-STOP
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="page-main">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Basic Cards -->
+            <section class="card-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Basic Cards</h2>
+                <p class="text-gray-600 mb-4">Basic card components for displaying content in organized containers.</p>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Basic Card</h3>
+                            <p class="text-gray-600">This is a basic card component with simple content. It provides a clean container for displaying information.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Card with Icon</h3>
+                            <div class="flex items-center mb-3">
+                                <i data-lucide="info" class="w-5 h-5 text-blue-500 mr-2"></i>
+                                <span class="text-sm text-blue-600">Information</span>
+                            </div>
+                            <p class="text-gray-600">Card with an icon to provide visual context and improve recognition.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Card with Badge</h3>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="badge badge-success">Active</span>
+                                <span class="text-sm text-gray-500">2 hours ago</span>
+                            </div>
+                            <p class="text-gray-600">Card with status badge and timestamp for additional context.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-code">
+                    <pre><code>&lt;div class="card"&gt;
+  &lt;div class="card-body"&gt;
+    &lt;h3 class="card-title"&gt;Basic Card&lt;/h3&gt;
+    &lt;p class="text-gray-600"&gt;Card content goes here.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+                </div>
+            </section>
+
+            <!-- Cards with Header -->
+            <section class="card-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Cards with Header</h2>
+                <p class="text-gray-600 mb-4">Cards with header sections for titles and actions.</p>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Card with Header</h3>
+                            <button class="btn btn-secondary btn-sm">
+                                <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-gray-600">Card with a header section containing the title and an action button.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="flex items-center">
+                                <i data-lucide="settings" class="w-5 h-5 text-gray-500 mr-2"></i>
+                                <h3 class="card-title">Settings Card</h3>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="btn btn-primary btn-sm">Save</button>
+                                <button class="btn btn-secondary btn-sm">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-gray-600">Card with icon in header and multiple action buttons.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Status Card</h3>
+                            <div class="flex items-center">
+                                <div class="status-indicator status-online mr-2"></div>
+                                <span class="text-sm text-green-600">Online</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-gray-600">Card with status indicator in the header showing system status.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cards with Footer -->
+            <section class="card-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Cards with Footer</h2>
+                <p class="text-gray-600 mb-4">Cards with footer sections for actions and additional information.</p>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Card with Footer</h3>
+                            <p class="text-gray-600">Card with footer actions for user interactions.</p>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-primary btn-sm">Save</button>
+                            <button class="btn btn-secondary btn-sm">Cancel</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Card with Info Footer</h3>
+                            <p class="text-gray-600">Card with informational footer showing metadata.</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="flex items-center justify-between text-sm text-gray-500">
+                                <span>Last updated: 2 hours ago</span>
+                                <span>By: Admin User</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Card with Progress</h3>
+                            <p class="text-gray-600">Card with progress indicator in footer.</p>
+                            <div class="mt-3">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>Progress</span>
+                                    <span>75%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-orange-500 h-2 rounded-full" style="width: 75%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-primary btn-sm">Continue</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Status Cards -->
+            <section class="card-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Status Cards</h2>
+                <p class="text-gray-600 mb-4">Specialized cards for displaying system status and metrics.</p>
+                
+                <div class="card-grid">
+                    <div class="card card-status">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="card-title">System Status</h3>
+                                    <p class="text-green-600 font-medium">Online</p>
+                                </div>
+                                <div class="status-indicator status-online"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-status">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="card-title">Battery Level</h3>
+                                    <p class="text-orange-600 font-medium">85%</p>
+                                </div>
+                                <i data-lucide="battery" class="w-8 h-8 text-orange-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-status">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="card-title">Temperature</h3>
+                                    <p class="text-blue-600 font-medium">42°C</p>
+                                </div>
+                                <i data-lucide="thermometer" class="w-8 h-8 text-blue-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-status">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="card-title">Connection</h3>
+                                    <p class="text-red-600 font-medium">Disconnected</p>
+                                </div>
+                                <div class="status-indicator status-error"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metric Cards -->
+            <section class="card-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Metric Cards</h2>
+                <p class="text-gray-600 mb-4">Cards designed for displaying key performance indicators and metrics.</p>
+                
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="metric-value">98.5%</div>
+                            <div class="metric-label">Uptime</div>
+                            <div class="mt-2">
+                                <span class="text-green-600 text-sm">↑ 2.3%</span>
+                                <span class="text-gray-500 text-sm">vs last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="metric-value">2.5s</div>
+                            <div class="metric-label">Response Time</div>
+                            <div class="mt-2">
+                                <span class="text-red-600 text-sm">↓ 0.3s</span>
+                                <span class="text-gray-500 text-sm">vs last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="metric-value">1,247</div>
+                            <div class="metric-label">Total Operations</div>
+                            <div class="mt-2">
+                                <span class="text-green-600 text-sm">↑ 12%</span>
+                                <span class="text-gray-500 text-sm">vs last week</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="metric-value">0</div>
+                            <div class="metric-label">Errors</div>
+                            <div class="mt-2">
+                                <span class="text-green-600 text-sm">Perfect</span>
+                                <span class="text-gray-500 text-sm">this week</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Demo -->
+            <section class="card-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Interactive Demo</h2>
+                <p class="text-gray-600 mb-4">Test card interactions and see dynamic content updates.</p>
+                
+                <div class="interactive-demo">
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <button id="add-card" class="btn btn-primary">Add Card</button>
+                        <button id="remove-card" class="btn btn-secondary">Remove Card</button>
+                        <button id="toggle-status" class="btn btn-warning">Toggle Status</button>
+                    </div>
+                    
+                    <div id="demo-cards" class="card-grid">
+                        <div class="card demo-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Demo Card 1</h3>
+                                <div class="status-indicator status-online" id="status-1"></div>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-gray-600">This is a demo card that can be interacted with.</p>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-primary btn-sm">Action</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="demo-result" class="demo-result hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">Card Interaction Result:</h4>
+                        <p id="result-text" class="text-gray-600">Interact with the buttons above to see results.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Card Guidelines -->
+            <section class="card-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Card Usage Guidelines</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">✅ Do's</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• Use cards to group related content</li>
+                            <li>• Keep card content focused and concise</li>
+                            <li>• Use headers for titles and actions</li>
+                            <li>• Use footers for actions and metadata</li>
+                            <li>• Maintain consistent spacing and alignment</li>
+                            <li>• Use status cards for system information</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">❌ Don'ts</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• Don't nest cards within cards</li>
+                            <li>• Don't overload cards with too much content</li>
+                            <li>• Don't use cards for simple text content</li>
+                            <li>• Don't mix different card types randomly</li>
+                            <li>• Don't forget to handle empty states</li>
+                            <li>• Don't use cards for navigation elements</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    OHT-50 Card System v1.0
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Last updated: 2025-01-28</span>
+                    <a href="component_library.html" class="btn btn-secondary btn-sm">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Back to Library
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Interactive demo functionality
+        const addCardBtn = document.getElementById('add-card');
+        const removeCardBtn = document.getElementById('remove-card');
+        const toggleStatusBtn = document.getElementById('toggle-status');
+        const demoCards = document.getElementById('demo-cards');
+        const demoResult = document.getElementById('demo-result');
+        const resultText = document.getElementById('result-text');
+        
+        let cardCount = 1;
+        let statusOnline = true;
+        
+        addCardBtn.addEventListener('click', function() {
+            cardCount++;
+            const newCard = document.createElement('div');
+            newCard.className = 'card demo-card';
+            newCard.innerHTML = `
+                <div class="card-header">
+                    <h3 class="card-title">Demo Card ${cardCount}</h3>
+                    <div class="status-indicator status-online"></div>
+                </div>
+                <div class="card-body">
+                    <p class="text-gray-600">This is demo card number ${cardCount}.</p>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary btn-sm">Action</button>
+                </div>
+            `;
+            demoCards.appendChild(newCard);
+            
+            demoResult.classList.remove('hidden');
+            resultText.textContent = `Added demo card ${cardCount}`;
+        });
+        
+        removeCardBtn.addEventListener('click', function() {
+            const cards = demoCards.querySelectorAll('.demo-card');
+            if (cards.length > 1) {
+                demoCards.removeChild(cards[cards.length - 1]);
+                cardCount--;
+                
+                demoResult.classList.remove('hidden');
+                resultText.textContent = `Removed demo card ${cardCount + 1}`;
+            } else {
+                demoResult.classList.remove('hidden');
+                resultText.textContent = 'Cannot remove the last card';
+            }
+        });
+        
+        toggleStatusBtn.addEventListener('click', function() {
+            statusOnline = !statusOnline;
+            const statusIndicators = document.querySelectorAll('.status-indicator');
+            
+            statusIndicators.forEach(indicator => {
+                if (statusOnline) {
+                    indicator.className = 'status-indicator status-online';
+                } else {
+                    indicator.className = 'status-indicator status-offline';
+                }
+            });
+            
+            demoResult.classList.remove('hidden');
+            resultText.textContent = `Status toggled to ${statusOnline ? 'online' : 'offline'}`;
+        });
+        
+        // Add hover effects for demonstration
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            });
+        });
+    </script>
+</body>
+</html>

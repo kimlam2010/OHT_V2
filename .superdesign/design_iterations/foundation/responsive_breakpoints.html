@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Breakpoints Test - OHT-50</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* Responsive Breakpoints Test */
+        .page-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: var(--space-lg);
+            height: 100vh;
+            padding: var(--space-lg);
+            background: var(--bg-secondary);
+        }
+
+        .page-header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        .page-main {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+            overflow-y: auto;
+        }
+
+        .page-footer {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        /* Breakpoint Indicator */
+        .breakpoint-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--primary-orange);
+            color: white;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            z-index: var(--z-emergency);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Test Cards */
+        .test-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .test-card h3 {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            margin-bottom: var(--space-md);
+        }
+
+        .test-card p {
+            color: var(--industrial-gray-600);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Responsive Grid Test */
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .grid-item {
+            background: var(--primary-orange-100);
+            border: 1px solid var(--primary-orange-300);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            color: var(--primary-orange-800);
+        }
+
+        /* Responsive Layouts */
+        .layout-test {
+            display: grid;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .layout-test.desktop {
+            grid-template-columns: 3fr 1fr;
+        }
+
+        .layout-test.tablet {
+            grid-template-columns: 1fr;
+        }
+
+        .layout-test.mobile {
+            grid-template-columns: 1fr;
+        }
+
+        .layout-panel {
+            background: var(--industrial-gray-100);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-700);
+        }
+
+        /* Responsive Typography */
+        .typography-test h1 {
+            font-size: var(--text-4xl);
+        }
+
+        .typography-test h2 {
+            font-size: var(--text-3xl);
+        }
+
+        .typography-test h3 {
+            font-size: var(--text-2xl);
+        }
+
+        .typography-test p {
+            font-size: var(--text-base);
+        }
+
+        /* Responsive Buttons */
+        .button-test {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        /* Responsive Images */
+        .image-test {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .image-placeholder {
+            background: var(--industrial-gray-200);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-600);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1536px) {
+            .breakpoint-indicator::after {
+                content: "2XL (1536px)";
+            }
+        }
+
+        @media (max-width: 1280px) {
+            .breakpoint-indicator::after {
+                content: "XL (1280px)";
+            }
+            
+            .layout-test.desktop {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .breakpoint-indicator::after {
+                content: "LG (1024px)";
+            }
+            
+            .layout-test.desktop {
+                grid-template-columns: 1fr;
+            }
+            
+            .responsive-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .breakpoint-indicator::after {
+                content: "MD (768px)";
+            }
+            
+            .page-container {
+                padding: var(--space-md);
+                gap: var(--space-md);
+            }
+            
+            .responsive-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .button-test {
+                flex-direction: column;
+            }
+            
+            .typography-test h1 {
+                font-size: var(--text-3xl);
+            }
+            
+            .typography-test h2 {
+                font-size: var(--text-2xl);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .breakpoint-indicator::after {
+                content: "SM (640px)";
+            }
+            
+            .responsive-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .image-test {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .breakpoint-indicator::after {
+                content: "XS (480px)";
+            }
+            
+            .responsive-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .typography-test h1 {
+                font-size: var(--text-2xl);
+            }
+            
+            .typography-test h2 {
+                font-size: var(--text-xl);
+            }
+        }
+
+        /* Hide/Show based on breakpoint */
+        .desktop-only { display: block; }
+        .tablet-only { display: none; }
+        .mobile-only { display: none; }
+
+        @media (max-width: 1024px) {
+            .desktop-only { display: none; }
+            .tablet-only { display: block; }
+        }
+
+        @media (max-width: 768px) {
+            .tablet-only { display: none; }
+            .mobile-only { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Breakpoint Indicator -->
+    <div class="breakpoint-indicator">
+        Current: <span id="current-breakpoint">Desktop</span>
+    </div>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="flex items-center gap-4">
+                <i data-lucide="smartphone" class="w-6 h-6 text-primary-orange"></i>
+                <h1 class="text-xl font-semibold">Responsive Breakpoints Test</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Resize window to test</span>
+                <button class="btn btn-secondary" onclick="toggleFullscreen()">
+                    <i data-lucide="maximize" class="w-4 h-4"></i>
+                    Fullscreen
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="page-main">
+            <!-- Grid System Test -->
+            <div class="test-card">
+                <h3>12-Column Grid System</h3>
+                <p>Test how the 12-column grid adapts to different screen sizes:</p>
+                
+                <div class="responsive-grid">
+                    <div class="grid-item">1</div>
+                    <div class="grid-item">2</div>
+                    <div class="grid-item">3</div>
+                    <div class="grid-item">4</div>
+                    <div class="grid-item">5</div>
+                    <div class="grid-item">6</div>
+                    <div class="grid-item">7</div>
+                    <div class="grid-item">8</div>
+                    <div class="grid-item">9</div>
+                    <div class="grid-item">10</div>
+                    <div class="grid-item">11</div>
+                    <div class="grid-item">12</div>
+                </div>
+                
+                <div class="desktop-only">
+                    <p class="text-sm text-success-green"><strong>Desktop:</strong> 12 columns visible</p>
+                </div>
+                <div class="tablet-only">
+                    <p class="text-sm text-warning-yellow"><strong>Tablet:</strong> 6 columns visible</p>
+                </div>
+                <div class="mobile-only">
+                    <p class="text-sm text-error-red"><strong>Mobile:</strong> 2 columns visible</p>
+                </div>
+            </div>
+            
+            <!-- Layout Test -->
+            <div class="test-card">
+                <h3>Layout Adaptation</h3>
+                <p>Test how layouts change across breakpoints:</p>
+                
+                <div class="layout-test desktop">
+                    <div class="layout-panel">Main Content Area (3fr)</div>
+                    <div class="layout-panel">Sidebar (1fr)</div>
+                </div>
+                
+                <div class="layout-test tablet">
+                    <div class="layout-panel">Full Width Content</div>
+                </div>
+                
+                <div class="layout-test mobile">
+                    <div class="layout-panel">Mobile Layout</div>
+                </div>
+            </div>
+            
+            <!-- Typography Test -->
+            <div class="test-card">
+                <h3>Responsive Typography</h3>
+                <p>Test how typography scales across breakpoints:</p>
+                
+                <div class="typography-test">
+                    <h1>Heading 1 - Main Title</h1>
+                    <h2>Heading 2 - Section Title</h2>
+                    <h3>Heading 3 - Subsection</h3>
+                    <p>This is body text that should remain readable on all devices. The font size and line height should adapt appropriately for different screen sizes.</p>
+                </div>
+            </div>
+            
+            <!-- Button Test -->
+            <div class="test-card">
+                <h3>Responsive Buttons</h3>
+                <p>Test button layout and touch targets:</p>
+                
+                <div class="button-test">
+                    <button class="btn btn-primary">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        Primary Action
+                    </button>
+                    <button class="btn btn-secondary">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Secondary Action
+                    </button>
+                    <button class="btn btn-danger">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        Emergency Stop
+                    </button>
+                    <button class="btn btn-success">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        Success Action
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Image Test -->
+            <div class="test-card">
+                <h3>Responsive Images</h3>
+                <p>Test how images adapt to different screen sizes:</p>
+                
+                <div class="image-test">
+                    <div class="image-placeholder">Image 1 (200px min)</div>
+                    <div class="image-placeholder">Image 2 (200px min)</div>
+                    <div class="image-placeholder">Image 3 (200px min)</div>
+                    <div class="image-placeholder">Image 4 (200px min)</div>
+                </div>
+            </div>
+            
+            <!-- Breakpoint Info -->
+            <div class="test-card">
+                <h3>Breakpoint Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="p-4 bg-industrial-gray-50 rounded-lg">
+                        <h4 class="font-semibold text-industrial-gray-800 mb-2">Mobile</h4>
+                        <p class="text-sm text-industrial-gray-600">≤ 640px</p>
+                        <ul class="text-xs text-industrial-gray-500 mt-2">
+                            <li>• Single column layout</li>
+                            <li>• Large touch targets</li>
+                            <li>• Simplified navigation</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-industrial-gray-50 rounded-lg">
+                        <h4 class="font-semibold text-industrial-gray-800 mb-2">Tablet</h4>
+                        <p class="text-sm text-industrial-gray-600">641px - 1024px</p>
+                        <ul class="text-xs text-industrial-gray-500 mt-2">
+                            <li>• Adaptive grid system</li>
+                            <li>• Balanced information density</li>
+                            <li>• Touch-friendly controls</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-industrial-gray-50 rounded-lg">
+                        <h4 class="font-semibold text-industrial-gray-800 mb-2">Desktop</h4>
+                        <p class="text-sm text-industrial-gray-600">≥ 1025px</p>
+                        <ul class="text-xs text-industrial-gray-500 mt-2">
+                            <li>• Full 12-column grid</li>
+                            <li>• Multi-column layouts</li>
+                            <li>• Hover interactions</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="page-footer">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Responsive Test v1.0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary" onclick="simulateMobile()">
+                    <i data-lucide="smartphone" class="w-4 h-4"></i>
+                    Mobile View
+                </button>
+                <button class="btn btn-secondary" onclick="simulateTablet()">
+                    <i data-lucide="tablet" class="w-4 h-4"></i>
+                    Tablet View
+                </button>
+                <button class="btn btn-primary" onclick="resetView()">
+                    <i data-lucide="monitor" class="w-4 h-4"></i>
+                    Desktop View
+                </button>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Update breakpoint indicator
+        function updateBreakpointIndicator() {
+            const width = window.innerWidth;
+            const indicator = document.getElementById('current-breakpoint');
+            
+            if (width >= 1536) {
+                indicator.textContent = '2XL (1536px+)';
+            } else if (width >= 1280) {
+                indicator.textContent = 'XL (1280px)';
+            } else if (width >= 1024) {
+                indicator.textContent = 'LG (1024px)';
+            } else if (width >= 768) {
+                indicator.textContent = 'MD (768px)';
+            } else if (width >= 640) {
+                indicator.textContent = 'SM (640px)';
+            } else {
+                indicator.textContent = 'XS (<640px)';
+            }
+        }
+        
+        // Simulate different screen sizes
+        function simulateMobile() {
+            window.resizeTo(375, 667);
+        }
+        
+        function simulateTablet() {
+            window.resizeTo(768, 1024);
+        }
+        
+        function resetView() {
+            window.resizeTo(1280, 720);
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // Update on resize
+        window.addEventListener('resize', updateBreakpointIndicator);
+        
+        // Initial update
+        document.addEventListener('DOMContentLoaded', function() {
+            updateBreakpointIndicator();
+        });
+    </script>
+</body>
+</html>

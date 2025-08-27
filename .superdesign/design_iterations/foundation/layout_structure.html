@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Layout Structure Framework</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Header Section -->
+    <header class="page-header">
+        <div class="flex items-center gap-4">
+            <h1>OHT-50 Layout Structure</h1>
+            <span class="badge badge-primary">Foundation</span>
+        </div>
+        <nav>
+            <a href="#grid-system" class="btn btn-secondary">Grid System</a>
+            <a href="#responsive" class="btn btn-secondary">Responsive</a>
+            <a href="#components" class="btn btn-secondary">Components</a>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="page-main">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+            <!-- Left Column - Grid System Demo -->
+            <div class="lg:col-span-2 space-y-8">
+                <section id="grid-system">
+                    <h2>12-Column Grid System</h2>
+                    <div class="grid grid-cols-12 gap-4 p-4 bg-gray-100 rounded-lg">
+                        <div class="col-span-12 bg-primary-orange text-white p-2 text-center rounded">12 Columns</div>
+                        <div class="col-span-6 bg-primary-orange-light text-white p-2 text-center rounded">6 Columns</div>
+                        <div class="col-span-6 bg-primary-orange-light text-white p-2 text-center rounded">6 Columns</div>
+                        <div class="col-span-4 bg-primary-orange-dark text-white p-2 text-center rounded">4 Columns</div>
+                        <div class="col-span-4 bg-primary-orange-dark text-white p-2 text-center rounded">4 Columns</div>
+                        <div class="col-span-4 bg-primary-orange-dark text-white p-2 text-center rounded">4 Columns</div>
+                        <div class="col-span-3 bg-industrial-gray-600 text-white p-2 text-center rounded">3 Cols</div>
+                        <div class="col-span-3 bg-industrial-gray-600 text-white p-2 text-center rounded">3 Cols</div>
+                        <div class="col-span-3 bg-industrial-gray-600 text-white p-2 text-center rounded">3 Cols</div>
+                        <div class="col-span-3 bg-industrial-gray-600 text-white p-2 text-center rounded">3 Cols</div>
+                    </div>
+                </section>
+
+                <section id="responsive">
+                    <h2>Responsive Breakpoints</h2>
+                    <div class="space-y-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Mobile First Approach</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Base: Mobile (≤640px)</p>
+                                <p>sm: Tablet (≥640px)</p>
+                                <p>md: Small Desktop (≥768px)</p>
+                                <p>lg: Desktop (≥1024px)</p>
+                                <p>xl: Large Desktop (≥1280px)</p>
+                                <p>2xl: Extra Large (≥1536px)</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column - Layout Components -->
+            <div class="space-y-8">
+                <section id="components">
+                    <h2>Layout Components</h2>
+                    <div class="space-y-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Page Header</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Consistent header with navigation and branding</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Page Footer</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Footer with status and navigation links</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Main Content Area</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Flexible content area with sidebar support</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="page-footer">
+        <div class="flex items-center gap-4">
+            <span>OHT-50 Layout Structure Framework</span>
+            <span class="badge badge-secondary">Foundation Phase</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span>Status: Ready</span>
+            <span>Version: 1.0</span>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

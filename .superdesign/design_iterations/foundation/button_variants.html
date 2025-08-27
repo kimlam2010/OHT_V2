@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Button Variants - Design System</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../themes/theme_components.css">
+    
+    <style>
+        .button-showcase {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-primary);
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .button-demo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--industrial-gray-200);
+        }
+        
+        .button-code {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--industrial-gray-900);
+            color: var(--industrial-gray-100);
+            border-radius: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+        
+        .interactive-demo {
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--industrial-gray-200);
+            margin: 1rem 0;
+        }
+        
+        .demo-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--industrial-gray-100);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--primary-orange);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Header -->
+    <header class="page-header bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <i data-lucide="square" class="w-8 h-8 text-orange-500 mr-3"></i>
+                        OHT-50 Button Variants
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Design System v1.0</span>
+                    <button class="btn btn-danger btn-sm">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        E-STOP
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="page-main">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Primary Buttons -->
+            <section class="button-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Primary Buttons</h2>
+                <p class="text-gray-600 mb-4">Primary buttons are used for the main actions in the interface.</p>
+                
+                <div class="button-grid">
+                    <div class="button-demo">
+                        <button class="btn btn-primary">Primary Button</button>
+                        <span class="text-sm text-gray-500">Default</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary" disabled>Disabled Primary</button>
+                        <span class="text-sm text-gray-500">Disabled</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary btn-loading">
+                            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                            Loading...
+                        </button>
+                        <span class="text-sm text-gray-500">Loading</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary btn-icon">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            Settings
+                        </button>
+                        <span class="text-sm text-gray-500">With Icon</span>
+                    </div>
+                </div>
+                
+                <div class="button-code">
+                    <pre><code>&lt;button class="btn btn-primary"&gt;Primary Button&lt;/button&gt;
+&lt;button class="btn btn-primary" disabled&gt;Disabled Primary&lt;/button&gt;
+&lt;button class="btn btn-primary btn-loading"&gt;
+  &lt;i data-lucide="loader-2" class="w-4 h-4 animate-spin"&gt;&lt;/i&gt;
+  Loading...
+&lt;/button&gt;
+&lt;button class="btn btn-primary btn-icon"&gt;
+  &lt;i data-lucide="settings" class="w-4 h-4"&gt;&lt;/i&gt;
+  Settings
+&lt;/button&gt;</code></pre>
+                </div>
+            </section>
+
+            <!-- Secondary Buttons -->
+            <section class="button-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Secondary Buttons</h2>
+                <p class="text-gray-600 mb-4">Secondary buttons are used for secondary actions and alternatives.</p>
+                
+                <div class="button-grid">
+                    <div class="button-demo">
+                        <button class="btn btn-secondary">Secondary Button</button>
+                        <span class="text-sm text-gray-500">Default</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-secondary" disabled>Disabled Secondary</button>
+                        <span class="text-sm text-gray-500">Disabled</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-secondary btn-icon">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            Download
+                        </button>
+                        <span class="text-sm text-gray-500">With Icon</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-secondary btn-outline">Outline Secondary</button>
+                        <span class="text-sm text-gray-500">Outline</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Safety Buttons -->
+            <section class="button-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Safety Buttons</h2>
+                <p class="text-gray-600 mb-4">Safety buttons use specific colors to indicate different levels of urgency and action types.</p>
+                
+                <div class="button-grid">
+                    <div class="button-demo">
+                        <button class="btn btn-danger">Danger Button</button>
+                        <span class="text-sm text-gray-500">Danger</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-warning">Warning Button</button>
+                        <span class="text-sm text-gray-500">Warning</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-success">Success Button</button>
+                        <span class="text-sm text-gray-500">Success</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-info">Info Button</button>
+                        <span class="text-sm text-gray-500">Info</span>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Emergency Controls</h3>
+                    <div class="button-grid">
+                        <div class="button-demo">
+                            <button class="btn btn-emergency">
+                                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                                E-STOP
+                            </button>
+                            <span class="text-sm text-gray-500">Emergency Stop</span>
+                        </div>
+                        <div class="button-demo">
+                            <button class="btn btn-danger btn-lg">
+                                <i data-lucide="power" class="w-5 h-5"></i>
+                                EMERGENCY SHUTDOWN
+                            </button>
+                            <span class="text-sm text-gray-500">Emergency Shutdown</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Button Sizes -->
+            <section class="button-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Button Sizes</h2>
+                <p class="text-gray-600 mb-4">Different button sizes for various use cases and interface contexts.</p>
+                
+                <div class="button-grid">
+                    <div class="button-demo">
+                        <button class="btn btn-primary btn-xs">Extra Small</button>
+                        <span class="text-sm text-gray-500">XS (0.5rem)</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary btn-sm">Small</button>
+                        <span class="text-sm text-gray-500">SM (0.75rem)</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary">Default</button>
+                        <span class="text-sm text-gray-500">Default (1rem)</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary btn-lg">Large</button>
+                        <span class="text-sm text-gray-500">LG (1.25rem)</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary btn-xl">Extra Large</button>
+                        <span class="text-sm text-gray-500">XL (1.5rem)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Button States -->
+            <section class="button-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Button States</h2>
+                <p class="text-gray-600 mb-4">Different states a button can be in during user interaction.</p>
+                
+                <div class="button-grid">
+                    <div class="button-demo">
+                        <button class="btn btn-primary">Normal</button>
+                        <span class="text-sm text-gray-500">Default State</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary" disabled>Disabled</button>
+                        <span class="text-sm text-gray-500">Disabled State</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary btn-loading">
+                            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                            Loading
+                        </button>
+                        <span class="text-sm text-gray-500">Loading State</span>
+                    </div>
+                    <div class="button-demo">
+                        <button class="btn btn-primary btn-success">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Success
+                        </button>
+                        <span class="text-sm text-gray-500">Success State</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Demo -->
+            <section class="button-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Interactive Demo</h2>
+                <p class="text-gray-600 mb-4">Test button interactions and see the results.</p>
+                
+                <div class="interactive-demo">
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <button id="demo-btn" class="btn btn-primary">Click Me</button>
+                        <button id="reset-btn" class="btn btn-secondary">Reset</button>
+                        <button id="loading-btn" class="btn btn-primary">Show Loading</button>
+                    </div>
+                    
+                    <div id="demo-result" class="demo-result hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">Button Click Result:</h4>
+                        <p id="result-text" class="text-gray-600">Click a button to see the result here.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Button Guidelines -->
+            <section class="button-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Button Usage Guidelines</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">✅ Do's</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• Use primary buttons for main actions</li>
+                            <li>• Use secondary buttons for alternatives</li>
+                            <li>• Use safety colors for critical actions</li>
+                            <li>• Include icons for better recognition</li>
+                            <li>• Provide clear, action-oriented labels</li>
+                            <li>• Use appropriate sizes for context</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">❌ Don'ts</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• Don't use danger colors for non-critical actions</li>
+                            <li>• Don't make buttons too small for touch interfaces</li>
+                            <li>• Don't use vague or unclear labels</li>
+                            <li>• Don't overload buttons with too much text</li>
+                            <li>• Don't use too many button variants on one page</li>
+                            <li>• Don't forget to handle loading states</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    OHT-50 Button Variants v1.0
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Last updated: 2025-01-28</span>
+                    <a href="component_library.html" class="btn btn-secondary btn-sm">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Back to Library
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Interactive demo functionality
+        const demoBtn = document.getElementById('demo-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const loadingBtn = document.getElementById('loading-btn');
+        const demoResult = document.getElementById('demo-result');
+        const resultText = document.getElementById('result-text');
+        
+        let clickCount = 0;
+        
+        demoBtn.addEventListener('click', function() {
+            clickCount++;
+            demoResult.classList.remove('hidden');
+            resultText.textContent = `Button clicked ${clickCount} time${clickCount > 1 ? 's' : ''}!`;
+            
+            // Add temporary visual feedback
+            this.classList.add('btn-success');
+            setTimeout(() => {
+                this.classList.remove('btn-success');
+            }, 1000);
+        });
+        
+        resetBtn.addEventListener('click', function() {
+            clickCount = 0;
+            demoResult.classList.add('hidden');
+            resultText.textContent = 'Click a button to see the result here.';
+        });
+        
+        loadingBtn.addEventListener('click', function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Loading...';
+            this.disabled = true;
+            
+            // Re-initialize icons for the new content
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+                lucide.createIcons();
+                
+                demoResult.classList.remove('hidden');
+                resultText.textContent = 'Loading completed!';
+            }, 2000);
+        });
+        
+        // Add hover effects for demonstration
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                if (!this.disabled && !this.classList.contains('btn-loading')) {
+                    this.style.transform = 'translateY(-1px)';
+                    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                }
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            });
+        });
+    </script>
+</body>
+</html>
