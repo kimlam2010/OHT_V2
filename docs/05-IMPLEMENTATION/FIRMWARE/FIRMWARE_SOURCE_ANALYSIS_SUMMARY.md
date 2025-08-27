@@ -1,9 +1,9 @@
 # FIRMWARE SOURCE ANALYSIS SUMMARY - OHT-50 MASTER MODULE
 
-**Phiên bản:** 3.0.0  
-**Ngày cập nhật:** 2025-01-27  
+**Phiên bản:** 3.1.0  
+**Ngày cập nhật:** 2025-01-28  
 **Team:** FW  
-**Trạng thái:** Phân tích hoàn thành - Updated for New Architecture v2.0
+**Trạng thái:** Phân tích hoàn thành - Updated for Simplified Architecture v2.1
 
 ---
 
@@ -12,7 +12,7 @@
 ### 🎯 Mục tiêu phân tích
 - Kiểm tra source code firmware hiện tại
 - Đánh giá tính năng đã triển khai
-- Xác định gaps và cải thiện cho kiến trúc mới
+- Xác định gaps và cải thiện cho kiến trúc đơn giản hóa
 - Cập nhật tài liệu kỹ thuật cho 5 module bắt buộc
 
 ### 📊 Kết quả phân tích
@@ -21,15 +21,15 @@
 - **Modules:** 12 HAL + 25 Application modules
 - **Test Files:** 20+ test files
 - **Documentation:** 10+ tài liệu kỹ thuật
-- **New Architecture:** 5 mandatory modules + RS485 standard
+- **Simplified Architecture:** 5 mandatory modules + RS485 standard
 
 ---
 
-## 🏗️ KIẾN TRÚC MỚI V2.0
+## 🏗️ KIẾN TRÚC ĐƠN GIẢN HÓA V2.1
 
 ### **5 Module Bắt Buộc:**
 1. **Power Module (0x01)** - Quản lý nguồn và BMS
-2. **Safety Module (0x02)** - Hệ thống an toàn SIL2
+2. **Safety Module (0x02)** - Hệ thống an toàn cơ bản
 3. **Travel Motor Module (0x03)** - Điều khiển động cơ di chuyển
 4. **Dock & Location Module (0x05)** - Định vị và docking
 5. **Master Control Module (0x00)** - Điều khiển tổng thể
@@ -54,7 +54,7 @@
 #### 1.1 HAL Common (`hal_common.c`)
 - **Chức năng:** Common utilities, timestamps, logging
 - **Tính năng:** Timestamp management, log levels, common status
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
 #### 1.2 HAL LED (`hal_led.c`)
 - **Chức năng:** LED control system
@@ -65,13 +65,13 @@
   - Communication LED: GPIO0_D4 (pin 28)
   - Network LED: GPIO0_D5 (pin 29)
   - Error LED: GPIO1_D2 (pin 58)
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
 #### 1.3 HAL E-Stop (`hal_estop.c`)
 - **Chức năng:** Emergency stop system
 - **Tính năng:** Single channel E-Stop, debounce, timeout
 - **GPIO:** GPIO1_D3 (pin 59)
-- **Trạng thái:** ✅ Hoàn thành - Cần upgrade lên dual-channel cho SIL2
+- **Trạng thái:** ✅ Hoàn thành - Single-channel cho basic compliance
 
 #### 1.4 HAL RS485 (`hal_rs485.c`)
 - **Chức năng:** RS485 communication (NEW STANDARD)
@@ -91,12 +91,12 @@
 - **GPIO Mapping:**
   - Relay 1: GPIO1_D3 (pin 59)
   - Relay 2: GPIO1_D2 (pin 58)
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
 #### 1.6 HAL Network (`hal_network.c`)
 - **Chức năng:** Network interface management
 - **Tính năng:** Ethernet, WiFi, network redundancy
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
 #### 1.7 HAL LiDAR (`hal_lidar.c`)
 - **Chức năng:** LiDAR integration via USB
@@ -108,22 +108,12 @@
 #### 1.8 HAL OTA Update (`hal_ota_update.c`)
 - **Chức năng:** Over-the-air firmware updates
 - **Tính năng:** Secure updates, rollback, validation
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
-#### 1.9 HAL USB Debug (`hal_usb_debug.c`)
-- **Chức năng:** USB debug interface
-- **Tính năng:** Console access, firmware updates
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
-
-#### 1.10 HAL GPIO (`hal_gpio.c`)
+#### 1.9 HAL GPIO (`hal_gpio.c`)
 - **Chức năng:** GPIO management
 - **Tính năng:** Pin configuration, interrupt handling
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
-
-#### 1.11 HAL Config Persistence (`hal_config_persistence.c`)
-- **Chức năng:** Configuration storage
-- **Tính năng:** Persistent storage, backup, restore
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
 ---
 
@@ -139,8 +129,8 @@
 
 #### 2.2 Safety Manager (`safety_manager.c`)
 - **Chức năng:** Safety system management
-- **Tính năng:** SIL2 compliance, location-based safety
-- **Trạng thái:** ✅ Hoàn thành - Cần upgrade cho location-based safety
+- **Tính năng:** Basic compliance, single-channel E-Stop
+- **Trạng thái:** ✅ Hoàn thành - Basic safety system implemented
 
 #### 2.3 Communication Manager (`communication_manager.c`)
 - **Chức năng:** Communication protocol management
@@ -150,12 +140,12 @@
 #### 2.4 Module Manager (`module_manager.c`)
 - **Chức năng:** Module management system
 - **Tính năng:** Auto-discovery, hot-swap, registry
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
 #### 2.5 API Manager (`api_manager.c`)
 - **Chức năng:** API management system
 - **Tính năng:** RESTful API, WebSocket, authentication
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
 ### 3. MODULE HANDLERS
 
@@ -163,7 +153,7 @@
 - **Chức năng:** Power module management
 - **Tính năng:** Battery monitoring, BMS, charging control
 - **Address:** 0x01
-- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc mới
+- **Trạng thái:** ✅ Hoàn thành - Compatible với kiến trúc đơn giản hóa
 
 #### 3.2 Motor Module Handler (`motor_module_handler.c`)
 - **Chức năng:** Travel motor control
@@ -189,12 +179,7 @@
   - LiDAR (RPLIDAR A1M8 via USB)
 - **Trạng thái:** ✅ Hoàn thành - Updated cho Dock & Location integration
 
-#### 3.4 IO Module Handler (`io_module_handler.c`)
-- **Chức năng:** IO module management (REMOVED from mandatory)
-- **Tính năng:** Digital/Analog I/O
-- **Trạng thái:** ❌ Không còn trong kiến trúc mới
-
-#### 3.5 DI/DO Module Handler (`di_do_module_handler.c`)
+#### 3.4 DI/DO Module Handler (`di_do_module_handler.c`)
 - **Chức năng:** Digital I/O management
 - **Tính năng:** Safety I/O, interlock management
 - **Trạng thái:** ✅ Hoàn thành - Integrated vào Safety Module
@@ -205,15 +190,15 @@
 
 ### **Gaps Identified:**
 
-#### 1. **Safety System Upgrade**
+#### 1. **Safety System Simplification**
 - **Current:** Single-channel E-Stop
-- **Required:** Dual-channel E-Stop for SIL2 compliance
-- **Action:** Upgrade `hal_estop.c` và `safety_manager.c`
+- **Required:** Single-channel E-Stop for basic compliance
+- **Action:** Simplify `hal_estop.c` và `safety_manager.c`
 
-#### 2. **Location-based Safety**
+#### 2. **Basic Safety System**
 - **Current:** Basic safety system
-- **Required:** Location-based safety integration
-- **Action:** Integrate với Dock & Location module
+- **Required:** Basic safety integration
+- **Action:** Simplify safety system
 
 #### 3. **Navigation States**
 - **Current:** Basic state machine
@@ -242,23 +227,23 @@
 - **Status:** ✅ Implemented
 - **Action:** Test và validate
 
-#### 3. **Location-based Safety**
+#### 3. **Basic Safety System**
 - **Priority:** Critical
 - **Status:** 🔄 In Progress
-- **Action:** Implement integration
+- **Action:** Implement basic integration
 
-#### 4. **Dual-channel E-Stop**
+#### 4. **Single-channel E-Stop**
 - **Priority:** Critical
 - **Status:** ⏳ Pending
-- **Action:** Hardware và software upgrade
+- **Action:** Simplify hardware và software
 
 ---
 
 ## 🎯 RECOMMENDATIONS
 
 ### **Immediate Actions (Week 1):**
-1. **Upgrade E-Stop system** lên dual-channel
-2. **Implement location-based safety** integration
+1. **Simplify E-Stop system** lên single-channel
+2. **Implement basic safety** integration
 3. **Update navigation states** trong state machine
 4. **Test RS485 standard** cho tất cả modules
 
@@ -269,7 +254,7 @@
 4. **Performance optimization**
 
 ### **Long-term Actions (Week 4+):**
-1. **SIL2 certification** preparation
+1. **Basic safety certification** preparation
 2. **Advanced safety features**
 3. **Performance monitoring**
 4. **Documentation updates**
@@ -289,7 +274,7 @@
 - **5 Mandatory Modules:** ✅ 100% coverage
 - **Auto-discovery:** ✅ Implemented
 - **Hot-swap:** ✅ Implemented
-- **Location-based Safety:** 🔄 60% complete
+- **Basic Safety System:** 🔄 60% complete
 
 ### **Performance Metrics:**
 - **Response Time:** < 100ms target
@@ -299,5 +284,5 @@
 
 ---
 
-**Status:** Analysis Complete - Ready for New Architecture Implementation  
+**Status:** Analysis Complete - Ready for Simplified Architecture Implementation  
 **Next Steps:** Begin Phase 2 - Update remaining documentation files

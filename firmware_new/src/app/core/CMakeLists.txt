@@ -5,6 +5,8 @@
 add_library(app_core STATIC
     system_state_machine.c
     control_loop.c
+    safety_monitor.c
+    system_controller.c
 )
 
 # Include directories

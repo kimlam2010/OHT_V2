@@ -20,7 +20,7 @@ add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(include)
 add_subdirectory(tests)
-add_subdirectory(docs)
+# add_subdirectory(docs)  # Removed - docs doesn't have CMakeLists.txt
 add_subdirectory(third_party)
 
 # Main executable
