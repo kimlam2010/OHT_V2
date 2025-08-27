@@ -70,7 +70,7 @@ hal_status_t mock_estop_validate_config(const estop_config_t *config) {
         return HAL_STATUS_ERROR;
     }
     
-    if (config->pin >= 256) {
+    if (config->pin >= 255) {
         return HAL_STATUS_ERROR;
     }
     

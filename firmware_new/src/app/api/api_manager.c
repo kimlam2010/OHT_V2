@@ -8,13 +8,21 @@
  */
 
 #include "api_manager.h"
+#include "api_endpoints.h"
+#include "hal_common.h"
+#include "http_server.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 // #include "network_manager.h" // Not available yet
 #include "communication_manager.h"
 #include "safety_manager.h"
 #include "system_state_machine.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <strings.h>
 
 // API Manager internal structure
@@ -50,6 +58,9 @@ typedef struct {
 
 // Global API Manager instance
 static api_manager_t g_api_manager = {0};
+
+// HTTP Server instance
+static http_server_t g_http_server = {0};
 
 // Default configuration
 static const api_mgr_config_t default_config = {
@@ -131,6 +142,39 @@ static const api_mgr_endpoint_t builtin_endpoints[] = {
         .enabled = true
     },
     
+    // Telemetry endpoints
+    {
+        .path = "/api/v1/telemetry",
+        .method = API_MGR_HTTP_GET,
+        .handler = api_handle_telemetry,
+        .required_resource = 3, // was SECURITY_MGR_RESOURCE_COMMUNICATION
+        .required_permission = 1, // was SECURITY_MGR_PERM_READ
+        .authentication_required = false,
+        .enabled = true
+    },
+    
+    // Command endpoints
+    {
+        .path = "/api/v1/command",
+        .method = API_MGR_HTTP_POST,
+        .handler = api_handle_module_command,
+        .required_resource = 3, // was SECURITY_MGR_RESOURCE_COMMUNICATION
+        .required_permission = 2, // was SECURITY_MGR_PERM_WRITE
+        .authentication_required = false,
+        .enabled = true
+    },
+    
+    // Modules endpoints
+    {
+        .path = "/api/v1/modules",
+        .method = API_MGR_HTTP_GET,
+        .handler = api_handle_modules_list,
+        .required_resource = 3, // was SECURITY_MGR_RESOURCE_COMMUNICATION
+        .required_permission = 1, // was SECURITY_MGR_PERM_READ
+        .authentication_required = false,
+        .enabled = true
+    },
+    
     // Safety endpoints
     {
         .path = "/api/v1/safety/status",
@@ -159,6 +203,17 @@ static const api_mgr_endpoint_t builtin_endpoints[] = {
         .required_resource = 5, // was SECURITY_MGR_RESOURCE_CONFIGURATION
         .required_permission = 2, // was SECURITY_MGR_PERM_WRITE
         .authentication_required = true,
+        .enabled = true
+    },
+    
+    // Diagnostics endpoints
+    {
+        .path = "/api/v1/diagnostics",
+        .method = API_MGR_HTTP_GET,
+        .handler = api_handle_diagnostics,
+        .required_resource = 1, // was SECURITY_MGR_RESOURCE_SYSTEM
+        .required_permission = 1, // was SECURITY_MGR_PERM_READ
+        .authentication_required = false,
         .enabled = true
     }
 };
@@ -317,10 +372,62 @@ hal_status_t api_manager_start_http_server(void) {
         return HAL_STATUS_ALREADY_INITIALIZED;
     }
     
-    // Start HTTP server (simplified implementation)
+    // Configure HTTP server
+    http_server_config_t http_config = {
+        .port = g_api_manager.config.http_port,
+        .max_connections = 10,
+        .timeout_ms = 30000,
+        .enable_cors = g_api_manager.config.cors_enabled,
+        .cors_origin = "*",
+        .enable_auth = g_api_manager.config.authentication_required,
+        .auth_token = "",
+        .enable_logging = true,
+        .log_file = "/tmp/oht50_http.log"
+    };
+    
+    // Initialize HTTP server
+    hal_status_t status = http_server_init(&g_http_server, &http_config);
+    if (status != HAL_STATUS_OK) {
+        printf("[API] Failed to initialize HTTP server: %d\n", status);
+        return status;
+    }
+    
+    // Register API endpoints
+    for (int i = 0; i < API_MGR_MAX_ENDPOINTS; i++) {
+        if (g_api_manager.endpoint_registered[i]) {
+            const api_mgr_endpoint_t *endpoint = &g_api_manager.endpoints[i];
+            
+            // Convert API method to HTTP method
+            http_method_t http_method;
+            switch (endpoint->method) {
+                case API_MGR_HTTP_GET: http_method = HTTP_METHOD_GET; break;
+                case API_MGR_HTTP_POST: http_method = HTTP_METHOD_POST; break;
+                case API_MGR_HTTP_PUT: http_method = HTTP_METHOD_PUT; break;
+                case API_MGR_HTTP_DELETE: http_method = HTTP_METHOD_DELETE; break;
+                default: continue;
+            }
+            
+            // Register route with HTTP server
+            status = http_server_add_route(&g_http_server, http_method, endpoint->path, 
+                                         (http_route_handler_t)endpoint->handler, false);
+            if (status != HAL_STATUS_OK) {
+                printf("[API] Failed to register route %s: %d\n", endpoint->path, status);
+            }
+        }
+    }
+    
+    // Start HTTP server
+    status = http_server_start(&g_http_server);
+    if (status != HAL_STATUS_OK) {
+        printf("[API] Failed to start HTTP server: %d\n", status);
+        return status;
+    }
+    
+    // Update API Manager status
     g_api_manager.http_server_running = true;
     g_api_manager.status.http_server_active = true;
     
+    printf("[API] HTTP server started on port %u\n", g_api_manager.config.http_port);
     handle_api_event(API_MGR_EVENT_SERVER_STARTED, NULL);
     
     return HAL_STATUS_OK;
@@ -335,10 +442,18 @@ hal_status_t api_manager_stop_http_server(void) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
+    // Stop HTTP server
+    hal_status_t status = http_server_stop(&g_http_server);
+    if (status != HAL_STATUS_OK) {
+        printf("[API] Failed to stop HTTP server: %d\n", status);
+    }
+    
+    // Update API Manager status
     g_api_manager.http_server_running = false;
     g_api_manager.status.http_server_active = false;
     g_api_manager.status.active_http_connections = 0;
     
+    printf("[API] HTTP server stopped\n");
     handle_api_event(API_MGR_EVENT_SERVER_STOPPED, NULL);
     
     return HAL_STATUS_OK;

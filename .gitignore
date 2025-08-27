@@ -4,3 +4,5 @@ wiringOP-Python/
 # Prevent nested repo copies (canonical layout enforced)
 /OHT-50/
 /OHT-50/**
+EMBED/uart1_46_47.save
+EMBED/uart1_46_47.save

@@ -274,22 +274,21 @@ int main(int argc, char **argv) {
         printf("[OHT-50] Scan complete: %zu online, has_offline=%s\n", 
                online, has_offline ? "YES" : "NO");
         
-        // COMM LED policy: solid when ≥1 online, warning when missing saved modules
-        if (online > 0) {
-            if (has_offline) {
-                // Warning pattern: some saved modules are offline
-                hal_led_comm_set(LED_STATE_BLINK_FAST);
-                hal_led_system_warning(); // indicate missing module (warning pattern)
-                printf("[OHT-50] WARNING: Some saved modules are offline\n");
-            } else {
-                // All good: solid on
-                hal_led_comm_set(LED_STATE_ON);
-                printf("[OHT-50] All modules online - COMM LED solid\n");
-            }
+        // CTO Requirements: COMM LED policy based on 4 mandatory slave modules
+        if (online == MANDATORY_MODULES_COUNT) {
+            // All 4 mandatory slave modules online: NORMAL status
+            hal_led_comm_set(LED_STATE_ON);
+            printf("[OHT-50] NORMAL: All %d mandatory slave modules online - COMM LED solid\n", MANDATORY_MODULES_COUNT);
+        } else if (online > 0 && online < MANDATORY_MODULES_COUNT) {
+            // Some mandatory slave modules missing: WARNING status
+            hal_led_comm_set(LED_STATE_BLINK_FAST);
+            hal_led_system_warning(); // indicate missing mandatory slave modules (warning pattern)
+            printf("[OHT-50] WARNING: Only %zu/%d mandatory slave modules online - COMM LED blink fast\n", 
+                   online, MANDATORY_MODULES_COUNT);
         } else {
-            // No modules online: LED off
+            // No modules online: ERROR status
             hal_led_comm_set(LED_STATE_OFF);
-            printf("[OHT-50] No modules online - COMM LED off\n");
+            printf("[OHT-50] ERROR: No slave modules online - COMM LED off\n");
         }
         
         registry_set_scanning(false);
@@ -300,8 +299,13 @@ int main(int argc, char **argv) {
         module_info_t mi;
         if (registry_get(MODULE_ADDR_POWER, &mi) == 0 && mi.status == MODULE_STATUS_ONLINE /* allow unknown type too */) {
             if (mi.type == MODULE_TYPE_POWER || mi.type == MODULE_TYPE_UNKNOWN) {
-                // Initialize power module handler with default config
-                power_module_config_t power_config = {0}; // Default config
+                // Initialize power module handler with explicit valid Modbus config
+                power_module_config_t power_config = {0};
+                power_config.slave_id = MODULE_ADDR_POWER;      // 0x02
+                power_config.baudrate_code = 5;                  // 115200
+                power_config.parity = 0;                         // None
+                power_config.stop_bits = 1;                      // 1 stop bit
+                power_config.fc_mask = 0x07;                     // FC3|FC6|FC16 supported
                 if (power_module_handler_init(&power_config) == HAL_STATUS_OK) {
                     // Apply 4S defaults - simplified for now
                     power_handler_initialized = true;

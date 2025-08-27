@@ -85,6 +85,11 @@ size_t registry_list(module_info_t *out_array, size_t max_items);
 size_t registry_count_online(void);
 bool registry_has_offline_saved(void);
 
+// CTO Requirements: Mandatory slave modules management
+size_t registry_count_mandatory_online(void);
+bool registry_all_mandatory_online(void);
+int registry_get_missing_mandatory(uint8_t *missing_modules, size_t max_count, size_t *actual_count);
+
 void registry_set_event_callback(module_event_callback_t cb);
 
 // Persistence (simple YAML-like)

@@ -123,6 +123,8 @@ void test_communication_event_constants(void)
 
 void test_communication_manager_data_structures(void)
 {
+    setUp();  // Ensure proper initialization
+    
     // Test configuration structure
     TEST_ASSERT_EQUAL(115200, test_config.baud_rate);
     TEST_ASSERT_EQUAL(8, test_config.data_bits);
@@ -228,6 +230,8 @@ void test_communication_manager_stats_initialization(void)
 
 void test_communication_manager_config_validation(void)
 {
+    setUp();  // Ensure proper initialization
+    
     // Test valid configuration
     TEST_ASSERT_TRUE(test_config.baud_rate > 0);
     TEST_ASSERT_TRUE(test_config.data_bits >= 7 && test_config.data_bits <= 8);
@@ -242,6 +246,8 @@ void test_communication_manager_config_validation(void)
 
 void test_communication_manager_request_validation(void)
 {
+    setUp();  // Ensure proper initialization
+    
     // Test valid request
     TEST_ASSERT_TRUE(test_request.slave_id > 0);
     TEST_ASSERT_TRUE(test_request.function_code >= 0x01 && test_request.function_code <= 0x10);
@@ -252,6 +258,8 @@ void test_communication_manager_request_validation(void)
 
 void test_communication_manager_response_validation(void)
 {
+    setUp();  // Ensure proper initialization
+    
     // Test valid response
     TEST_ASSERT_TRUE(test_response.slave_id > 0);
     TEST_ASSERT_TRUE(test_response.function_code >= 0x01 && test_response.function_code <= 0x10);

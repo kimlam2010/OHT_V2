@@ -198,8 +198,7 @@
 | RS485 Standard | ✅ Complete | 100% | Critical |
 | Auto-discovery | ✅ Complete | 100% | High |
 | Hot-swap | ✅ Complete | 100% | High |
-| Dual-channel E-Stop | 🔄 In Progress | 60% | Critical |
-| Location-based Safety | 🔄 In Progress | 70% | Critical |
+| Single-channel E-Stop | 🔄 In Progress | 60% | Critical |
 | Navigation States | 🔄 In Progress | 80% | High |
 | LiDAR USB Integration | 🔄 In Progress | 85% | High |
 | API System | ✅ Complete | 100% | High |

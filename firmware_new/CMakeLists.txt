@@ -38,6 +38,7 @@ target_link_libraries(oht50_main
     app_managers
     app_modules
     app_api
+    http_server
     utils
 )
 

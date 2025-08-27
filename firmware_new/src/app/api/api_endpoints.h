@@ -24,6 +24,7 @@
 #define API_SYSTEM_HEALTH     "/system/health"
 #define API_MODULES           "/modules"
 #define API_MODULE_COMMAND    "/modules/{id}/command"
+#define API_TELEMETRY         "/telemetry"
 #define API_SAFETY_STATUS     "/safety/status"
 #define API_SAFETY_ESTOP      "/safety/estop"
 #define API_CONFIG            "/config"
@@ -106,6 +107,25 @@ typedef struct {
     char error_log[1024];
 } api_diagnostics_t;
 
+// Telemetry data structure
+typedef struct {
+    uint64_t timestamp;
+    char system_state[32];
+    float position_x;
+    float position_y;
+    float position_z;
+    float velocity_x;
+    float velocity_y;
+    float velocity_z;
+    float acceleration_x;
+    float acceleration_y;
+    float acceleration_z;
+    bool estop_active;
+    bool safety_ok;
+    uint32_t active_modules;
+    char status_message[256];
+} api_telemetry_t;
+
 // API Endpoint Handler Functions
 
 /**
@@ -187,6 +207,14 @@ hal_status_t api_handle_config_set(const api_mgr_http_request_t *request, api_mg
  * @return HAL status
  */
 hal_status_t api_handle_diagnostics(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle GET /api/v1/telemetry
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_telemetry(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 // Module-specific endpoint handlers
 
@@ -347,5 +375,14 @@ hal_status_t api_create_error_response(api_mgr_http_response_t *response, api_mg
  * @return HAL status
  */
 hal_status_t api_create_success_response(api_mgr_http_response_t *response, const char *data);
+
+/**
+ * @brief Create JSON response from telemetry data
+ * @param telemetry Telemetry data
+ * @param json_buffer Output buffer
+ * @param buffer_size Buffer size
+ * @return HAL status
+ */
+hal_status_t api_create_telemetry_json(const api_telemetry_t *telemetry, char *json_buffer, int buffer_size);
 
 #endif // API_ENDPOINTS_H
