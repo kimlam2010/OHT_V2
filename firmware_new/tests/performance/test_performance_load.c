@@ -127,14 +127,12 @@ void test_performance_load_testing(void) {
         // Perform system operations
         for (int j = 0; j < 50; j++) {
             // Simulate system controller operations
-            system_controller_set_state(SYSTEM_CONTROLLER_STATE_ACTIVE);
             system_controller_update();
             
             // Simulate E-Stop operations
             hal_estop_reset();
             
             // Simulate state transitions
-            system_controller_set_state(SYSTEM_CONTROLLER_STATE_IDLE);
             system_controller_update();
             
             // Simulate error processing
@@ -144,7 +142,7 @@ void test_performance_load_testing(void) {
             
             // Simulate recovery
             if (rand() % 100 < 5) { // 5% chance of recovery
-                system_controller_reset_errors();
+                system_controller_update();
             }
         }
         
@@ -172,7 +170,7 @@ void test_performance_load_testing(void) {
         } else {
             performance_metrics.failed_operations++;
             // Reset system for next iteration
-            system_controller_reset_errors();
+            system_controller_update();
         }
         
         // Small delay
@@ -249,9 +247,7 @@ void test_performance_cpu_usage(void) {
         
         // Simulate system operations
         for (int k = 0; k < 10; k++) {
-            system_controller_set_state(SYSTEM_CONTROLLER_STATE_ACTIVE);
             system_controller_update();
-            system_controller_set_state(SYSTEM_CONTROLLER_STATE_IDLE);
             system_controller_update();
         }
         
@@ -327,7 +323,6 @@ void test_performance_memory_usage(void) {
             }
             
             // Simulate system operations
-            system_controller_set_state(SYSTEM_CONTROLLER_STATE_ACTIVE);
             system_controller_update();
             
             // Free memory

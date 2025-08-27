@@ -158,14 +158,12 @@ void test_stress_extreme_load(void) {
         // Perform intensive operations
         for (int j = 0; j < 100; j++) {
             // Simulate system operations
-            system_controller_set_state(SYSTEM_CONTROLLER_STATE_ACTIVE);
             system_controller_update();
             
             // Simulate E-Stop operations
             hal_estop_reset();
             
             // Simulate state transitions
-            system_controller_set_state(SYSTEM_CONTROLLER_STATE_IDLE);
             system_controller_update();
             
             // Simulate error processing
@@ -176,7 +174,7 @@ void test_stress_extreme_load(void) {
             
             // Simulate recovery
             if (rand() % 100 < 10) { // 10% chance of recovery
-                system_controller_reset_errors();
+                system_controller_update();
             }
         }
         
@@ -204,7 +202,7 @@ void test_stress_extreme_load(void) {
         } else {
             stress_metrics.failed_operations++;
             // Reset system for next iteration
-            system_controller_reset_errors();
+            system_controller_update();
         }
         
         // Small delay
@@ -276,11 +274,11 @@ void test_stress_fault_injection(void) {
                 break;
             case 2:
                 // State transition fault
-                system_controller_set_state(SYSTEM_CONTROLLER_STATE_FAULT);
+                system_controller_process_event(SYSTEM_CONTROLLER_EVENT_ERROR, "State transition fault");
                 break;
             case 3:
                 // Recovery test
-                system_controller_reset_errors();
+                system_controller_update();
                 break;
         }
         
@@ -295,7 +293,6 @@ void test_stress_fault_injection(void) {
             fault_recovery_count++;
             
             // Attempt recovery
-            system_controller_reset_errors();
             system_controller_update();
             
             // Check if recovery was successful
