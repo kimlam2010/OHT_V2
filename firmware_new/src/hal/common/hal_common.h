@@ -187,7 +187,7 @@ hal_status_t hal_safety_enable(void);
 hal_status_t hal_safety_disable(void);
 bool hal_safety_is_enabled(void);
 
-// HAL logging functions
+// ENHANCED HAL logging functions
 typedef enum {
     HAL_LOG_LEVEL_DEBUG = 0,
     HAL_LOG_LEVEL_INFO = 1,
@@ -196,10 +196,22 @@ typedef enum {
     HAL_LOG_LEVEL_FATAL = 4
 } hal_log_level_t;
 
+// Basic logging functions
 hal_status_t hal_log_init(const char *log_file);
 hal_status_t hal_log_set_level(hal_log_level_t level);
 hal_status_t hal_log_message(hal_log_level_t level, const char *format, ...);
 hal_status_t hal_log_close(void);
+
+// ENHANCED: Structured logging with context
+hal_status_t hal_log_message_with_context(hal_log_level_t level, const char *component, 
+                                         const char *function, uint32_t line, const char *format, ...);
+
+// ENHANCED: Error logging with automatic error tracking
+hal_status_t hal_log_error(const char *component, const char *function, uint32_t line, 
+                          hal_status_t error_code, const char *format, ...);
+
+// ENHANCED: Logging statistics
+hal_status_t hal_log_get_statistics(uint32_t *total_messages, uint32_t *error_count, uint64_t *uptime_ms);
 
 // HAL version information
 #define HAL_VERSION_MAJOR 1

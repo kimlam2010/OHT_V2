@@ -5,6 +5,7 @@
 add_library(app_api STATIC
     api_manager.c
     api_endpoints.c
+    http_server_mock.c
 )
 
 # Include directories

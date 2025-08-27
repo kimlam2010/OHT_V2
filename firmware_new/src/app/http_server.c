@@ -444,6 +444,7 @@ static hal_status_t http_send_response(int client_socket, const http_response_t 
 
 // Log HTTP request
 static void http_log_request(http_server_t *server, const http_request_t *request, const http_response_t *response) {
+    (void)server; // Suppress unused parameter warning
     printf("[HTTP] %s %s -> %d\n", 
                  http_get_method_string(request->method), 
                  request->path, 
@@ -501,6 +502,7 @@ hal_status_t http_parse_request(const char *request_data, int request_length, ht
     char *method_str = strtok(first_line, " ");
     char *path_str = strtok(NULL, " ");
     char *version_str = strtok(NULL, " ");
+    (void)version_str; // Suppress unused variable warning
 
     if (method_str == NULL || path_str == NULL) {
         return HAL_STATUS_ERROR;

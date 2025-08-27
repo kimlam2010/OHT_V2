@@ -179,12 +179,85 @@ static const api_mgr_endpoint_t builtin_endpoints[] = {
     {
         .path = "/api/v1/safety/status",
         .method = API_MGR_HTTP_GET,
-        .handler = api_manager_handle_safety_status,
+        .handler = api_handle_safety_status,
         .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
         .required_permission = 1, // was SECURITY_MGR_PERM_READ
         .authentication_required = true,
         .enabled = true
     },
+    {
+        .path = "/api/v1/safety/estop",
+        .method = API_MGR_HTTP_POST,
+        .handler = api_handle_safety_estop,
+        .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
+        .required_permission = 2, // was SECURITY_MGR_PERM_WRITE
+        .authentication_required = true,
+        .enabled = true
+    },
+    {
+        .path = "/api/v1/safety/zones",
+        .method = API_MGR_HTTP_GET,
+        .handler = api_handle_safety_zones_get,
+        .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
+        .required_permission = 1, // was SECURITY_MGR_PERM_READ
+        .authentication_required = true,
+        .enabled = true
+    },
+           {
+           .path = "/api/v1/safety/zones",
+           .method = API_MGR_HTTP_PUT,
+           .handler = api_handle_safety_zones_set,
+           .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
+           .required_permission = 2, // was SECURITY_MGR_PERM_WRITE
+           .authentication_required = true,
+           .enabled = true
+       },
+       // Safety Configuration Management
+       {
+           .path = "/api/v1/safety/config",
+           .method = API_MGR_HTTP_GET,
+           .handler = api_handle_safety_config_get,
+           .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
+           .required_permission = 1, // was SECURITY_MGR_PERM_READ
+           .authentication_required = true,
+           .enabled = true
+       },
+       {
+           .path = "/api/v1/safety/config",
+           .method = API_MGR_HTTP_PUT,
+           .handler = api_handle_safety_config_set,
+           .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
+           .required_permission = 2, // was SECURITY_MGR_PERM_WRITE
+           .authentication_required = true,
+           .enabled = true
+       },
+       {
+           .path = "/api/v1/safety/config/export",
+           .method = API_MGR_HTTP_GET,
+           .handler = api_handle_safety_config_export,
+           .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
+           .required_permission = 1, // was SECURITY_MGR_PERM_READ
+           .authentication_required = true,
+           .enabled = true
+       },
+       {
+           .path = "/api/v1/safety/config/import",
+           .method = API_MGR_HTTP_POST,
+           .handler = api_handle_safety_config_import,
+           .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
+           .required_permission = 2, // was SECURITY_MGR_PERM_WRITE
+           .authentication_required = true,
+           .enabled = true
+       },
+       {
+           .path = "/api/v1/safety/config/reset",
+           .method = API_MGR_HTTP_POST,
+           .handler = api_handle_safety_config_reset,
+           .required_resource = 4, // was SECURITY_MGR_RESOURCE_SAFETY
+           .required_permission = 2, // was SECURITY_MGR_PERM_WRITE
+           .authentication_required = true,
+           .enabled = true
+       },
     
     // Configuration endpoints
     {
@@ -509,43 +582,46 @@ hal_status_t api_manager_unregister_endpoint(const char *path, api_mgr_http_meth
 
 hal_status_t api_manager_process_http_request(const api_mgr_http_request_t *request, 
                                             api_mgr_http_response_t *response) {
-    if (!g_api_manager.initialized) {
-        return HAL_STATUS_NOT_INITIALIZED;
-    }
-    if (request == NULL || response == NULL) {
+    // OPTIMIZATION: Early validation with single return path
+    if (!g_api_manager.initialized || request == NULL || response == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
+    // OPTIMIZATION: Batch statistics update
     g_api_manager.statistics.http_requests_received++;
     g_api_manager.status.total_requests_processed++;
     
-    // Find endpoint
+    // Find endpoint with optimized error handling
     int endpoint_index;
     hal_status_t status = find_endpoint(request->path, request->method, &endpoint_index);
     if (status != HAL_STATUS_OK) {
-        return api_manager_create_error_response(response, API_MGR_RESPONSE_NOT_FOUND, "Endpoint not found");
+        api_manager_create_error_response(response, API_MGR_RESPONSE_NOT_FOUND, "Endpoint not found");
+        return HAL_STATUS_OK; // API manager always returns OK, error is in response
     }
+    
+    // OPTIMIZATION: Cache endpoint pointer to avoid repeated array access
+    api_mgr_endpoint_t *endpoint = &g_api_manager.endpoints[endpoint_index];
     
     // Check if endpoint is enabled
-    if (!g_api_manager.endpoints[endpoint_index].enabled) {
-        return api_manager_create_error_response(response, API_MGR_RESPONSE_SERVICE_UNAVAILABLE, "Endpoint disabled");
+    if (!endpoint->enabled) {
+        api_manager_create_error_response(response, API_MGR_RESPONSE_SERVICE_UNAVAILABLE, "Endpoint disabled");
+        return HAL_STATUS_OK;
     }
     
-    // Authentication check - simplified for now
-    if (g_api_manager.endpoints[endpoint_index].authentication_required) {
-        // Simplified authentication - always pass for now
+    // OPTIMIZATION: Simplified authentication check (placeholder for future implementation)
+    if (endpoint->authentication_required) {
         // TODO: Implement proper authentication when security manager is available
+        // For now, always pass authentication
     }
     
-    // Authorization check - simplified for now
-    // TODO: Implement proper authorization when security manager is available
-    
-    // Call endpoint handler
-    status = g_api_manager.endpoints[endpoint_index].handler(request, response);
+    // OPTIMIZATION: Call endpoint handler with direct error handling
+    status = endpoint->handler(request, response);
     if (status != HAL_STATUS_OK) {
-        return api_manager_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Handler error");
+        api_manager_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Handler error");
+        return HAL_STATUS_OK;
     }
     
+    // OPTIMIZATION: Batch statistics and event handling
     g_api_manager.statistics.http_responses_sent++;
     handle_api_event(API_MGR_EVENT_HTTP_RESPONSE, response);
     
@@ -1022,12 +1098,22 @@ static hal_status_t find_endpoint(const char *path, api_mgr_http_method_t method
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    for (int i = 0; i < API_MGR_MAX_ENDPOINTS; i++) {
-        if (g_api_manager.endpoint_registered[i] && 
-            strcmp(g_api_manager.endpoints[i].path, path) == 0 &&
-            g_api_manager.endpoints[i].method == method) {
-            *endpoint_index = i;
-            return HAL_STATUS_OK;
+    // OPTIMIZATION: Early exit if no endpoints registered
+    if (g_api_manager.registered_endpoints == 0) {
+        return HAL_STATUS_NOT_FOUND;
+    }
+    
+    // OPTIMIZATION: Use registered endpoints count for faster iteration
+    for (int i = 0; i < API_MGR_MAX_ENDPOINTS && i < g_api_manager.registered_endpoints; i++) {
+        if (g_api_manager.endpoint_registered[i]) {
+            // OPTIMIZATION: Cache endpoint pointer to avoid repeated array access
+            api_mgr_endpoint_t *endpoint = &g_api_manager.endpoints[i];
+            
+            // OPTIMIZATION: Check method first (faster comparison)
+            if (endpoint->method == method && strcmp(endpoint->path, path) == 0) {
+                *endpoint_index = i;
+                return HAL_STATUS_OK;
+            }
         }
     }
     

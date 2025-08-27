@@ -511,8 +511,11 @@ hal_status_t hal_config_reset_statistics(void) { memset(&config_state.statistics
 hal_status_t hal_config_set_event_callback(config_event_callback_t callback) { config_state.event_callback = callback; return HAL_STATUS_OK; }
 
 // More stub implementations
+static hal_status_t config_validate_file(const char *filepath, config_validation_t *result) __attribute__((unused));
 static hal_status_t config_validate_file(const char *filepath, config_validation_t *result) { (void)filepath; result->valid = true; return HAL_STATUS_OK; }
+static hal_status_t config_calculate_file_checksum(const char *filepath, char *checksum) __attribute__((unused));
 static hal_status_t config_calculate_file_checksum(const char *filepath, char *checksum) { (void)filepath; strcpy(checksum, "ABC123"); return HAL_STATUS_OK; }
+static hal_status_t config_parse_json_line(const char *line, config_entry_t *entry) __attribute__((unused));
 static hal_status_t config_parse_json_line(const char *line, config_entry_t *entry) { (void)line; (void)entry; return HAL_STATUS_OK; }
 
 hal_status_t hal_config_export_to_file(const char *filepath) { (void)filepath; return HAL_STATUS_OK; }

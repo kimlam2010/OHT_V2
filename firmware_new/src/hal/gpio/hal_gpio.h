@@ -21,7 +21,7 @@
 // Relay Configuration (Updated per EMBED test)
 #define RELAY_CHANNEL_1           "GPIO4_A3"  // Relay 1 - GPIO131
 #define RELAY_CHANNEL_2           "GPIO4_A4"  // Relay 2 - GPIO132
-#define RELAY_MAX_CHANNELS        2
+// Removed RELAY_MAX_CHANNELS - it belongs to hal_relay.h
 
 // GPIO direction
 typedef enum {
@@ -63,15 +63,6 @@ typedef struct {
     uint32_t debounce_ms;
 } gpio_config_t;
 
-// Relay configuration structure
-typedef struct {
-    uint8_t channel;
-    char gpio_pin[16];
-    bool active_high;
-    uint32_t pulse_duration_ms;
-    bool auto_off;
-} relay_config_t;
-
 // GPIO event structure
 typedef struct {
     uint32_t pin_number;
@@ -88,15 +79,6 @@ typedef struct {
     uint64_t errors;
     uint64_t timestamp_us;
 } gpio_statistics_t;
-
-// Relay statistics
-typedef struct {
-    uint64_t activations;
-    uint64_t deactivations;
-    uint64_t total_on_time_ms;
-    uint64_t errors;
-    uint64_t timestamp_us;
-} relay_statistics_t;
 
 // GPIO device info
 typedef struct {
@@ -125,23 +107,8 @@ hal_status_t hal_gpio_get_statistics(gpio_statistics_t *statistics);
 hal_status_t hal_gpio_reset_statistics(void);
 hal_status_t hal_gpio_health_check(void);
 
-// Relay function prototypes
-hal_status_t hal_relay_init(const relay_config_t *config);
-hal_status_t hal_relay_deinit(void);
-hal_status_t hal_relay_set(uint8_t channel, bool state);
-hal_status_t hal_relay_get(uint8_t channel, bool *state);
-hal_status_t hal_relay_pulse(uint8_t channel, uint32_t duration_ms);
-hal_status_t hal_relay_toggle(uint8_t channel);
-hal_status_t hal_relay_get_statistics(relay_statistics_t *statistics);
-hal_status_t hal_relay_reset_statistics(void);
-hal_status_t hal_relay_health_check(void);
-
-// Utility functions
-hal_status_t gpio_validate_config(const gpio_config_t *config);
-hal_status_t relay_validate_config(const relay_config_t *config);
-uint32_t gpio_get_pin_offset(const char *pin_name);
-bool gpio_is_pin_valid(uint32_t pin);
-hal_status_t gpio_export_pin(uint32_t pin);
-hal_status_t gpio_unexport_pin(uint32_t pin);
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HAL_GPIO_H

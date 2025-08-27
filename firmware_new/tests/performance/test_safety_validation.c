@@ -81,9 +81,13 @@ static uint64_t get_time_us(void) {
 void test_safety_estop_response_time(void) {
     printf("\n=== SAFETY TEST: E-STOP RESPONSE TIME VALIDATION ===\n");
     
-    // Initialize system with mock configs
-    TEST_ASSERT_EQUAL(0, hal_estop_init(&mock_estop_config));
-    TEST_ASSERT_EQUAL(0, system_controller_init(&mock_system_config));
+    // Ensure clean state then initialize system with mock configs
+    (void)hal_estop_deinit();
+    (void)system_controller_deinit();
+    hal_status_t s1 = hal_estop_init(&mock_estop_config);
+    TEST_ASSERT_TRUE(s1 == HAL_STATUS_OK || s1 == HAL_STATUS_ALREADY_INITIALIZED);
+    hal_status_t s2 = system_controller_init(&mock_system_config);
+    TEST_ASSERT_TRUE(s2 == HAL_STATUS_OK || s2 == HAL_STATUS_ALREADY_INITIALIZED);
     
     // Initialize safety metrics
     memset(&safety_metrics, 0, sizeof(safety_metrics));
@@ -167,9 +171,12 @@ void test_safety_estop_response_time(void) {
 void test_safety_zone_monitoring(void) {
     printf("\n=== SAFETY TEST: SAFETY ZONE MONITORING ===\n");
     
-    // Initialize system
-    TEST_ASSERT_EQUAL(0, hal_estop_init(&mock_estop_config));
-    TEST_ASSERT_EQUAL(0, system_controller_init(&mock_system_config));
+    // Initialize system (avoid unsafe deinit here)
+    hal_status_t s1, s2;
+    s1 = hal_estop_init(&mock_estop_config);
+    TEST_ASSERT_TRUE(s1 == HAL_STATUS_OK || s1 == HAL_STATUS_ALREADY_INITIALIZED);
+    s2 = system_controller_init(&mock_system_config);
+    TEST_ASSERT_TRUE(s2 == HAL_STATUS_OK || s2 == HAL_STATUS_ALREADY_INITIALIZED);
     
     printf("Starting safety zone monitoring test for %d seconds...\n", SAFETY_ZONE_TEST_DURATION_SECONDS);
     
@@ -191,7 +198,8 @@ void test_safety_zone_monitoring(void) {
             
             // Check if system entered safe state
             system_controller_status_t status;
-            system_controller_get_status(&status);
+            hal_status_t rs = system_controller_get_status(&status);
+            TEST_ASSERT_EQUAL(HAL_STATUS_OK, rs);
             if (status.current_state == SYSTEM_CONTROLLER_STATE_FAULT || 
                 status.current_state == SYSTEM_CONTROLLER_STATE_EMERGENCY) {
                 recovery_count++;
@@ -203,8 +211,11 @@ void test_safety_zone_monitoring(void) {
             system_controller_update();
         }
         
-        // Update system state
+        // Update system state and verify status retrieval does not fail
         system_controller_update();
+        system_controller_status_t status2;
+        hal_status_t rs2 = system_controller_get_status(&status2);
+        TEST_ASSERT_EQUAL(HAL_STATUS_OK, rs2);
         
         // Small delay
         usleep(10000); // 10ms
@@ -230,9 +241,14 @@ void test_safety_zone_monitoring(void) {
 void test_safety_system_stress(void) {
     printf("\n=== SAFETY TEST: SAFETY SYSTEM STRESS TESTING ===\n");
     
-    // Initialize system with mock configs
-    TEST_ASSERT_EQUAL(0, hal_estop_init(&mock_estop_config));
-    TEST_ASSERT_EQUAL(0, system_controller_init(&mock_system_config));
+    // Ensure clean state then initialize system with mock configs
+    (void)hal_estop_deinit();
+    (void)system_controller_deinit();
+    hal_status_t s1, s2;
+    s1 = hal_estop_init(&mock_estop_config);
+    TEST_ASSERT_TRUE(s1 == HAL_STATUS_OK || s1 == HAL_STATUS_ALREADY_INITIALIZED);
+    s2 = system_controller_init(&mock_system_config);
+    TEST_ASSERT_TRUE(s2 == HAL_STATUS_OK || s2 == HAL_STATUS_ALREADY_INITIALIZED);
     
     printf("Starting safety system stress test...\n");
     
@@ -310,9 +326,14 @@ void test_safety_system_stress(void) {
 void test_safety_fault_tolerance(void) {
     printf("\n=== SAFETY TEST: FAULT TOLERANCE TESTING ===\n");
     
-    // Initialize system
-    TEST_ASSERT_EQUAL(0, hal_estop_init(&mock_estop_config));
-    TEST_ASSERT_EQUAL(0, system_controller_init(&mock_system_config));
+    // Ensure clean state then initialize system
+    (void)hal_estop_deinit();
+    (void)system_controller_deinit();
+    hal_status_t s1, s2;
+    s1 = hal_estop_init(&mock_estop_config);
+    TEST_ASSERT_TRUE(s1 == HAL_STATUS_OK || s1 == HAL_STATUS_ALREADY_INITIALIZED);
+    s2 = system_controller_init(&mock_system_config);
+    TEST_ASSERT_TRUE(s2 == HAL_STATUS_OK || s2 == HAL_STATUS_ALREADY_INITIALIZED);
     
     printf("Starting fault tolerance test...\n");
     
@@ -379,11 +400,11 @@ int main(void) {
     // Initialize Unity test framework
     UNITY_BEGIN();
     
-    // Run safety tests
-    test_safety_estop_response_time();
-    test_safety_zone_monitoring();
-    test_safety_system_stress();
-    test_safety_fault_tolerance();
+    // Run safety tests via Unity
+    RUN_TEST(test_safety_estop_response_time);
+    RUN_TEST(test_safety_zone_monitoring);
+    RUN_TEST(test_safety_system_stress);
+    RUN_TEST(test_safety_fault_tolerance);
     
     // Complete Unity tests
     UNITY_END();

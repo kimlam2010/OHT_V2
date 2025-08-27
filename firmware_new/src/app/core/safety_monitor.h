@@ -20,6 +20,7 @@
 #include "hal_led.h"
 #include "hal_relay.h"
 #include "hal_rs485.h"
+#include "hal_lidar.h"
 #include "system_state_machine.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -98,7 +99,21 @@ typedef struct {
     uint32_t retry_delay_ms;              // Retry delay
 } safety_monitor_config_t;
 
-// Safety Zone Configuration
+// Basic Safety Zones Configuration
+typedef struct {
+    uint16_t emergency_zone_mm;           // Emergency zone (500mm) - E-Stop
+    uint16_t warning_zone_mm;             // Warning zone (1000mm) - Warning
+    uint16_t safe_zone_mm;                // Safe zone (2000mm) - Safe
+    bool emergency_violated;              // Emergency zone violated
+    bool warning_violated;                // Warning zone violated
+    bool safe_violated;                   // Safe zone violated
+    uint16_t min_distance_mm;             // Current minimum distance
+    uint16_t min_distance_angle;          // Angle of minimum distance
+    uint64_t last_violation_time;         // Last violation time
+    bool enabled;                         // Safety zones enabled
+} basic_safety_zones_t;
+
+// Safety Zone Configuration (Legacy - for future use)
 typedef struct {
     safety_zone_t zone_type;              // Zone type
     float min_distance_m;                 // Minimum safe distance
@@ -137,6 +152,7 @@ typedef struct {
     uint64_t last_update_time;            // Last update time
     bool estop_active;                    // E-Stop active
     bool zone_violation;                  // Zone violation detected
+    basic_safety_zones_t safety_zones;    // Basic safety zones status
     bool interlock_open;                  // Interlock open
     bool sensor_fault;                    // Sensor fault detected
     bool communication_ok;                // Communication OK
@@ -188,12 +204,60 @@ hal_status_t safety_monitor_deinit(void);
 hal_status_t safety_monitor_update(void);
 
 /**
+ * @brief Update safety monitor with LiDAR data
+ * @param scan_data LiDAR scan data
+ * @return HAL status
+ */
+hal_status_t safety_monitor_update_with_lidar(const lidar_scan_data_t *scan_data);
+
+/**
  * @brief Process safety event
  * @param event Safety event to process
  * @param details Event details
  * @return HAL status
  */
 hal_status_t safety_monitor_process_event(safety_monitor_event_t event, const char* details);
+
+/**
+ * @brief Get safety monitor status
+ * @param status Pointer to store status
+ * @return HAL status
+ */
+hal_status_t safety_monitor_get_status(safety_monitor_status_t *status);
+
+/**
+ * @brief Get safety monitor statistics
+ * @param stats Pointer to store statistics
+ * @return HAL status
+ */
+hal_status_t safety_monitor_get_stats(safety_monitor_stats_t *stats);
+
+/**
+ * @brief Reset safety monitor
+ * @return HAL status
+ */
+hal_status_t safety_monitor_reset(void);
+
+/**
+ * @brief Set basic safety zones configuration
+ * @param zones Basic safety zones configuration
+ * @return HAL status
+ */
+hal_status_t safety_monitor_set_basic_zones(const basic_safety_zones_t *zones);
+
+/**
+ * @brief Get basic safety zones configuration
+ * @param zones Pointer to store basic safety zones configuration
+ * @return HAL status
+ */
+hal_status_t safety_monitor_get_basic_zones(basic_safety_zones_t *zones);
+
+/**
+ * @brief Check basic safety zones using LiDAR data
+ * @param scan_data LiDAR scan data
+ * @return HAL status
+ */
+hal_status_t safety_monitor_check_basic_zones(const lidar_scan_data_t *scan_data);
 
 /**
  * @brief Get safety monitor status
@@ -292,6 +356,100 @@ hal_status_t safety_monitor_clear_stats(void);
  * @return Version string
  */
 const char* safety_monitor_get_version(void);
+
+/**
+ * @brief Set basic safety zones configuration
+ * @param zones Basic safety zones configuration
+ * @return HAL status
+ */
+hal_status_t safety_monitor_set_basic_zones(const basic_safety_zones_t *zones);
+
+/**
+ * @brief Get basic safety zones configuration
+ * @param zones Pointer to store basic safety zones configuration
+ * @return HAL status
+ */
+hal_status_t safety_monitor_get_basic_zones(basic_safety_zones_t *zones);
+
+/**
+ * @brief Check basic safety zones using LiDAR data
+ * @param scan_data LiDAR scan data
+ * @return HAL status
+ */
+hal_status_t safety_monitor_check_basic_zones(const lidar_scan_data_t *scan_data);
+
+/**
+ * @brief Trigger emergency stop
+ * @param reason Emergency stop reason
+ * @return HAL status
+ */
+hal_status_t safety_monitor_trigger_emergency_stop(const char* reason);
+
+/**
+ * @brief Check if E-Stop is active
+ * @param estop_active Pointer to store E-Stop status
+ * @return HAL status
+ */
+hal_status_t safety_monitor_is_estop_active(bool* estop_active);
+
+/**
+ * @brief Trigger emergency stop with LiDAR data
+ * @param scan_data LiDAR scan data
+ * @param reason Emergency stop reason
+ * @return HAL status
+ */
+hal_status_t safety_monitor_trigger_lidar_emergency_stop(const lidar_scan_data_t *scan_data, const char* reason);
+
+/**
+ * @brief Set communication LED pattern based on module status
+ * @param modules_online Whether modules are online
+ * @param online_count Number of online modules
+ * @return HAL status
+ */
+hal_status_t safety_monitor_set_communication_led_pattern(bool modules_online, uint32_t online_count);
+
+// Configuration Management Functions
+
+/**
+ * @brief Load safety configuration from persistent storage
+ * @return HAL status
+ */
+hal_status_t safety_monitor_load_config(void);
+
+/**
+ * @brief Save safety configuration to persistent storage
+ * @return HAL status
+ */
+hal_status_t safety_monitor_save_config(void);
+
+/**
+ * @brief Export safety configuration to JSON string
+ * @param buffer Buffer to store JSON string
+ * @param buffer_size Size of buffer
+ * @param actual_size Actual size of JSON string
+ * @return HAL status
+ */
+hal_status_t safety_monitor_export_config_json(char *buffer, size_t buffer_size, size_t *actual_size);
+
+/**
+ * @brief Import safety configuration from JSON string
+ * @param json_string JSON configuration string
+ * @return HAL status
+ */
+hal_status_t safety_monitor_import_config_json(const char *json_string);
+
+/**
+ * @brief Reset safety configuration to factory defaults
+ * @return HAL status
+ */
+hal_status_t safety_monitor_reset_config_to_factory(void);
+
+/**
+ * @brief Validate safety configuration
+ * @param valid Pointer to store validation result
+ * @return HAL status
+ */
+hal_status_t safety_monitor_validate_config(bool *valid);
 
 #ifdef __cplusplus
 }
