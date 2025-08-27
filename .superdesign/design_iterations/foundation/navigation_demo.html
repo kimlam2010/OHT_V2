@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Navigation Components - Design System</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../themes/theme_components.css">
+    
+    <style>
+        .nav-showcase {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-primary);
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-demo {
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--industrial-gray-200);
+            margin: 1rem 0;
+        }
+        
+        .nav-code {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--industrial-gray-900);
+            color: var(--industrial-gray-100);
+            border-radius: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+        
+        .interactive-demo {
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--industrial-gray-200);
+            margin: 1rem 0;
+        }
+        
+        .demo-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--industrial-gray-100);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--primary-orange);
+        }
+        
+        .sidebar-nav {
+            width: 250px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--industrial-gray-200);
+            padding: 1rem;
+        }
+        
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--industrial-gray-600);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar-nav-item:hover,
+        .sidebar-nav-item.active {
+            background: var(--primary-orange);
+            color: white;
+        }
+        
+        .sidebar-nav-item i {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--industrial-gray-200);
+        }
+        
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--industrial-gray-600);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-tab.active {
+            color: var(--primary-orange);
+            border-bottom-color: var(--primary-orange);
+        }
+        
+        .nav-tab:hover {
+            color: var(--primary-orange);
+        }
+        
+        .breadcrumb-nav {
+            margin: 1rem 0;
+        }
+        
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .breadcrumb-item:not(:last-child)::after {
+            content: '/';
+            margin: 0 0.5rem;
+            color: var(--industrial-gray-400);
+        }
+        
+        .breadcrumb-link {
+            color: var(--primary-orange);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        
+        .breadcrumb-link:hover {
+            color: var(--primary-orange-dark);
+        }
+        
+        .breadcrumb-text {
+            color: var(--industrial-gray-600);
+        }
+        
+        .pagination-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .pagination-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: 0.375rem;
+            color: var(--industrial-gray-600);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .pagination-item:hover {
+            background: var(--industrial-gray-100);
+            border-color: var(--industrial-gray-400);
+        }
+        
+        .pagination-item.active {
+            background: var(--primary-orange);
+            border-color: var(--primary-orange);
+            color: white;
+        }
+        
+        .pagination-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination-item.disabled:hover {
+            background: transparent;
+            border-color: var(--industrial-gray-300);
+        }
+        
+        .demo-layout {
+            display: flex;
+            min-height: 400px;
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .demo-content {
+            flex: 1;
+            padding: 2rem;
+            background: var(--bg-primary);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Header -->
+    <header class="page-header bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <i data-lucide="navigation" class="w-8 h-8 text-orange-500 mr-3"></i>
+                        OHT-50 Navigation Components
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Design System v1.0</span>
+                    <button class="btn btn-danger btn-sm">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        E-STOP
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="page-main">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Sidebar Navigation -->
+            <section class="nav-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Sidebar Navigation</h2>
+                <p class="text-gray-600 mb-4">Vertical sidebar navigation for main application sections.</p>
+                
+                <div class="nav-demo">
+                    <div class="demo-layout">
+                        <nav class="sidebar-nav">
+                            <div class="mb-6">
+                                <h3 class="font-semibold text-gray-900 mb-4">OHT-50 Control</h3>
+                            </div>
+                            
+                            <a href="#" class="sidebar-nav-item active">
+                                <i data-lucide="home"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            
+                            <a href="#" class="sidebar-nav-item">
+                                <i data-lucide="gamepad-2"></i>
+                                <span>Control Panel</span>
+                            </a>
+                            
+                            <a href="#" class="sidebar-nav-item">
+                                <i data-lucide="map"></i>
+                                <span>Map Interface</span>
+                            </a>
+                            
+                            <a href="#" class="sidebar-nav-item">
+                                <i data-lucide="settings"></i>
+                                <span>Configuration</span>
+                            </a>
+                            
+                            <a href="#" class="sidebar-nav-item">
+                                <i data-lucide="file-text"></i>
+                                <span>Logs & Reports</span>
+                            </a>
+                            
+                            <a href="#" class="sidebar-nav-item">
+                                <i data-lucide="users"></i>
+                                <span>User Management</span>
+                            </a>
+                            
+                            <a href="#" class="sidebar-nav-item">
+                                <i data-lucide="help-circle"></i>
+                                <span>Help & Support</span>
+                            </a>
+                        </nav>
+                        
+                        <div class="demo-content">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Dashboard Content</h3>
+                            <p class="text-gray-600">This is the main content area. The sidebar navigation provides access to different sections of the application.</p>
+                            <div class="mt-4">
+                                <button class="btn btn-primary btn-sm" onclick="changeActiveNav()">Change Active Item</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nav-code">
+                    <pre><code>&lt;nav class="sidebar-nav"&gt;
+  &lt;a href="#" class="sidebar-nav-item active"&gt;
+    &lt;i data-lucide="home"&gt;&lt;/i&gt;
+    &lt;span&gt;Dashboard&lt;/span&gt;
+  &lt;/a&gt;
+  &lt;a href="#" class="sidebar-nav-item"&gt;
+    &lt;i data-lucide="gamepad-2"&gt;&lt;/i&gt;
+    &lt;span&gt;Control Panel&lt;/span&gt;
+  &lt;/a&gt;
+&lt;/nav&gt;</code></pre>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="nav-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Tabs Navigation</h2>
+                <p class="text-gray-600 mb-4">Horizontal tab navigation for switching between related content sections.</p>
+                
+                <div class="nav-demo">
+                    <div class="nav-tabs">
+                        <button class="nav-tab active" onclick="switchTab('overview')">Overview</button>
+                        <button class="nav-tab" onclick="switchTab('status')">Status</button>
+                        <button class="nav-tab" onclick="switchTab('control')">Control</button>
+                        <button class="nav-tab" onclick="switchTab('settings')">Settings</button>
+                    </div>
+                    
+                    <div id="tab-content" class="mt-4">
+                        <div id="overview" class="tab-panel">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">System Overview</h3>
+                            <p class="text-gray-600">This tab shows the system overview with key metrics and status information.</p>
+                            <div class="grid grid-cols-3 gap-4 mt-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <div class="text-2xl font-bold text-green-600">98.5%</div>
+                                        <div class="text-sm text-gray-600">Uptime</div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <div class="text-2xl font-bold text-blue-600">85%</div>
+                                        <div class="text-sm text-gray-600">Battery</div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <div class="text-2xl font-bold text-orange-600">42°C</div>
+                                        <div class="text-sm text-gray-600">Temperature</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="status" class="tab-panel hidden">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">System Status</h3>
+                            <p class="text-gray-600">Detailed status information for all system components.</p>
+                            <div class="mt-4 space-y-2">
+                                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                    <span class="font-medium">Navigation System</span>
+                                    <span class="text-green-600">Online</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                    <span class="font-medium">Safety System</span>
+                                    <span class="text-green-600">Active</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                                    <span class="font-medium">Communication</span>
+                                    <span class="text-yellow-600">Warning</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="control" class="tab-panel hidden">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Control Panel</h3>
+                            <p class="text-gray-600">Manual control interface for robot operations.</p>
+                            <div class="mt-4 grid grid-cols-2 gap-4">
+                                <button class="btn btn-primary">Start</button>
+                                <button class="btn btn-secondary">Stop</button>
+                                <button class="btn btn-warning">Pause</button>
+                                <button class="btn btn-danger">Emergency Stop</button>
+                            </div>
+                        </div>
+                        
+                        <div id="settings" class="tab-panel hidden">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Settings</h3>
+                            <p class="text-gray-600">System configuration and settings.</p>
+                            <div class="mt-4 space-y-4">
+                                <div class="form-group">
+                                    <label class="form-label">Auto Mode</label>
+                                    <select class="form-select">
+                                        <option>Enabled</option>
+                                        <option>Disabled</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Speed Limit</label>
+                                    <input type="range" class="w-full" min="0" max="100" value="75">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nav-code">
+                    <pre><code>&lt;div class="nav-tabs"&gt;
+  &lt;button class="nav-tab active"&gt;Overview&lt;/button&gt;
+  &lt;button class="nav-tab"&gt;Status&lt;/button&gt;
+  &lt;button class="nav-tab"&gt;Control&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+                </div>
+            </section>
+
+            <!-- Breadcrumb Navigation -->
+            <section class="nav-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Breadcrumb Navigation</h2>
+                <p class="text-gray-600 mb-4">Breadcrumb navigation for showing current location in the application hierarchy.</p>
+                
+                <div class="nav-demo">
+                    <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+                        <ol class="breadcrumb-list">
+                            <li class="breadcrumb-item">
+                                <a href="#" class="breadcrumb-link">Home</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="#" class="breadcrumb-link">Dashboard</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="#" class="breadcrumb-link">System Control</a>
+                            </li>
+                            <li class="breadcrumb-item active">
+                                <span class="breadcrumb-text">Navigation Settings</span>
+                            </li>
+                        </ol>
+                    </nav>
+                    
+                    <div class="mt-4">
+                        <button class="btn btn-secondary btn-sm" onclick="addBreadcrumb()">Add Level</button>
+                        <button class="btn btn-secondary btn-sm" onclick="removeBreadcrumb()">Remove Level</button>
+                    </div>
+                </div>
+                
+                <div class="nav-code">
+                    <pre><code>&lt;nav class="breadcrumb-nav" aria-label="Breadcrumb"&gt;
+  &lt;ol class="breadcrumb-list"&gt;
+    &lt;li class="breadcrumb-item"&gt;
+      &lt;a href="#" class="breadcrumb-link"&gt;Home&lt;/a&gt;
+    &lt;/li&gt;
+    &lt;li class="breadcrumb-item active"&gt;
+      &lt;span class="breadcrumb-text"&gt;Current Page&lt;/span&gt;
+    &lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/nav&gt;</code></pre>
+                </div>
+            </section>
+
+            <!-- Pagination Navigation -->
+            <section class="nav-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Pagination Navigation</h2>
+                <p class="text-gray-600 mb-4">Pagination components for navigating through large datasets or content pages.</p>
+                
+                <div class="nav-demo">
+                    <nav class="pagination-nav" aria-label="Pagination">
+                        <a href="#" class="pagination-item disabled">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="pagination-item">1</a>
+                        <a href="#" class="pagination-item active">2</a>
+                        <a href="#" class="pagination-item">3</a>
+                        <a href="#" class="pagination-item">4</a>
+                        <a href="#" class="pagination-item">5</a>
+                        <span class="pagination-item">...</span>
+                        <a href="#" class="pagination-item">10</a>
+                        <a href="#" class="pagination-item">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </a>
+                    </nav>
+                    
+                    <div class="mt-4">
+                        <button class="btn btn-secondary btn-sm" onclick="changePage(1)">Go to Page 1</button>
+                        <button class="btn btn-secondary btn-sm" onclick="changePage(5)">Go to Page 5</button>
+                        <button class="btn btn-secondary btn-sm" onclick="changePage(10)">Go to Page 10</button>
+                    </div>
+                </div>
+                
+                <div class="nav-code">
+                    <pre><code>&lt;nav class="pagination-nav" aria-label="Pagination"&gt;
+  &lt;a href="#" class="pagination-item disabled"&gt;
+    &lt;i data-lucide="chevron-left"&gt;&lt;/i&gt;
+  &lt;/a&gt;
+  &lt;a href="#" class="pagination-item"&gt;1&lt;/a&gt;
+  &lt;a href="#" class="pagination-item active"&gt;2&lt;/a&gt;
+  &lt;a href="#" class="pagination-item"&gt;3&lt;/a&gt;
+  &lt;a href="#" class="pagination-item"&gt;
+    &lt;i data-lucide="chevron-right"&gt;&lt;/i&gt;
+  &lt;/a&gt;
+&lt;/nav&gt;</code></pre>
+                </div>
+            </section>
+
+            <!-- Interactive Demo -->
+            <section class="nav-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Interactive Navigation Demo</h2>
+                <p class="text-gray-600 mb-4">Test navigation interactions and see dynamic content updates.</p>
+                
+                <div class="interactive-demo">
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <button id="toggle-sidebar" class="btn btn-primary">Toggle Sidebar</button>
+                        <button id="add-tab" class="btn btn-secondary">Add Tab</button>
+                        <button id="remove-tab" class="btn btn-secondary">Remove Tab</button>
+                        <button id="reset-nav" class="btn btn-warning">Reset Navigation</button>
+                    </div>
+                    
+                    <div id="nav-result" class="demo-result hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">Navigation Interaction Result:</h4>
+                        <p id="nav-result-text" class="text-gray-600">Interact with the navigation to see results.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Navigation Guidelines -->
+            <section class="nav-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Navigation Usage Guidelines</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">✅ Do's</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• Use consistent navigation patterns</li>
+                            <li>• Provide clear visual feedback</li>
+                            <li>• Include descriptive labels and icons</li>
+                            <li>• Maintain proper hierarchy</li>
+                            <li>• Ensure keyboard accessibility</li>
+                            <li>• Show current location clearly</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">❌ Don'ts</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• Don't use too many navigation levels</li>
+                            <li>• Don't hide important navigation</li>
+                            <li>• Don't use inconsistent patterns</li>
+                            <li>• Don't forget mobile navigation</li>
+                            <li>• Don't use unclear labels</li>
+                            <li>• Don't break navigation flow</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    OHT-50 Navigation Components v1.0
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Last updated: 2025-01-28</span>
+                    <a href="component_library.html" class="btn btn-secondary btn-sm">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Back to Library
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab panel
+            document.getElementById(tabName).classList.remove('hidden');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        // Sidebar navigation functionality
+        function changeActiveNav() {
+            const navItems = document.querySelectorAll('.sidebar-nav-item');
+            const currentActive = document.querySelector('.sidebar-nav-item.active');
+            const currentIndex = Array.from(navItems).indexOf(currentActive);
+            const nextIndex = (currentIndex + 1) % navItems.length;
+            
+            currentActive.classList.remove('active');
+            navItems[nextIndex].classList.add('active');
+            
+            // Update content
+            const content = document.querySelector('.demo-content h3');
+            const text = navItems[nextIndex].querySelector('span').textContent;
+            content.textContent = text + ' Content';
+        }
+        
+        // Breadcrumb functionality
+        let breadcrumbLevels = 4;
+        
+        function addBreadcrumb() {
+            if (breadcrumbLevels < 6) {
+                breadcrumbLevels++;
+                updateBreadcrumb();
+            }
+        }
+        
+        function removeBreadcrumb() {
+            if (breadcrumbLevels > 2) {
+                breadcrumbLevels--;
+                updateBreadcrumb();
+            }
+        }
+        
+        function updateBreadcrumb() {
+            const breadcrumbList = document.querySelector('.breadcrumb-list');
+            const items = ['Home', 'Dashboard', 'System Control', 'Navigation Settings', 'Advanced Config', 'Final Level'];
+            
+            breadcrumbList.innerHTML = '';
+            
+            for (let i = 0; i < breadcrumbLevels; i++) {
+                const li = document.createElement('li');
+                li.className = 'breadcrumb-item';
+                
+                if (i === breadcrumbLevels - 1) {
+                    li.innerHTML = `<span class="breadcrumb-text">${items[i]}</span>`;
+                    li.classList.add('active');
+                } else {
+                    li.innerHTML = `<a href="#" class="breadcrumb-link">${items[i]}</a>`;
+                }
+                
+                breadcrumbList.appendChild(li);
+            }
+        }
+        
+        // Pagination functionality
+        function changePage(pageNumber) {
+            const paginationItems = document.querySelectorAll('.pagination-nav .pagination-item');
+            
+            paginationItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Find the page number item and make it active
+            paginationItems.forEach(item => {
+                if (item.textContent.trim() === pageNumber.toString()) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Update navigation result
+            showNavResult(`Navigated to page ${pageNumber}`);
+        }
+        
+        // Interactive demo functionality
+        const toggleSidebarBtn = document.getElementById('toggle-sidebar');
+        const addTabBtn = document.getElementById('add-tab');
+        const removeTabBtn = document.getElementById('remove-tab');
+        const resetNavBtn = document.getElementById('reset-nav');
+        const navResult = document.getElementById('nav-result');
+        const navResultText = document.getElementById('nav-result-text');
+        
+        let sidebarVisible = true;
+        let tabCount = 4;
+        
+        toggleSidebarBtn.addEventListener('click', function() {
+            const sidebar = document.querySelector('.sidebar-nav');
+            sidebarVisible = !sidebarVisible;
+            
+            if (sidebarVisible) {
+                sidebar.style.display = 'block';
+                showNavResult('Sidebar shown');
+            } else {
+                sidebar.style.display = 'none';
+                showNavResult('Sidebar hidden');
+            }
+        });
+        
+        addTabBtn.addEventListener('click', function() {
+            if (tabCount < 6) {
+                tabCount++;
+                const tabNames = ['Overview', 'Status', 'Control', 'Settings', 'Advanced', 'Help'];
+                const newTab = document.createElement('button');
+                newTab.className = 'nav-tab';
+                newTab.textContent = tabNames[tabCount - 1];
+                newTab.onclick = () => switchTab(tabNames[tabCount - 1].toLowerCase());
+                
+                document.querySelector('.nav-tabs').appendChild(newTab);
+                showNavResult(`Added tab: ${tabNames[tabCount - 1]}`);
+            }
+        });
+        
+        removeTabBtn.addEventListener('click', function() {
+            if (tabCount > 2) {
+                const tabs = document.querySelectorAll('.nav-tab');
+                if (tabs.length > 2) {
+                    tabs[tabs.length - 1].remove();
+                    tabCount--;
+                    showNavResult(`Removed tab. Total tabs: ${tabCount}`);
+                }
+            }
+        });
+        
+        resetNavBtn.addEventListener('click', function() {
+            // Reset sidebar
+            const sidebar = document.querySelector('.sidebar-nav');
+            sidebar.style.display = 'block';
+            sidebarVisible = true;
+            
+            // Reset tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach((tab, index) => {
+                if (index === 0) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Reset breadcrumb
+            breadcrumbLevels = 4;
+            updateBreadcrumb();
+            
+            showNavResult('Navigation reset to default state');
+        });
+        
+        function showNavResult(message) {
+            navResult.classList.remove('hidden');
+            navResultText.textContent = message;
+        }
+        
+        // Add hover effects for demonstration
+        document.querySelectorAll('.sidebar-nav-item, .nav-tab, .breadcrumb-link, .pagination-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('active') && !this.classList.contains('disabled')) {
+                    this.style.transform = 'translateY(-1px)';
+                }
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+            });
+        });
+    </script>
+</body>
+</html>

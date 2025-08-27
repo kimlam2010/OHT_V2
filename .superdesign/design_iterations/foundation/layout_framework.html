@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout Framework - OHT-50</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* 12-Column Grid System */
+        .page-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: var(--space-lg);
+            height: 100vh;
+            padding: var(--space-lg);
+            background: var(--bg-secondary);
+        }
+
+        .page-header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        .page-main {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: var(--space-lg);
+            overflow: hidden;
+        }
+
+        .page-footer {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        /* Grid Demo Components */
+        .grid-demo {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-600);
+        }
+
+        .grid-demo.span-1 { grid-column: span 1; }
+        .grid-demo.span-2 { grid-column: span 2; }
+        .grid-demo.span-3 { grid-column: span 3; }
+        .grid-demo.span-4 { grid-column: span 4; }
+        .grid-demo.span-6 { grid-column: span 6; }
+        .grid-demo.span-12 { grid-column: span 12; }
+
+        .grid-row {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Responsive Grid */
+        @media (max-width: 1024px) {
+            .page-main {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-demo.span-6 { grid-column: span 12; }
+            .grid-demo.span-4 { grid-column: span 6; }
+            .grid-demo.span-3 { grid-column: span 4; }
+            .grid-demo.span-2 { grid-column: span 3; }
+        }
+
+        @media (max-width: 768px) {
+            .page-container {
+                padding: var(--space-md);
+                gap: var(--space-md);
+            }
+            
+            .grid-demo.span-4 { grid-column: span 12; }
+            .grid-demo.span-3 { grid-column: span 6; }
+            .grid-demo.span-2 { grid-column: span 6; }
+        }
+
+        @media (max-width: 640px) {
+            .grid-demo.span-3 { grid-column: span 12; }
+            .grid-demo.span-2 { grid-column: span 12; }
+        }
+
+        /* Demo Content */
+        .demo-section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        .demo-title {
+            font-family: var(--font-display);
+            font-size: var(--text-2xl);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            margin-bottom: var(--space-md);
+        }
+
+        .demo-description {
+            color: var(--industrial-gray-600);
+            margin-bottom: var(--space-lg);
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="flex items-center gap-4">
+                <i data-lucide="grid-3x3" class="w-6 h-6 text-primary-orange"></i>
+                <h1 class="text-xl font-semibold">Layout Framework Demo</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">OHT-50 Design System</span>
+                <button class="btn btn-secondary">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    Settings
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="page-main">
+            <!-- Left Column - Grid Demo -->
+            <div class="demo-section">
+                <h2 class="demo-title">12-Column Grid System</h2>
+                <p class="demo-description">
+                    This demonstrates the 12-column grid system used across all OHT-50 pages. 
+                    The grid is responsive and adapts to different screen sizes.
+                </p>
+                
+                <!-- Grid Row 1: 12 columns -->
+                <div class="grid-row">
+                    <div class="grid-demo span-1">1</div>
+                    <div class="grid-demo span-1">2</div>
+                    <div class="grid-demo span-1">3</div>
+                    <div class="grid-demo span-1">4</div>
+                    <div class="grid-demo span-1">5</div>
+                    <div class="grid-demo span-1">6</div>
+                    <div class="grid-demo span-1">7</div>
+                    <div class="grid-demo span-1">8</div>
+                    <div class="grid-demo span-1">9</div>
+                    <div class="grid-demo span-1">10</div>
+                    <div class="grid-demo span-1">11</div>
+                    <div class="grid-demo span-1">12</div>
+                </div>
+                
+                <!-- Grid Row 2: 6 + 6 -->
+                <div class="grid-row">
+                    <div class="grid-demo span-6">6 columns</div>
+                    <div class="grid-demo span-6">6 columns</div>
+                </div>
+                
+                <!-- Grid Row 3: 4 + 4 + 4 -->
+                <div class="grid-row">
+                    <div class="grid-demo span-4">4 columns</div>
+                    <div class="grid-demo span-4">4 columns</div>
+                    <div class="grid-demo span-4">4 columns</div>
+                </div>
+                
+                <!-- Grid Row 4: 3 + 3 + 3 + 3 -->
+                <div class="grid-row">
+                    <div class="grid-demo span-3">3 cols</div>
+                    <div class="grid-demo span-3">3 cols</div>
+                    <div class="grid-demo span-3">3 cols</div>
+                    <div class="grid-demo span-3">3 cols</div>
+                </div>
+                
+                <!-- Grid Row 5: 2 + 2 + 2 + 2 + 2 + 2 -->
+                <div class="grid-row">
+                    <div class="grid-demo span-2">2</div>
+                    <div class="grid-demo span-2">2</div>
+                    <div class="grid-demo span-2">2</div>
+                    <div class="grid-demo span-2">2</div>
+                    <div class="grid-demo span-2">2</div>
+                    <div class="grid-demo span-2">2</div>
+                </div>
+                
+                <!-- Grid Row 6: Mixed sizes -->
+                <div class="grid-row">
+                    <div class="grid-demo span-3">3 cols</div>
+                    <div class="grid-demo span-6">6 cols</div>
+                    <div class="grid-demo span-3">3 cols</div>
+                </div>
+            </div>
+            
+            <!-- Right Column - Info -->
+            <div class="demo-section">
+                <h3 class="demo-title">Grid Information</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-semibold text-industrial-gray-800 mb-2">Breakpoints</h4>
+                        <ul class="text-sm text-industrial-gray-600 space-y-1">
+                            <li>• Mobile: &lt; 640px</li>
+                            <li>• Tablet: 640px - 1024px</li>
+                            <li>• Desktop: &gt; 1024px</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-industrial-gray-800 mb-2">Grid Features</h4>
+                        <ul class="text-sm text-industrial-gray-600 space-y-1">
+                            <li>• 12-column system</li>
+                            <li>• Responsive breakpoints</li>
+                            <li>• Flexible column spans</li>
+                            <li>• Consistent spacing</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-industrial-gray-800 mb-2">Usage</h4>
+                        <p class="text-sm text-industrial-gray-600">
+                            Use <code class="bg-industrial-gray-100 px-1 rounded">grid-column: span X</code> 
+                            to control column spans. The grid automatically adapts to screen size.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="page-footer">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Layout Framework v1.0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary">
+                    <i data-lucide="monitor" class="w-4 h-4"></i>
+                    Test Responsive
+                </button>
+                <button class="btn btn-primary">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    Validate Layout
+                </button>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Add responsive testing functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const testBtn = document.querySelector('button:contains("Test Responsive")');
+            if (testBtn) {
+                testBtn.addEventListener('click', function() {
+                    alert('Resize your browser window to test responsive behavior!');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
