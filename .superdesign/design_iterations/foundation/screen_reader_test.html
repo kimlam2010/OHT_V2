@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Reader Test - OHT-50</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* Screen Reader Test */
+        .page-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: var(--space-lg);
+            height: 100vh;
+            padding: var(--space-lg);
+            background: var(--bg-secondary);
+        }
+
+        .page-header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        .page-main {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+            overflow-y: auto;
+        }
+
+        .page-footer {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        /* Screen Reader Test Components */
+        .sr-test {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sr-test h3 {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            margin-bottom: var(--space-md);
+        }
+
+        .sr-test p {
+            color: var(--industrial-gray-600);
+            margin-bottom: var(--space-lg);
+        }
+
+        /* ARIA Examples */
+        .aria-example {
+            background: var(--industrial-gray-50);
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .aria-example h4 {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-800);
+            margin-bottom: var(--space-sm);
+        }
+
+        .aria-example code {
+            background: var(--industrial-gray-100);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            display: block;
+            margin: var(--space-xs) 0;
+        }
+
+        /* Live Regions */
+        .live-region {
+            border: 2px solid var(--primary-orange);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .live-region h4 {
+            color: var(--primary-orange);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Hidden Content */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Status Announcements */
+        .status-announcement {
+            background: var(--success-green-50);
+            border: 1px solid var(--success-green-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .status-announcement h4 {
+            color: var(--success-green-800);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Form Accessibility */
+        .form-sr-test {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-md);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: var(--font-medium);
+            color: var(--industrial-gray-700);
+            margin-bottom: var(--space-xs);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-sm);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px var(--primary-orange-100);
+        }
+
+        .form-error {
+            color: var(--error-red);
+            font-size: var(--text-sm);
+            margin-top: var(--space-xs);
+        }
+
+        .form-help {
+            color: var(--industrial-gray-600);
+            font-size: var(--text-sm);
+            margin-top: var(--space-xs);
+        }
+
+        /* Navigation Test */
+        .nav-sr-test {
+            background: var(--industrial-gray-50);
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .nav-sr-test h4 {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-800);
+            margin-bottom: var(--space-sm);
+        }
+
+        .nav-sr-test ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-sr-test li {
+            margin-bottom: var(--space-xs);
+        }
+
+        .nav-sr-test a {
+            color: var(--primary-orange);
+            text-decoration: none;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            transition: background-color var(--transition-fast);
+        }
+
+        .nav-sr-test a:hover {
+            background-color: var(--primary-orange-100);
+        }
+
+        /* Landmark Roles */
+        .landmark-test {
+            border: 2px solid var(--primary-orange);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .landmark-test::before {
+            content: "Landmark: " attr(data-landmark);
+            display: block;
+            font-weight: var(--font-semibold);
+            color: var(--primary-orange);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Error Handling */
+        .error-sr-test {
+            background: var(--error-red-50);
+            border: 1px solid var(--error-red-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .error-sr-test h4 {
+            color: var(--error-red-800);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Progress Indicators */
+        .progress-sr-test {
+            background: var(--info-blue-50);
+            border: 1px solid var(--info-blue-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .progress-sr-test h4 {
+            color: var(--info-blue-800);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-sm);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--industrial-gray-200);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            margin: var(--space-sm) 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-orange);
+            transition: width var(--transition-normal);
+        }
+
+        /* Testing Tools */
+        .sr-tools {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            box-shadow: var(--shadow-md);
+            z-index: var(--z-emergency);
+        }
+
+        .sr-tools h4 {
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-sm);
+        }
+
+        .sr-tools button {
+            font-size: var(--text-xs);
+            padding: var(--space-xs) var(--space-sm);
+            margin: var(--space-xs);
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Screen Reader Testing Tools -->
+    <div class="sr-tools">
+        <h4>SR Tools</h4>
+        <button class="btn btn-secondary" onclick="announceStatus()">Announce Status</button>
+        <button class="btn btn-secondary" onclick="toggleLiveRegion()">Toggle Live</button>
+        <button class="btn btn-primary" onclick="testNavigation()">Test Nav</button>
+    </div>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header" role="banner">
+            <div class="flex items-center gap-4">
+                <i data-lucide="volume-2" class="w-6 h-6 text-primary-orange" aria-hidden="true"></i>
+                <h1 class="text-xl font-semibold">Screen Reader Test</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">ARIA & Accessibility Testing</span>
+                <button class="btn btn-secondary" aria-label="Screen reader settings">
+                    <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i>
+                    Settings
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="page-main" role="main">
+            <!-- ARIA Labels and Descriptions -->
+            <div class="sr-test">
+                <h3>ARIA Labels and Descriptions</h3>
+                <p>Test proper ARIA labeling for screen readers. Each element should have appropriate accessible names and descriptions.</p>
+                
+                <div class="aria-example">
+                    <h4>Button with ARIA Label</h4>
+                    <button class="btn btn-primary" aria-label="Start OHT-50 system operation">
+                        <i data-lucide="play" class="w-4 h-4" aria-hidden="true"></i>
+                        Start
+                    </button>
+                    <code>aria-label="Start OHT-50 system operation"</code>
+                </div>
+                
+                <div class="aria-example">
+                    <h4>Button with ARIA Description</h4>
+                    <button class="btn btn-danger" aria-describedby="estop-description">
+                        <i data-lucide="alert-triangle" class="w-4 h-4" aria-hidden="true"></i>
+                        E-Stop
+                    </button>
+                    <div id="estop-description" class="sr-only">
+                        Emergency stop button. Immediately halts all system operations and applies safety brakes.
+                    </div>
+                    <code>aria-describedby="estop-description"</code>
+                </div>
+                
+                <div class="aria-example">
+                    <h4>Icon with Hidden Text</h4>
+                    <button class="btn btn-secondary">
+                        <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+                        <span class="sr-only">Refresh system status</span>
+                    </button>
+                    <code>&lt;span class="sr-only"&gt;Refresh system status&lt;/span&gt;</code>
+                </div>
+            </div>
+            
+            <!-- Live Regions -->
+            <div class="sr-test">
+                <h3>Live Regions</h3>
+                <p>Test live regions that announce dynamic content changes to screen readers.</p>
+                
+                <div class="live-region" role="status" aria-live="polite" aria-atomic="true">
+                    <h4>Status Updates</h4>
+                    <p>This region announces status changes to screen readers.</p>
+                    <div id="status-content">System is ready for operation.</div>
+                    <button class="btn btn-primary mt-2" onclick="updateStatus()">
+                        Update Status
+                    </button>
+                </div>
+                
+                <div class="live-region" role="alert" aria-live="assertive">
+                    <h4>Critical Alerts</h4>
+                    <p>This region announces critical alerts immediately.</p>
+                    <div id="alert-content">No critical alerts at this time.</div>
+                    <button class="btn btn-danger mt-2" onclick="triggerAlert()">
+                        Trigger Alert
+                    </button>
+                </div>
+                
+                <div class="aria-example">
+                    <h4>Live Region Types</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><code>aria-live="polite"</code> - Announces changes when user is idle</li>
+                        <li><code>aria-live="assertive"</code> - Announces changes immediately</li>
+                        <li><code>aria-atomic="true"</code> - Announces entire region content</li>
+                        <li><code>role="status"</code> - For status updates</li>
+                        <li><code>role="alert"</code> - For critical notifications</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Form Accessibility -->
+            <div class="sr-test">
+                <h3>Form Accessibility</h3>
+                <p>Test form elements with proper labels, descriptions, and error handling for screen readers.</p>
+                
+                <div class="form-sr-test">
+                    <form role="form" aria-labelledby="form-title">
+                        <h4 id="form-title">System Configuration Form</h4>
+                        
+                        <div class="form-group">
+                            <label for="system-name" class="form-label">System Name *</label>
+                            <input type="text" id="system-name" class="form-input" 
+                                   aria-required="true" 
+                                   aria-describedby="name-help name-error"
+                                   placeholder="Enter system name">
+                            <div id="name-help" class="form-help">Enter a unique name for this system</div>
+                            <div id="name-error" class="form-error" role="alert" aria-live="polite"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="operation-mode" class="form-label">Operation Mode</label>
+                            <select id="operation-mode" class="form-input" aria-describedby="mode-help">
+                                <option value="">Select operation mode</option>
+                                <option value="automatic">Automatic Mode</option>
+                                <option value="manual">Manual Mode</option>
+                                <option value="semi">Semi-Automatic Mode</option>
+                            </select>
+                            <div id="mode-help" class="form-help">Choose how the system should operate</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <fieldset>
+                                <legend class="form-label">Safety Features</legend>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" name="safety" value="estop" aria-describedby="estop-help">
+                                        <span>Emergency Stop</span>
+                                    </label>
+                                    <div id="estop-help" class="form-help">Enable emergency stop functionality</div>
+                                    
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" name="safety" value="sensors" aria-describedby="sensors-help">
+                                        <span>Proximity Sensors</span>
+                                    </label>
+                                    <div id="sensors-help" class="form-help">Enable proximity sensor monitoring</div>
+                                    
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" name="safety" value="monitoring" aria-describedby="monitoring-help">
+                                        <span>Real-time Monitoring</span>
+                                    </label>
+                                    <div id="monitoring-help" class="form-help">Enable real-time system monitoring</div>
+                                </div>
+                            </fieldset>
+                        </div>
+                        
+                        <div class="flex gap-4">
+                            <button type="submit" class="btn btn-primary">Save Configuration</button>
+                            <button type="reset" class="btn btn-secondary">Reset Form</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Navigation Test -->
+            <div class="sr-test">
+                <h3>Navigation Accessibility</h3>
+                <p>Test navigation elements with proper ARIA landmarks and screen reader support.</p>
+                
+                <nav class="nav-sr-test" role="navigation" aria-label="Main navigation">
+                    <h4>Main Navigation</h4>
+                    <ul>
+                        <li><a href="#" aria-current="page">Dashboard</a></li>
+                        <li><a href="#" aria-describedby="control-desc">Control Panel</a></li>
+                        <li><a href="#" aria-describedby="map-desc">Map View</a></li>
+                        <li><a href="#" aria-describedby="settings-desc">Settings</a></li>
+                    </ul>
+                    <div id="control-desc" class="sr-only">Access system control and manual operation</div>
+                    <div id="map-desc" class="sr-only">View system location and navigation map</div>
+                    <div id="settings-desc" class="sr-only">Configure system parameters and preferences</div>
+                </nav>
+                
+                <div class="aria-example">
+                    <h4>Navigation ARIA Attributes</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><code>role="navigation"</code> - Defines navigation landmark</li>
+                        <li><code>aria-label="Main navigation"</code> - Provides accessible name</li>
+                        <li><code>aria-current="page"</code> - Indicates current page</li>
+                        <li><code>aria-describedby</code> - Links to descriptions</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Landmark Roles -->
+            <div class="sr-test">
+                <h3>Landmark Roles</h3>
+                <p>Test semantic HTML elements and ARIA landmarks for proper screen reader navigation.</p>
+                
+                <header class="landmark-test" data-landmark="Banner" role="banner">
+                    <h4>Page Header</h4>
+                    <p>This is the page header with banner role.</p>
+                </header>
+                
+                <nav class="landmark-test" data-landmark="Navigation" role="navigation" aria-label="Secondary navigation">
+                    <h4>Secondary Navigation</h4>
+                    <ul>
+                        <li><a href="#">Help</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </nav>
+                
+                <aside class="landmark-test" data-landmark="Complementary" role="complementary" aria-label="System information">
+                    <h4>System Information</h4>
+                    <p>Additional system information and status.</p>
+                </aside>
+                
+                <div class="aria-example">
+                    <h4>Landmark Roles</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><code>role="banner"</code> - Page header</li>
+                        <li><code>role="navigation"</code> - Navigation menu</li>
+                        <li><code>role="main"</code> - Main content</li>
+                        <li><code>role="complementary"</code> - Supporting content</li>
+                        <li><code>role="contentinfo"</code> - Footer information</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Error Handling -->
+            <div class="sr-test">
+                <h3>Error Handling</h3>
+                <p>Test error messages and validation feedback for screen readers.</p>
+                
+                <div class="error-sr-test" role="alert" aria-live="assertive">
+                    <h4>Error Notification</h4>
+                    <p>This demonstrates how errors are announced to screen readers.</p>
+                    <div id="error-content">No errors at this time.</div>
+                    <button class="btn btn-danger mt-2" onclick="triggerError()">
+                        Simulate Error
+                    </button>
+                </div>
+                
+                <div class="aria-example">
+                    <h4>Error ARIA Attributes</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><code>role="alert"</code> - For error notifications</li>
+                        <li><code>aria-live="assertive"</code> - Immediate announcement</li>
+                        <li><code>aria-invalid="true"</code> - Marks invalid form fields</li>
+                        <li><code>aria-describedby="error-id"</code> - Links to error message</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Progress Indicators -->
+            <div class="sr-test">
+                <h3>Progress Indicators</h3>
+                <p>Test progress bars and loading states with proper ARIA attributes.</p>
+                
+                <div class="progress-sr-test">
+                    <h4>System Operation Progress</h4>
+                    <div class="progress-bar" role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100" aria-labelledby="progress-label">
+                        <div class="progress-fill" style="width: 65%"></div>
+                    </div>
+                    <div id="progress-label" class="sr-only">System operation progress</div>
+                    <p>65% complete</p>
+                    <button class="btn btn-primary mt-2" onclick="updateProgress()">
+                        Update Progress
+                    </button>
+                </div>
+                
+                <div class="aria-example">
+                    <h4>Progress ARIA Attributes</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><code>role="progressbar"</code> - Defines progress indicator</li>
+                        <li><code>aria-valuenow="65"</code> - Current value</li>
+                        <li><code>aria-valuemin="0"</code> - Minimum value</li>
+                        <li><code>aria-valuemax="100"</code> - Maximum value</li>
+                        <li><code>aria-labelledby="progress-label"</code> - Links to description</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Status Announcements -->
+            <div class="sr-test">
+                <h3>Status Announcements</h3>
+                <p>Test various types of status announcements for screen readers.</p>
+                
+                <div class="status-announcement" role="status" aria-live="polite">
+                    <h4>System Status</h4>
+                    <p>Current system status and operational information.</p>
+                    <div id="system-status">System is operational and ready for commands.</div>
+                    <button class="btn btn-success mt-2" onclick="updateSystemStatus()">
+                        Update System Status
+                    </button>
+                </div>
+                
+                <div class="aria-example">
+                    <h4>Status Announcement Types</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><strong>Operational Status:</strong> System ready, operational, offline</li>
+                        <li><strong>Task Progress:</strong> Starting, in progress, completed, failed</li>
+                        <li><strong>Safety Status:</strong> Safe, warning, emergency</li>
+                        <li><strong>Connection Status:</strong> Connected, disconnected, reconnecting</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="page-footer" role="contentinfo">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Screen Reader Test v1.0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary" aria-label="Run screen reader audit">
+                    <i data-lucide="shield-check" class="w-4 h-4" aria-hidden="true"></i>
+                    Audit
+                </button>
+                <button class="btn btn-primary" aria-label="Generate accessibility report">
+                    <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                    Report
+                </button>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Status update functions
+        function updateStatus() {
+            const statusContent = document.getElementById('status-content');
+            const statuses = [
+                'System is starting up...',
+                'System is operational',
+                'System is in maintenance mode',
+                'System is shutting down...'
+            ];
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            statusContent.textContent = randomStatus;
+        }
+        
+        function triggerAlert() {
+            const alertContent = document.getElementById('alert-content');
+            alertContent.textContent = 'CRITICAL: System temperature exceeded safe limits!';
+            alertContent.style.color = 'var(--error-red)';
+            alertContent.style.fontWeight = 'bold';
+        }
+        
+        function announceStatus() {
+            const statusRegion = document.querySelector('[role="status"]');
+            if (statusRegion) {
+                statusRegion.setAttribute('aria-live', 'polite');
+                setTimeout(() => {
+                    statusRegion.textContent = 'Status announcement: System is ready for operation.';
+                }, 100);
+            }
+        }
+        
+        function toggleLiveRegion() {
+            const liveRegions = document.querySelectorAll('[aria-live]');
+            liveRegions.forEach(region => {
+                const currentLive = region.getAttribute('aria-live');
+                region.setAttribute('aria-live', currentLive === 'off' ? 'polite' : 'off');
+            });
+        }
+        
+        function testNavigation() {
+            const nav = document.querySelector('[role="navigation"]');
+            if (nav) {
+                nav.setAttribute('aria-expanded', 'true');
+                setTimeout(() => {
+                    nav.setAttribute('aria-expanded', 'false');
+                }, 2000);
+            }
+        }
+        
+        function triggerError() {
+            const errorContent = document.getElementById('error-content');
+            errorContent.textContent = 'ERROR: Configuration validation failed. Please check your input.';
+            errorContent.style.color = 'var(--error-red)';
+            errorContent.style.fontWeight = 'bold';
+        }
+        
+        function updateProgress() {
+            const progressBar = document.querySelector('[role="progressbar"]');
+            const progressFill = document.querySelector('.progress-fill');
+            const currentValue = parseInt(progressBar.getAttribute('aria-valuenow'));
+            const newValue = Math.min(100, currentValue + 10);
+            
+            progressBar.setAttribute('aria-valuenow', newValue);
+            progressFill.style.width = newValue + '%';
+            
+            // Announce progress to screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.className = 'sr-only';
+            announcement.textContent = `Progress updated to ${newValue} percent`;
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+        
+        function updateSystemStatus() {
+            const systemStatus = document.getElementById('system-status');
+            const statuses = [
+                'System is operational and ready for commands.',
+                'System is processing current task.',
+                'System is in standby mode.',
+                'System is performing maintenance.'
+            ];
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            systemStatus.textContent = randomStatus;
+        }
+        
+        // Form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const nameInput = document.getElementById('system-name');
+            const nameError = document.getElementById('name-error');
+            
+            if (form && nameInput && nameError) {
+                nameInput.addEventListener('blur', function() {
+                    if (!this.value.trim()) {
+                        nameError.textContent = 'System name is required';
+                        this.setAttribute('aria-invalid', 'true');
+                    } else {
+                        nameError.textContent = '';
+                        this.setAttribute('aria-invalid', 'false');
+                    }
+                });
+                
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (!nameInput.value.trim()) {
+                        nameError.textContent = 'System name is required';
+                        nameInput.setAttribute('aria-invalid', 'true');
+                        nameInput.focus();
+                    } else {
+                        // Show success message
+                        const successMessage = document.createElement('div');
+                        successMessage.setAttribute('role', 'status');
+                        successMessage.setAttribute('aria-live', 'polite');
+                        successMessage.textContent = 'Configuration saved successfully!';
+                        successMessage.className = 'sr-only';
+                        document.body.appendChild(successMessage);
+                        
+                        setTimeout(() => {
+                            document.body.removeChild(successMessage);
+                        }, 3000);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Monitoring Interface</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* Monitoring Interface specific styles */
+        .monitoring-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: var(--space-lg);
+            height: 100%;
+            padding: var(--space-lg);
+        }
+        
+        .telemetry-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+        
+        .telemetry-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .metric-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+            padding: var(--space-sm);
+            background: var(--industrial-gray-50);
+            border-radius: var(--radius-md);
+        }
+        
+        .metric-value {
+            font-family: var(--font-mono);
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+        }
+        
+        .metric-label {
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-600);
+            font-weight: var(--font-medium);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: var(--font-medium);
+        }
+        
+        .status-healthy { background: var(--success-green-light); color: var(--success-green-dark); }
+        .status-warning { background: var(--warning-yellow-light); color: var(--warning-yellow-dark); }
+        .status-critical { background: var(--error-red-light); color: var(--error-red-dark); }
+        .status-offline { background: var(--industrial-gray-200); color: var(--industrial-gray-600); }
+        
+        .chart-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .chart-placeholder {
+            height: 200px;
+            background: var(--industrial-gray-50);
+            border: 2px dashed var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--industrial-gray-500);
+            font-size: var(--text-sm);
+        }
+        
+        .alert-panel {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+            border-radius: var(--radius-md);
+            border-left: 4px solid;
+        }
+        
+        .alert-critical { background: var(--error-red-light); border-left-color: var(--error-red); }
+        .alert-warning { background: var(--warning-yellow-light); border-left-color: var(--warning-yellow); }
+        .alert-info { background: var(--info-blue-light); border-left-color: var(--info-blue); }
+        .alert-success { background: var(--success-green-light); border-left-color: var(--success-green); }
+        
+        .alert-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .alert-message {
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-600);
+        }
+        
+        .alert-time {
+            font-size: var(--text-xs);
+            color: var(--industrial-gray-500);
+            font-family: var(--font-mono);
+        }
+        
+        .performance-gauge {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+        }
+        
+        .gauge-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--success-green) 0deg,
+                var(--success-green) calc(var(--percentage) * 3.6deg),
+                var(--industrial-gray-200) calc(var(--percentage) * 3.6deg),
+                var(--industrial-gray-200) 360deg
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .gauge-center {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: var(--font-semibold);
+            font-size: var(--text-lg);
+        }
+        
+        .log-entries {
+            background: var(--industrial-gray-900);
+            color: var(--industrial-gray-100);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: var(--space-xs);
+            padding: var(--space-xs);
+            border-radius: var(--radius-sm);
+        }
+        
+        .log-info { background: rgba(59, 130, 246, 0.1); }
+        .log-warning { background: rgba(245, 158, 11, 0.1); }
+        .log-error { background: rgba(239, 68, 68, 0.1); }
+        .log-success { background: rgba(34, 197, 94, 0.1); }
+        
+        .log-timestamp {
+            color: var(--industrial-gray-400);
+            margin-right: var(--space-sm);
+        }
+        
+        .log-level {
+            font-weight: var(--font-semibold);
+            margin-right: var(--space-sm);
+        }
+        
+        .log-info .log-level { color: var(--info-blue); }
+        .log-warning .log-level { color: var(--warning-yellow); }
+        .log-error .log-level { color: var(--error-red); }
+        .log-success .log-level { color: var(--success-green); }
+        
+        /* Responsive Design */
+        @media (max-width: 1536px) {
+            .monitoring-grid {
+                gap: var(--space-md);
+                padding: var(--space-md);
+            }
+        }
+        
+        @media (max-width: 1280px) {
+            .monitoring-grid {
+                gap: var(--space-sm);
+                padding: var(--space-sm);
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .monitoring-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: var(--space-md);
+                padding: var(--space-md);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .monitoring-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: var(--space-sm);
+                padding: var(--space-sm);
+            }
+            
+            .telemetry-card {
+                padding: var(--space-md);
+            }
+            
+            .metric-value {
+                font-size: var(--text-lg);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .monitoring-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-xs);
+                padding: var(--space-xs);
+            }
+            
+            .telemetry-card {
+                padding: var(--space-sm);
+            }
+            
+            .metric-value {
+                font-size: var(--text-base);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="flex items-center gap-4">
+                <i data-lucide="activity" class="w-6 h-6 text-primary-orange" aria-hidden="true"></i>
+                <h1 class="text-2xl font-bold text-industrial-gray-900">OHT-50 Monitoring</h1>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-success-green rounded-full animate-pulse"></div>
+                    <span class="text-sm text-industrial-gray-600">Live Monitoring</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary" id="refresh-data" aria-label="Refresh monitoring data">
+                    <i data-lucide="refresh-cw" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-secondary" aria-label="Export monitoring data">
+                    <i data-lucide="download" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-emergency" aria-label="Emergency Stop">
+                    <i data-lucide="square" class="w-5 h-5" aria-hidden="true"></i>
+                    <span>E-STOP</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="main-content" class="page-main">
+            <div class="monitoring-grid">
+                <!-- System Health Overview -->
+                <section class="col-span-3 telemetry-card">
+                    <h3 class="text-lg font-semibold mb-4">System Health</h3>
+                    <div class="space-y-4">
+                        <div class="metric-display">
+                            <span class="metric-label">Overall Status</span>
+                            <span class="status-indicator status-healthy" id="overall-status">HEALTHY</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Uptime</span>
+                            <span class="metric-value" id="uptime">2d 14h 32m</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Last Restart</span>
+                            <span class="metric-value" id="last-restart">2025-02-16 08:30</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">System Load</span>
+                            <span class="metric-value" id="system-load">0.45</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Performance Metrics -->
+                <section class="col-span-3 telemetry-card">
+                    <h3 class="text-lg font-semibold mb-4">Performance</h3>
+                    <div class="space-y-4">
+                        <div class="metric-display">
+                            <span class="metric-label">CPU Usage</span>
+                            <div class="performance-gauge">
+                                <div class="gauge-circle" style="--percentage: 45;">
+                                    <div class="gauge-center">45%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Memory Usage</span>
+                            <span class="metric-value" id="memory-usage">67%</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Disk Usage</span>
+                            <span class="metric-value" id="disk-usage">23%</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Network I/O</span>
+                            <span class="metric-value" id="network-io">2.4 MB/s</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Communication Status -->
+                <section class="col-span-3 telemetry-card">
+                    <h3 class="text-lg font-semibold mb-4">Communication</h3>
+                    <div class="space-y-4">
+                        <div class="metric-display">
+                            <span class="metric-label">Center Connection</span>
+                            <span class="status-indicator status-healthy" id="center-connection">CONNECTED</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">RS485 Status</span>
+                            <span class="status-indicator status-healthy" id="rs485-status">ACTIVE</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">WiFi Signal</span>
+                            <span class="metric-value" id="wifi-signal">-45 dBm</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Latency</span>
+                            <span class="metric-value" id="latency">12ms</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Safety Status -->
+                <section class="col-span-3 telemetry-card">
+                    <h3 class="text-lg font-semibold mb-4">Safety Status</h3>
+                    <div class="space-y-4">
+                        <div class="metric-display">
+                            <span class="metric-label">E-Stop Status</span>
+                            <span class="status-indicator status-healthy" id="estop-status">READY</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Safety Zone</span>
+                            <span class="status-indicator status-healthy" id="safety-zone">CLEAR</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Obstacle Count</span>
+                            <span class="metric-value" id="obstacle-count">0</span>
+                        </div>
+                        <div class="metric-display">
+                            <span class="metric-label">Emergency Contact</span>
+                            <span class="metric-value" id="emergency-contact">+84 123 456 789</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Real-time Charts -->
+                <section class="col-span-6 chart-container">
+                    <h3 class="text-lg font-semibold mb-4">Performance Trends</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="chart-placeholder">
+                            <div class="text-center">
+                                <i data-lucide="trending-up" class="w-8 h-8 mx-auto mb-2 text-industrial-gray-400"></i>
+                                <p>CPU Usage Trend</p>
+                                <p class="text-xs">Chart.js integration</p>
+                            </div>
+                        </div>
+                        <div class="chart-placeholder">
+                            <div class="text-center">
+                                <i data-lucide="activity" class="w-8 h-8 mx-auto mb-2 text-industrial-gray-400"></i>
+                                <p>Memory Usage Trend</p>
+                                <p class="text-xs">Chart.js integration</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Alert Management -->
+                <section class="col-span-6 alert-panel">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Active Alerts</h3>
+                        <button class="btn btn-secondary btn-sm" id="clear-alerts" aria-label="Clear all alerts">
+                            <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                            Clear All
+                        </button>
+                    </div>
+                    <div id="alerts-container" class="space-y-2">
+                        <div class="alert-item alert-info">
+                            <i data-lucide="info" class="alert-icon text-info-blue" aria-hidden="true"></i>
+                            <div class="alert-content">
+                                <div class="alert-title">System Update Available</div>
+                                <div class="alert-message">New firmware version v2.1.0 is ready for installation</div>
+                                <div class="alert-time">2 minutes ago</div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
+                                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="alert-item alert-warning">
+                            <i data-lucide="alert-triangle" class="alert-icon text-warning-yellow" aria-hidden="true"></i>
+                            <div class="alert-content">
+                                <div class="alert-title">High Memory Usage</div>
+                                <div class="alert-message">Memory usage is above 80% threshold</div>
+                                <div class="alert-time">5 minutes ago</div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
+                                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="alert-item alert-success">
+                            <i data-lucide="check-circle" class="alert-icon text-success-green" aria-hidden="true"></i>
+                            <div class="alert-content">
+                                <div class="alert-title">Safety Check Complete</div>
+                                <div class="alert-message">All safety systems verified and operational</div>
+                                <div class="alert-time">10 minutes ago</div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
+                                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- System Logs -->
+                <section class="col-span-12 chart-container">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">System Logs</h3>
+                        <div class="flex items-center gap-2">
+                            <select class="form-select" id="log-level-filter" aria-label="Filter log level">
+                                <option value="all">All Levels</option>
+                                <option value="info">Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="error">Error</option>
+                                <option value="success">Success</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" id="export-logs" aria-label="Export logs">
+                                <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="log-entries" id="log-entries">
+                        <div class="log-entry log-info">
+                            <span class="log-timestamp">14:32:15</span>
+                            <span class="log-level">INFO</span>
+                            <span>System monitoring started successfully</span>
+                        </div>
+                        <div class="log-entry log-success">
+                            <span class="log-timestamp">14:32:10</span>
+                            <span class="log-level">SUCCESS</span>
+                            <span>All safety systems operational</span>
+                        </div>
+                        <div class="log-entry log-warning">
+                            <span class="log-timestamp">14:31:45</span>
+                            <span class="log-level">WARNING</span>
+                            <span>Memory usage approaching threshold (78%)</span>
+                        </div>
+                        <div class="log-entry log-info">
+                            <span class="log-timestamp">14:31:30</span>
+                            <span class="log-level">INFO</span>
+                            <span>Telemetry data updated</span>
+                        </div>
+                        <div class="log-entry log-error">
+                            <span class="log-timestamp">14:30:15</span>
+                            <span class="log-level">ERROR</span>
+                            <span>Network connection timeout - retrying</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Last Update: <span id="last-update">2025-02-18 14:32:15</span></span>
+                <span class="text-sm text-industrial-gray-600">Data Refresh: <span id="refresh-interval">5s</span></span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary btn-sm" id="pause-monitoring" aria-label="Pause monitoring">
+                    <i data-lucide="pause" class="w-4 h-4" aria-hidden="true"></i>
+                    Pause
+                </button>
+                <button class="btn btn-secondary btn-sm" id="fullscreen" aria-label="Fullscreen view">
+                    <i data-lucide="maximize" class="w-4 h-4" aria-hidden="true"></i>
+                    Fullscreen
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        class MonitoringController {
+            constructor() {
+                this.isMonitoring = true;
+                this.refreshInterval = 5000; // 5 seconds
+                this.initializeEventListeners();
+                this.startRealTimeUpdates();
+                this.initializeAccessibility();
+            }
+            
+            initializeEventListeners() {
+                // Refresh data
+                document.getElementById('refresh-data').addEventListener('click', () => {
+                    this.refreshData();
+                });
+                
+                // Clear alerts
+                document.getElementById('clear-alerts').addEventListener('click', () => {
+                    this.clearAllAlerts();
+                });
+                
+                // Pause monitoring
+                document.getElementById('pause-monitoring').addEventListener('click', () => {
+                    this.toggleMonitoring();
+                });
+                
+                // Fullscreen
+                document.getElementById('fullscreen').addEventListener('click', () => {
+                    this.toggleFullscreen();
+                });
+                
+                // Log level filter
+                document.getElementById('log-level-filter').addEventListener('change', (e) => {
+                    this.filterLogs(e.target.value);
+                });
+                
+                // Export logs
+                document.getElementById('export-logs').addEventListener('click', () => {
+                    this.exportLogs();
+                });
+                
+                // E-Stop
+                document.querySelector('.btn-emergency').addEventListener('click', () => {
+                    this.triggerEmergencyStop();
+                });
+            }
+            
+            initializeAccessibility() {
+                // Add keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.triggerEmergencyStop();
+                    }
+                    if (e.key === 'F11') {
+                        this.toggleFullscreen();
+                    }
+                });
+                
+                // Add ARIA live regions for status updates
+                const statusElements = document.querySelectorAll('[id$="-status"]');
+                statusElements.forEach(el => {
+                    el.setAttribute('aria-live', 'polite');
+                });
+                
+                // Add ARIA live region for alerts
+                const alertsContainer = document.getElementById('alerts-container');
+                alertsContainer.setAttribute('aria-live', 'assertive');
+            }
+            
+            refreshData() {
+                // Simulate data refresh
+                this.updateMetrics();
+                this.addLogEntry('info', 'Monitoring data refreshed');
+                
+                // Visual feedback
+                const refreshBtn = document.getElementById('refresh-data');
+                refreshBtn.classList.add('animate-spin');
+                setTimeout(() => {
+                    refreshBtn.classList.remove('animate-spin');
+                }, 1000);
+            }
+            
+            clearAllAlerts() {
+                const alertsContainer = document.getElementById('alerts-container');
+                alertsContainer.innerHTML = '';
+                this.addLogEntry('info', 'All alerts cleared');
+            }
+            
+            toggleMonitoring() {
+                this.isMonitoring = !this.isMonitoring;
+                const pauseBtn = document.getElementById('pause-monitoring');
+                const icon = pauseBtn.querySelector('i');
+                
+                if (this.isMonitoring) {
+                    pauseBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4" aria-hidden="true"></i>Pause';
+                    this.addLogEntry('info', 'Monitoring resumed');
+                } else {
+                    pauseBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4" aria-hidden="true"></i>Resume';
+                    this.addLogEntry('warning', 'Monitoring paused');
+                }
+            }
+            
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
+            filterLogs(level) {
+                const logEntries = document.querySelectorAll('.log-entry');
+                logEntries.forEach(entry => {
+                    if (level === 'all' || entry.classList.contains(`log-${level}`)) {
+                        entry.style.display = 'block';
+                    } else {
+                        entry.style.display = 'none';
+                    }
+                });
+            }
+            
+            exportLogs() {
+                const logEntries = document.querySelectorAll('.log-entry');
+                let logText = 'OHT-50 System Logs\n';
+                logText += '==================\n\n';
+                
+                logEntries.forEach(entry => {
+                    const timestamp = entry.querySelector('.log-timestamp').textContent;
+                    const level = entry.querySelector('.log-level').textContent;
+                    const message = entry.textContent.replace(timestamp, '').replace(level, '').trim();
+                    logText += `${timestamp} [${level}] ${message}\n`;
+                });
+                
+                const blob = new Blob([logText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `oht50-logs-${new Date().toISOString().split('T')[0]}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.addLogEntry('info', 'System logs exported');
+            }
+            
+            triggerEmergencyStop() {
+                // Update UI
+                document.getElementById('overall-status').textContent = 'E-STOP';
+                document.getElementById('overall-status').className = 'status-indicator status-critical';
+                
+                // Add to logs
+                this.addLogEntry('error', 'Emergency stop activated');
+                
+                // Announce to screen readers
+                this.announceToScreenReader('Emergency stop activated. All systems halted.');
+                
+                // Visual feedback
+                document.body.style.backgroundColor = '#fee2e2';
+                setTimeout(() => {
+                    document.body.style.backgroundColor = '';
+                }, 1000);
+            }
+            
+            updateMetrics() {
+                // Simulate changing metrics
+                const cpuUsage = Math.floor(Math.random() * 60) + 20;
+                const memoryUsage = Math.floor(Math.random() * 30) + 50;
+                const diskUsage = Math.floor(Math.random() * 20) + 15;
+                const networkIO = (Math.random() * 5 + 1).toFixed(1);
+                
+                document.getElementById('memory-usage').textContent = `${memoryUsage}%`;
+                document.getElementById('disk-usage').textContent = `${diskUsage}%`;
+                document.getElementById('network-io').textContent = `${networkIO} MB/s`;
+                
+                // Update CPU gauge
+                const cpuGauge = document.querySelector('.gauge-circle');
+                cpuGauge.style.setProperty('--percentage', cpuUsage);
+                cpuGauge.querySelector('.gauge-center').textContent = `${cpuUsage}%`;
+                
+                // Update status indicators based on thresholds
+                if (memoryUsage > 80) {
+                    document.getElementById('memory-usage').parentElement.querySelector('.status-indicator').className = 'status-indicator status-warning';
+                    this.addAlert('warning', 'High Memory Usage', `Memory usage is above 80% threshold (${memoryUsage}%)`);
+                }
+                
+                if (cpuUsage > 70) {
+                    document.getElementById('overall-status').textContent = 'WARNING';
+                    document.getElementById('overall-status').className = 'status-indicator status-warning';
+                }
+            }
+            
+            addAlert(level, title, message) {
+                const alertsContainer = document.getElementById('alerts-container');
+                const alertItem = document.createElement('div');
+                alertItem.className = `alert-item alert-${level}`;
+                
+                const icons = {
+                    info: 'info',
+                    warning: 'alert-triangle',
+                    error: 'alert-circle',
+                    success: 'check-circle'
+                };
+                
+                alertItem.innerHTML = `
+                    <i data-lucide="${icons[level]}" class="alert-icon text-${level === 'info' ? 'info-blue' : level === 'warning' ? 'warning-yellow' : level === 'error' ? 'error-red' : 'success-green'}" aria-hidden="true"></i>
+                    <div class="alert-content">
+                        <div class="alert-title">${title}</div>
+                        <div class="alert-message">${message}</div>
+                        <div class="alert-time">Just now</div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
+                        <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
+                `;
+                
+                alertsContainer.insertBefore(alertItem, alertsContainer.firstChild);
+                
+                // Keep only last 10 alerts
+                while (alertsContainer.children.length > 10) {
+                    alertsContainer.removeChild(alertsContainer.lastChild);
+                }
+            }
+            
+            addLogEntry(level, message) {
+                const logContainer = document.getElementById('log-entries');
+                const timestamp = new Date().toLocaleTimeString();
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${level}`;
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">${timestamp}</span>
+                    <span class="log-level">${level.toUpperCase()}</span>
+                    <span>${message}</span>
+                `;
+                
+                logContainer.insertBefore(logEntry, logContainer.firstChild);
+                
+                // Keep only last 50 entries
+                while (logContainer.children.length > 50) {
+                    logContainer.removeChild(logContainer.lastChild);
+                }
+            }
+            
+            announceToScreenReader(message) {
+                const announcement = document.createElement('div');
+                announcement.setAttribute('aria-live', 'assertive');
+                announcement.setAttribute('aria-atomic', 'true');
+                announcement.className = 'sr-only';
+                announcement.textContent = message;
+                
+                document.body.appendChild(announcement);
+                
+                setTimeout(() => {
+                    document.body.removeChild(announcement);
+                }, 1000);
+            }
+            
+            startRealTimeUpdates() {
+                // Update metrics every 5 seconds
+                setInterval(() => {
+                    if (this.isMonitoring) {
+                        this.updateMetrics();
+                    }
+                }, this.refreshInterval);
+                
+                // Update timestamp
+                setInterval(() => {
+                    document.getElementById('last-update').textContent = 
+                        new Date().toLocaleString();
+                }, 1000);
+            }
+        }
+        
+        // Initialize monitoring when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new MonitoringController();
+        });
+    </script>
+</body>
+</html>

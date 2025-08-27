@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header/Footer Templates - OHT-50</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* Header/Footer Templates */
+        .page-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: var(--space-lg);
+            height: 100vh;
+            padding: var(--space-lg);
+            background: var(--bg-secondary);
+        }
+
+        .page-header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        .page-main {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+            overflow-y: auto;
+        }
+
+        .page-footer {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        /* Template Demo */
+        .template-demo {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .template-demo h3 {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            margin-bottom: var(--space-md);
+        }
+
+        .template-demo p {
+            color: var(--industrial-gray-600);
+            margin-bottom: var(--space-lg);
+        }
+
+        /* Header Templates */
+        .header-template {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md) var(--space-lg);
+            margin-bottom: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-template.simple {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-template.complex {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: var(--space-lg);
+            align-items: center;
+        }
+
+        .header-template.mobile {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+
+        /* Footer Templates */
+        .footer-template {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md) var(--space-lg);
+            margin-bottom: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .footer-template.simple {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-template.complex {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: var(--space-lg);
+            align-items: center;
+        }
+
+        .footer-template.mobile {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            text-align: center;
+        }
+
+        /* Navigation Components */
+        .nav-menu {
+            display: flex;
+            gap: var(--space-lg);
+            align-items: center;
+        }
+
+        .nav-menu.mobile {
+            flex-direction: column;
+            gap: var(--space-md);
+            width: 100%;
+        }
+
+        .nav-item {
+            color: var(--industrial-gray-600);
+            text-decoration: none;
+            font-weight: var(--font-medium);
+            transition: color var(--transition-fast);
+        }
+
+        .nav-item:hover {
+            color: var(--primary-orange);
+        }
+
+        .nav-item.active {
+            color: var(--primary-orange);
+            font-weight: var(--font-semibold);
+        }
+
+        /* Logo Component */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-family: var(--font-display);
+            font-weight: var(--font-bold);
+            color: var(--industrial-gray-900);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 2rem;
+            height: 2rem;
+            color: var(--primary-orange);
+        }
+
+        /* Status Indicators */
+        .status-indicators {
+            display: flex;
+            gap: var(--space-md);
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .status-indicator.online {
+            color: var(--success-green);
+        }
+
+        .status-indicator.warning {
+            color: var(--warning-yellow);
+        }
+
+        .status-indicator.error {
+            color: var(--error-red);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.online {
+            background: var(--success-green);
+        }
+
+        .status-dot.warning {
+            background: var(--warning-yellow);
+        }
+
+        .status-dot.error {
+            background: var(--error-red);
+        }
+
+        /* Emergency Controls */
+        .emergency-controls {
+            display: flex;
+            gap: var(--space-sm);
+            align-items: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-template.complex {
+                grid-template-columns: 1fr;
+                gap: var(--space-md);
+            }
+
+            .footer-template.complex {
+                grid-template-columns: 1fr;
+                gap: var(--space-md);
+                text-align: center;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .nav-menu.mobile {
+                display: flex;
+            }
+
+            .status-indicators {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        /* Template Usage Guide */
+        .usage-guide {
+            background: var(--industrial-gray-50);
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-top: var(--space-md);
+        }
+
+        .usage-guide h4 {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-800);
+            margin-bottom: var(--space-sm);
+        }
+
+        .usage-guide code {
+            background: var(--industrial-gray-100);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="flex items-center gap-4">
+                <i data-lucide="layout-template" class="w-6 h-6 text-primary-orange"></i>
+                <h1 class="text-xl font-semibold">Header/Footer Templates</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">OHT-50 Design System</span>
+                <button class="btn btn-secondary">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    Settings
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="page-main">
+            <!-- Header Templates -->
+            <div class="template-demo">
+                <h3>Header Templates</h3>
+                <p>Consistent header structures for different page types and screen sizes:</p>
+                
+                <!-- Simple Header -->
+                <div class="usage-guide">
+                    <h4>Simple Header (Basic Pages)</h4>
+                    <p>Use for simple pages with minimal navigation needs.</p>
+                </div>
+                <div class="header-template simple">
+                    <a href="#" class="logo">
+                        <i data-lucide="bot" class="logo-icon"></i>
+                        OHT-50
+                    </a>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-industrial-gray-600">System Status</span>
+                        <button class="btn btn-secondary">
+                            <i data-lucide="menu" class="w-4 h-4"></i>
+                            Menu
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Complex Header -->
+                <div class="usage-guide">
+                    <h4>Complex Header (Dashboard/Control Pages)</h4>
+                    <p>Use for pages with navigation, status indicators, and controls.</p>
+                </div>
+                <div class="header-template complex">
+                    <a href="#" class="logo">
+                        <i data-lucide="bot" class="logo-icon"></i>
+                        OHT-50 Control
+                    </a>
+                    
+                    <nav class="nav-menu">
+                        <a href="#" class="nav-item active">Dashboard</a>
+                        <a href="#" class="nav-item">Control</a>
+                        <a href="#" class="nav-item">Map</a>
+                        <a href="#" class="nav-item">Settings</a>
+                    </nav>
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="status-indicators">
+                            <div class="status-indicator online">
+                                <div class="status-dot online"></div>
+                                Online
+                            </div>
+                            <div class="status-indicator warning">
+                                <div class="status-dot warning"></div>
+                                Battery: 45%
+                            </div>
+                        </div>
+                        <div class="emergency-controls">
+                            <button class="btn btn-danger">
+                                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                                E-Stop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile Header -->
+                <div class="usage-guide">
+                    <h4>Mobile Header (Responsive Design)</h4>
+                    <p>Adapts to mobile screens with hamburger menu and simplified controls.</p>
+                </div>
+                <div class="header-template mobile">
+                    <a href="#" class="logo">
+                        <i data-lucide="bot" class="logo-icon"></i>
+                        OHT-50
+                    </a>
+                    
+                    <div class="flex items-center gap-2">
+                        <div class="status-indicator online">
+                            <div class="status-dot online"></div>
+                        </div>
+                        <button class="btn btn-secondary">
+                            <i data-lucide="menu" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    
+                    <nav class="nav-menu mobile">
+                        <a href="#" class="nav-item">Dashboard</a>
+                        <a href="#" class="nav-item">Control</a>
+                        <a href="#" class="nav-item">Map</a>
+                        <a href="#" class="nav-item">Settings</a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Footer Templates -->
+            <div class="template-demo">
+                <h3>Footer Templates</h3>
+                <p>Consistent footer structures with navigation, status, and controls:</p>
+                
+                <!-- Simple Footer -->
+                <div class="usage-guide">
+                    <h4>Simple Footer (Basic Pages)</h4>
+                    <p>Use for simple pages with minimal footer content.</p>
+                </div>
+                <div class="footer-template simple">
+                    <span class="text-sm text-industrial-gray-600">© 2025 OHT-50 System</span>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-industrial-gray-600">v1.0.0</span>
+                        <button class="btn btn-secondary">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
+                            Help
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Complex Footer -->
+                <div class="usage-guide">
+                    <h4>Complex Footer (Dashboard/Control Pages)</h4>
+                    <p>Use for pages with detailed status information and controls.</p>
+                </div>
+                <div class="footer-template complex">
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-industrial-gray-600">© 2025 OHT-50 System</span>
+                        <div class="status-indicators">
+                            <div class="status-indicator online">
+                                <div class="status-dot online"></div>
+                                Connected
+                            </div>
+                            <div class="status-indicator warning">
+                                <div class="status-dot warning"></div>
+                                Temp: 42°C
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-industrial-gray-600">Last Update:</span>
+                        <span class="text-sm font-mono text-industrial-gray-800">14:32:15</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <button class="btn btn-secondary">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            Refresh
+                        </button>
+                        <button class="btn btn-secondary">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
+                            Help
+                        </button>
+                        <button class="btn btn-primary">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            Settings
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile Footer -->
+                <div class="usage-guide">
+                    <h4>Mobile Footer (Responsive Design)</h4>
+                    <p>Adapts to mobile screens with simplified layout and touch-friendly controls.</p>
+                </div>
+                <div class="footer-template mobile">
+                    <div class="flex items-center justify-center gap-4">
+                        <span class="text-sm text-industrial-gray-600">© 2025 OHT-50</span>
+                        <div class="status-indicator online">
+                            <div class="status-dot online"></div>
+                            Online
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-center gap-2">
+                        <button class="btn btn-secondary">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                        <button class="btn btn-secondary">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
+                        </button>
+                        <button class="btn btn-primary">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Implementation Guide -->
+            <div class="template-demo">
+                <h3>Implementation Guide</h3>
+                <p>How to use these templates in your OHT-50 pages:</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="usage-guide">
+                        <h4>HTML Structure</h4>
+                        <pre><code>&lt;div class="page-container"&gt;
+  &lt;header class="page-header"&gt;
+    &lt;!-- Header content --&gt;
+  &lt;/header&gt;
+  
+  &lt;main class="page-main"&gt;
+    &lt;!-- Main content --&gt;
+  &lt;/main&gt;
+  
+  &lt;footer class="page-footer"&gt;
+    &lt;!-- Footer content --&gt;
+  &lt;/footer&gt;
+&lt;/div&gt;</code></pre>
+                    </div>
+                    
+                    <div class="usage-guide">
+                        <h4>CSS Classes</h4>
+                        <ul class="text-sm space-y-2">
+                            <li><code>.page-container</code> - Main grid container</li>
+                            <li><code>.page-header</code> - Header section</li>
+                            <li><code>.page-main</code> - Main content area</li>
+                            <li><code>.page-footer</code> - Footer section</li>
+                            <li><code>.logo</code> - Logo component</li>
+                            <li><code>.nav-menu</code> - Navigation menu</li>
+                            <li><code>.status-indicators</code> - Status display</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="usage-guide mt-6">
+                    <h4>Best Practices</h4>
+                    <ul class="text-sm space-y-2">
+                        <li>• Always include skip link for accessibility</li>
+                        <li>• Use consistent spacing with CSS variables</li>
+                        <li>• Include emergency controls in header when needed</li>
+                        <li>• Show system status in footer for monitoring pages</li>
+                        <li>• Ensure touch targets are at least 44px on mobile</li>
+                        <li>• Test responsive behavior across all breakpoints</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="page-footer">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Header/Footer Templates v1.0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    Copy Template
+                </button>
+                <button class="btn btn-primary">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    Validate Templates
+                </button>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Add template copy functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const copyBtn = document.querySelector('button:contains("Copy Template")');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function() {
+                    // Copy template code to clipboard
+                    const templateCode = `
+<!-- Simple Header Template -->
+<header class="page-header">
+    <a href="#" class="logo">
+        <i data-lucide="bot" class="logo-icon"></i>
+        OHT-50
+    </a>
+    <div class="flex items-center gap-4">
+        <span class="text-sm text-industrial-gray-600">System Status</span>
+        <button class="btn btn-secondary">
+            <i data-lucide="menu" class="w-4 h-4"></i>
+            Menu
+        </button>
+    </div>
+</header>`;
+                    
+                    navigator.clipboard.writeText(templateCode).then(function() {
+                        alert('Template code copied to clipboard!');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 Form Components - Design System</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../themes/theme_components.css">
+    
+    <style>
+        .form-showcase {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-primary);
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .form-demo {
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--industrial-gray-200);
+        }
+        
+        .form-code {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--industrial-gray-900);
+            color: var(--industrial-gray-100);
+            border-radius: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+        
+        .interactive-demo {
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--industrial-gray-200);
+            margin: 1rem 0;
+        }
+        
+        .demo-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--industrial-gray-100);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--primary-orange);
+        }
+        
+        .form-input:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: var(--error-red);
+        }
+        
+        .form-input.success {
+            border-color: var(--success-green);
+        }
+        
+        .error-message {
+            color: var(--error-red);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .success-message {
+            color: var(--success-green);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .form-help {
+            color: var(--industrial-gray-600);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .checkbox-group, .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .checkbox-item, .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        
+        .checkbox-item input, .radio-item input {
+            cursor: pointer;
+        }
+        
+        .checkbox-label, .radio-label {
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Header -->
+    <header class="page-header bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <i data-lucide="file-text" class="w-8 h-8 text-orange-500 mr-3"></i>
+                        OHT-50 Form Components
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Design System v1.0</span>
+                    <button class="btn btn-danger btn-sm">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        E-STOP
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="page-main">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Text Inputs -->
+            <section class="form-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Text Inputs</h2>
+                <p class="text-gray-600 mb-4">Basic text input components with various states and validation.</p>
+                
+                <div class="form-grid">
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="basic-input" class="form-label">Basic Input</label>
+                            <input type="text" id="basic-input" class="form-input" placeholder="Enter text...">
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="required-input" class="form-label">Required Input</label>
+                            <input type="text" id="required-input" class="form-input" placeholder="Required field..." required>
+                            <div class="form-help">This field is required</div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="success-input" class="form-label">Success Input</label>
+                            <input type="text" id="success-input" class="form-input success" value="Valid input" readonly>
+                            <div class="success-message">✓ Input is valid</div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="error-input" class="form-label">Error Input</label>
+                            <input type="text" id="error-input" class="form-input error" value="Invalid input">
+                            <div class="error-message">✗ Please enter a valid value</div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="disabled-input" class="form-label">Disabled Input</label>
+                            <input type="text" id="disabled-input" class="form-input" value="Disabled field" disabled>
+                            <div class="form-help">This field is disabled</div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="icon-input" class="form-label">Input with Icon</label>
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                                <input type="text" id="icon-input" class="form-input pl-10" placeholder="Search...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-code">
+                    <pre><code>&lt;div class="form-group"&gt;
+  &lt;label for="input" class="form-label"&gt;Label&lt;/label&gt;
+  &lt;input type="text" id="input" class="form-input" placeholder="Enter text..."&gt;
+  &lt;div class="form-help"&gt;Help text&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+                </div>
+            </section>
+
+            <!-- Select Inputs -->
+            <section class="form-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Select Inputs</h2>
+                <p class="text-gray-600 mb-4">Dropdown select components for choosing from predefined options.</p>
+                
+                <div class="form-grid">
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="basic-select" class="form-label">Basic Select</label>
+                            <select id="basic-select" class="form-select">
+                                <option value="">Choose an option</option>
+                                <option value="option1">Option 1</option>
+                                <option value="option2">Option 2</option>
+                                <option value="option3">Option 3</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="required-select" class="form-label">Required Select</label>
+                            <select id="required-select" class="form-select" required>
+                                <option value="">Please select...</option>
+                                <option value="auto">Auto Mode</option>
+                                <option value="manual">Manual Mode</option>
+                                <option value="maintenance">Maintenance Mode</option>
+                            </select>
+                            <div class="form-help">Select the operating mode</div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="disabled-select" class="form-label">Disabled Select</label>
+                            <select id="disabled-select" class="form-select" disabled>
+                                <option value="disabled">Disabled Option</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="multiple-select" class="form-label">Multiple Select</label>
+                            <select id="multiple-select" class="form-select" multiple size="3">
+                                <option value="sensor1">Temperature Sensor</option>
+                                <option value="sensor2">Pressure Sensor</option>
+                                <option value="sensor3">Speed Sensor</option>
+                                <option value="sensor4">Position Sensor</option>
+                            </select>
+                            <div class="form-help">Hold Ctrl/Cmd to select multiple</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Checkbox Groups -->
+            <section class="form-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Checkbox Groups</h2>
+                <p class="text-gray-600 mb-4">Checkbox components for multiple choice selections.</p>
+                
+                <div class="form-grid">
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label class="form-label">Basic Checkboxes</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox">
+                                    <span class="checkbox-label">Option 1</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox">
+                                    <span class="checkbox-label">Option 2</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox">
+                                    <span class="checkbox-label">Option 3</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label class="form-label">System Features</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox" checked>
+                                    <span class="checkbox-label">Auto Navigation</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox">
+                                    <span class="checkbox-label">Obstacle Detection</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox" checked>
+                                    <span class="checkbox-label">Safety Monitoring</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox">
+                                    <span class="checkbox-label">Remote Control</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label class="form-label">Disabled Checkboxes</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox" disabled>
+                                    <span class="checkbox-label">Disabled Option</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="form-checkbox" checked disabled>
+                                    <span class="checkbox-label">Disabled Checked</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Radio Groups -->
+            <section class="form-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Radio Groups</h2>
+                <p class="text-gray-600 mb-4">Radio button components for single choice selections.</p>
+                
+                <div class="form-grid">
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label class="form-label">Basic Radio Buttons</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="basic-radio" class="form-radio">
+                                    <span class="radio-label">Option 1</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="basic-radio" class="form-radio">
+                                    <span class="radio-label">Option 2</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="basic-radio" class="form-radio">
+                                    <span class="radio-label">Option 3</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label class="form-label">Operating Mode</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="mode-radio" class="form-radio" checked>
+                                    <span class="radio-label">Automatic Mode</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="mode-radio" class="form-radio">
+                                    <span class="radio-label">Manual Mode</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="mode-radio" class="form-radio">
+                                    <span class="radio-label">Maintenance Mode</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label class="form-label">Disabled Radio Buttons</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="disabled-radio" class="form-radio" disabled>
+                                    <span class="radio-label">Disabled Option</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="disabled-radio" class="form-radio" checked disabled>
+                                    <span class="radio-label">Disabled Selected</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Textarea -->
+            <section class="form-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Textarea</h2>
+                <p class="text-gray-600 mb-4">Multi-line text input components for longer content.</p>
+                
+                <div class="form-grid">
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="basic-textarea" class="form-label">Basic Textarea</label>
+                            <textarea id="basic-textarea" class="form-textarea" rows="4" placeholder="Enter your message..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="resizable-textarea" class="form-label">Resizable Textarea</label>
+                            <textarea id="resizable-textarea" class="form-textarea" rows="3" placeholder="This textarea can be resized..."></textarea>
+                            <div class="form-help">Drag the bottom-right corner to resize</div>
+                        </div>
+                    </div>
+
+                    <div class="form-demo">
+                        <div class="form-group">
+                            <label for="disabled-textarea" class="form-label">Disabled Textarea</label>
+                            <textarea id="disabled-textarea" class="form-textarea" rows="3" disabled>This textarea is disabled and cannot be edited.</textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Form Validation Demo -->
+            <section class="form-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Form Validation Demo</h2>
+                <p class="text-gray-600 mb-4">Interactive form with real-time validation and error handling.</p>
+                
+                <div class="interactive-demo">
+                    <form id="validation-form" class="space-y-6">
+                        <div class="form-group">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" id="username" class="form-input" placeholder="Enter username..." required>
+                            <div class="form-help">Username must be at least 3 characters</div>
+                            <div class="error-message hidden" id="username-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" class="form-input" placeholder="Enter email..." required>
+                            <div class="error-message hidden" id="email-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" id="password" class="form-input" placeholder="Enter password..." required>
+                            <div class="form-help">Password must be at least 8 characters with uppercase, lowercase, and number</div>
+                            <div class="error-message hidden" id="password-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm-password" class="form-label">Confirm Password</label>
+                            <input type="password" id="confirm-password" class="form-input" placeholder="Confirm password..." required>
+                            <div class="error-message hidden" id="confirm-password-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">System Access</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="admin-access" class="form-checkbox">
+                                    <span class="checkbox-label">Administrator Access</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="maintenance-access" class="form-checkbox">
+                                    <span class="checkbox-label">Maintenance Access</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4">
+                            <button type="submit" class="btn btn-primary">Submit Form</button>
+                            <button type="reset" class="btn btn-secondary">Reset Form</button>
+                        </div>
+                    </form>
+                    
+                    <div id="form-result" class="demo-result hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">Form Submission Result:</h4>
+                        <p id="result-text" class="text-gray-600">Submit the form to see the result.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Form Guidelines -->
+            <section class="form-showcase">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Form Usage Guidelines</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">✅ Do's</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• Use clear, descriptive labels</li>
+                            <li>• Provide helpful placeholder text</li>
+                            <li>• Show validation errors clearly</li>
+                            <li>• Use appropriate input types</li>
+                            <li>• Group related form elements</li>
+                            <li>• Provide clear success/error feedback</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">❌ Don'ts</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• Don't use vague or unclear labels</li>
+                            <li>• Don't hide validation errors</li>
+                            <li>• Don't use inappropriate input types</li>
+                            <li>• Don't make forms too long</li>
+                            <li>• Don't forget to handle all states</li>
+                            <li>• Don't use inconsistent styling</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-500">
+                    OHT-50 Form Components v1.0
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Last updated: 2025-01-28</span>
+                    <a href="component_library.html" class="btn btn-secondary btn-sm">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Back to Library
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Form validation functionality
+        const form = document.getElementById('validation-form');
+        const formResult = document.getElementById('form-result');
+        const resultText = document.getElementById('result-text');
+        
+        // Validation functions
+        function validateUsername(username) {
+            if (username.length < 3) {
+                return 'Username must be at least 3 characters long';
+            }
+            return '';
+        }
+        
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return 'Please enter a valid email address';
+            }
+            return '';
+        }
+        
+        function validatePassword(password) {
+            if (password.length < 8) {
+                return 'Password must be at least 8 characters long';
+            }
+            if (!/(?=.*[a-z])/.test(password)) {
+                return 'Password must contain at least one lowercase letter';
+            }
+            if (!/(?=.*[A-Z])/.test(password)) {
+                return 'Password must contain at least one uppercase letter';
+            }
+            if (!/(?=.*\d)/.test(password)) {
+                return 'Password must contain at least one number';
+            }
+            return '';
+        }
+        
+        function validateConfirmPassword(password, confirmPassword) {
+            if (password !== confirmPassword) {
+                return 'Passwords do not match';
+            }
+            return '';
+        }
+        
+        // Real-time validation
+        const inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]');
+        
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                const field = this.id;
+                const value = this.value;
+                const errorElement = document.getElementById(`${field}-error`);
+                
+                let errorMessage = '';
+                
+                switch (field) {
+                    case 'username':
+                        errorMessage = validateUsername(value);
+                        break;
+                    case 'email':
+                        errorMessage = validateEmail(value);
+                        break;
+                    case 'password':
+                        errorMessage = validatePassword(value);
+                        break;
+                    case 'confirm-password':
+                        const password = document.getElementById('password').value;
+                        errorMessage = validateConfirmPassword(password, value);
+                        break;
+                }
+                
+                if (errorMessage) {
+                    this.classList.add('error');
+                    this.classList.remove('success');
+                    errorElement.textContent = errorMessage;
+                    errorElement.classList.remove('hidden');
+                } else if (value) {
+                    this.classList.remove('error');
+                    this.classList.add('success');
+                    errorElement.classList.add('hidden');
+                } else {
+                    this.classList.remove('error', 'success');
+                    errorElement.classList.add('hidden');
+                }
+            });
+        });
+        
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            // Validate all fields
+            let isValid = true;
+            let errors = [];
+            
+            if (validateUsername(data.username)) {
+                errors.push('Username: ' + validateUsername(data.username));
+                isValid = false;
+            }
+            
+            if (validateEmail(data.email)) {
+                errors.push('Email: ' + validateEmail(data.email));
+                isValid = false;
+            }
+            
+            if (validatePassword(data.password)) {
+                errors.push('Password: ' + validatePassword(data.password));
+                isValid = false;
+            }
+            
+            if (validateConfirmPassword(data.password, data['confirm-password'])) {
+                errors.push('Confirm Password: ' + validateConfirmPassword(data.password, data['confirm-password']));
+                isValid = false;
+            }
+            
+            if (isValid) {
+                formResult.classList.remove('hidden');
+                resultText.innerHTML = `
+                    <strong>Form submitted successfully!</strong><br>
+                    Username: ${data.username}<br>
+                    Email: ${data.email}<br>
+                    Admin Access: ${data['admin-access'] ? 'Yes' : 'No'}<br>
+                    Maintenance Access: ${data['maintenance-access'] ? 'Yes' : 'No'}
+                `;
+                formResult.style.borderLeftColor = 'var(--success-green)';
+            } else {
+                formResult.classList.remove('hidden');
+                resultText.innerHTML = `
+                    <strong>Form validation failed:</strong><br>
+                    ${errors.join('<br>')}
+                `;
+                formResult.style.borderLeftColor = 'var(--error-red)';
+            }
+        });
+        
+        // Form reset
+        form.addEventListener('reset', function() {
+            setTimeout(() => {
+                formResult.classList.add('hidden');
+                inputs.forEach(input => {
+                    input.classList.remove('error', 'success');
+                });
+                document.querySelectorAll('.error-message').forEach(error => {
+                    error.classList.add('hidden');
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

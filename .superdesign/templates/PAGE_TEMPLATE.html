@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 - [Page Title]</title>
+    
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../themes/theme_components.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Meta Tags -->
+    <meta name="description" content="OHT-50 Robot Control System - [Page Description]">
+    <meta name="keywords" content="OHT-50, robot, control, industrial, automation">
+    <meta name="author" content="OHT-50 Team">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+</head>
+<body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Top Navigation -->
+        <nav class="top-navigation">
+            <div class="nav-container">
+                <!-- Brand/Logo -->
+                <div class="nav-brand">
+                    <i data-lucide="bot" class="w-6 h-6 text-primary-orange"></i>
+                    <span class="brand-text">OHT-50</span>
+                </div>
+                
+                <!-- Main Navigation Menu -->
+                <div class="nav-menu">
+                    <a href="/dashboard" class="nav-item" data-page="dashboard">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    
+                    <a href="/control" class="nav-item" data-page="control">
+                        <i data-lucide="gamepad-2"></i>
+                        <span>Control</span>
+                    </a>
+                    
+                    <a href="/map" class="nav-item" data-page="map">
+                        <i data-lucide="map"></i>
+                        <span>Map</span>
+                    </a>
+                    
+                    <a href="/monitoring" class="nav-item" data-page="monitoring">
+                        <i data-lucide="activity"></i>
+                        <span>Monitoring</span>
+                    </a>
+                    
+                    <a href="/safety" class="nav-item" data-page="safety">
+                        <i data-lucide="shield-alert"></i>
+                        <span>Safety</span>
+                    </a>
+                    
+                    <a href="/config" class="nav-item" data-page="config">
+                        <i data-lucide="settings"></i>
+                        <span>Config</span>
+                    </a>
+                </div>
+                
+                <!-- Right Side Actions -->
+                <div class="nav-actions">
+                    <!-- Emergency Stop Button (Always Visible) -->
+                    <button class="nav-btn btn-emergency" id="emergencyStop">
+                        <i data-lucide="power-off"></i>
+                        <span>E-STOP</span>
+                    </button>
+                    
+                    <!-- Notifications -->
+                    <button class="nav-btn" id="notificationsBtn">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    
+                    <!-- User Menu -->
+                    <div class="user-menu">
+                        <button class="nav-btn" id="userMenuBtn">
+                            <i data-lucide="user"></i>
+                            <span>Admin</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar-navigation" id="sidebarNav">
+            <div class="sidebar-header">
+                <h3>Navigation</h3>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <!-- Dashboard Section -->
+                <div class="nav-section">
+                    <h4 class="nav-section-title">Dashboard</h4>
+                    <a href="/dashboard/overview" class="sidebar-item">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Overview</span>
+                    </a>
+                    <a href="/dashboard/quick-actions" class="sidebar-item">
+                        <i data-lucide="zap"></i>
+                        <span>Quick Actions</span>
+                    </a>
+                    <a href="/dashboard/system-health" class="sidebar-item">
+                        <i data-lucide="heart"></i>
+                        <span>System Health</span>
+                    </a>
+                </div>
+                
+                <!-- Robot Control Section -->
+                <div class="nav-section">
+                    <h4 class="nav-section-title">Robot Control</h4>
+                    <a href="/control/manual" class="sidebar-item">
+                        <i data-lucide="gamepad-2"></i>
+                        <span>Manual Control</span>
+                    </a>
+                    <a href="/control/movement" class="sidebar-item">
+                        <i data-lucide="move"></i>
+                        <span>Movement</span>
+                    </a>
+                    <a href="/control/emergency" class="sidebar-item">
+                        <i data-lucide="power-off"></i>
+                        <span>Emergency Stop</span>
+                    </a>
+                    <a href="/control/voice" class="sidebar-item">
+                        <i data-lucide="mic"></i>
+                        <span>Voice Commands</span>
+                    </a>
+                </div>
+                
+                <!-- Map & Navigation Section -->
+                <div class="nav-section">
+                    <h4 class="nav-section-title">Map & Navigation</h4>
+                    <a href="/map/live-location" class="sidebar-item">
+                        <i data-lucide="map-pin"></i>
+                        <span>Live Location</span>
+                    </a>
+                    <a href="/map/lidar-view" class="sidebar-item">
+                        <i data-lucide="radar"></i>
+                        <span>LiDAR View</span>
+                    </a>
+                    <a href="/map/dock-status" class="sidebar-item">
+                        <i data-lucide="home"></i>
+                        <span>Dock Status</span>
+                    </a>
+                    <a href="/map/path-planning" class="sidebar-item">
+                        <i data-lucide="route"></i>
+                        <span>Path Planning</span>
+                    </a>
+                </div>
+                
+                <!-- Monitoring Section -->
+                <div class="nav-section">
+                    <h4 class="nav-section-title">Monitoring</h4>
+                    <a href="/monitoring/telemetry" class="sidebar-item">
+                        <i data-lucide="activity"></i>
+                        <span>Telemetry</span>
+                    </a>
+                    <a href="/monitoring/speed-position" class="sidebar-item">
+                        <i data-lucide="gauge"></i>
+                        <span>Speed & Position</span>
+                    </a>
+                    <a href="/monitoring/connection" class="sidebar-item">
+                        <i data-lucide="wifi"></i>
+                        <span>Connection</span>
+                    </a>
+                    <a href="/monitoring/performance" class="sidebar-item">
+                        <i data-lucide="trending-up"></i>
+                        <span>Performance</span>
+                    </a>
+                </div>
+                
+                <!-- Safety & Alarms Section -->
+                <div class="nav-section">
+                    <h4 class="nav-section-title">Safety & Alarms</h4>
+                    <a href="/safety/active-alerts" class="sidebar-item">
+                        <i data-lucide="alert-triangle"></i>
+                        <span>Active Alerts</span>
+                    </a>
+                    <a href="/safety/alert-history" class="sidebar-item">
+                        <i data-lucide="history"></i>
+                        <span>Alert History</span>
+                    </a>
+                    <a href="/safety/safety-status" class="sidebar-item">
+                        <i data-lucide="shield"></i>
+                        <span>Safety Status</span>
+                    </a>
+                    <a href="/safety/emergency" class="sidebar-item">
+                        <i data-lucide="siren"></i>
+                        <span>Emergency</span>
+                    </a>
+                </div>
+                
+                <!-- Configuration Section -->
+                <div class="nav-section">
+                    <h4 class="nav-section-title">Configuration</h4>
+                    <a href="/config/robot-settings" class="sidebar-item">
+                        <i data-lucide="bot"></i>
+                        <span>Robot Settings</span>
+                    </a>
+                    <a href="/config/system-params" class="sidebar-item">
+                        <i data-lucide="settings"></i>
+                        <span>System Params</span>
+                    </a>
+                    <a href="/config/user-management" class="sidebar-item">
+                        <i data-lucide="users"></i>
+                        <span>User Management</span>
+                    </a>
+                    <a href="/config/access-control" class="sidebar-item">
+                        <i data-lucide="lock"></i>
+                        <span>Access Control</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main id="main-content" class="page-main">
+            <!-- Page Header -->
+            <header class="page-header">
+                <div class="header-content">
+                    <h1 class="page-title">[Page Title]</h1>
+                    <p class="page-description">[Page Description]</p>
+                </div>
+                
+                <!-- Breadcrumb Navigation -->
+                <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+                    <ol class="breadcrumb-list">
+                        <li class="breadcrumb-item">
+                            <a href="/dashboard" class="breadcrumb-link">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/[section]" class="breadcrumb-link">[Section]</a>
+                        </li>
+                        <li class="breadcrumb-item" aria-current="page">
+                            <span class="breadcrumb-current">[Current Page]</span>
+                        </li>
+                    </ol>
+                </nav>
+            </header>
+            
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Main Content Grid -->
+                <div class="content-grid">
+                    <!-- Primary Content Area -->
+                    <div class="content-primary">
+                        <!-- Content Section 1 -->
+                        <section class="content-section">
+                            <div class="section-header">
+                                <h2 class="section-title">[Section Title]</h2>
+                                <div class="section-actions">
+                                    <button class="btn btn-primary">
+                                        <i data-lucide="plus"></i>
+                                        <span>Add New</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="section-content">
+                                <!-- Your content goes here -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3 class="card-title">[Card Title]</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>This is where your main content will go. Replace this with your actual content.</p>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button class="btn btn-secondary">Cancel</button>
+                                        <button class="btn btn-primary">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        
+                        <!-- Content Section 2 -->
+                        <section class="content-section">
+                            <div class="section-header">
+                                <h2 class="section-title">[Another Section]</h2>
+                            </div>
+                            
+                            <div class="section-content">
+                                <!-- More content here -->
+                                <div class="alert alert-info">
+                                    <div class="alert-icon">ℹ️</div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">Information</div>
+                                        <div class="alert-message">This is an informational message.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    
+                    <!-- Secondary Content Area -->
+                    <div class="content-secondary">
+                        <!-- Sidebar Content -->
+                        <aside class="sidebar-content">
+                            <!-- Status Card -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">System Status</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="status-item">
+                                        <span class="status-label">Status:</span>
+                                        <span class="status-value connected">Online</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Battery:</span>
+                                        <span class="status-value">85%</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Connection:</span>
+                                        <span class="status-value connected">WiFi</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Actions -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Quick Actions</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="action-buttons">
+                                        <button class="btn btn-secondary btn-sm">
+                                            <i data-lucide="refresh-cw"></i>
+                                            <span>Refresh</span>
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm">
+                                            <i data-lucide="download"></i>
+                                            <span>Export</span>
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm">
+                                            <i data-lucide="settings"></i>
+                                            <span>Settings</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Page Footer -->
+        <footer class="page-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <span class="footer-text">OHT-50 Robot Control System</span>
+                    <span class="footer-version">v2.0</span>
+                </div>
+                
+                <div class="footer-actions">
+                    <button class="btn btn-secondary btn-sm">
+                        <i data-lucide="help-circle"></i>
+                        <span>Help</span>
+                    </button>
+                    <button class="btn btn-secondary btn-sm">
+                        <i data-lucide="file-text"></i>
+                        <span>Documentation</span>
+                    </button>
+                    <button class="btn btn-secondary btn-sm">
+                        <i data-lucide="message-circle"></i>
+                        <span>Support</span>
+                    </button>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Emergency Navigation (Always Visible) -->
+    <div class="emergency-navigation">
+        <button class="emergency-btn" id="emergencyStop">
+            <i data-lucide="power-off"></i>
+            <span>EMERGENCY STOP</span>
+        </button>
+        
+        <button class="emergency-btn secondary" id="pauseBtn">
+            <i data-lucide="pause"></i>
+            <span>PAUSE</span>
+        </button>
+        
+        <button class="emergency-btn secondary" id="homeBtn">
+            <i data-lucide="home"></i>
+            <span>HOME</span>
+        </button>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+        
+        // Navigation Management
+        function updateActiveNavigation() {
+            const currentPath = window.location.pathname;
+            
+            // Update top navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Update sidebar navigation
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
+            });
+        }
+        
+        // Emergency Stop Function
+        function triggerEmergencyStop() {
+            // Emergency stop logic here
+            console.log('Emergency Stop triggered');
+            
+            // Show confirmation
+            alert('Emergency Stop activated! Robot has been stopped safely.');
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update active navigation
+            updateActiveNavigation();
+            
+            // Emergency stop button
+            document.getElementById('emergencyStop').addEventListener('click', triggerEmergencyStop);
+            
+            // Sidebar toggle
+            document.getElementById('sidebarToggle').addEventListener('click', function() {
+                document.getElementById('sidebarNav').classList.toggle('open');
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(event) {
+                // Emergency stop with Ctrl + Space
+                if (event.ctrlKey && event.code === 'Space') {
+                    event.preventDefault();
+                    triggerEmergencyStop();
+                }
+                
+                // Escape to close modals/menus
+                if (event.code === 'Escape') {
+                    // Close any open modals or menus
+                }
+            });
+        });
+        
+        // Responsive Navigation
+        function handleResize() {
+            const sidebar = document.getElementById('sidebarNav');
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+            }
+        }
+        
+        window.addEventListener('resize', handleResize);
+    </script>
+</body>
+</html>

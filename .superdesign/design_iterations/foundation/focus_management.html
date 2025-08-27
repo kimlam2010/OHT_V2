@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Management Test - OHT-50</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* Focus Management Test */
+        .page-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: var(--space-lg);
+            height: 100vh;
+            padding: var(--space-lg);
+            background: var(--bg-secondary);
+        }
+
+        .page-header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        .page-main {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+            overflow-y: auto;
+        }
+
+        .page-footer {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        /* Focus Test Components */
+        .focus-test {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .focus-test h3 {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            margin-bottom: var(--space-md);
+        }
+
+        .focus-test p {
+            color: var(--industrial-gray-600);
+            margin-bottom: var(--space-lg);
+        }
+
+        /* Focus Traps */
+        .focus-trap {
+            border: 2px solid var(--primary-orange);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .focus-trap h4 {
+            color: var(--primary-orange);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Focus Indicators */
+        .focus-indicator {
+            padding: var(--space-md);
+            border: 2px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            text-align: center;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .focus-indicator:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px var(--primary-orange-100);
+            outline: none;
+            transform: translateY(-2px);
+        }
+
+        /* Focus Order Test */
+        .focus-order {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        /* Modal Focus Management */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: var(--z-modal-backdrop);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        .modal-content:focus {
+            outline: none;
+        }
+
+        /* Focus Groups */
+        .focus-group {
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .focus-group h5 {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-800);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Focus History */
+        .focus-history {
+            background: var(--industrial-gray-50);
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .focus-history h4 {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-800);
+            margin-bottom: var(--space-sm);
+        }
+
+        .focus-history ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .focus-history li {
+            padding: var(--space-xs) 0;
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-600);
+        }
+
+        /* Keyboard Shortcuts */
+        .shortcuts-demo {
+            background: var(--industrial-gray-50);
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .shortcuts-demo h4 {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-800);
+            margin-bottom: var(--space-sm);
+        }
+
+        .shortcut {
+            display: inline-block;
+            background: var(--industrial-gray-100);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-sm);
+            padding: var(--space-xs) var(--space-sm);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            margin: var(--space-xs);
+        }
+
+        /* Focus Testing Tools */
+        .focus-tools {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            box-shadow: var(--shadow-md);
+            z-index: var(--z-emergency);
+        }
+
+        .focus-tools h4 {
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-sm);
+        }
+
+        .focus-tools button {
+            font-size: var(--text-xs);
+            padding: var(--space-xs) var(--space-sm);
+            margin: var(--space-xs);
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Focus Testing Tools -->
+    <div class="focus-tools">
+        <h4>Focus Tools</h4>
+        <button class="btn btn-secondary" onclick="highlightFocusable()">Highlight Focusable</button>
+        <button class="btn btn-secondary" onclick="clearFocusHistory()">Clear History</button>
+        <button class="btn btn-primary" onclick="openModal()">Open Modal</button>
+    </div>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="flex items-center gap-4">
+                <i data-lucide="mouse-pointer" class="w-6 h-6 text-primary-orange"></i>
+                <h1 class="text-xl font-semibold">Focus Management Test</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Keyboard Navigation Testing</span>
+                <button class="btn btn-secondary" onclick="toggleFocusMode()">
+                    <i data-lucide="keyboard" class="w-4 h-4"></i>
+                    Focus Mode
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="page-main">
+            <!-- Focus Order Test -->
+            <div class="focus-test">
+                <h3>Focus Order Testing</h3>
+                <p>Test the logical tab order of interactive elements. Use Tab to navigate and observe the focus flow.</p>
+                
+                <div class="focus-order">
+                    <button class="focus-indicator" tabindex="0">Button 1</button>
+                    <button class="focus-indicator" tabindex="0">Button 2</button>
+                    <button class="focus-indicator" tabindex="0">Button 3</button>
+                    <a href="#" class="focus-indicator" tabindex="0">Link 1</a>
+                    <a href="#" class="focus-indicator" tabindex="0">Link 2</a>
+                    <input type="text" class="focus-indicator" placeholder="Input 1" tabindex="0">
+                    <input type="text" class="focus-indicator" placeholder="Input 2" tabindex="0">
+                    <select class="focus-indicator" tabindex="0">
+                        <option>Select Option</option>
+                        <option>Option 1</option>
+                        <option>Option 2</option>
+                    </select>
+                </div>
+                
+                <div class="shortcuts-demo">
+                    <h4>Keyboard Navigation</h4>
+                    <p>Use these keyboard shortcuts to test focus management:</p>
+                    <div>
+                        <span class="shortcut">Tab</span> Navigate forward
+                        <span class="shortcut">Shift + Tab</span> Navigate backward
+                        <span class="shortcut">Enter</span> Activate
+                        <span class="shortcut">Space</span> Toggle
+                        <span class="shortcut">Escape</span> Close/Cancel
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Focus Trap Test -->
+            <div class="focus-test">
+                <h3>Focus Trap Testing</h3>
+                <p>Test focus trapping within modal dialogs and overlays. Focus should not escape the trap area.</p>
+                
+                <div class="focus-trap" id="focus-trap-demo">
+                    <h4>Focus Trap Area</h4>
+                    <p>This area demonstrates focus trapping. When active, focus cannot escape this container.</p>
+                    
+                    <div class="focus-group">
+                        <h5>Group 1</h5>
+                        <button class="btn btn-primary" tabindex="0">Primary Action</button>
+                        <button class="btn btn-secondary" tabindex="0">Secondary Action</button>
+                    </div>
+                    
+                    <div class="focus-group">
+                        <h5>Group 2</h5>
+                        <input type="text" placeholder="Text input" tabindex="0">
+                        <button class="btn btn-success" tabindex="0">Success</button>
+                        <button class="btn btn-danger" tabindex="0">Cancel</button>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button class="btn btn-secondary" onclick="toggleFocusTrap()">
+                            Toggle Focus Trap
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Focus History -->
+            <div class="focus-test">
+                <h3>Focus History Tracking</h3>
+                <p>Track the focus movement through the page. This helps identify focus order issues.</p>
+                
+                <div class="focus-history">
+                    <h4>Focus History</h4>
+                    <ul id="focus-history-list">
+                        <li>No focus events yet. Start navigating with Tab...</li>
+                    </ul>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="focus-group">
+                        <h5>Navigation Controls</h5>
+                        <button class="btn btn-primary" tabindex="0">Start Navigation</button>
+                        <button class="btn btn-secondary" tabindex="0">Pause Tracking</button>
+                        <button class="btn btn-secondary" tabindex="0">Reset History</button>
+                    </div>
+                    
+                    <div class="focus-group">
+                        <h5>Focus Indicators</h5>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" checked tabindex="0">
+                            <span>Show focus indicators</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" checked tabindex="0">
+                            <span>Track focus history</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" tabindex="0">
+                            <span>Highlight current focus</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Complex Focus Patterns -->
+            <div class="focus-test">
+                <h3>Complex Focus Patterns</h3>
+                <p>Test complex focus patterns like nested components, dynamic content, and conditional focus.</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Nested Components -->
+                    <div class="focus-group">
+                        <h5>Nested Components</h5>
+                        <div class="border border-industrial-gray-200 rounded-md p-4">
+                            <button class="btn btn-primary mb-2" tabindex="0">Outer Button</button>
+                            <div class="border border-industrial-gray-100 rounded p-2">
+                                <button class="btn btn-secondary mb-2" tabindex="0">Inner Button 1</button>
+                                <button class="btn btn-secondary mb-2" tabindex="0">Inner Button 2</button>
+                                <input type="text" placeholder="Nested input" class="w-full mb-2" tabindex="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dynamic Content -->
+                    <div class="focus-group">
+                        <h5>Dynamic Content</h5>
+                        <button class="btn btn-primary mb-2" onclick="addDynamicContent()" tabindex="0">
+                            Add Dynamic Element
+                        </button>
+                        <div id="dynamic-content" class="space-y-2">
+                            <!-- Dynamic content will be added here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conditional Focus -->
+                <div class="focus-group mt-4">
+                    <h5>Conditional Focus</h5>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="enable-conditional" tabindex="0">
+                            <span>Enable conditional focus</span>
+                        </label>
+                        <button class="btn btn-secondary" id="conditional-button" tabindex="-1">
+                            Conditional Button (disabled by default)
+                        </button>
+                        <input type="text" id="conditional-input" placeholder="Conditional input" tabindex="-1">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Focus Accessibility -->
+            <div class="focus-test">
+                <h3>Focus Accessibility Features</h3>
+                <p>Test accessibility features related to focus management.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Skip Links -->
+                    <div class="focus-group">
+                        <h5>Skip Links</h5>
+                        <p class="text-sm text-industrial-gray-600 mb-2">
+                            Skip links allow keyboard users to jump to important sections.
+                        </p>
+                        <div class="space-y-1">
+                            <a href="#main-content" class="text-primary-orange hover:underline">Skip to main content</a><br>
+                            <a href="#navigation" class="text-primary-orange hover:underline">Skip to navigation</a><br>
+                            <a href="#footer" class="text-primary-orange hover:underline">Skip to footer</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Focus Indicators -->
+                    <div class="focus-group">
+                        <h5>Focus Indicators</h5>
+                        <p class="text-sm text-industrial-gray-600 mb-2">
+                            Test different focus indicator styles.
+                        </p>
+                        <div class="space-y-2">
+                            <button class="btn btn-primary focus:ring-2 focus:ring-primary-orange focus:ring-offset-2" tabindex="0">
+                                Ring Indicator
+                            </button>
+                            <button class="btn btn-secondary focus:outline-none focus:border-2 focus:border-primary-orange" tabindex="0">
+                                Border Indicator
+                            </button>
+                            <button class="btn btn-success focus:outline-none focus:bg-primary-orange focus:text-white" tabindex="0">
+                                Background Indicator
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer id="footer" class="page-footer">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Focus Management Test v1.0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary" onclick="exportFocusReport()">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    Export Report
+                </button>
+                <button class="btn btn-primary" onclick="validateFocusOrder()">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    Validate Focus
+                </button>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Modal for Focus Trap Testing -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content" tabindex="0">
+            <h3 class="text-lg font-semibold mb-4">Modal Dialog</h3>
+            <p class="mb-4">This modal demonstrates focus trapping. Focus should be trapped within this dialog.</p>
+            
+            <div class="space-y-4">
+                <input type="text" placeholder="Modal input" class="w-full p-2 border rounded">
+                <div class="flex gap-2">
+                    <button class="btn btn-primary">Confirm</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Focus management variables
+        let focusHistory = [];
+        let focusTrapActive = false;
+        let focusMode = false;
+        
+        // Track focus events
+        document.addEventListener('focusin', function(e) {
+            const element = e.target;
+            const timestamp = new Date().toLocaleTimeString();
+            const elementInfo = {
+                tag: element.tagName.toLowerCase(),
+                type: element.type || 'none',
+                id: element.id || 'none',
+                class: element.className || 'none',
+                timestamp: timestamp
+            };
+            
+            focusHistory.push(elementInfo);
+            updateFocusHistory();
+            
+            // Add visual indicator
+            if (focusMode) {
+                element.style.outline = '3px solid var(--primary-orange)';
+                element.style.outlineOffset = '2px';
+            }
+        });
+        
+        document.addEventListener('focusout', function(e) {
+            // Remove visual indicator
+            if (focusMode) {
+                e.target.style.outline = '';
+                e.target.style.outlineOffset = '';
+            }
+        });
+        
+        // Update focus history display
+        function updateFocusHistory() {
+            const historyList = document.getElementById('focus-history-list');
+            if (!historyList) return;
+            
+            const recentHistory = focusHistory.slice(-10); // Show last 10 items
+            historyList.innerHTML = recentHistory.map(item => 
+                `<li>${item.timestamp} - ${item.tag}${item.id !== 'none' ? '#' + item.id : ''}${item.type !== 'none' ? '[' + item.type + ']' : ''}</li>`
+            ).join('');
+        }
+        
+        // Toggle focus trap
+        function toggleFocusTrap() {
+            focusTrapActive = !focusTrapActive;
+            const trapDemo = document.getElementById('focus-trap-demo');
+            
+            if (focusTrapActive) {
+                trapDemo.style.borderColor = 'var(--safety-red)';
+                trapDemo.style.backgroundColor = 'var(--error-red-50)';
+                // Implement actual focus trap logic here
+            } else {
+                trapDemo.style.borderColor = 'var(--primary-orange)';
+                trapDemo.style.backgroundColor = 'var(--bg-primary)';
+            }
+        }
+        
+        // Toggle focus mode
+        function toggleFocusMode() {
+            focusMode = !focusMode;
+            const button = document.querySelector('button[onclick="toggleFocusMode()"]');
+            
+            if (focusMode) {
+                button.innerHTML = '<i data-lucide="eye-off" class="w-4 h-4"></i> Hide Focus';
+                lucide.createIcons();
+            } else {
+                button.innerHTML = '<i data-lucide="keyboard" class="w-4 h-4"></i> Focus Mode';
+                lucide.createIcons();
+                // Remove all focus indicators
+                document.querySelectorAll('[style*="outline"]').forEach(el => {
+                    el.style.outline = '';
+                    el.style.outlineOffset = '';
+                });
+            }
+        }
+        
+        // Highlight focusable elements
+        function highlightFocusable() {
+            const focusableElements = document.querySelectorAll('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            focusableElements.forEach(el => {
+                el.style.backgroundColor = 'var(--primary-orange-100)';
+                el.style.border = '2px solid var(--primary-orange)';
+            });
+            
+            setTimeout(() => {
+                focusableElements.forEach(el => {
+                    el.style.backgroundColor = '';
+                    el.style.border = '';
+                });
+            }, 3000);
+        }
+        
+        // Clear focus history
+        function clearFocusHistory() {
+            focusHistory = [];
+            updateFocusHistory();
+        }
+        
+        // Open modal
+        function openModal() {
+            const modal = document.getElementById('modal-overlay');
+            modal.classList.add('active');
+            // Focus the modal content
+            setTimeout(() => {
+                modal.querySelector('.modal-content').focus();
+            }, 100);
+        }
+        
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('modal-overlay');
+            modal.classList.remove('active');
+        }
+        
+        // Add dynamic content
+        function addDynamicContent() {
+            const container = document.getElementById('dynamic-content');
+            const newElement = document.createElement('button');
+            newElement.className = 'btn btn-secondary';
+            newElement.textContent = `Dynamic Button ${container.children.length + 1}`;
+            newElement.tabIndex = 0;
+            container.appendChild(newElement);
+        }
+        
+        // Conditional focus management
+        document.getElementById('enable-conditional')?.addEventListener('change', function(e) {
+            const conditionalElements = [
+                document.getElementById('conditional-button'),
+                document.getElementById('conditional-input')
+            ];
+            
+            conditionalElements.forEach(el => {
+                if (el) {
+                    el.tabIndex = e.target.checked ? 0 : -1;
+                }
+            });
+        });
+        
+        // Export focus report
+        function exportFocusReport() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                totalFocusEvents: focusHistory.length,
+                focusHistory: focusHistory,
+                focusTrapActive: focusTrapActive,
+                focusMode: focusMode
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'focus-report.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Validate focus order
+        function validateFocusOrder() {
+            const focusableElements = Array.from(document.querySelectorAll('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+            const issues = [];
+            
+            // Check for logical tab order
+            focusableElements.forEach((el, index) => {
+                const rect = el.getBoundingClientRect();
+                const position = { x: rect.left, y: rect.top };
+                
+                // Simple validation: check if elements are in a logical order
+                if (index > 0) {
+                    const prevEl = focusableElements[index - 1];
+                    const prevRect = prevEl.getBoundingClientRect();
+                    const prevPosition = { x: prevRect.left, y: prevRect.top };
+                    
+                    // Check if current element is significantly to the left of previous element
+                    if (position.x < prevPosition.x - 100 && Math.abs(position.y - prevPosition.y) < 50) {
+                        issues.push(`Potential tab order issue: ${el.tagName} at position ${index + 1}`);
+                    }
+                }
+            });
+            
+            if (issues.length === 0) {
+                alert('Focus order validation passed! No issues found.');
+            } else {
+                alert('Focus order validation found issues:\n\n' + issues.join('\n'));
+            }
+        }
+        
+        // Close modal on escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFocusHistory();
+        });
+    </script>
+</body>
+</html>

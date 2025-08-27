@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication & Login - OHT-50</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* Authentication Specific Styles */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--industrial-gray-50) 0%, var(--industrial-gray-100) 100%);
+            padding: var(--space-lg);
+        }
+        
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color-light);
+            overflow: hidden;
+        }
+        
+        .auth-header {
+            background: var(--primary-orange);
+            color: white;
+            padding: var(--space-xl);
+            text-align: center;
+        }
+        
+        .auth-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .auth-brand i {
+            width: 2rem;
+            height: 2rem;
+        }
+        
+        .auth-title {
+            font-family: var(--font-display);
+            font-size: var(--text-2xl);
+            font-weight: var(--font-bold);
+            margin: 0;
+        }
+        
+        .auth-subtitle {
+            font-size: var(--text-sm);
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .auth-form {
+            padding: var(--space-xl);
+        }
+        
+        .form-group {
+            margin-bottom: var(--space-lg);
+        }
+        
+        .form-label {
+            display: block;
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            color: var(--industrial-gray-700);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            border: 2px solid var(--industrial-gray-200);
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-family: var(--font-sans);
+            transition: all var(--transition-normal);
+            background: var(--bg-primary);
+            color: var(--industrial-gray-900);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: var(--safety-red);
+        }
+        
+        .form-error {
+            color: var(--safety-red);
+            font-size: var(--text-sm);
+            margin-top: var(--space-xs);
+            display: none;
+        }
+        
+        .form-error.show {
+            display: block;
+        }
+        
+        .form-help {
+            color: var(--industrial-gray-500);
+            font-size: var(--text-sm);
+            margin-top: var(--space-xs);
+        }
+        
+        .btn-full {
+            width: 100%;
+        }
+        
+        .auth-footer {
+            padding: var(--space-lg) var(--space-xl);
+            background: var(--industrial-gray-50);
+            border-top: 1px solid var(--industrial-gray-200);
+            text-align: center;
+        }
+        
+        .auth-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--space-md);
+        }
+        
+        .auth-link {
+            color: var(--primary-orange);
+            text-decoration: none;
+            font-size: var(--text-sm);
+            transition: color var(--transition-normal);
+        }
+        
+        .auth-link:hover {
+            color: var(--primary-orange-dark);
+            text-decoration: underline;
+        }
+        
+        .security-indicators {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+            padding: var(--space-sm);
+            background: var(--safety-green);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+        }
+        
+        .security-indicators.warning {
+            background: var(--safety-yellow);
+            color: var(--industrial-gray-900);
+        }
+        
+        .security-indicators.error {
+            background: var(--safety-red);
+            color: white;
+        }
+        
+        .emergency-access {
+            position: fixed;
+            top: var(--space-md);
+            right: var(--space-md);
+            z-index: 1000;
+        }
+        
+        .btn-emergency {
+            background: var(--safety-red);
+            color: white;
+            border: none;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            font-weight: var(--font-bold);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-emergency:hover {
+            background: #B91C1C;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-emergency:active {
+            transform: translateY(0);
+        }
+        
+        .btn-emergency i {
+            width: 1rem;
+            height: 1rem;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 640px) {
+            .auth-container {
+                padding: var(--space-md);
+            }
+            
+            .auth-card {
+                max-width: 100%;
+            }
+            
+            .auth-header {
+                padding: var(--space-lg);
+            }
+            
+            .auth-form {
+                padding: var(--space-lg);
+            }
+            
+            .auth-links {
+                flex-direction: column;
+                gap: var(--space-sm);
+            }
+        }
+        
+        /* Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: var(--primary-orange);
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            z-index: 1001;
+        }
+        
+        .skip-link:focus {
+            top: 6px;
+        }
+        
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            .auth-card {
+                border: 2px solid var(--industrial-gray-900);
+            }
+            
+            .form-input {
+                border: 2px solid var(--industrial-gray-900);
+            }
+        }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .form-input,
+            .btn-emergency,
+            .auth-link {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Emergency Access Button -->
+    <div class="emergency-access">
+        <button class="btn-emergency" onclick="emergencyStop()" aria-label="Emergency Stop">
+            <i data-lucide="alert-triangle"></i>
+            E-STOP
+        </button>
+    </div>
+    
+    <!-- Main Authentication Container -->
+    <div class="auth-container" role="main" id="main-content">
+        <div class="auth-card">
+            <!-- Authentication Header -->
+            <div class="auth-header">
+                <div class="auth-brand">
+                    <i data-lucide="shield-check"></i>
+                    <h1 class="auth-title">OHT-50</h1>
+                </div>
+                <p class="auth-subtitle">Industrial Control System</p>
+            </div>
+            
+            <!-- Authentication Form -->
+            <form class="auth-form" id="loginForm" novalidate>
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-input" 
+                        placeholder="Enter your username"
+                        required
+                        autocomplete="username"
+                        aria-describedby="username-error username-help"
+                    >
+                    <div id="username-error" class="form-error" role="alert"></div>
+                    <div id="username-help" class="form-help">Enter your system username</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input" 
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                        aria-describedby="password-error password-help"
+                    >
+                    <div id="password-error" class="form-error" role="alert"></div>
+                    <div id="password-help" class="form-help">Enter your system password</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="remember" class="form-label">
+                        <input 
+                            type="checkbox" 
+                            id="remember" 
+                            name="remember"
+                            class="form-checkbox"
+                        >
+                        Remember me for 30 days
+                    </label>
+                </div>
+                
+                <!-- Security Indicators -->
+                <div class="security-indicators" id="securityStatus">
+                    <i data-lucide="shield-check"></i>
+                    <span>Secure connection established</span>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i data-lucide="log-in"></i>
+                    Login to System
+                </button>
+            </form>
+            
+            <!-- Authentication Footer -->
+            <div class="auth-footer">
+                <div class="auth-links">
+                    <a href="#" class="auth-link" onclick="forgotPassword()">Forgot Password?</a>
+                    <a href="#" class="auth-link" onclick="contactSupport()">Contact Support</a>
+                </div>
+                <p style="margin-top: var(--space-md); font-size: var(--text-xs); color: var(--industrial-gray-500);">
+                    &copy; 2025 OHT-50 Industrial Control System. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Form validation
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const securityStatus = document.getElementById('securityStatus');
+        
+        // Real-time validation
+        usernameInput.addEventListener('input', function() {
+            validateUsername();
+        });
+        
+        passwordInput.addEventListener('input', function() {
+            validatePassword();
+        });
+        
+        // Form submission
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (validateForm()) {
+                performLogin();
+            }
+        });
+        
+        // Validation functions
+        function validateUsername() {
+            const username = usernameInput.value.trim();
+            const errorElement = document.getElementById('username-error');
+            
+            if (username.length === 0) {
+                showError(usernameInput, errorElement, 'Username is required');
+                return false;
+            } else if (username.length < 3) {
+                showError(usernameInput, errorElement, 'Username must be at least 3 characters');
+                return false;
+            } else {
+                clearError(usernameInput, errorElement);
+                return true;
+            }
+        }
+        
+        function validatePassword() {
+            const password = passwordInput.value;
+            const errorElement = document.getElementById('password-error');
+            
+            if (password.length === 0) {
+                showError(passwordInput, errorElement, 'Password is required');
+                return false;
+            } else if (password.length < 6) {
+                showError(passwordInput, errorElement, 'Password must be at least 6 characters');
+                return false;
+            } else {
+                clearError(passwordInput, errorElement);
+                return true;
+            }
+        }
+        
+        function validateForm() {
+            const usernameValid = validateUsername();
+            const passwordValid = validatePassword();
+            return usernameValid && passwordValid;
+        }
+        
+        function showError(input, errorElement, message) {
+            input.classList.add('error');
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+        
+        function clearError(input, errorElement) {
+            input.classList.remove('error');
+            errorElement.classList.remove('show');
+        }
+        
+        // Login simulation
+        function performLogin() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            
+            // Show loading state
+            const submitButton = loginForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> Logging in...';
+            submitButton.disabled = true;
+            
+            // Simulate login process
+            setTimeout(() => {
+                if (username === 'admin' && password === 'password') {
+                    // Success
+                    updateSecurityStatus('success', 'Login successful. Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = '../core_pages/2-1-dashboard-main.html';
+                    }, 1500);
+                } else {
+                    // Error
+                    updateSecurityStatus('error', 'Invalid username or password');
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                    
+                    // Clear password field
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            }, 2000);
+        }
+        
+        // Security status updates
+        function updateSecurityStatus(type, message) {
+            const icon = securityStatus.querySelector('i');
+            const text = securityStatus.querySelector('span');
+            
+            securityStatus.className = 'security-indicators';
+            
+            switch(type) {
+                case 'success':
+                    securityStatus.classList.add('success');
+                    icon.setAttribute('data-lucide', 'check-circle');
+                    break;
+                case 'warning':
+                    securityStatus.classList.add('warning');
+                    icon.setAttribute('data-lucide', 'alert-triangle');
+                    break;
+                case 'error':
+                    securityStatus.classList.add('error');
+                    icon.setAttribute('data-lucide', 'x-circle');
+                    break;
+                default:
+                    icon.setAttribute('data-lucide', 'shield-check');
+            }
+            
+            text.textContent = message;
+            lucide.createIcons();
+        }
+        
+        // Emergency stop function
+        function emergencyStop() {
+            if (confirm('EMERGENCY STOP: Are you sure you want to stop all systems?')) {
+                updateSecurityStatus('error', 'EMERGENCY STOP ACTIVATED - All systems halted');
+                
+                // Simulate emergency stop
+                setTimeout(() => {
+                    alert('EMERGENCY STOP: All systems have been safely stopped. Contact system administrator.');
+                }, 1000);
+            }
+        }
+        
+        // Support functions
+        function forgotPassword() {
+            alert('Password reset functionality would be implemented here.');
+        }
+        
+        function contactSupport() {
+            alert('Support contact functionality would be implemented here.');
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + E for emergency stop
+            if (e.ctrlKey && e.key === 'e') {
+                e.preventDefault();
+                emergencyStop();
+            }
+            
+            // Enter key in form
+            if (e.key === 'Enter' && (e.target === usernameInput || e.target === passwordInput)) {
+                if (validateForm()) {
+                    performLogin();
+                }
+            }
+        });
+        
+        // Focus management
+        usernameInput.focus();
+        
+        // Auto-hide security status after 5 seconds
+        setTimeout(() => {
+            if (securityStatus.classList.contains('success')) {
+                securityStatus.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

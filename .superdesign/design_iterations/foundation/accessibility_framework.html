@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessibility Framework - OHT-50</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- OHT-50 Theme -->
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    
+    <style>
+        /* Accessibility Framework */
+        .page-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: var(--space-lg);
+            height: 100vh;
+            padding: var(--space-lg);
+            background: var(--bg-secondary);
+        }
+
+        .page-header {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        .page-main {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+            overflow-y: auto;
+        }
+
+        .page-footer {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--industrial-gray-300);
+        }
+
+        /* Accessibility Demo */
+        .accessibility-demo {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .accessibility-demo h3 {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            margin-bottom: var(--space-md);
+        }
+
+        .accessibility-demo p {
+            color: var(--industrial-gray-600);
+            margin-bottom: var(--space-lg);
+        }
+
+        /* Focus Management */
+        .focus-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .focus-item {
+            padding: var(--space-md);
+            border: 2px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            text-align: center;
+            transition: all var(--transition-fast);
+        }
+
+        .focus-item:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px var(--primary-orange-100);
+            outline: none;
+        }
+
+        /* High Contrast Mode */
+        .high-contrast-demo {
+            background: var(--bg-primary);
+            border: 2px solid var(--industrial-gray-900);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .high-contrast-demo h4 {
+            color: var(--industrial-gray-900);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--space-md);
+        }
+
+        .high-contrast-demo p {
+            color: var(--industrial-gray-900);
+        }
+
+        /* Screen Reader Support */
+        .sr-demo {
+            position: relative;
+            padding: var(--space-lg);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Keyboard Navigation */
+        .keyboard-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .keyboard-nav button {
+            min-width: 120px;
+            min-height: 44px;
+        }
+
+        /* Color Contrast Test */
+        .contrast-test {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .contrast-item {
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            text-align: center;
+            font-weight: var(--font-medium);
+        }
+
+        .contrast-item.pass {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .contrast-item.warning {
+            background: var(--warning-yellow);
+            color: var(--industrial-gray-900);
+        }
+
+        .contrast-item.fail {
+            background: var(--error-red);
+            color: white;
+        }
+
+        /* ARIA Examples */
+        .aria-demo {
+            background: var(--industrial-gray-50);
+            border: 1px solid var(--industrial-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .aria-demo h4 {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-800);
+            margin-bottom: var(--space-sm);
+        }
+
+        .aria-demo code {
+            background: var(--industrial-gray-100);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+        }
+
+        /* Reduced Motion */
+        .motion-demo {
+            padding: var(--space-lg);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .motion-element {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-orange);
+            border-radius: var(--radius-md);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Skip Links */
+        .skip-links {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            z-index: var(--z-emergency);
+        }
+
+        .skip-link {
+            background: var(--primary-orange);
+            color: white;
+            padding: var(--space-sm) var(--space-md);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            font-weight: var(--font-semibold);
+            transition: top var(--transition-fast);
+        }
+
+        .skip-link:focus {
+            top: 6px;
+        }
+
+        /* Landmark Roles */
+        .landmark-demo {
+            border: 2px solid var(--primary-orange);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .landmark-demo::before {
+            content: "Landmark: " attr(data-landmark);
+            display: block;
+            font-weight: var(--font-semibold);
+            color: var(--primary-orange);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Form Accessibility */
+        .form-demo {
+            background: var(--bg-primary);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-md);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: var(--font-medium);
+            color: var(--industrial-gray-700);
+            margin-bottom: var(--space-xs);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-sm);
+            border: 1px solid var(--industrial-gray-300);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px var(--primary-orange-100);
+        }
+
+        .form-error {
+            color: var(--error-red);
+            font-size: var(--text-sm);
+            margin-top: var(--space-xs);
+        }
+
+        /* Error Handling */
+        .error-demo {
+            background: var(--error-red-50);
+            border: 1px solid var(--error-red-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .error-demo h4 {
+            color: var(--error-red-800);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-sm);
+        }
+
+        .error-demo p {
+            color: var(--error-red-700);
+        }
+
+        /* Success Feedback */
+        .success-demo {
+            background: var(--success-green-50);
+            border: 1px solid var(--success-green-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .success-demo h4 {
+            color: var(--success-green-800);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-sm);
+        }
+
+        .success-demo p {
+            color: var(--success-green-700);
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Links -->
+    <div class="skip-links">
+        <a href="#main-content" class="skip-link">Skip to main content</a>
+        <a href="#navigation" class="skip-link">Skip to navigation</a>
+        <a href="#footer" class="skip-link">Skip to footer</a>
+    </div>
+    
+    <!-- Page Container -->
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header" role="banner">
+            <div class="flex items-center gap-4">
+                <i data-lucide="accessibility" class="w-6 h-6 text-primary-orange" aria-hidden="true"></i>
+                <h1 class="text-xl font-semibold">Accessibility Framework</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">WCAG 2.1 AA Compliance</span>
+                <button class="btn btn-secondary" aria-label="Accessibility settings">
+                    <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i>
+                    Settings
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="page-main" role="main">
+            <!-- Focus Management -->
+            <div class="accessibility-demo">
+                <h3>Focus Management</h3>
+                <p>Test keyboard navigation and focus indicators. Use Tab to navigate through interactive elements.</p>
+                
+                <div class="focus-demo">
+                    <button class="focus-item" tabindex="0">Button 1</button>
+                    <button class="focus-item" tabindex="0">Button 2</button>
+                    <button class="focus-item" tabindex="0">Button 3</button>
+                    <a href="#" class="focus-item" tabindex="0">Link 1</a>
+                    <a href="#" class="focus-item" tabindex="0">Link 2</a>
+                    <input type="text" class="focus-item" placeholder="Input field" tabindex="0">
+                </div>
+                
+                <div class="aria-demo">
+                    <h4>Focus Indicators</h4>
+                    <p>All interactive elements have visible focus indicators with high contrast:</p>
+                    <code>:focus { outline: 2px solid var(--primary-orange); outline-offset: 2px; }</code>
+                </div>
+            </div>
+            
+            <!-- Screen Reader Support -->
+            <div class="accessibility-demo">
+                <h3>Screen Reader Support</h3>
+                <p>Elements with proper ARIA labels and screen reader support:</p>
+                
+                <div class="sr-demo">
+                    <h4>Hidden Content for Screen Readers</h4>
+                    <p>This content is visible to screen readers but hidden visually:</p>
+                    <span class="sr-only">This text is only available to screen readers</span>
+                    
+                    <div class="mt-4">
+                        <button class="btn btn-primary" aria-describedby="button-description">
+                            <i data-lucide="play" class="w-4 h-4" aria-hidden="true"></i>
+                            Start Operation
+                        </button>
+                        <div id="button-description" class="sr-only">
+                            Starts the OHT-50 system operation. This will begin the automated process.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="aria-demo">
+                    <h4>ARIA Labels and Descriptions</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><code>aria-label="Close dialog"</code> - Provides accessible name</li>
+                        <li><code>aria-describedby="description-id"</code> - Links to description</li>
+                        <li><code>aria-hidden="true"</code> - Hides decorative elements</li>
+                        <li><code>role="button"</code> - Defines element role</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Keyboard Navigation -->
+            <div class="accessibility-demo">
+                <h3>Keyboard Navigation</h3>
+                <p>All functionality accessible via keyboard. Test with Tab, Enter, Space, and arrow keys.</p>
+                
+                <div class="keyboard-nav">
+                    <button class="btn btn-primary" tabindex="0">Primary Action</button>
+                    <button class="btn btn-secondary" tabindex="0">Secondary Action</button>
+                    <button class="btn btn-danger" tabindex="0">Emergency Stop</button>
+                    <button class="btn btn-success" tabindex="0">Success Action</button>
+                </div>
+                
+                <div class="aria-demo">
+                    <h4>Keyboard Shortcuts</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><strong>Tab:</strong> Navigate between interactive elements</li>
+                        <li><strong>Enter/Space:</strong> Activate buttons and links</li>
+                        <li><strong>Arrow keys:</strong> Navigate within components</li>
+                        <li><strong>Escape:</strong> Close dialogs and menus</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Color Contrast -->
+            <div class="accessibility-demo">
+                <h3>Color Contrast Compliance</h3>
+                <p>All text meets WCAG 2.1 AA contrast requirements (4.5:1 for normal text, 3:1 for large text):</p>
+                
+                <div class="contrast-test">
+                    <div class="contrast-item pass">Pass (4.5:1)</div>
+                    <div class="contrast-item pass">Pass (7:1)</div>
+                    <div class="contrast-item warning">Warning (3.2:1)</div>
+                    <div class="contrast-item fail">Fail (2.1:1)</div>
+                </div>
+                
+                <div class="aria-demo">
+                    <h4>Contrast Ratios</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><strong>Normal text:</strong> Minimum 4.5:1 contrast ratio</li>
+                        <li><strong>Large text:</strong> Minimum 3:1 contrast ratio</li>
+                        <li><strong>UI components:</strong> Minimum 3:1 contrast ratio</li>
+                        <li><strong>Focus indicators:</strong> Minimum 3:1 contrast ratio</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Form Accessibility -->
+            <div class="accessibility-demo">
+                <h3>Form Accessibility</h3>
+                <p>Forms with proper labels, error handling, and validation feedback:</p>
+                
+                <div class="form-demo">
+                    <form role="form" aria-labelledby="form-title">
+                        <h4 id="form-title">System Configuration</h4>
+                        
+                        <div class="form-group">
+                            <label for="system-name" class="form-label">System Name *</label>
+                            <input type="text" id="system-name" class="form-input" 
+                                   aria-required="true" 
+                                   aria-describedby="name-error"
+                                   placeholder="Enter system name">
+                            <div id="name-error" class="form-error" role="alert" aria-live="polite"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="system-mode" class="form-label">Operating Mode</label>
+                            <select id="system-mode" class="form-input" aria-describedby="mode-help">
+                                <option value="">Select mode</option>
+                                <option value="auto">Automatic</option>
+                                <option value="manual">Manual</option>
+                                <option value="semi">Semi-automatic</option>
+                            </select>
+                            <div id="mode-help" class="text-sm text-industrial-gray-600">
+                                Choose the operating mode for the system
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <fieldset>
+                                <legend class="form-label">Safety Features</legend>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" name="safety" value="estop">
+                                        <span>Emergency Stop</span>
+                                    </label>
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" name="safety" value="sensors">
+                                        <span>Proximity Sensors</span>
+                                    </label>
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" name="safety" value="monitoring">
+                                        <span>Real-time Monitoring</span>
+                                    </label>
+                                </div>
+                            </fieldset>
+                        </div>
+                        
+                        <div class="flex gap-4">
+                            <button type="submit" class="btn btn-primary">Save Configuration</button>
+                            <button type="reset" class="btn btn-secondary">Reset</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Error and Success Handling -->
+            <div class="accessibility-demo">
+                <h3>Error and Success Feedback</h3>
+                <p>Proper error handling with screen reader announcements:</p>
+                
+                <div class="error-demo" role="alert" aria-live="assertive">
+                    <h4>Error: Configuration Failed</h4>
+                    <p>The system configuration could not be saved. Please check your input and try again.</p>
+                    <button class="btn btn-secondary mt-2">Dismiss Error</button>
+                </div>
+                
+                <div class="success-demo" role="status" aria-live="polite">
+                    <h4>Success: Configuration Saved</h4>
+                    <p>The system configuration has been successfully saved and applied.</p>
+                    <button class="btn btn-secondary mt-2">Dismiss Success</button>
+                </div>
+                
+                <div class="aria-demo">
+                    <h4>Live Regions</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><code>aria-live="assertive"</code> - For critical errors</li>
+                        <li><code>aria-live="polite"</code> - For success messages</li>
+                        <li><code>role="alert"</code> - For error notifications</li>
+                        <li><code>role="status"</code> - For status updates</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Landmark Roles -->
+            <div class="accessibility-demo">
+                <h3>Semantic HTML and Landmarks</h3>
+                <p>Proper use of semantic HTML elements and ARIA landmarks:</p>
+                
+                <nav id="navigation" class="landmark-demo" data-landmark="Navigation" role="navigation" aria-label="Main navigation">
+                    <ul class="flex gap-4">
+                        <li><a href="#" class="nav-item">Dashboard</a></li>
+                        <li><a href="#" class="nav-item">Control</a></li>
+                        <li><a href="#" class="nav-item">Settings</a></li>
+                    </ul>
+                </nav>
+                
+                <aside class="landmark-demo" data-landmark="Complementary" role="complementary" aria-label="System status">
+                    <h4>System Status</h4>
+                    <p>All systems operational</p>
+                </aside>
+                
+                <div class="aria-demo">
+                    <h4>Landmark Roles</h4>
+                    <ul class="text-sm space-y-2">
+                        <li><code>role="banner"</code> - Page header</li>
+                        <li><code>role="main"</code> - Main content</li>
+                        <li><code>role="navigation"</code> - Navigation menu</li>
+                        <li><code>role="complementary"</code> - Sidebar content</li>
+                        <li><code>role="contentinfo"</code> - Footer information</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Reduced Motion -->
+            <div class="accessibility-demo">
+                <h3>Reduced Motion Support</h3>
+                <p>Respects user's motion preferences:</p>
+                
+                <div class="motion-demo">
+                    <p>This element animates unless the user has requested reduced motion:</p>
+                    <div class="motion-element" aria-label="Animated element"></div>
+                </div>
+                
+                <div class="aria-demo">
+                    <h4>Motion Preferences</h4>
+                    <p>The system respects the user's motion preferences set in their operating system:</p>
+                    <code>@media (prefers-reduced-motion: reduce) { animation: none; }</code>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer id="footer" class="page-footer" role="contentinfo">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-industrial-gray-600">Accessibility Framework v1.0</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="btn btn-secondary" aria-label="Run accessibility audit">
+                    <i data-lucide="shield-check" class="w-4 h-4" aria-hidden="true"></i>
+                    Audit
+                </button>
+                <button class="btn btn-primary" aria-label="View accessibility report">
+                    <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                    Report
+                </button>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Form validation example
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const nameInput = document.getElementById('system-name');
+            const nameError = document.getElementById('name-error');
+            
+            if (form && nameInput && nameError) {
+                nameInput.addEventListener('blur', function() {
+                    if (!this.value.trim()) {
+                        nameError.textContent = 'System name is required';
+                        this.setAttribute('aria-invalid', 'true');
+                    } else {
+                        nameError.textContent = '';
+                        this.setAttribute('aria-invalid', 'false');
+                    }
+                });
+                
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (!nameInput.value.trim()) {
+                        nameError.textContent = 'System name is required';
+                        nameInput.setAttribute('aria-invalid', 'true');
+                        nameInput.focus();
+                    } else {
+                        // Show success message
+                        const successDemo = document.querySelector('.success-demo');
+                        if (successDemo) {
+                            successDemo.style.display = 'block';
+                        }
+                    }
+                });
+            }
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + / for accessibility help
+                if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                    e.preventDefault();
+                    alert('Accessibility shortcuts:\n- Tab: Navigate\n- Enter/Space: Activate\n- Escape: Close\n- Ctrl+/: This help');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
