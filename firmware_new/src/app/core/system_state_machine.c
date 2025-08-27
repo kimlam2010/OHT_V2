@@ -28,6 +28,8 @@ typedef struct {
     bool safety_ok;
     bool communication_ok;
     bool sensors_ok;
+    bool location_ok;
+    bool target_valid;
 } system_state_machine_t;
 
 // Global state machine instance
@@ -46,6 +48,7 @@ static bool transition_condition_always(void);
 static bool transition_condition_safety_ok(void);
 static bool transition_condition_system_ready(void);
 static bool transition_condition_no_fault(void);
+static bool transition_condition_move_ready(void);
 static hal_status_t enter_state(system_state_t state);
 static hal_status_t exit_state(system_state_t state);
 static hal_status_t update_leds_for_state(system_state_t state);
@@ -61,7 +64,7 @@ static const state_transition_t state_transitions[] = {
     {SYSTEM_STATE_INIT, SYSTEM_EVENT_FAULT_DETECTED, SYSTEM_STATE_FAULT, transition_condition_always},
     
     // IDLE state transitions
-    {SYSTEM_STATE_IDLE, SYSTEM_EVENT_MOVE_COMMAND, SYSTEM_STATE_MOVE, transition_condition_safety_ok},
+    {SYSTEM_STATE_IDLE, SYSTEM_EVENT_MOVE_COMMAND, SYSTEM_STATE_MOVE, transition_condition_move_ready},
     {SYSTEM_STATE_IDLE, SYSTEM_EVENT_DOCK_COMMAND, SYSTEM_STATE_DOCK, transition_condition_safety_ok},
     {SYSTEM_STATE_IDLE, SYSTEM_EVENT_ESTOP_TRIGGERED, SYSTEM_STATE_ESTOP, transition_condition_always},
     {SYSTEM_STATE_IDLE, SYSTEM_EVENT_FAULT_DETECTED, SYSTEM_STATE_FAULT, transition_condition_always},
@@ -76,7 +79,7 @@ static const state_transition_t state_transitions[] = {
     
     // DOCK state transitions
     {SYSTEM_STATE_DOCK, SYSTEM_EVENT_STOP_COMMAND, SYSTEM_STATE_IDLE, transition_condition_always},
-    {SYSTEM_STATE_DOCK, SYSTEM_EVENT_MOVE_COMMAND, SYSTEM_STATE_MOVE, transition_condition_safety_ok},
+    {SYSTEM_STATE_DOCK, SYSTEM_EVENT_MOVE_COMMAND, SYSTEM_STATE_MOVE, transition_condition_move_ready},
     {SYSTEM_STATE_DOCK, SYSTEM_EVENT_ESTOP_TRIGGERED, SYSTEM_STATE_ESTOP, transition_condition_always},
     {SYSTEM_STATE_DOCK, SYSTEM_EVENT_FAULT_DETECTED, SYSTEM_STATE_FAULT, transition_condition_always},
     {SYSTEM_STATE_DOCK, SYSTEM_EVENT_TIMEOUT, SYSTEM_STATE_IDLE, transition_condition_always},
@@ -111,6 +114,10 @@ static bool transition_condition_system_ready(void) {
 
 static bool transition_condition_no_fault(void) {
     return (g_state_machine.current_fault == SYSTEM_FAULT_NONE);
+}
+
+static bool transition_condition_move_ready(void) {
+    return g_state_machine.safety_ok && g_state_machine.location_ok && g_state_machine.target_valid;
 }
 
 // State machine implementation
@@ -155,11 +162,18 @@ hal_status_t system_state_machine_init(const system_config_t *config) {
         return status;
     }
     
-    // Set initial LED pattern
-    update_leds_for_state(SYSTEM_STATE_INIT);
-    
     // Set E-Stop callback
     hal_estop_set_callback(NULL); // Will be set by safety manager
+    
+    // Automatically transition to IDLE state after successful initialization
+    g_state_machine.previous_state = SYSTEM_STATE_INIT;
+    g_state_machine.current_state = SYSTEM_STATE_IDLE;
+    g_state_machine.last_event = SYSTEM_EVENT_INIT_COMPLETE;
+    g_state_machine.state_entry_time = hal_get_timestamp_us();
+    g_state_machine.state_transition_count++;
+    
+    // Set initial LED pattern for IDLE state
+    update_leds_for_state(SYSTEM_STATE_IDLE);
     
     return HAL_STATUS_OK;
 }
@@ -250,9 +264,26 @@ hal_status_t system_state_machine_update(void) {
     check_communication_status();
     check_sensor_status();
     
+    // Per-state timeout thresholds (ms)
+    uint32_t timeout_ms = g_state_machine.config.state_timeout_ms;
+    switch (g_state_machine.current_state) {
+        case SYSTEM_STATE_MOVE:
+            timeout_ms = (g_state_machine.config.state_timeout_ms > 0) ? g_state_machine.config.state_timeout_ms : 5000;
+            break;
+        case SYSTEM_STATE_DOCK:
+            timeout_ms = (g_state_machine.config.state_timeout_ms > 0) ? g_state_machine.config.state_timeout_ms : 8000;
+            break;
+        case SYSTEM_STATE_IDLE:
+            timeout_ms = 0; // no timeout for idle by default
+            break;
+        default:
+            // use default or provided config
+            break;
+    }
+    
     // Check for timeout events
     uint64_t state_duration_ms = (current_time - g_state_machine.state_entry_time) / 1000;
-    if (state_duration_ms > g_state_machine.config.state_timeout_ms) {
+    if (timeout_ms > 0 && state_duration_ms > timeout_ms) {
         system_state_machine_process_event(SYSTEM_EVENT_TIMEOUT);
     }
     
@@ -291,6 +322,8 @@ hal_status_t system_state_machine_get_status(system_status_t *status) {
     status->safety_ok = g_state_machine.safety_ok;
     status->communication_ok = g_state_machine.communication_ok;
     status->sensors_ok = g_state_machine.sensors_ok;
+    status->location_ok = g_state_machine.location_ok;
+    status->target_valid = g_state_machine.target_valid;
     
     return HAL_STATUS_OK;
 }
@@ -364,6 +397,23 @@ hal_status_t system_state_machine_get_config(system_config_t *config) {
     }
     
     memcpy(config, &g_state_machine.config, sizeof(system_config_t));
+    return HAL_STATUS_OK;
+}
+
+// New setter APIs
+hal_status_t system_state_machine_set_location_ok(bool ok) {
+    if (!g_state_machine.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    g_state_machine.location_ok = ok;
+    return HAL_STATUS_OK;
+}
+
+hal_status_t system_state_machine_set_target_valid(bool valid) {
+    if (!g_state_machine.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    g_state_machine.target_valid = valid;
     return HAL_STATUS_OK;
 }
 
@@ -464,7 +514,9 @@ hal_status_t system_state_machine_get_diagnostics(char *info, size_t max_len) {
         "System Ready: %s\n"
         "Safety OK: %s\n"
         "Communication OK: %s\n"
-        "Sensors OK: %s\n",
+        "Sensors OK: %s\n"
+        "Location OK: %s\n"
+        "Target Valid: %s\n",
         system_state_machine_get_state_name(g_state_machine.current_state),
         system_state_machine_get_state_name(g_state_machine.previous_state),
         system_state_machine_get_event_name(g_state_machine.last_event),
@@ -474,7 +526,9 @@ hal_status_t system_state_machine_get_diagnostics(char *info, size_t max_len) {
         g_state_machine.system_ready ? "YES" : "NO",
         g_state_machine.safety_ok ? "YES" : "NO",
         g_state_machine.communication_ok ? "YES" : "NO",
-        g_state_machine.sensors_ok ? "YES" : "NO"
+        g_state_machine.sensors_ok ? "YES" : "NO",
+        g_state_machine.location_ok ? "YES" : "NO",
+        g_state_machine.target_valid ? "YES" : "NO"
     );
     
     return HAL_STATUS_OK;
@@ -493,36 +547,50 @@ static hal_status_t enter_state(system_state_t state) {
             g_state_machine.safety_ok = false;
             g_state_machine.communication_ok = false;
             g_state_machine.sensors_ok = false;
+            g_state_machine.location_ok = false;
+            g_state_machine.target_valid = false;
             break;
             
         case SYSTEM_STATE_IDLE:
             // System is ready for commands
             g_state_machine.system_ready = true;
             g_state_machine.safety_ok = true;  // Set safety OK for test compatibility
+            g_state_machine.location_ok = false; // Reset location
+            g_state_machine.target_valid = false; // Reset target
             break;
             
         case SYSTEM_STATE_MOVE:
             // Start movement operations
+            g_state_machine.location_ok = false; // Reset location
+            g_state_machine.target_valid = false; // Reset target
             break;
             
         case SYSTEM_STATE_DOCK:
             // Start docking operations
+            g_state_machine.location_ok = false; // Reset location
+            g_state_machine.target_valid = false; // Reset target
             break;
             
         case SYSTEM_STATE_FAULT:
             // Handle fault state
             g_state_machine.system_ready = false;
+            g_state_machine.location_ok = false; // Reset location
+            g_state_machine.target_valid = false; // Reset target
             break;
             
         case SYSTEM_STATE_ESTOP:
             // Emergency stop - disable all operations
             g_state_machine.system_ready = false;
             g_state_machine.safety_ok = false;
+            g_state_machine.location_ok = false; // Reset location
+            g_state_machine.target_valid = false; // Reset target
             break;
             
         case SYSTEM_STATE_SHUTDOWN:
             // Shutdown system
             g_state_machine.system_ready = false;
+            g_state_machine.location_ok = false; // Reset location
+            g_state_machine.target_valid = false; // Reset target
             break;
             
         default:
@@ -635,9 +703,11 @@ static hal_status_t check_communication_status(void) {
     return HAL_STATUS_OK;
 }
 
+// Update checks: also evaluate location and target guards if enabled
 static hal_status_t check_sensor_status(void) {
-    // Check LiDAR sensor status
-    // This will be implemented when LiDAR HAL is integrated
-    g_state_machine.sensors_ok = true; // Placeholder
+    // Placeholder sensor checks
+    g_state_machine.sensors_ok = true;
+    // For now, derive location_ok from sensors_ok (can be replaced by real location manager)
+    g_state_machine.location_ok = g_state_machine.sensors_ok;
     return HAL_STATUS_OK;
 }

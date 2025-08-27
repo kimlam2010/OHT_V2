@@ -8,10 +8,17 @@
  */
 
 #include "module_manager.h"
+#include "communication_manager.h"
 #include "hal_common.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+// Forward declarations for auto-discovery functions
+static hal_status_t discover_module_at_address(uint8_t address);
+static bool is_valid_module_type(uint16_t module_type);
+static hal_status_t read_module_capabilities(uint8_t address, module_type_t type, uint32_t *capabilities);
+static void check_offline_modules(void);
 
 // Maximum number of modules that can be managed
 #define MAX_MODULES 32
@@ -128,10 +135,14 @@ hal_status_t module_manager_stop(void) {
 }
 
 hal_status_t module_manager_discover_modules(void) {
+    printf("DEBUG: module_manager_discover_modules() called\n");
+    
     if (!g_module_manager.initialized) {
+        printf("DEBUG: Module manager not initialized\n");
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
+    printf("DEBUG: Calling perform_module_discovery()\n");
     return perform_module_discovery();
 }
 
@@ -432,15 +443,29 @@ hal_status_t module_manager_reset(void) {
 // Helper functions
 
 static hal_status_t perform_module_discovery(void) {
-    g_module_manager.statistics.discovery_count++;
+    printf("DEBUG: perform_module_discovery() - starting scan\n");
     
-    // Simulate module discovery
-    printf("Performing module discovery...\n");
+    hal_status_t overall_status = HAL_STATUS_OK;
+    int discovered_count = 0;
     
-    // Update discovery time
-    g_module_manager.last_discovery_time = hal_get_timestamp_us();
+    // Scan Modbus addresses 0x01-0x20
+    for (uint8_t address = 0x01; address <= 0x20; address++) {
+        printf("DEBUG: Scanning address 0x%02X\n", address);
+        hal_status_t status = discover_module_at_address(address);
+        if (status == HAL_STATUS_OK) {
+            discovered_count++;
+            printf("DEBUG: Module discovered at address 0x%02X\n", address);
+        } else {
+            printf("DEBUG: No module at address 0x%02X (status=%d)\n", address, status);
+        }
+    }
     
-    return HAL_STATUS_OK;
+    printf("DEBUG: Discovery scan completed - found %d modules\n", discovered_count);
+    
+    // Check for offline modules
+    check_offline_modules();
+    
+    return overall_status;
 }
 
 static hal_status_t perform_health_check(uint8_t module_id) {
@@ -527,4 +552,183 @@ static int find_module_index(uint8_t module_id) {
         }
     }
     return -1;
+}
+
+// Auto-Discovery Implementation Functions
+
+static hal_status_t discover_module_at_address(uint8_t address) {
+    printf("DEBUG: discover_module_at_address(0x%02X)\n", address);
+    
+    // Read module identification registers (0x00F0-0x00FF)
+    uint16_t device_id = 0;
+    uint16_t module_type = 0;
+    char version[16] = {0};
+    
+    // Read Device ID register (0x00F0) - use single register read
+    hal_status_t status = comm_manager_modbus_read_holding_registers(
+        address, 0x00F0, 1, &device_id);
+    
+    printf("DEBUG: Device ID read status=%d, value=0x%04X\n", status, device_id);
+    
+    if (status != HAL_STATUS_OK) {
+        return status; // Module not responding
+    }
+    
+    // Read Module Type register (0x00F7) - use single register read
+    status = comm_manager_modbus_read_holding_registers(
+        address, 0x00F7, 1, &module_type);
+    
+    printf("DEBUG: Module Type read status=%d, value=0x%04X\n", status, module_type);
+    
+    if (status != HAL_STATUS_OK) {
+        return status;
+    }
+    
+    // Read Version registers (0x00F8-0x00FF) - 8 registers for version string
+    uint16_t version_regs[8];
+    status = comm_manager_modbus_read_holding_registers(
+        address, 0x00F8, 8, version_regs);
+    
+    printf("DEBUG: Version registers read status=%d\n", status);
+    
+    if (status != HAL_STATUS_OK) {
+        return status;
+    }
+    
+    // Convert version registers to string
+    int version_index = 0;
+    for (int i = 0; i < 8 && version_index < 15; i++) {
+        // Each register contains 2 ASCII characters
+        char high_byte = (version_regs[i] >> 8) & 0xFF;
+        char low_byte = version_regs[i] & 0xFF;
+        
+        if (high_byte != 0) {
+            version[version_index++] = high_byte;
+        }
+        if (low_byte != 0 && version_index < 15) {
+            version[version_index++] = low_byte;
+        }
+    }
+    version[version_index] = '\0'; // Ensure null termination
+    
+    printf("DEBUG: Converted version string: '%s'\n", version);
+    
+    // Validate module type
+    if (!is_valid_module_type(module_type)) {
+        printf("Invalid module type 0x%04X at address 0x%02X\n", module_type, address);
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    printf("DEBUG: Module type 0x%04X is valid\n", module_type);
+    
+    // Create module info
+    module_info_t module_info = {0};
+    module_info.module_id = address;
+    module_info.address = address;
+    module_info.type = (module_type_t)module_type;
+    strncpy(module_info.version, version, sizeof(module_info.version) - 1);
+    snprintf(module_info.name, sizeof(module_info.name), "%s_%02X", 
+             module_manager_get_type_name(module_info.type), address);
+    snprintf(module_info.serial_number, sizeof(module_info.serial_number), 
+             "SN%04X%02X", device_id, address);
+    
+    printf("DEBUG: Created module info: ID=%d, Type=%s, Version=%s\n", 
+           module_info.module_id, module_manager_get_type_name(module_info.type), module_info.version);
+    
+    // Read module capabilities based on type
+    status = read_module_capabilities(address, module_info.type, &module_info.capabilities);
+    if (status != HAL_STATUS_OK) {
+        printf("Failed to read capabilities for module at 0x%02X\n", address);
+        // Continue anyway, capabilities will be 0
+    }
+    
+    // Register or update module
+    status = module_manager_register_module(&module_info);
+    printf("DEBUG: Register module status=%d\n", status);
+    
+    if (status == HAL_STATUS_OK) {
+        // Mark module as online in registry
+        registry_mark_online(address, module_info.type, version);
+        
+        if (g_module_manager.event_callback) {
+            g_module_manager.event_callback(MODULE_EVENT_DISCOVERED, address, &module_info);
+        }
+    }
+    
+    return status;
+}
+
+static bool is_valid_module_type(uint16_t module_type) {
+    printf("DEBUG: is_valid_module_type(0x%04X)\n", module_type);
+    switch (module_type) {
+        case MODULE_TYPE_POWER:
+        case MODULE_TYPE_SAFETY:
+        case MODULE_TYPE_TRAVEL_MOTOR:
+        case MODULE_TYPE_DOCK:
+            printf("DEBUG: Module type 0x%04X is valid\n", module_type);
+            return true;
+        default:
+            printf("DEBUG: Module type 0x%04X is invalid\n", module_type);
+            return false;
+    }
+}
+
+static hal_status_t read_module_capabilities(uint8_t address, module_type_t type, uint32_t *capabilities) {
+    uint16_t capabilities_reg = 0;
+    
+    // Read capabilities register (0x00F6)
+    hal_status_t status = comm_manager_modbus_read_holding_registers(
+        address, 0x00F6, 1, &capabilities_reg);
+    
+    if (status != HAL_STATUS_OK) {
+        return status;
+    }
+    
+    *capabilities = capabilities_reg;
+    
+    // Add default capabilities based on module type
+    if (type == MODULE_TYPE_POWER) {
+        *capabilities |= POWER_CAP_VOLTAGE_MONITOR | POWER_CAP_CURRENT_MONITOR;
+    } else if (type == MODULE_TYPE_TRAVEL_MOTOR) {
+        *capabilities |= (1 << 0) | (1 << 1); // Position and velocity control
+    } else if (type == MODULE_TYPE_SAFETY) {
+        *capabilities |= (1 << 0); // Basic safety monitoring
+    } else if (type == MODULE_TYPE_DOCK) {
+        *capabilities |= (1 << 0) | (1 << 1); // Location and docking
+    }
+    printf("DEBUG: Final capabilities=0x%04X\n", *capabilities);
+    
+    return HAL_STATUS_OK;
+}
+
+static void check_offline_modules(void) {
+    uint64_t current_time = hal_get_timestamp_us();
+    uint64_t offline_threshold = 30000000; // 30 seconds in microseconds
+    
+    for (int i = 0; i < MAX_MODULES; i++) {
+        if (g_module_manager.modules[i].registered) {
+            uint64_t time_since_last_seen = current_time - g_module_manager.modules[i].last_health_check;
+            
+            if (time_since_last_seen > offline_threshold) {
+                if (g_module_manager.modules[i].status.status == MODULE_STATUS_ONLINE) {
+                    // Mark as offline
+                    g_module_manager.modules[i].status.status = MODULE_STATUS_OFFLINE;
+                    g_module_manager.statistics.online_modules--;
+                    g_module_manager.statistics.offline_modules++;
+                    
+                    // Mark as offline in registry
+                    registry_mark_offline(g_module_manager.modules[i].info.address);
+                    
+                    if (g_module_manager.event_callback) {
+                        g_module_manager.event_callback(MODULE_EVENT_OFFLINE, 
+                            g_module_manager.modules[i].info.module_id, NULL);
+                    }
+                    
+                    printf("Module %d (0x%02X) marked as offline\n", 
+                           g_module_manager.modules[i].info.module_id,
+                           g_module_manager.modules[i].info.address);
+                }
+            }
+        }
+    }
 }

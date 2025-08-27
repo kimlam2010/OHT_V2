@@ -21,12 +21,18 @@
 
 // Modbus Configuration - Using values from hal_rs485.h
 
-// Module Addresses
-#define MODULE_ADDR_POWER                  0x02U
-#define MODULE_ADDR_SAFETY                 0x03U
-#define MODULE_ADDR_TRAVEL_MOTOR           0x04U
-#define MODULE_ADDR_DOCK                   0x05U
+// Module Addresses - Updated according to CTO requirements for 4 mandatory slave modules
+// Master Control Module (0x01) is running this firmware, so we only need 4 slave modules
+#define MODULE_ADDR_POWER                  0x02U  // Power Module (BẮT BUỘC)
+#define MODULE_ADDR_SAFETY                 0x03U  // Safety Module (BẮT BUỘC)
+#define MODULE_ADDR_TRAVEL_MOTOR           0x04U  // Travel Motor Module (BẮT BUỘC)
+#define MODULE_ADDR_DOCK                   0x05U  // Dock & Location Module (BẮT BUỘC)
 #define MODULE_ADDR_MAX                    0x06U
+
+// CTO Requirements - 4 Mandatory Slave Modules (excluding Master Control)
+#define MANDATORY_MODULES_COUNT            4U     // Number of mandatory slave modules required
+#define MANDATORY_MODULE_ADDR_START        0x02U  // Start address for mandatory slave modules
+#define MANDATORY_MODULE_ADDR_END          0x05U  // End address for mandatory slave modules
 
 // ============================================================================
 // TIMING CONSTANTS

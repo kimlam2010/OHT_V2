@@ -161,22 +161,31 @@ target_link_libraries(test_hal_usb
 )
 
 # Application Core tests - DISABLED
-# add_executable(test_system_state_machine
-#     app/test_system_state_machine.c
-# )
-# 
-# target_include_directories(test_system_state_machine PRIVATE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
-# )
-# 
-# target_link_libraries(test_system_state_machine
-#     app_core
-#     hal_common
-#     unity
-# )
-# 
+add_executable(test_system_state_machine
+    app/test_system_state_machine.c
+    ../../src/app/core/system_state_machine.c
+    ../mocks/mock_estop.c
+    ../mocks/mock_led.c
+    ../unit/hal/test_hal_estop_wrapper.c
+    ../unit/hal/test_hal_led_wrapper.c
+)
+
+target_include_directories(test_system_state_machine PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/gpio
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/peripherals
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_system_state_machine
+    hal_common
+    unity
+)
+
 # add_executable(test_control_loop
 #     app/test_control_loop.c
 # )
@@ -193,24 +202,24 @@ target_link_libraries(test_hal_usb
 #     unity
 # )
 
-# Application Communication Manager tests - DISABLED
-# add_executable(test_communication_manager
-#     app/test_communication_manager.c
-# )
-# 
-# target_include_directories(test_communication_manager PRIVATE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
-# )
-# 
-# target_link_libraries(test_communication_manager
-#     app_managers
-#     hal_common
-#     hal_communication
-#     unity
-#     pthread
-# )
+# Application Communication Manager tests
+add_executable(test_communication_manager
+    app/test_communication_manager.c
+)
+
+target_include_directories(test_communication_manager PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_communication_manager
+    hal_common
+    unity
+    app_managers
+)
 
 # Application Module Manager tests - DISABLED
 # add_executable(test_module_manager
@@ -300,6 +309,47 @@ target_link_libraries(test_hal_usb
 #     pthread
 # )
 
+# Module Discovery tests
+add_executable(test_module_discovery_unit
+    app/test_module_discovery.c
+)
+
+target_include_directories(test_module_discovery_unit PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/peripherals
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_module_discovery_unit
+    hal_common
+    unity
+    app_managers
+)
+
+# Application Telemetry Manager tests
+add_executable(test_telemetry_manager
+    app/test_telemetry_manager.c
+)
+
+target_include_directories(test_telemetry_manager PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_telemetry_manager
+    hal_common
+    unity
+    app_managers
+    m
+)
+
 # Add tests to CTest (HAL only)
 add_test(NAME test_hal_common COMMAND test_hal_common)
 add_test(NAME test_hal_gpio COMMAND test_hal_gpio)
@@ -310,14 +360,15 @@ add_test(NAME test_hal_network COMMAND test_hal_network)
 add_test(NAME test_hal_estop COMMAND test_hal_estop)
 add_test(NAME test_hal_storage COMMAND test_hal_storage)
 add_test(NAME test_hal_usb COMMAND test_hal_usb)
-# add_test(NAME test_system_state_machine COMMAND test_system_state_machine)
+add_test(NAME test_system_state_machine COMMAND test_system_state_machine)
 # add_test(NAME test_control_loop COMMAND test_control_loop)
-# add_test(NAME test_communication_manager COMMAND test_communication_manager)
+add_test(NAME test_communication_manager COMMAND test_communication_manager)
 # add_test(NAME test_module_manager COMMAND test_module_manager)
 # add_test(NAME test_safety_module_handler COMMAND test_safety_module_handler)
 # add_test(NAME test_travel_motor_module_handler COMMAND test_travel_motor_module_handler)
 # add_test(NAME test_dock_module_handler COMMAND test_dock_module_handler)
 # add_test(NAME test_power_module_handler COMMAND test_power_module_handler)
+add_test(NAME test_telemetry_manager COMMAND test_telemetry_manager)
 
 # Enable testing
 enable_testing()

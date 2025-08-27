@@ -1,7 +1,8 @@
-#include "module_manager.h"
+#include "module_registry.h"
 #include "hal_common.h"
-#include <string.h>
+#include "constants.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 static module_info_t g_modules[MODULE_REGISTRY_MAX_MODULES];
@@ -10,16 +11,15 @@ static module_event_callback_t g_event_cb = NULL;
 static bool g_scanning = false;
 
 // Registry-specific callback type (for backward compatibility)
-typedef void (*registry_event_callback_t)(module_event_t event, const module_info_t *info);
+typedef void (*registry_event_callback_t)(module_event_t event, uint8_t address, const module_info_t *info);
 static registry_event_callback_t g_registry_cb = NULL;
 
 static void emit(module_event_t ev, const module_info_t *info) {
-    // Call both callbacks if available
-    if (g_event_cb && info) {
-        g_event_cb(ev, info->module_id, info);
+    if (g_event_cb) {
+        g_event_cb(ev, info);
     }
     if (g_registry_cb) {
-        g_registry_cb(ev, info);
+        g_registry_cb(ev, info->address, info);
     }
 }
 
@@ -62,7 +62,6 @@ int registry_mark_online(uint8_t address, module_type_t type, const char *versio
     if (idx < 0) {
         module_info_t mi = {0};
         mi.address = address;
-        mi.module_id = address; // Use address as module_id for compatibility
         mi.type = type;
         mi.status = MODULE_STATUS_ONLINE;
         mi.last_seen_ms = hal_get_timestamp_ms();
@@ -127,6 +126,57 @@ size_t registry_count_online(void) {
         }
     }
     return count;
+}
+
+// CTO Requirements: Count mandatory slave modules online (addresses 0x02-0x05)
+size_t registry_count_mandatory_online(void) {
+    size_t count = 0;
+    for (size_t i = 0; i < g_count; ++i) {
+        if (g_modules[i].status == MODULE_STATUS_ONLINE) {
+            // Check if this is a mandatory slave module (address 0x02-0x05)
+            if (g_modules[i].address >= MANDATORY_MODULE_ADDR_START && 
+                g_modules[i].address <= MANDATORY_MODULE_ADDR_END) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+// CTO Requirements: Check if all mandatory slave modules are online
+bool registry_all_mandatory_online(void) {
+    return registry_count_mandatory_online() == MANDATORY_MODULES_COUNT;
+}
+
+// CTO Requirements: Get list of missing mandatory slave modules
+int registry_get_missing_mandatory(uint8_t *missing_modules, size_t max_count, size_t *actual_count) {
+    if (!missing_modules || !actual_count) return -1;
+    
+    *actual_count = 0;
+    bool found_mandatory[MANDATORY_MODULES_COUNT] = {false};
+    
+    // Mark found mandatory slave modules
+    for (size_t i = 0; i < g_count; ++i) {
+        if (g_modules[i].status == MODULE_STATUS_ONLINE) {
+            if (g_modules[i].address >= MANDATORY_MODULE_ADDR_START && 
+                g_modules[i].address <= MANDATORY_MODULE_ADDR_END) {
+                size_t idx = g_modules[i].address - MANDATORY_MODULE_ADDR_START;
+                if (idx < MANDATORY_MODULES_COUNT) {
+                    found_mandatory[idx] = true;
+                }
+            }
+        }
+    }
+    
+    // Find missing mandatory slave modules
+    for (size_t i = 0; i < MANDATORY_MODULES_COUNT && *actual_count < max_count; ++i) {
+        if (!found_mandatory[i]) {
+            missing_modules[*actual_count] = MANDATORY_MODULE_ADDR_START + i;
+            (*actual_count)++;
+        }
+    }
+    
+    return 0;
 }
 
 bool registry_has_offline_saved(void) {

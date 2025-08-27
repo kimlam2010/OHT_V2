@@ -71,6 +71,8 @@ typedef struct {
     bool safety_ok;
     bool communication_ok;
     bool sensors_ok;
+    bool location_ok;
+    bool target_valid;
 } system_status_t;
 
 // System Configuration Structure
@@ -182,6 +184,20 @@ hal_status_t system_state_machine_set_config(const system_config_t *config);
  * @return HAL status
  */
 hal_status_t system_state_machine_get_config(system_config_t *config);
+
+/**
+ * @brief Set location system status
+ * @param ok true if location system is healthy/ready
+ * @return HAL status
+ */
+hal_status_t system_state_machine_set_location_ok(bool ok);
+
+/**
+ * @brief Set target validity status (e.g., navigation target validated)
+ * @param valid true if target is valid
+ * @return HAL status
+ */
+hal_status_t system_state_machine_set_target_valid(bool valid);
 
 // State-specific Functions
 

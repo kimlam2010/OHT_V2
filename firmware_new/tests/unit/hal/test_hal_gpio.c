@@ -57,6 +57,7 @@ void test_hal_gpio_configure_pin_returns_success(void) {
 }
 
 void test_hal_gpio_configure_pin_not_initialized_returns_error(void) {
+    setUp(); // Ensure setup is called
     hal_status_t status = hal_gpio_configure_pin(&test_config);
     TEST_ASSERT_EQUAL(HAL_STATUS_NOT_INITIALIZED, status);
 }

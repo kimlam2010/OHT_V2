@@ -34,10 +34,13 @@ This firmware implements the Master Module functionality for the OHT-50 system, 
 
 ## Documentation
 
-- [API Documentation](docs/api/)
+- [API Documentation](docs/API_DOCUMENTATION.md)
 - [Design Documentation](docs/design/)
 - [User Guide](docs/user_guide/)
 - [Developer Guide](docs/developer_guide/)
+- [Migration Guide](docs/MIGRATION_GUIDE.md)
+- [Reports](docs/reports/)
+- [Archive](docs/archive/)
 
 ## License
 

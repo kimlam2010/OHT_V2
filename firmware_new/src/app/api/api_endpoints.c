@@ -291,6 +291,37 @@ hal_status_t api_handle_diagnostics(const api_mgr_http_request_t *request, api_m
     return api_create_success_response(response, json_buffer);
 }
 
+hal_status_t api_handle_telemetry(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
+    (void)request;
+    
+    // Create telemetry response with mock data
+    api_telemetry_t telemetry = {
+        .timestamp = hal_get_timestamp_ms(),
+        .system_state = "idle",
+        .position_x = 0.0f,
+        .position_y = 0.0f,
+        .position_z = 0.0f,
+        .velocity_x = 0.0f,
+        .velocity_y = 0.0f,
+        .velocity_z = 0.0f,
+        .acceleration_x = 0.0f,
+        .acceleration_y = 0.0f,
+        .acceleration_z = 0.0f,
+        .estop_active = false,
+        .safety_ok = true,
+        .active_modules = 3,
+        .status_message = "System operational"
+    };
+    
+    char json_buffer[2048];
+    hal_status_t result = api_create_telemetry_json(&telemetry, json_buffer, sizeof(json_buffer));
+    if (result != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to create telemetry");
+    }
+    
+    return api_create_success_response(response, json_buffer);
+}
+
 // API Utility Functions
 
 hal_status_t api_endpoints_init(void) {
@@ -487,4 +518,28 @@ hal_status_t api_create_success_response(api_mgr_http_response_t *response, cons
     response->body_length = strlen(data);
     
     return HAL_STATUS_OK;
+}
+
+hal_status_t api_create_telemetry_json(const api_telemetry_t *telemetry, char *json_buffer, int buffer_size) {
+    if (telemetry == NULL || json_buffer == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    int written = snprintf(json_buffer, buffer_size,
+                          "{\"timestamp\":%lu,\"system_state\":\"%s\","
+                          "\"position\":{\"x\":%.2f,\"y\":%.2f,\"z\":%.2f},"
+                          "\"velocity\":{\"x\":%.2f,\"y\":%.2f,\"z\":%.2f},"
+                          "\"acceleration\":{\"x\":%.2f,\"y\":%.2f,\"z\":%.2f},"
+                          "\"estop_active\":%s,\"safety_ok\":%s,\"active_modules\":%u,"
+                          "\"status_message\":\"%s\"}",
+                          telemetry->timestamp, telemetry->system_state,
+                          telemetry->position_x, telemetry->position_y, telemetry->position_z,
+                          telemetry->velocity_x, telemetry->velocity_y, telemetry->velocity_z,
+                          telemetry->acceleration_x, telemetry->acceleration_y, telemetry->acceleration_z,
+                          telemetry->estop_active ? "true" : "false",
+                          telemetry->safety_ok ? "true" : "false",
+                          telemetry->active_modules,
+                          telemetry->status_message);
+    
+    return (written < buffer_size) ? HAL_STATUS_OK : HAL_STATUS_ERROR;
 }

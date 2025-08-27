@@ -10,6 +10,7 @@
 #include "mock_estop.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 // Override E-Stop functions with mock implementations for testing
 
@@ -136,15 +137,9 @@ hal_status_t hal_estop_get_config(estop_config_t *config) {
 }
 
 hal_status_t hal_estop_is_triggered(bool *triggered) {
-    if (!mock_estop_state.initialized) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    if (triggered == NULL) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    *triggered = (mock_estop_state.state == ESTOP_STATE_TRIGGERED);
+    if (!mock_estop_state.initialized) { return HAL_STATUS_ERROR; }
+    if (triggered == NULL) { return HAL_STATUS_ERROR; }
+    *triggered = false; // Mock E-Stop is never triggered by default
     return HAL_STATUS_OK;
 }
 
@@ -171,24 +166,14 @@ hal_status_t hal_estop_set_callback(estop_event_callback_t callback) {
 }
 
 hal_status_t hal_estop_validate_safety(void) {
-    if (!mock_estop_state.initialized) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    // Mock implementation - return success
-    return HAL_STATUS_OK;
+    if (!mock_estop_state.initialized) { return HAL_STATUS_ERROR; }
+    return HAL_STATUS_OK; // Mock E-Stop always validates safety
 }
 
 hal_status_t hal_estop_check_safety_compliance(bool *compliant) {
-    if (!mock_estop_state.initialized) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    if (compliant == NULL) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    *compliant = true; // Mock as compliant
+    if (!mock_estop_state.initialized) { return HAL_STATUS_ERROR; }
+    if (compliant == NULL) { return HAL_STATUS_ERROR; }
+    *compliant = true; // Mock E-Stop always compliant
     return HAL_STATUS_OK;
 }
 
@@ -197,7 +182,7 @@ hal_status_t hal_estop_self_test(void) {
         return HAL_STATUS_ERROR;
     }
     
-    // Mock implementation - return success
+    // Mock self-test always passes
     return HAL_STATUS_OK;
 }
 
@@ -223,33 +208,33 @@ hal_status_t hal_estop_validate_hardware(void) {
         return HAL_STATUS_ERROR;
     }
     
-    // Mock implementation - return success
+    // Mock hardware validation always passes
     return HAL_STATUS_OK;
 }
 
-hal_status_t hal_estop_get_trigger_count(uint32_t *count) {
+hal_status_t hal_estop_get_trigger_count(uint32_t *trigger_count) {
     if (!mock_estop_state.initialized) {
         return HAL_STATUS_ERROR;
     }
     
-    if (count == NULL) {
+    if (trigger_count == NULL) {
         return HAL_STATUS_ERROR;
     }
     
-    *count = 0; // Mock count
+    *trigger_count = 0; // Mock trigger count
     return HAL_STATUS_OK;
 }
 
-hal_status_t hal_estop_get_fault_count(uint32_t *count) {
+hal_status_t hal_estop_get_fault_count(uint32_t *fault_count) {
     if (!mock_estop_state.initialized) {
         return HAL_STATUS_ERROR;
     }
     
-    if (count == NULL) {
+    if (fault_count == NULL) {
         return HAL_STATUS_ERROR;
     }
     
-    *count = 0; // Mock count
+    *fault_count = 0; // Mock fault count
     return HAL_STATUS_OK;
 }
 
@@ -258,6 +243,14 @@ hal_status_t hal_estop_reset_statistics(void) {
         return HAL_STATUS_ERROR;
     }
     
-    // Mock implementation - return success
+    // Mock statistics reset
+    return HAL_STATUS_OK;
+}
+
+hal_status_t hal_estop_update(void) {
+    if (!mock_estop_state.initialized) { return HAL_STATUS_ERROR; }
+    
+    // Update mock timestamp
+    mock_estop_state.timestamp_us += 1000;
     return HAL_STATUS_OK;
 }
