@@ -1,0 +1,5 @@
+[33mfa62e5b[m[33m ([m[1;36mHEAD -> [m[1;32mFW-Phase-3-1[m[33m)[m FW-Phase-3-1: Cleanup và cập nhật firmware architecture
+[33ma71afc1[m[33m ([m[1;31morigin/FW-Phase-3-1[m[33m)[m feat: Hoàn thành Phase 3 - HAL Testing & Release
+[33m6c54026[m feat: Complete Phase 3 - Build successful with all application modules
+[33mc663735[m feat: Hoàn thành Phase 3.1 - Tái cấu trúc module handlers và cải thiện safety system
+[33mf83c834[m Merge pull request #17 from kimlam2010/phase3-fw
