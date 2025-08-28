@@ -1,0 +1,384 @@
+# 🎨 OHT-50 DESIGN SYSTEM RULES - V2.1
+
+**Phiên bản:** v2.1  
+**Ngày cập nhật:** 2025-01-28  
+**Mục tiêu:** Chuẩn hóa quy trình design cho OHT-50 với focus vào navigation, user journey và quality control
+
+---
+
+## 🎯 **VAI TRÒ & TRÁCH NHIỆM**
+
+### **DESIGNER LEADER**
+- **Quản lý tổng thể:** Design system, navigation structure, user journey
+- **Quality Control:** Review tất cả deliverables trước khi approve
+- **Coordination:** Đảm bảo consistency giữa các team
+- **User Experience:** Đảm bảo end-to-end user flow hoàn chỉnh
+
+### **TEAM A (Layout & Navigation)**
+- **Navigation System:** Top nav với Emergency Controls, breadcrumbs
+- **Layout Structure:** Page containers, responsive grids
+- **User Journey:** Flow giữa các trang
+- **Information Architecture:** Content hierarchy
+
+### **TEAM B (Components & Functionality)**
+- **UI Components:** Buttons, forms, cards, modals
+- **Design System:** Colors, typography, spacing
+- **Interactive Elements:** Controls, charts, data display
+- **Accessibility:** WCAG compliance, screen reader support
+
+---
+
+## 🚨 **CRITICAL REQUIREMENTS (BẮT BUỘC)**
+
+### **1. NAVIGATION FIRST APPROACH**
+```
+❌ KHÔNG BAO GIỜ tạo page mà không có navigation
+✅ LUÔN LUÔN có TOP NAVIGATION với Emergency Controls
+✅ MỖI PAGE phải có clear way để chuyển sang page khác
+✅ TEST user journey: Login → Dashboard → Map → Control → Config
+```
+
+### **2. TOP NAVIGATION BẮT BUỘC**
+```
+MUST HAVE trong mọi trang:
+□ Top Navigation Bar với Emergency Controls
+□ Emergency Stop button (luôn visible)
+□ Pause/Reset buttons
+□ Main menu items (Dashboard, Control, Map, etc.)
+□ User actions (Notifications, User Menu)
+□ Responsive mobile navigation
+```
+
+### **3. SIDEBAR POLICY MỚI**
+```
+❌ KHÔNG SỬ DỤNG: Sidebar bên trái (left sidebar)
+✅ CÓ THỂ SỬ DỤNG: Sidebar bên phải (right sidebar) nếu cần
+✅ BẮT BUỘC: Breadcrumb navigation trong main content
+✅ BẮT BUỘC: Clear page hierarchy
+```
+
+### **4. USER JOURNEY VALIDATION**
+```
+BEFORE APPROVAL:
+□ User có thể navigate từ page này sang page khác?
+□ Emergency Controls luôn accessible?
+□ Mobile/tablet navigation có work không?
+□ Keyboard navigation có support không?
+```
+
+### **5. INFORMATION ARCHITECTURE COMPLIANCE**
+```
+MUST FOLLOW:
+- Site Map: 9 main sections (Auth → Dashboard → Map → Control → Config → Reports → Alerts → Voice → Docs)
+- Navigation Structure: Top Navigation + Breadcrumbs
+- Content Hierarchy: Critical → Primary → Secondary → Supporting
+- User Flows: 4 main flows (Daily Monitoring, Emergency Response, Manual Control, Configuration)
+```
+
+---
+
+## 📋 **QUY TRÌNH DESIGN 5 BƯỚC (BẮT BUỘC)**
+
+### **BƯỚC 1: INFORMATION ARCHITECTURE REVIEW**
+```
+Designer Leader MUST:
+□ Review site map và navigation structure
+□ Validate user journey flows
+□ Confirm content hierarchy
+□ Approve navigation wireframes
+```
+
+### **BƯỚC 2: LAYOUT DESIGN (Team A)**
+```
+Team A MUST:
+□ Design TOP NAVIGATION với Emergency Controls
+□ Create page layout với clear sections
+□ Implement responsive grid system
+□ Test navigation flow giữa các pages
+□ Validate user journey end-to-end
+```
+
+### **BƯỚC 3: COMPONENT DESIGN (Team B)**
+```
+Team B MUST:
+□ Design UI components theo design system
+□ Implement interactive elements
+□ Add accessibility features
+□ Create responsive components
+□ Test component integration
+```
+
+### **BƯỚC 4: INTEGRATION & TESTING**
+```
+Designer Leader MUST:
+□ Review complete page với TOP NAVIGATION
+□ Test user journey end-to-end
+□ Validate responsive design
+□ Check accessibility compliance
+□ Approve final deliverable
+```
+
+### **BƯỚC 5: QUALITY GATE**
+```
+BEFORE RELEASE:
+□ TOP NAVIGATION works trên all devices
+□ Emergency Controls luôn accessible
+□ User journey complete end-to-end
+□ Accessibility compliance (WCAG 2.1 AA)
+□ Responsive design tested
+□ Performance optimized
+```
+
+---
+
+## 🎨 **DESIGN SYSTEM STANDARDS**
+
+### **TOP NAVIGATION COMPONENTS (BẮT BUỘC)**
+```html
+<!-- Top Navigation Bar - MANDATORY -->
+<nav class="top-navigation">
+  <div class="nav-brand">OHT-50</div>
+  
+  <!-- Emergency Controls - ALWAYS VISIBLE -->
+  <div class="nav-emergency-controls">
+    <button class="btn-emergency-nav" id="emergency-stop">E-STOP</button>
+    <button class="btn-nav btn-warning-nav" id="pause-system">Pause</button>
+    <button class="btn-nav btn-success-nav" id="reset-system">Reset</button>
+  </div>
+  
+  <!-- Main Navigation Menu -->
+  <div class="nav-menu">
+    <a href="/dashboard" class="nav-item">Dashboard</a>
+    <a href="/control" class="nav-item">Control Panel</a>
+    <a href="/map" class="nav-item">Map & Navigation</a>
+    <a href="/config" class="nav-item">Configuration</a>
+    <a href="/reports" class="nav-item">Reports</a>
+  </div>
+  
+  <!-- User Actions -->
+  <div class="nav-actions">
+    <button class="nav-btn">Notifications</button>
+    <button class="nav-btn">User Menu</button>
+  </div>
+</nav>
+```
+
+### **PAGE STRUCTURE (BẮT BUỘC)**
+```html
+<!-- Page Container -->
+<div class="page-container">
+  <!-- TOP NAVIGATION - MANDATORY -->
+  <nav class="top-navigation">...</nav>
+  
+  <!-- Main Content -->
+  <main id="main-content" class="page-main">
+    <div class="page-content">
+      <!-- Breadcrumb Navigation -->
+      <nav class="breadcrumb-nav">...</nav>
+      
+      <!-- Page specific content -->
+      <div class="content-grid">...</div>
+    </div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="page-footer">...</footer>
+</div>
+```
+
+---
+
+## 🔍 **QUALITY CONTROL CHECKLIST**
+
+### **TOP NAVIGATION CHECKLIST (MUST PASS)**
+```
+□ Top navigation visible trên all pages
+□ Emergency Controls luôn accessible
+□ Main menu items functional
+□ Mobile navigation menu works
+□ Keyboard navigation supported
+□ Screen reader navigation works
+□ User can navigate between all pages
+□ Active page highlighted trong navigation
+□ Navigation consistent across all pages
+□ No broken links hoặc missing pages
+```
+
+### **EMERGENCY CONTROLS CHECKLIST (MUST PASS)**
+```
+□ Emergency Stop button luôn visible
+□ Emergency Stop button accessible từ keyboard
+□ Pause/Reset buttons functional
+□ Emergency Controls responsive trên mobile
+□ Emergency Controls có visual feedback
+□ Emergency Controls có sound feedback (optional)
+□ Emergency Controls có confirmation dialog
+```
+
+### **USER JOURNEY CHECKLIST (MUST PASS)**
+```
+□ User can complete full journey: Login → Dashboard → Map → Control → Config
+□ Each page has clear purpose và functionality
+□ Navigation between pages is intuitive
+□ User không bị "trapped" trong any page
+□ Emergency controls accessible từ any page
+□ Back/forward navigation works properly
+□ Page transitions are smooth và clear
+```
+
+### **ACCESSIBILITY CHECKLIST (MUST PASS)**
+```
+□ WCAG 2.1 AA compliance
+□ Keyboard navigation complete
+□ Screen reader support
+□ Color contrast ratios meet standards
+□ Focus indicators visible
+□ Skip links implemented
+□ ARIA labels properly used
+□ Semantic HTML structure
+□ Alternative text for images
+□ Error messages accessible
+```
+
+---
+
+## 🚨 **COMMON MISTAKES TO AVOID**
+
+### **NAVIGATION MISTAKES**
+```
+❌ Creating pages without TOP NAVIGATION
+❌ Missing Emergency Controls trong navigation
+❌ Using left sidebar (KHÔNG ĐƯỢC PHÉP)
+❌ No clear way to navigate between sections
+❌ Broken links hoặc missing pages
+❌ Navigation hidden hoặc hard to find
+❌ Emergency Controls not accessible
+```
+
+### **USER EXPERIENCE MISTAKES**
+```
+❌ Focusing only on individual components
+❌ Ignoring user journey end-to-end
+❌ Not testing navigation flow
+❌ Missing responsive navigation
+❌ Poor information hierarchy
+❌ Inconsistent design patterns
+❌ Emergency Controls not prominent
+```
+
+### **QUALITY CONTROL MISTAKES**
+```
+❌ Approving without TOP NAVIGATION testing
+❌ Not validating Emergency Controls
+❌ Ignoring accessibility requirements
+❌ Missing responsive testing
+❌ Not checking cross-browser compatibility
+❌ Approving incomplete deliverables
+```
+
+---
+
+## 📁 **FILE STRUCTURE & NAMING**
+
+### **File Organization**
+```
+.superdesign/
+├── design_iterations/
+│   ├── foundation/
+│   │   ├── navigation_system.html
+│   │   ├── layout_framework.html
+│   │   └── design_system.html
+│   ├── core_pages/
+│   │   ├── 1-1-auth-login.html
+│   │   ├── 2-1-dashboard-main.html
+│   │   ├── 3-1-control-panel.html
+│   │   └── 4-1-map-interface.html
+│   ├── functional_pages/
+│   │   ├── 5-1-monitoring.html
+│   │   ├── 6-1-configuration.html
+│   │   └── 7-1-reports.html
+│   └── advanced_pages/
+│       ├── 8-1-alerts.html
+│       └── 9-1-voice-control.html
+├── themes/
+│   ├── theme_oht50_unified.css
+│   └── theme_components.css
+└── documentation/
+    ├── navigation_guide.md
+    ├── user_journey_maps.md
+    └── accessibility_checklist.md
+```
+
+### **Naming Conventions**
+```
+- Navigation files: navigation_system.html, top_nav.html
+- Page files: {section}-{page}-{name}.html (e.g., 2-1-dashboard-main.html)
+- Theme files: theme_{name}.css
+- Documentation: {topic}_guide.md
+```
+
+---
+
+## 🎯 **SUCCESS METRICS**
+
+### **Navigation Success**
+```
+✅ 100% pages có TOP NAVIGATION
+✅ 100% pages có Emergency Controls
+✅ 100% user journeys complete
+✅ 100% responsive navigation
+✅ 100% accessibility compliance
+✅ 0 broken links
+✅ 0 navigation errors
+```
+
+### **Quality Success**
+```
+✅ 100% pages pass TOP NAVIGATION test
+✅ 100% pages pass Emergency Controls test
+✅ 100% pages pass user journey test
+✅ 100% pages pass accessibility test
+✅ 100% pages pass responsive test
+✅ 0 critical issues
+✅ 0 user experience blockers
+```
+
+---
+
+## 🚀 **IMPLEMENTATION GUIDELINES**
+
+### **For Designer Leader**
+1. **Always start with TOP NAVIGATION structure**
+2. **Validate Emergency Controls before approving**
+3. **Test end-to-end flow on all devices**
+4. **Ensure accessibility compliance**
+5. **Maintain design system consistency**
+
+### **For Team A (Layout & Navigation)**
+1. **Design TOP NAVIGATION first, content second**
+2. **Test Emergency Controls functionality**
+3. **Test navigation flow between all pages**
+4. **Ensure responsive navigation works**
+5. **Validate information architecture**
+
+### **For Team B (Components & Functionality)**
+1. **Follow design system standards**
+2. **Implement accessible components**
+3. **Create responsive components**
+4. **Test component integration**
+5. **Ensure performance optimization**
+
+---
+
+**🚨 REMEMBER: TOP NAVIGATION với Emergency Controls là BẮT BUỘC - KHÔNG CÓ SIDEBAR BÊN TRÁI!**
+
+Changelog (v2.1): 
+- ✅ Removed left sidebar requirement
+- ✅ Added mandatory TOP NAVIGATION with Emergency Controls
+- ✅ Updated navigation structure guidelines
+- ✅ Enhanced Emergency Controls checklist
+- ✅ Updated file structure requirements
+description:
+globs:
+alwaysApply: true
+---

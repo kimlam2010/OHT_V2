@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 - Alerts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    <style>
+        .page-container{display:flex;flex-direction:column;min-height:100vh;background:var(--bg-secondary);padding-top:80px}
+        .top-navigation{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-lg);background:var(--bg-primary);border-bottom:var(--border-width-1) solid var(--border-color-light);box-shadow:var(--shadow-sm);z-index:var(--z-sticky)}
+        .nav-brand{display:flex;align-items:center;gap:var(--space-sm);font-family:var(--font-display);font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--primary-orange)}
+        .nav-emergency-controls{display:flex;align-items:center;gap:var(--space-sm);margin-left:var(--space-lg)}
+        .btn-emergency-nav{display:flex;align-items:center;gap:var(--space-xs);padding:var(--space-sm) var(--space-md);background:var(--safety-red);color:#fff;border:0;border-radius:var(--radius-md);font-size:var(--text-sm);font-weight:var(--font-bold);cursor:pointer;transition:all var(--transition-fast);box-shadow:var(--shadow-sm)}
+        .btn-emergency-nav:hover{background:var(--error-red-dark);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+        .btn-nav{display:flex;align-items:center;gap:var(--space-xs);padding:var(--space-sm) var(--space-md);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-md);font-size:var(--text-sm);font-weight:var(--font-medium);cursor:pointer;transition:all var(--transition-fast)}
+        .btn-warning-nav{background:var(--warning-yellow);color:var(--industrial-gray-900);border-color:var(--warning-yellow)}
+        .btn-warning-nav:hover{background:var(--warning-yellow-dark);color:#fff}
+        .btn-success-nav{background:var(--success-green);color:#fff;border-color:var(--success-green)}
+        .btn-success-nav:hover{background:var(--success-green-dark)}
+        .nav-menu{display:flex;align-items:center;gap:var(--space-lg)}
+        .nav-item{display:flex;align-items:center;gap:var(--space-xs);padding:var(--space-sm) var(--space-md);color:var(--industrial-gray-700);text-decoration:none;border-radius:var(--radius-md);transition:all var(--transition-fast);font-weight:var(--font-medium)}
+        .nav-item:hover{background:var(--industrial-gray-100);color:var(--primary-orange)}
+        .nav-item.active{background:var(--primary-orange);color:#fff}
+        .nav-actions{display:flex;align-items:center;gap:var(--space-sm)}
+        .nav-btn{display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:var(--bg-secondary);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-md);color:var(--industrial-gray-600);transition:all var(--transition-fast)}
+        .nav-btn:hover{background:var(--primary-orange);color:#fff;border-color:var(--primary-orange)}
+        .page-main{flex:1;padding:var(--space-lg)}
+        .page-content{max-width:1920px;margin:0 auto}
+        .breadcrumb-nav{display:flex;align-items:center;gap:var(--space-sm);padding:var(--space-sm) 0;margin-bottom:var(--space-lg)}
+        .breadcrumb-item{color:var(--industrial-gray-600);text-decoration:none;font-size:var(--text-sm)}
+        .breadcrumb-item:hover{color:var(--primary-orange)}
+        .breadcrumb-item.active{color:var(--industrial-gray-900);font-weight:var(--font-medium)}
+        .breadcrumb-separator{color:var(--industrial-gray-400)}
+        .content-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--space-lg)}
+        .page-header{margin-bottom:var(--space-xl)}
+        .page-title{font-size:var(--text-3xl);font-weight:var(--font-bold);color:var(--industrial-gray-900);margin-bottom:var(--space-sm)}
+        .page-description{font-size:var(--text-lg);color:var(--industrial-gray-600)}
+        
+        /* Alerts Specific Styles */
+        .alert-card{background:var(--bg-primary);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-lg);padding:var(--space-xl);box-shadow:var(--shadow-sm)}
+        .alert-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-lg)}
+        .alert-card-title{font-size:var(--text-xl);font-weight:var(--font-semibold);color:var(--industrial-gray-900)}
+        .alert-count{padding:var(--space-xs) var(--space-sm);border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:var(--font-bold);text-transform:uppercase}
+        .count-critical{background:var(--safety-red);color:white}
+        .count-warning{background:var(--warning-yellow);color:var(--industrial-gray-900)}
+        .count-info{background:var(--info-blue);color:white}
+        
+        /* Alert Item Styles */
+        .alert-item{display:flex;align-items:flex-start;gap:var(--space-md);padding:var(--space-lg);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-lg);margin-bottom:var(--space-md);transition:all var(--transition-fast)}
+        .alert-item:hover{background:var(--bg-secondary);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+        .alert-item.critical{border-left:4px solid var(--safety-red)}
+        .alert-item.warning{border-left:4px solid var(--warning-yellow)}
+        .alert-item.info{border-left:4px solid var(--info-blue)}
+        .alert-item.success{border-left:4px solid var(--success-green)}
+        
+        .alert-icon{width:48px;height:48px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .alert-icon.critical{background:var(--safety-red);color:white}
+        .alert-icon.warning{background:var(--warning-yellow);color:var(--industrial-gray-900)}
+        .alert-icon.info{background:var(--info-blue);color:white}
+        .alert-icon.success{background:var(--success-green);color:white}
+        
+        .alert-content{flex:1}
+        .alert-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-sm)}
+        .alert-title{font-size:var(--text-lg);font-weight:var(--font-semibold);color:var(--industrial-gray-900)}
+        .alert-timestamp{font-size:var(--text-sm);color:var(--industrial-gray-600)}
+        .alert-description{color:var(--industrial-gray-700);margin-bottom:var(--space-md);line-height:1.5}
+        .alert-meta{display:flex;align-items:center;gap:var(--space-md);font-size:var(--text-sm);color:var(--industrial-gray-600)}
+        .alert-source{display:flex;align-items:center;gap:var(--space-xs)}
+        .alert-priority{display:flex;align-items:center;gap:var(--space-xs)}
+        
+        .alert-actions{display:flex;gap:var(--space-sm);flex-shrink:0}
+        
+        /* Button Styles */
+        .btn-primary{background:var(--primary-orange);color:white;border:none;padding:var(--space-sm) var(--space-lg);border-radius:var(--radius-md);font-weight:var(--font-medium);cursor:pointer;transition:all var(--transition-fast);display:flex;align-items:center;gap:var(--space-sm)}
+        .btn-primary:hover{background:var(--primary-orange-dark);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+        .btn-secondary{background:var(--bg-secondary);color:var(--industrial-gray-700);border:var(--border-width-1) solid var(--border-color-light);padding:var(--space-sm) var(--space-lg);border-radius:var(--radius-md);font-weight:var(--font-medium);cursor:pointer;transition:all var(--transition-fast);display:flex;align-items:center;gap:var(--space-sm)}
+        .btn-secondary:hover{background:var(--industrial-gray-100)}
+        .btn-danger{background:var(--error-red);color:white;border:none;padding:var(--space-sm) var(--space-lg);border-radius:var(--radius-md);font-weight:var(--font-medium);cursor:pointer;transition:all var(--transition-fast);display:flex;align-items:center;gap:var(--space-sm)}
+        .btn-danger:hover{background:var(--error-red-dark)}
+        
+        /* Filter Controls */
+        .filter-controls{display:flex;gap:var(--space-md);margin-bottom:var(--space-lg);flex-wrap:wrap}
+        .filter-group{display:flex;flex-direction:column;gap:var(--space-xs)}
+        .filter-label{font-size:var(--text-sm);font-weight:var(--font-medium);color:var(--industrial-gray-700)}
+        .filter-input{padding:var(--space-sm) var(--space-md);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-md);font-size:var(--text-sm);min-width:150px}
+        .filter-input:focus{outline:none;border-color:var(--primary-orange);box-shadow:0 0 0 3px rgba(255, 165, 0, 0.1)}
+        
+        /* Alert Stats */
+        .alert-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-md);margin-bottom:var(--space-lg)}
+        .stat-card{background:var(--bg-secondary);padding:var(--space-lg);border-radius:var(--radius-lg);text-align:center;border:var(--border-width-1) solid var(--border-color-light)}
+        .stat-value{font-size:var(--text-2xl);font-weight:var(--font-bold);font-family:var(--font-mono)}
+        .stat-value.critical{color:var(--safety-red)}
+        .stat-value.warning{color:var(--warning-yellow)}
+        .stat-value.info{color:var(--info-blue)}
+        .stat-value.success{color:var(--success-green)}
+        .stat-label{font-size:var(--text-sm);color:var(--industrial-gray-600);margin-top:var(--space-xs)}
+        
+        /* Alert History */
+        .alert-history{max-height:400px;overflow-y:auto}
+        .history-item{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md);border-bottom:var(--border-width-1) solid var(--border-color-light);transition:all var(--transition-fast)}
+        .history-item:hover{background:var(--bg-secondary)}
+        .history-info{display:flex;flex-direction:column;gap:var(--space-xs)}
+        .history-title{font-weight:var(--font-medium);color:var(--industrial-gray-900)}
+        .history-meta{font-size:var(--text-sm);color:var(--industrial-gray-600)}
+        
+        /* Notification Settings */
+        .notification-settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--space-lg)}
+        .setting-group{background:var(--bg-secondary);padding:var(--space-lg);border-radius:var(--radius-lg);border:var(--border-width-1) solid var(--border-color-light)}
+        .setting-header{display:flex;align-items:center;gap:var(--space-md);margin-bottom:var(--space-md)}
+        .setting-icon{width:40px;height:40px;background:var(--primary-orange);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:white}
+        .setting-title{font-size:var(--text-lg);font-weight:var(--font-semibold);color:var(--industrial-gray-900)}
+        .setting-options{display:flex;flex-direction:column;gap:var(--space-sm)}
+        .setting-option{display:flex;align-items:center;justify-content:space-between;padding:var(--space-sm);background:var(--bg-primary);border-radius:var(--radius-md)}
+        .setting-label{font-weight:var(--font-medium);color:var(--industrial-gray-900)}
+        .setting-toggle{width:40px;height:20px;background:var(--industrial-gray-300);border-radius:var(--radius-full);position:relative;cursor:pointer;transition:all var(--transition-fast)}
+        .setting-toggle.active{background:var(--primary-orange)}
+        .setting-toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:white;border-radius:50%;transition:all var(--transition-fast)}
+        .setting-toggle.active::after{transform:translateX(20px)}
+        
+        /* Responsive Design */
+        @media (max-width:1024px){.nav-menu{gap:var(--space-md)}.nav-item{padding:var(--space-xs) var(--space-sm);font-size:var(--text-sm)}.filter-controls{flex-direction:column}.alert-stats{grid-template-columns:repeat(2,1fr)}.notification-settings{grid-template-columns:1fr}}
+        @media (max-width:768px){.nav-menu{display:none}.nav-emergency-controls{margin-left:var(--space-sm);gap:var(--space-xs)}.btn-emergency-nav,.btn-nav{padding:var(--space-xs) var(--space-sm);font-size:var(--text-xs)}.btn-emergency-nav i,.btn-nav i{width:12px;height:12px}.page-container{padding-top:60px}.content-grid{grid-template-columns:repeat(6,1fr);gap:var(--space-md)}.alert-item{flex-direction:column}.alert-actions{justify-content:flex-start}.alert-stats{grid-template-columns:1fr}}
+        @media (max-width:640px){.content-grid{grid-template-columns:repeat(2,1fr);gap:var(--space-sm)}}
+        
+        .skip-link{position:absolute;top:-40px;left:6px;background:var(--primary-orange);color:#fff;padding:var(--space-sm) var(--space-md);text-decoration:none;border-radius:var(--radius-md);z-index:var(--z-emergency)}
+        .skip-link:focus{top:6px}
+        .nav-item:focus-visible,.btn:focus-visible,.nav-btn:focus-visible,.alert-item:focus-visible,.filter-input:focus-visible,.setting-toggle:focus-visible{outline:var(--border-width-2) solid var(--primary-orange);outline-offset:var(--space-xs)}
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div class="page-container">
+        <nav class="top-navigation" role="navigation" aria-label="Main navigation">
+            <div class="nav-brand">
+                <i data-lucide="activity" class="w-6 h-6" aria-hidden="true"></i>
+                <span>OHT-50</span>
+            </div>
+            <div class="nav-emergency-controls">
+                <button class="btn-emergency-nav" id="emergency-stop" aria-label="Emergency Stop">
+                    <i data-lucide="square" class="w-4 h-4" aria-hidden="true"></i>
+                    E-STOP
+                </button>
+                <button class="btn-nav btn-warning-nav" id="pause-system" aria-label="Pause System">
+                    <i data-lucide="pause" class="w-4 h-4" aria-hidden="true"></i>
+                    Pause
+                </button>
+                <button class="btn-nav btn-success-nav" id="reset-system" aria-label="Reset System">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+                    Reset
+                </button>
+            </div>
+            <div class="nav-menu">
+                <a href="../core_pages/2-1-dashboard-main.html" class="nav-item" aria-label="Dashboard">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4" aria-hidden="true"></i>
+                    Dashboard
+                </a>
+                <a href="../core_pages/3-1-control-panel.html" class="nav-item" aria-label="Control Panel">
+                    <i data-lucide="gamepad-2" class="w-4 h-4" aria-hidden="true"></i>
+                    Control Panel
+                </a>
+                <a href="../core_pages/4-1-map-interface.html" class="nav-item" aria-label="Map & Navigation">
+                    <i data-lucide="map" class="w-4 h-4" aria-hidden="true"></i>
+                    Map & Navigation
+                </a>
+                <a href="../functional_pages/5-1-monitoring.html" class="nav-item" aria-label="Monitoring">
+                    <i data-lucide="monitor" class="w-4 h-4" aria-hidden="true"></i>
+                    Monitoring
+                </a>
+                <a href="../functional_pages/6-1-configuration.html" class="nav-item" aria-label="Configuration">
+                    <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i>
+                    Configuration
+                </a>
+                <a href="../functional_pages/7-1-reports.html" class="nav-item" aria-label="Reports">
+                    <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                    Reports
+                </a>
+                <a href="8-1-alerts.html" class="nav-item active" aria-current="page" aria-label="Alerts">
+                    <i data-lucide="alert-triangle" class="w-4 h-4" aria-hidden="true"></i>
+                    Alerts
+                </a>
+                <a href="9-1-voice-control.html" class="nav-item" aria-label="Voice Control">
+                    <i data-lucide="mic" class="w-4 h-4" aria-hidden="true"></i>
+                    Voice Control
+                </a>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn" aria-label="Notifications">
+                    <i data-lucide="bell" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+                <button class="nav-btn" aria-label="User menu">
+                    <i data-lucide="user" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+            </div>
+        </nav>
+        <main id="main-content" class="page-main">
+            <div class="page-content">
+                <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+                    <a href="../core_pages/2-1-dashboard-main.html" class="breadcrumb-item">Dashboard</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-item active">Alerts</span>
+                </nav>
+                <header class="page-header">
+                    <h1 class="page-title">Alerts</h1>
+                    <p class="page-description">System alerts, notifications, and alert management for OHT-50</p>
+                </header>
+                <div class="content-grid">
+                    <!-- Alert Statistics -->
+                    <section class="alert-card" style="grid-column: span 12;">
+                        <div class="alert-card-header">
+                            <h2 class="alert-card-title">Alert Statistics</h2>
+                        </div>
+                        <div class="alert-stats">
+                            <div class="stat-card">
+                                <div class="stat-value critical" id="critical-count">2</div>
+                                <div class="stat-label">Critical Alerts</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value warning" id="warning-count">5</div>
+                                <div class="stat-label">Warning Alerts</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value info" id="info-count">12</div>
+                                <div class="stat-label">Info Alerts</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value success" id="resolved-count">45</div>
+                                <div class="stat-label">Resolved Today</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Filter Controls -->
+                    <section class="alert-card" style="grid-column: span 12;">
+                        <div class="alert-card-header">
+                            <h2 class="alert-card-title">Alert Filters</h2>
+                        </div>
+                        <div class="filter-controls">
+                            <div class="filter-group">
+                                <label class="filter-label">Severity</label>
+                                <select class="filter-input" id="severity-filter">
+                                    <option value="all">All Severities</option>
+                                    <option value="critical">Critical</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="info">Info</option>
+                                    <option value="success">Success</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Status</label>
+                                <select class="filter-input" id="status-filter">
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="acknowledged">Acknowledged</option>
+                                    <option value="resolved">Resolved</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Source</label>
+                                <select class="filter-input" id="source-filter">
+                                    <option value="all">All Sources</option>
+                                    <option value="system">System</option>
+                                    <option value="safety">Safety</option>
+                                    <option value="performance">Performance</option>
+                                    <option value="maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Time Range</label>
+                                <select class="filter-input" id="time-filter">
+                                    <option value="1h">Last Hour</option>
+                                    <option value="24h" selected>Last 24 Hours</option>
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Active Alerts -->
+                    <section class="alert-card" style="grid-column: span 8;">
+                        <div class="alert-card-header">
+                            <h2 class="alert-card-title">Active Alerts</h2>
+                            <span class="alert-count count-critical" id="active-count">7 Active</span>
+                        </div>
+                        <div id="active-alerts">
+                            <div class="alert-item critical" data-alert-id="1">
+                                <div class="alert-icon critical">
+                                    <i data-lucide="alert-triangle" class="w-6 h-6" aria-hidden="true"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-header">
+                                        <div class="alert-title">Emergency Stop Activated</div>
+                                        <div class="alert-timestamp">2 minutes ago</div>
+                                    </div>
+                                    <div class="alert-description">
+                                        Emergency stop button was pressed. All system operations have been halted for safety reasons.
+                                    </div>
+                                    <div class="alert-meta">
+                                        <div class="alert-source">
+                                            <i data-lucide="shield" class="w-4 h-4" aria-hidden="true"></i>
+                                            <span>Safety System</span>
+                                        </div>
+                                        <div class="alert-priority">
+                                            <i data-lucide="alert-circle" class="w-4 h-4" aria-hidden="true"></i>
+                                            <span>Critical</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn-secondary" onclick="acknowledgeAlert(1)" aria-label="Acknowledge Alert">
+                                        <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+                                        Acknowledge
+                                    </button>
+                                    <button class="btn-danger" onclick="dismissAlert(1)" aria-label="Dismiss Alert">
+                                        <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="alert-item warning" data-alert-id="2">
+                                <div class="alert-icon warning">
+                                    <i data-lucide="battery" class="w-6 h-6" aria-hidden="true"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-header">
+                                        <div class="alert-title">Low Battery Warning</div>
+                                        <div class="alert-timestamp">15 minutes ago</div>
+                                    </div>
+                                    <div class="alert-description">
+                                        Battery level is below 15%. Please charge the system soon to avoid shutdown.
+                                    </div>
+                                    <div class="alert-meta">
+                                        <div class="alert-source">
+                                            <i data-lucide="cpu" class="w-4 h-4" aria-hidden="true"></i>
+                                            <span>Power System</span>
+                                        </div>
+                                        <div class="alert-priority">
+                                            <i data-lucide="alert-triangle" class="w-4 h-4" aria-hidden="true"></i>
+                                            <span>Warning</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn-secondary" onclick="acknowledgeAlert(2)" aria-label="Acknowledge Alert">
+                                        <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+                                        Acknowledge
+                                    </button>
+                                    <button class="btn-danger" onclick="dismissAlert(2)" aria-label="Dismiss Alert">
+                                        <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="alert-item info" data-alert-id="3">
+                                <div class="alert-icon info">
+                                    <i data-lucide="wifi" class="w-6 h-6" aria-hidden="true"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-header">
+                                        <div class="alert-title">Network Connection Restored</div>
+                                        <div class="alert-timestamp">1 hour ago</div>
+                                    </div>
+                                    <div class="alert-description">
+                                        Network connection has been restored. All communication channels are now operational.
+                                    </div>
+                                    <div class="alert-meta">
+                                        <div class="alert-source">
+                                            <i data-lucide="network" class="w-4 h-4" aria-hidden="true"></i>
+                                            <span>Network</span>
+                                        </div>
+                                        <div class="alert-priority">
+                                            <i data-lucide="info" class="w-4 h-4" aria-hidden="true"></i>
+                                            <span>Info</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn-secondary" onclick="acknowledgeAlert(3)" aria-label="Acknowledge Alert">
+                                        <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+                                        Acknowledge
+                                    </button>
+                                    <button class="btn-danger" onclick="dismissAlert(3)" aria-label="Dismiss Alert">
+                                        <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Alert History -->
+                    <section class="alert-card" style="grid-column: span 4;">
+                        <div class="alert-card-header">
+                            <h2 class="alert-card-title">Recent History</h2>
+                        </div>
+                        <div class="alert-history">
+                            <div class="history-item">
+                                <div class="history-info">
+                                    <div class="history-title">Temperature Normal</div>
+                                    <div class="history-meta">Resolved 2 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-info">
+                                    <div class="history-title">Maintenance Due</div>
+                                    <div class="history-meta">Acknowledged 4 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-info">
+                                    <div class="history-title">System Update Complete</div>
+                                    <div class="history-meta">Resolved 6 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-info">
+                                    <div class="history-title">Battery Charging</div>
+                                    <div class="history-meta">Resolved 8 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-info">
+                                    <div class="history-title">Communication Timeout</div>
+                                    <div class="history-meta">Resolved 12 hours ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Notification Settings -->
+                    <section class="alert-card" style="grid-column: span 12;">
+                        <div class="alert-card-header">
+                            <h2 class="alert-card-title">Notification Settings</h2>
+                        </div>
+                        <div class="notification-settings">
+                            <div class="setting-group">
+                                <div class="setting-header">
+                                    <div class="setting-icon">
+                                        <i data-lucide="bell" class="w-5 h-5" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="setting-title">Push Notifications</div>
+                                </div>
+                                <div class="setting-options">
+                                    <div class="setting-option">
+                                        <div class="setting-label">Critical Alerts</div>
+                                        <div class="setting-toggle active" data-setting="push-critical" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                    <div class="setting-option">
+                                        <div class="setting-label">Warning Alerts</div>
+                                        <div class="setting-toggle active" data-setting="push-warning" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                    <div class="setting-option">
+                                        <div class="setting-label">Info Alerts</div>
+                                        <div class="setting-toggle" data-setting="push-info" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <div class="setting-header">
+                                    <div class="setting-icon">
+                                        <i data-lucide="mail" class="w-5 h-5" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="setting-title">Email Notifications</div>
+                                </div>
+                                <div class="setting-options">
+                                    <div class="setting-option">
+                                        <div class="setting-label">Critical Alerts</div>
+                                        <div class="setting-toggle active" data-setting="email-critical" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                    <div class="setting-option">
+                                        <div class="setting-label">Daily Summary</div>
+                                        <div class="setting-toggle active" data-setting="email-summary" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                    <div class="setting-option">
+                                        <div class="setting-label">Weekly Report</div>
+                                        <div class="setting-toggle" data-setting="email-weekly" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <div class="setting-header">
+                                    <div class="setting-icon">
+                                        <i data-lucide="volume-2" class="w-5 h-5" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="setting-title">Audio Alerts</div>
+                                </div>
+                                <div class="setting-options">
+                                    <div class="setting-option">
+                                        <div class="setting-label">Critical Sounds</div>
+                                        <div class="setting-toggle active" data-setting="audio-critical" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                    <div class="setting-option">
+                                        <div class="setting-label">Warning Sounds</div>
+                                        <div class="setting-toggle" data-setting="audio-warning" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                    <div class="setting-option">
+                                        <div class="setting-label">Voice Announcements</div>
+                                        <div class="setting-toggle" data-setting="audio-voice" onclick="toggleSetting(this)"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Alert Actions -->
+                    <section class="alert-card" style="grid-column: span 12;">
+                        <div class="alert-card-header">
+                            <h2 class="alert-card-title">Alert Management</h2>
+                        </div>
+                        <div style="display: flex; gap: var(--space-md); align-items: center; flex-wrap: wrap;">
+                            <button class="btn-primary" onclick="acknowledgeAll()">
+                                <i data-lucide="check-circle" class="w-4 h-4" aria-hidden="true"></i>
+                                Acknowledge All
+                            </button>
+                            <button class="btn-secondary" onclick="clearResolved()">
+                                <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+                                Clear Resolved
+                            </button>
+                            <button class="btn-secondary" onclick="exportAlerts()">
+                                <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                                Export Alerts
+                            </button>
+                            <button class="btn-secondary" onclick="testAlert()">
+                                <i data-lucide="play" class="w-4 h-4" aria-hidden="true"></i>
+                                Test Alert
+                            </button>
+                            <button class="btn-danger" onclick="clearAll()">
+                                <i data-lucide="trash" class="w-4 h-4" aria-hidden="true"></i>
+                                Clear All
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        lucide.createIcons();
+        
+        class AlertsController {
+            constructor() {
+                this.alerts = [];
+                this.initializeEventListeners();
+                this.initializeAccessibility();
+                this.startAlertSimulation();
+            }
+            
+            initializeEventListeners() {
+                // Filter controls
+                document.getElementById('severity-filter').addEventListener('change', () => this.updateFilters());
+                document.getElementById('status-filter').addEventListener('change', () => this.updateFilters());
+                document.getElementById('source-filter').addEventListener('change', () => this.updateFilters());
+                document.getElementById('time-filter').addEventListener('change', () => this.updateFilters());
+                
+                // Navigation emergency controls
+                document.getElementById('emergency-stop').addEventListener('click', () => this.emergencyStop());
+                document.getElementById('pause-system').addEventListener('click', () => this.pauseSystem());
+                document.getElementById('reset-system').addEventListener('click', () => this.resetSystem());
+            }
+            
+            initializeAccessibility() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        this.emergencyStop();
+                    }
+                });
+            }
+            
+            updateFilters() {
+                const severity = document.getElementById('severity-filter').value;
+                const status = document.getElementById('status-filter').value;
+                const source = document.getElementById('source-filter').value;
+                const timeRange = document.getElementById('time-filter').value;
+                
+                console.log('Filters updated:', { severity, status, source, timeRange });
+                // Here you would typically filter the alerts based on these criteria
+            }
+            
+            startAlertSimulation() {
+                setInterval(() => {
+                    // Simulate new alerts
+                    if (Math.random() < 0.1) { // 10% chance every 10 seconds
+                        this.simulateNewAlert();
+                    }
+                }, 10000);
+            }
+            
+            simulateNewAlert() {
+                const alertTypes = [
+                    { type: 'info', title: 'System Check Complete', description: 'Routine system check completed successfully.' },
+                    { type: 'warning', title: 'High CPU Usage', description: 'CPU usage is above 80%. Consider optimizing processes.' },
+                    { type: 'info', title: 'Data Backup Complete', description: 'Automatic data backup completed successfully.' }
+                ];
+                
+                const randomAlert = alertTypes[Math.floor(Math.random() * alertTypes.length)];
+                console.log('New alert simulated:', randomAlert);
+            }
+            
+            emergencyStop() {
+                console.log('EMERGENCY STOP ACTIVATED');
+                alert('EMERGENCY STOP - All operations halted');
+            }
+            
+            pauseSystem() {
+                console.log('System Paused');
+            }
+            
+            resetSystem() {
+                console.log('System Reset');
+            }
+        }
+        
+        // Global functions for alert actions
+        function acknowledgeAlert(id) {
+            console.log(`Acknowledging alert: ${id}`);
+            const alertItem = document.querySelector(`[data-alert-id="${id}"]`);
+            if (alertItem) {
+                alertItem.style.opacity = '0.6';
+                alertItem.style.background = 'var(--bg-secondary)';
+            }
+            alert(`Alert ${id} acknowledged.`);
+        }
+        
+        function dismissAlert(id) {
+            console.log(`Dismissing alert: ${id}`);
+            const alertItem = document.querySelector(`[data-alert-id="${id}"]`);
+            if (alertItem) {
+                alertItem.remove();
+                updateAlertCount();
+            }
+            alert(`Alert ${id} dismissed.`);
+        }
+        
+        function acknowledgeAll() {
+            console.log('Acknowledging all alerts');
+            document.querySelectorAll('.alert-item').forEach(item => {
+                item.style.opacity = '0.6';
+                item.style.background = 'var(--bg-secondary)';
+            });
+            alert('All alerts acknowledged.');
+        }
+        
+        function clearResolved() {
+            console.log('Clearing resolved alerts');
+            alert('Resolved alerts cleared.');
+        }
+        
+        function exportAlerts() {
+            console.log('Exporting alerts');
+            alert('Alert export started. File will be downloaded shortly.');
+        }
+        
+        function testAlert() {
+            console.log('Testing alert system');
+            alert('Test alert triggered. Check notification settings.');
+        }
+        
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all alerts? This action cannot be undone.')) {
+                console.log('Clearing all alerts');
+                document.querySelectorAll('.alert-item').forEach(item => item.remove());
+                updateAlertCount();
+                alert('All alerts cleared.');
+            }
+        }
+        
+        function toggleSetting(element) {
+            element.classList.toggle('active');
+            const setting = element.dataset.setting;
+            const isActive = element.classList.contains('active');
+            console.log(`Setting ${setting} ${isActive ? 'enabled' : 'disabled'}`);
+        }
+        
+        function updateAlertCount() {
+            const activeAlerts = document.querySelectorAll('.alert-item').length;
+            document.getElementById('active-count').textContent = `${activeAlerts} Active`;
+        }
+        
+        // Initialize controller when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new AlertsController();
+        });
+    </script>
+</body>
+</html>
