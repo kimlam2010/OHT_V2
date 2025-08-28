@@ -411,4 +411,10 @@ hal_status_t power_module_handler_reset_system_errors(void);
  */
 hal_status_t power_module_handler_get_system_status(uint16_t *system_status, uint16_t *system_error);
 
+/**
+ * @brief Poll power module data (continuous polling function)
+ * @return HAL status
+ */
+hal_status_t power_module_handler_poll_data(void);
+
 #endif // POWER_MODULE_HANDLER_H

@@ -21,6 +21,7 @@
 #include "communication_manager.h"
 #include "module_manager.h"
 #include "power_module_handler.h"
+#include "travel_motor_module_handler.h"
 #include "api_manager.h"
 #include "constants.h"
 
@@ -282,11 +283,18 @@ int main(int argc, char **argv) {
     uint64_t last_led_toggle_ms = now_ms();
     uint64_t last_diag_ms = now_ms();
     uint64_t last_power_poll_ms = now_ms();
+    uint64_t last_comm_poll_ms = now_ms();
+    uint64_t last_discovery_poll_ms = now_ms();
+    uint64_t last_motor_poll_ms = now_ms();
     bool heartbeat_on = false;
 
     // Power module handler instance
     // power_module_handler_t power_handler; // Commented out - using global state instead
     bool power_handler_initialized = false;
+
+    // Motor module handler instance
+    motor_module_handler_t motor_handler;
+    bool motor_handler_initialized = false;
 
     // Target: reach IDLE in <= 120s
     uint64_t startup_deadline_ms = now_ms() + STARTUP_DEADLINE_MS;
@@ -349,6 +357,34 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Initialize Motor Module handler if present and online
+    if (!g_dry_run) {
+        module_info_t mi;
+        if (registry_get(MODULE_ADDR_TRAVEL_MOTOR, &mi) == 0 && mi.status == MODULE_STATUS_ONLINE) {
+            if (mi.type == MODULE_TYPE_TRAVEL_MOTOR || mi.type == MODULE_TYPE_UNKNOWN) {
+                // Initialize motor module handler
+                motor_module_config_t motor_config = {0};
+                motor_config.address = MODULE_ADDR_TRAVEL_MOTOR;      // 0x04
+                motor_config.command_timeout_ms = 1000;
+                motor_config.response_timeout_ms = 500;
+                motor_config.default_velocity = 1000;
+                motor_config.default_acceleration = 500;
+                motor_config.default_jerk = 100;
+                motor_config.enable_safety_checks = true;
+                motor_config.enable_position_limits = true;
+                motor_config.enable_velocity_limits = true;
+                motor_config.enable_acceleration_limits = true;
+                
+                if (motor_module_init(&motor_handler, &motor_config) == HAL_STATUS_OK) {
+                    motor_handler_initialized = true;
+                    printf("[MOTOR] Handler initialized (addr=0x%02X)\n", MODULE_ADDR_TRAVEL_MOTOR);
+                } else {
+                    printf("[MOTOR] Failed to initialize handler for addr 0x%02X\n", MODULE_ADDR_TRAVEL_MOTOR);
+                }
+            }
+        }
+    }
+
     while (g_should_run) {
         // Periodic updates
         if (!g_dry_run) {
@@ -395,17 +431,74 @@ int main(int argc, char **argv) {
             last_diag_ms = t;
         }
 
-        // Periodic Power Module polling (every 500ms)
-        if (!g_dry_run && power_handler_initialized) {
-            if ((t - last_power_poll_ms) >= POWER_POLL_INTERVAL_MS) {
-                power_module_data_t power_data;
-                if (power_module_handler_read_data(&power_data) == HAL_STATUS_OK) {
-                    // Simplified power module polling - no alarm checking for now
+        // Communication Manager polling (every 100ms)
+        if (!g_dry_run) {
+            if ((t - last_comm_poll_ms) >= COMM_POLL_INTERVAL_MS) {
+                hal_status_t comm_status = comm_manager_update();
+                if (comm_status != HAL_STATUS_OK && g_debug_mode) {
+                    printf("[OHT-50][DEBUG] comm_manager_update failed: %d\n", comm_status);
+                }
+                last_comm_poll_ms = t;
+            }
+        }
+
+        // Module Discovery - only once at startup, not continuous polling
+        static bool initial_discovery_done = false;
+        if (!g_dry_run && !initial_discovery_done) {
+            if ((t - last_discovery_poll_ms) >= 1000) { // Wait 1 second after startup
+                hal_status_t discovery_status = module_manager_discover_modules();
+                if (discovery_status != HAL_STATUS_OK && g_debug_mode) {
+                    printf("[OHT-50][DEBUG] Initial module discovery failed: %d\n", discovery_status);
+                } else {
+                    printf("[OHT-50] Initial module discovery completed\n");
+                }
+                initial_discovery_done = true; // Only do discovery once
+            }
+        }
+
+        // Power Module polling (every 100ms) - with fallback for offline modules
+        if (!g_dry_run) {
+            if ((t - last_power_poll_ms) >= 100) {
+                if (power_handler_initialized) {
+                    hal_status_t power_status = power_module_handler_poll_data();
+                    if (power_status != HAL_STATUS_OK && g_debug_mode) {
+                        printf("[OHT-50][DEBUG] power_module_handler_poll_data failed: %d\n", power_status);
+                    }
+                } else {
+                    // Fallback polling for power module even when not initialized
                     if (g_debug_mode) {
-                        printf("[POWER] Data read successfully\n");
+                        printf("[OHT-50][DEBUG] Power module fallback polling (module offline)\n");
+                    }
+                    // Try to read power module directly via RS485
+                    uint16_t power_data[4];
+                    if (comm_manager_modbus_read_holding_registers(MODULE_ADDR_POWER, 0x00F0, 1, power_data) == HAL_STATUS_OK) {
+                        printf("[POWER] Fallback poll: Device ID=0x%04X\n", power_data[0]);
                     }
                 }
                 last_power_poll_ms = t;
+            }
+        }
+
+        // Motor Module polling (every 50ms) - with fallback for offline modules
+        if (!g_dry_run) {
+            if ((t - last_motor_poll_ms) >= 50) {
+                if (motor_handler_initialized) {
+                    hal_status_t motor_status = motor_module_handler_poll_data(&motor_handler);
+                    if (motor_status != HAL_STATUS_OK && g_debug_mode) {
+                        printf("[OHT-50][DEBUG] motor_module_handler_poll_data failed: %d\n", motor_status);
+                    }
+                } else {
+                    // Fallback polling for motor module even when not initialized
+                    if (g_debug_mode) {
+                        printf("[OHT-50][DEBUG] Motor module fallback polling (module offline)\n");
+                    }
+                    // Try to read motor module directly via RS485
+                    uint16_t motor_data[4];
+                    if (comm_manager_modbus_read_holding_registers(MODULE_ADDR_TRAVEL_MOTOR, 0x0000, 1, motor_data) == HAL_STATUS_OK) {
+                        printf("[MOTOR] Fallback poll: Position=%d\n", (int16_t)motor_data[0]);
+                    }
+                }
+                last_motor_poll_ms = t;
             }
         }
 
@@ -415,12 +508,6 @@ int main(int argc, char **argv) {
             lidar_scan_data_t scan_data;
             if (hal_lidar_get_scan_data(&scan_data) == HAL_STATUS_OK) {
                 // Process LiDAR data for safety monitoring
-                if (g_debug_mode && scan_data.scan_complete) {
-                    printf("[LIDAR] Scan complete: %d points, min_dist=%dmm\n", 
-                           scan_data.point_count, 
-                           lidar_calculate_min_distance(&scan_data));
-                }
-                
                 // Check safety zones using LiDAR data
                 if (scan_data.scan_complete) {
                     safety_monitor_check_basic_zones(&scan_data);

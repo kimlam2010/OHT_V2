@@ -104,7 +104,7 @@ typedef struct {
     api_mgr_response_code_t status_code;
     api_mgr_http_header_t headers[API_MGR_MAX_HEADERS];
     uint32_t header_count;
-    char *body;
+    char body[API_MGR_MAX_RESPONSE_SIZE];
     uint32_t body_length;
     api_mgr_content_type_t content_type;
     bool keep_alive;

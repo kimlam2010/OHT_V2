@@ -1033,3 +1033,81 @@ hal_status_t power_module_handler_get_system_status(uint16_t *system_status, uin
     pthread_mutex_unlock(&power_module_state.mutex);
     return status;
 }
+
+/**
+ * @brief Poll power module data (continuous polling function)
+ * @return HAL status
+ */
+static hal_status_t power_module_poll_data(void)
+{
+    if (!power_module_state.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&power_module_state.mutex);
+    
+    hal_status_t status = HAL_STATUS_OK;
+    uint64_t current_time = power_module_get_timestamp_ms();
+    
+    // Check if enough time has passed since last poll (100ms interval)
+    if ((current_time - power_module_state.last_update_ms) < 100) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_OK;
+    }
+    
+    printf("[POWER-POLL] Starting data poll...\n");
+    
+    // Poll battery data
+    status = power_module_read_battery_data();
+    if (status != HAL_STATUS_OK) {
+        printf("[POWER-POLL] Battery data read failed: %d\n", status);
+    }
+    
+    // Poll charging data
+    status = power_module_read_charging_data();
+    if (status != HAL_STATUS_OK) {
+        printf("[POWER-POLL] Charging data read failed: %d\n", status);
+    }
+    
+    // Poll power distribution data
+    status = power_module_read_power_distribution();
+    if (status != HAL_STATUS_OK) {
+        printf("[POWER-POLL] Power distribution read failed: %d\n", status);
+    }
+    
+    // Poll fault status
+    status = power_module_read_fault_status();
+    if (status != HAL_STATUS_OK) {
+        printf("[POWER-POLL] Fault status read failed: %d\n", status);
+    }
+    
+    // Poll system info
+    status = power_module_read_system_info();
+    if (status != HAL_STATUS_OK) {
+        printf("[POWER-POLL] System info read failed: %d\n", status);
+    }
+    
+    // Update timestamp
+    power_module_state.last_update_ms = current_time;
+    
+    // Update status
+    power_module_state.status.online = true;
+    power_module_state.status.last_communication_ms = current_time;
+    
+    printf("[POWER-POLL] Data poll completed. Battery: %.1fV, Current: %.1fA, Temp: %d°C\n",
+           power_module_state.data.battery_voltage,
+           power_module_state.data.battery_current,
+           power_module_state.data.temperature);
+    
+    pthread_mutex_unlock(&power_module_state.mutex);
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Public function to trigger power module polling
+ * @return HAL status
+ */
+hal_status_t power_module_handler_poll_data(void)
+{
+    return power_module_poll_data();
+}

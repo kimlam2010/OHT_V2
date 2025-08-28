@@ -488,4 +488,11 @@ hal_status_t motor_module_get_statistics(motor_module_handler_t *handler, uint32
                                        uint32_t *successful_moves, uint32_t *failed_moves, 
                                        uint64_t *total_runtime);
 
+/**
+ * @brief Poll motor module data (continuous polling function)
+ * @param handler Motor module handler
+ * @return HAL status
+ */
+hal_status_t motor_module_handler_poll_data(motor_module_handler_t *handler);
+
 #endif // TRAVEL_MOTOR_MODULE_HANDLER_H

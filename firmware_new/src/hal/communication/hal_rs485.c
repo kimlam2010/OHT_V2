@@ -212,6 +212,8 @@ hal_status_t hal_rs485_transmit(const uint8_t *data, size_t length)
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
+    printf("[HAL-RS485-TX] Transmitting %zu bytes to %s\n", length, rs485_state.config.device_path);
+    
     hal_status_t result = HAL_STATUS_ERROR;
     uint32_t current_retry = 0;
     uint32_t current_delay = rs485_state.retry_delay_ms;
@@ -234,6 +236,7 @@ hal_status_t hal_rs485_transmit(const uint8_t *data, size_t length)
             rs485_state.last_operation_time_us = rs485_state.statistics.timestamp_us;
             rs485_state.retry_count = 0; // Reset retry count on success
             
+            printf("[HAL-RS485-TX] Success: %zu bytes written\n", written);
             result = HAL_STATUS_OK;
             break;
         } else {
@@ -242,6 +245,9 @@ hal_status_t hal_rs485_transmit(const uint8_t *data, size_t length)
             rs485_state.device_info.error_count++;
             rs485_state.retry_count++;
             
+            printf("[HAL-RS485-TX] Error: written=%zd, expected=%zu, retry=%u/%u\n", 
+                   written, length, current_retry, rs485_state.max_retries);
+            
             if (current_retry < rs485_state.max_retries) {
                 // Exponential backoff: delay *= 2
                 usleep(current_delay * 1000);
@@ -249,6 +255,7 @@ hal_status_t hal_rs485_transmit(const uint8_t *data, size_t length)
                 current_retry++;
             } else {
                 // Max retries reached
+                printf("[HAL-RS485-TX] Max retries reached, giving up\n");
                 result = HAL_STATUS_IO_ERROR;
                 break;
             }
@@ -292,6 +299,7 @@ hal_status_t hal_rs485_receive(uint8_t *buffer, size_t max_length, size_t *actua
     timeout.tv_sec = rs485_state.config.timeout_ms / 1000;
     timeout.tv_usec = (rs485_state.config.timeout_ms % 1000) * 1000;
     
+    printf("[HAL-RS485-RX] Waiting for data (timeout=%u ms)...\n", rs485_state.config.timeout_ms);
     int select_result = select(rs485_state.device_fd + 1, &read_fds, NULL, NULL, &timeout);
     
     if (select_result > 0) {
@@ -306,12 +314,20 @@ hal_status_t hal_rs485_receive(uint8_t *buffer, size_t max_length, size_t *actua
             rs485_state.statistics.timestamp_us = rs485_get_timestamp_us();
             rs485_state.last_operation_time_us = rs485_state.statistics.timestamp_us;
             
+            printf("[HAL-RS485-RX] Success: received %zd bytes\n", received);
+            
             // Update status
             rs485_state.device_info.rs485_status = RS485_STATUS_IDLE;
             
             pthread_mutex_unlock(&rs485_state.mutex);
             return HAL_STATUS_OK;
+        } else {
+            printf("[HAL-RS485-RX] Read error: received=%zd\n", received);
         }
+    } else if (select_result == 0) {
+        printf("[HAL-RS485-RX] Timeout after %u ms\n", rs485_state.config.timeout_ms);
+    } else {
+        printf("[HAL-RS485-RX] Select error: %d\n", select_result);
     }
     
     // Update status
