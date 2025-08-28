@@ -1061,3 +1061,116 @@ static hal_status_t simulate_motor_movement(motor_module_handler_t *handler) {
     
     return HAL_STATUS_OK;
 }
+
+/**
+ * @brief Poll motor module data (continuous polling function)
+ * @param handler Motor module handler
+ * @return HAL status
+ */
+static hal_status_t motor_module_poll_data(motor_module_handler_t *handler)
+{
+    if (!handler || !handler->initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    uint64_t current_time = hal_get_timestamp_us();
+    
+    // Check if enough time has passed since last poll (50ms interval)
+    if ((current_time - handler->data.last_update_time) < 50000) {
+        return HAL_STATUS_OK;
+    }
+    
+    printf("[MOTOR-POLL] Starting data poll for motor 0x%02X...\n", handler->address);
+    
+    hal_status_t status = HAL_STATUS_OK;
+    
+    // Poll position data
+    uint16_t position;
+    status = motor_module_read_register(handler, MOTOR_CURRENT_POSITION_REG, &position);
+    if (status == HAL_STATUS_OK) {
+        handler->data.current_position = (int32_t)position;
+    } else {
+        printf("[MOTOR-POLL] Position read failed: %d\n", status);
+    }
+    
+    // Poll velocity data
+    uint16_t velocity;
+    status = motor_module_read_register(handler, MOTOR_CURRENT_VELOCITY_REG, &velocity);
+    if (status == HAL_STATUS_OK) {
+        handler->data.current_velocity = (int32_t)velocity;
+    } else {
+        printf("[MOTOR-POLL] Velocity read failed: %d\n", status);
+    }
+    
+    // Poll acceleration data
+    uint16_t acceleration;
+    status = motor_module_read_register(handler, MOTOR_CURRENT_ACCELERATION_REG, &acceleration);
+    if (status == HAL_STATUS_OK) {
+        handler->data.current_acceleration = (int32_t)acceleration;
+    } else {
+        printf("[MOTOR-POLL] Acceleration read failed: %d\n", status);
+    }
+    
+    // Poll status data (using fault status as enable status for now)
+    uint16_t enable_status;
+    status = motor_module_read_register(handler, MOTOR_FAULT_STATUS_REG, &enable_status);
+    if (status == HAL_STATUS_OK) {
+        handler->data.enable_status = enable_status;
+    } else {
+        printf("[MOTOR-POLL] Enable status read failed: %d\n", status);
+    }
+    
+    // Poll fault status
+    uint16_t fault_status;
+    status = motor_module_read_register(handler, MOTOR_FAULT_STATUS_REG, &fault_status);
+    if (status == HAL_STATUS_OK) {
+        handler->data.fault_status = fault_status;
+    } else {
+        printf("[MOTOR-POLL] Fault status read failed: %d\n", status);
+    }
+    
+    // Poll target reached status
+    uint16_t target_reached;
+    status = motor_module_read_register(handler, MOTOR_TARGET_REACHED_REG, &target_reached);
+    if (status == HAL_STATUS_OK) {
+        handler->data.target_reached = target_reached;
+    } else {
+        printf("[MOTOR-POLL] Target reached read failed: %d\n", status);
+    }
+    
+    // Poll motion complete status
+    uint16_t motion_complete;
+    status = motor_module_read_register(handler, MOTOR_MOTION_COMPLETE_REG, &motion_complete);
+    if (status == HAL_STATUS_OK) {
+        handler->data.motion_complete = motion_complete;
+    } else {
+        printf("[MOTOR-POLL] Motion complete read failed: %d\n", status);
+    }
+    
+    // Update timestamp
+    handler->data.last_update_time = current_time;
+    
+    // Check for faults
+    check_motor_faults(handler);
+    
+    // Validate limits
+    validate_motor_limits(handler);
+    
+    printf("[MOTOR-POLL] Data poll completed. Pos: %d, Vel: %d, Status: 0x%04X, Fault: 0x%04X\n",
+           handler->data.current_position,
+           handler->data.current_velocity,
+           handler->data.enable_status,
+           handler->data.fault_status);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Public function to trigger motor module polling
+ * @param handler Motor module handler
+ * @return HAL status
+ */
+hal_status_t motor_module_handler_poll_data(motor_module_handler_t *handler)
+{
+    return motor_module_poll_data(handler);
+}

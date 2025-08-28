@@ -43,6 +43,8 @@
 #define HEARTBEAT_INTERVAL_MS              500U
 #define DIAGNOSTICS_INTERVAL_MS            1000U
 #define POWER_POLL_INTERVAL_MS             500U
+#define COMM_POLL_INTERVAL_MS              100U
+#define DISCOVERY_POLL_INTERVAL_MS         5000U
 
 // Timeouts
 #define STARTUP_DEADLINE_MS                120000U

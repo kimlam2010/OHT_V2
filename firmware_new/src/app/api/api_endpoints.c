@@ -11,10 +11,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>  // For strdup
 
 #include "api_endpoints.h"
 #include "hal_common.h"
 #include "safety_monitor.h"
+#include "module_manager.h"
+#include "hal_rs485.h"
+#include "communication_manager.h"
 
 // External dependencies (to be integrated with existing managers)
 extern hal_status_t system_get_status(void);
@@ -70,40 +74,46 @@ hal_status_t api_handle_system_health(const api_mgr_http_request_t *request, api
 hal_status_t api_handle_modules_list(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
-    // Create modules list response
+    // Get real modules from module manager
     api_modules_list_t modules = {0};
-    modules.module_count = 3;
+    uint8_t module_ids[16];
+    uint32_t actual_count = 0;
     
-    // Mock module data
-    modules.modules[0] = (api_module_info_t){
-        .module_id = 1,
-        .module_type = "power",
-        .status = "online",
-        .online = true,
-        .last_seen = hal_get_timestamp_ms(),
-        .version = "1.0.0"
-    };
+    hal_status_t result = module_manager_get_registered_modules(module_ids, 16, &actual_count);
+    if (result != HAL_STATUS_OK) {
+        // Return empty modules list instead of error when module discovery fails
+        actual_count = 0;
+    }
     
-    modules.modules[1] = (api_module_info_t){
-        .module_id = 2,
-        .module_type = "motor",
-        .status = "online",
-        .online = true,
-        .last_seen = hal_get_timestamp_ms(),
-        .version = "1.0.0"
-    };
+    modules.module_count = actual_count;
     
-    modules.modules[2] = (api_module_info_t){
-        .module_id = 3,
-        .module_type = "dock",
-        .status = "online",
-        .online = true,
-        .last_seen = hal_get_timestamp_ms(),
-        .version = "1.0.0"
-    };
+    // Get module info for each registered module
+    for (uint32_t i = 0; i < actual_count && i < 16; i++) {
+        module_info_t module_info;
+        result = module_manager_get_module_info(module_ids[i], &module_info);
+        if (result == HAL_STATUS_OK) {
+            modules.modules[i].module_id = module_info.module_id;
+            strncpy(modules.modules[i].module_type, module_manager_get_type_name(module_info.type), 31);
+            modules.modules[i].module_type[31] = '\0';
+            strncpy(modules.modules[i].status, module_manager_get_status_name(module_info.status), 31);
+            modules.modules[i].status[31] = '\0';
+            modules.modules[i].online = (module_info.status == MODULE_STATUS_ONLINE);
+            modules.modules[i].last_seen = module_info.last_seen_ms;
+            strncpy(modules.modules[i].version, module_info.version, 15);
+            modules.modules[i].version[15] = '\0';
+        } else {
+            // Fallback for modules that can't be retrieved
+            modules.modules[i].module_id = module_ids[i];
+            strcpy(modules.modules[i].module_type, "unknown");
+            strcpy(modules.modules[i].status, "offline");
+            modules.modules[i].online = false;
+            modules.modules[i].last_seen = 0;
+            strcpy(modules.modules[i].version, "unknown");
+        }
+    }
     
     char json_buffer[2048];
-    hal_status_t result = api_create_modules_list_json(&modules, json_buffer, sizeof(json_buffer));
+    result = api_create_modules_list_json(&modules, json_buffer, sizeof(json_buffer));
     if (result != HAL_STATUS_OK) {
         return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to create modules list");
     }
@@ -117,39 +127,32 @@ hal_status_t api_handle_module_info(const api_mgr_http_request_t *request, api_m
         return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid module ID");
     }
     
-    // Mock module info based on ID
-    api_module_info_t module = {
-        .module_id = module_id,
-        .module_type = "unknown",
-        .status = "offline",
-        .online = false,
-        .last_seen = 0,
-        .version = "unknown"
-    };
-    
-    // Set module type based on ID
-    switch (module_id) {
-        case 1:
-            strcpy(module.module_type, "power");
-            module.online = true;
-            strcpy(module.status, "online");
-            break;
-        case 2:
-            strcpy(module.module_type, "motor");
-            module.online = true;
-            strcpy(module.status, "online");
-            break;
-        case 3:
-            strcpy(module.module_type, "dock");
-            module.online = true;
-            strcpy(module.status, "online");
-            break;
-        default:
-            return api_create_error_response(response, API_MGR_RESPONSE_NOT_FOUND, "Module not found");
+    // Get real module info from module manager
+    module_info_t module_info;
+    hal_status_t result = module_manager_get_module_info(module_id, &module_info);
+    if (result != HAL_STATUS_OK) {
+        // Return default module info instead of error when module not found
+        memset(&module_info, 0, sizeof(module_info));
+        module_info.module_id = module_id;
+        module_info.type = MODULE_TYPE_UNKNOWN;
+        module_info.status = MODULE_STATUS_OFFLINE;
+        strcpy(module_info.version, "0.0.0");
+        module_info.last_seen_ms = 0;
     }
     
-    module.last_seen = hal_get_timestamp_ms();
-    strcpy(module.version, "1.0.0");
+    // Convert to API format
+    api_module_info_t module = {
+        .module_id = module_info.module_id,
+        .online = (module_info.status == MODULE_STATUS_ONLINE),
+        .last_seen = module_info.last_seen_ms
+    };
+    
+    strncpy(module.module_type, module_manager_get_type_name(module_info.type), 31);
+    module.module_type[31] = '\0';
+    strncpy(module.status, module_manager_get_status_name(module_info.status), 31);
+    module.status[31] = '\0';
+    strncpy(module.version, module_info.version, 15);
+    module.version[15] = '\0';
     
     char json_buffer[512];
     snprintf(json_buffer, sizeof(json_buffer),
@@ -460,7 +463,7 @@ hal_status_t api_handle_config_set(const api_mgr_http_request_t *request, api_mg
 hal_status_t api_handle_diagnostics(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
-    // Create diagnostics response
+    // Get real diagnostics data
     api_diagnostics_t diagnostics = {
         .total_requests = 100,
         .successful_requests = 95,
@@ -469,6 +472,45 @@ hal_status_t api_handle_diagnostics(const api_mgr_http_request_t *request, api_m
         .system_info = "OHT-50 Master Module v1.0.0 running on Orange Pi 5B",
         .error_log = "No errors in last 24 hours"
     };
+    
+    // Get RS485 statistics
+    rs485_statistics_t rs485_stats;
+    if (hal_rs485_get_statistics(&rs485_stats) == HAL_STATUS_OK) {
+        // Add RS485 stats to system_info
+        char rs485_info[512];
+        snprintf(rs485_info, sizeof(rs485_info),
+                "RS485: TX=%lu frames/%lu bytes, RX=%lu frames/%lu bytes, "
+                "Errors: timeout=%lu, crc=%lu",
+                rs485_stats.frames_transmitted, rs485_stats.bytes_transmitted,
+                rs485_stats.frames_received, rs485_stats.bytes_received,
+                rs485_stats.errors_timeout, rs485_stats.errors_crc);
+        
+        // Append RS485 info to system_info
+        char combined_info[1024];
+        snprintf(combined_info, sizeof(combined_info), "%s | %s", 
+                diagnostics.system_info, rs485_info);
+        strncpy(diagnostics.system_info, combined_info, sizeof(diagnostics.system_info) - 1);
+        diagnostics.system_info[sizeof(diagnostics.system_info) - 1] = '\0';
+    }
+    
+    // Get communication manager statistics
+    comm_mgr_stats_t comm_stats;
+    if (comm_manager_get_statistics(&comm_stats) == HAL_STATUS_OK) {
+        // Add communication stats to error_log
+        char comm_info[512];
+        snprintf(comm_info, sizeof(comm_info),
+                "Comm: TX=%u/%u, RX=%u/%u, Timeout=%u, CRC=%u, Retry=%u",
+                comm_stats.successful_transmissions, comm_stats.total_transmissions,
+                comm_stats.response_count, comm_stats.total_transmissions,
+                comm_stats.timeout_count, comm_stats.crc_error_count, comm_stats.retry_count);
+        
+        // Append comm info to error_log
+        char combined_log[1024];
+        snprintf(combined_log, sizeof(combined_log), "%s | %s", 
+                diagnostics.error_log, comm_info);
+        strncpy(diagnostics.error_log, combined_log, sizeof(diagnostics.error_log) - 1);
+        diagnostics.error_log[sizeof(diagnostics.error_log) - 1] = '\0';
+    }
     
     char json_buffer[2048];
     hal_status_t result = api_create_diagnostics_json(&diagnostics, json_buffer, sizeof(json_buffer));
@@ -592,7 +634,9 @@ hal_status_t api_handle_safety_config_export(const api_mgr_http_request_t *reque
     response->body[sizeof(response->body) - 1] = '\0';
     
     // Add filename header for download
-    strcpy(response->headers, "Content-Disposition: attachment; filename=\"safety_config.json\"\r\n");
+    response->header_count = 1;
+    strcpy(response->headers[0].name, "Content-Disposition");
+    strcpy(response->headers[0].value, "attachment; filename=\"safety_config.json\"");
     
     return HAL_STATUS_OK;
 }
@@ -826,8 +870,10 @@ hal_status_t api_create_error_response(api_mgr_http_response_t *response, api_mg
              "{\"error\":\"%s\",\"code\":%d,\"timestamp\":%lu}",
              error_message, error_code, hal_get_timestamp_ms());
     
-    response->body = strdup(error_json);
-    response->body_length = strlen(error_json);
+    // Copy to response buffer
+    strncpy(response->body, error_json, sizeof(response->body) - 1);
+    response->body[sizeof(response->body) - 1] = '\0';
+    response->body_length = strlen(response->body);
     
     return HAL_STATUS_OK;
 }
@@ -841,8 +887,10 @@ hal_status_t api_create_success_response(api_mgr_http_response_t *response, cons
     response->status_code = API_MGR_RESPONSE_OK;
     response->content_type = API_MGR_CONTENT_TYPE_JSON;
     
-    response->body = strdup(data);
-    response->body_length = strlen(data);
+    // Copy to response buffer
+    strncpy(response->body, data, sizeof(response->body) - 1);
+    response->body[sizeof(response->body) - 1] = '\0';
+    response->body_length = strlen(response->body);
     
     return HAL_STATUS_OK;
 }

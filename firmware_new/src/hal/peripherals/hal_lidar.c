@@ -55,8 +55,6 @@ hal_status_t hal_lidar_init(const lidar_config_t *config)
 {
     hal_status_t status;
     
-    printf("DEBUG: hal_lidar_init() called\n");
-    
     if (!config) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
@@ -78,11 +76,8 @@ hal_status_t hal_lidar_init(const lidar_config_t *config)
     
     pthread_mutex_lock(&lidar_state.mutex);
     
-    printf("DEBUG: hal_lidar_init() - lidar_state.initialized = %d\n", lidar_state.initialized);
-    
     if (lidar_state.initialized) {
         pthread_mutex_unlock(&lidar_state.mutex);
-        printf("DEBUG: hal_lidar_init() - returning ALREADY_INITIALIZED\n");
         return HAL_STATUS_ALREADY_INITIALIZED;
     }
     
@@ -119,8 +114,6 @@ hal_status_t hal_lidar_init(const lidar_config_t *config)
     
     pthread_mutex_unlock(&lidar_state.mutex);
     
-    printf("DEBUG: hal_lidar_init() - initialization completed successfully\n");
-    
     return HAL_STATUS_OK;
 }
 
@@ -130,9 +123,6 @@ hal_status_t hal_lidar_init(const lidar_config_t *config)
  */
 hal_status_t hal_lidar_reset_state(void)
 {
-    printf("DEBUG: hal_lidar_reset_state() called\n");
-    printf("DEBUG: Before reset - initialized: %d, scanning: %d\n", lidar_state.initialized, lidar_state.scanning);
-    
     pthread_mutex_lock(&lidar_state.mutex);
     
     // Stop scanning if active
@@ -148,9 +138,6 @@ hal_status_t hal_lidar_reset_state(void)
     lidar_state.device_fd = -1;
     
     pthread_mutex_unlock(&lidar_state.mutex);
-    
-    printf("DEBUG: After reset - initialized: %d, scanning: %d\n", lidar_state.initialized, lidar_state.scanning);
-    printf("DEBUG: hal_lidar_reset_state() completed\n");
     
     return HAL_STATUS_OK;
 }
@@ -513,26 +500,21 @@ hal_status_t lidar_validate_config(const lidar_config_t *config)
     }
     
     if (strlen(config->device_path) == 0) { 
-        printf("DEBUG: device_path is empty\n"); 
         return HAL_STATUS_INVALID_PARAMETER; 
     }
     
     if (config->baud_rate != LIDAR_BAUD_RATE) { 
-        printf("DEBUG: baud_rate mismatch: expected %d, got %d\n", LIDAR_BAUD_RATE, config->baud_rate); 
         return HAL_STATUS_INVALID_PARAMETER; 
     }
     
     if (config->scan_rate_hz < LIDAR_SCAN_RATE_MIN_HZ || config->scan_rate_hz > LIDAR_SCAN_RATE_MAX_HZ) { 
-        printf("DEBUG: scan_rate_hz out of range: %d (min: %d, max: %d)\n", config->scan_rate_hz, LIDAR_SCAN_RATE_MIN_HZ, LIDAR_SCAN_RATE_MAX_HZ); 
         return HAL_STATUS_INVALID_PARAMETER; 
     }
     
     if (config->emergency_stop_mm >= config->warning_mm || config->warning_mm >= config->safe_mm) { 
-        printf("DEBUG: safety thresholds invalid: emergency=%d, warning=%d, safe=%d\n", config->emergency_stop_mm, config->warning_mm, config->safe_mm); 
         return HAL_STATUS_INVALID_PARAMETER; 
     }
     
-    printf("DEBUG: config validation passed\n");
     return HAL_STATUS_OK;
 }
 

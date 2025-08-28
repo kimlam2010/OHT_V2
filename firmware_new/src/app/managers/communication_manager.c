@@ -869,7 +869,25 @@ static hal_status_t send_modbus_frame(const uint8_t *data, uint16_t length) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    return hal_rs485_transmit(data, length);  // Use hal_rs485_transmit instead of hal_rs485_send
+    // Log TX frame details
+    printf("[RS485-TX] Sending %u bytes: ", length);
+    for (uint16_t i = 0; i < length && i < 16; i++) {
+        printf("%02X ", data[i]);
+    }
+    if (length > 16) printf("...");
+    printf(" (Slave: %02X, Func: %02X)\n", data[0], data[1]);
+    
+    hal_status_t result = hal_rs485_transmit(data, length);
+    
+    if (result == HAL_STATUS_OK) {
+        g_comm_manager.status.statistics.successful_transmissions++;
+        printf("[RS485-TX] Success\n");
+    } else {
+        g_comm_manager.status.statistics.failed_transmissions++;
+        printf("[RS485-TX] Failed: status=%d\n", result);
+    }
+    
+    return result;
 }
 
 static hal_status_t receive_modbus_frame(uint8_t *data, uint16_t *length) {
@@ -880,24 +898,38 @@ static hal_status_t receive_modbus_frame(uint8_t *data, uint16_t *length) {
     size_t actual_length;
     // Give the bus a brief settle time after TX before RX
     hal_sleep_ms(20);
+    
+    printf("[RS485-RX] Waiting for response...\n");
     hal_status_t status = hal_rs485_receive(data, 256, &actual_length);
+    
     if (status != HAL_STATUS_OK) {
-        printf("[MODBUS] RS485 receive failed: status=%d\n", status);
+        g_comm_manager.status.statistics.timeout_count++;
+        printf("[RS485-RX] Timeout/Error: status=%d\n", status);
         return status;
     }
     
-    printf("[MODBUS] RS485 received %zu bytes\n", actual_length);
-    
     *length = (uint16_t)actual_length;
+    
+    // Log RX frame details
+    printf("[RS485-RX] Received %u bytes: ", *length);
+    for (uint16_t i = 0; i < *length && i < 16; i++) {
+        printf("%02X ", data[i]);
+    }
+    if (*length > 16) printf("...");
+    printf(" (Slave: %02X, Func: %02X)\n", data[0], data[1]);
     
     // Verify CRC if enabled
     if (g_comm_manager.config.enable_crc_check) {
         if (!verify_crc16(data, *length)) {
             g_comm_manager.status.statistics.crc_error_count++;
+            printf("[RS485-RX] CRC Error - calculated vs received mismatch\n");
             return HAL_STATUS_ERROR;
+        } else {
+            printf("[RS485-RX] CRC OK\n");
         }
     }
     
+    g_comm_manager.status.statistics.successful_transmissions++;
     return HAL_STATUS_OK;
 }
 
