@@ -246,3 +246,104 @@
 5. **Real-time Updates:** Live data simulation working
 
 **✅ PHASE 2 SUCCESSFULLY COMPLETED**
+
+---
+
+## 📡 Monitoring – Option B (Grid First) — Proposal for PM Decision
+
+### **Mục tiêu**
+- **Quan sát nhanh theo module RS485**: thấy ngay trạng thái từng địa chỉ 0x01–0x0F.
+- **Hiển thị sức khỏe Bus + Discovery**: KPI tập trung, thao tác tối thiểu.
+- **Tuân thủ Design System**: sidebar trái, breadcrumbs rõ ràng, accessibility đạt WCAG 2.1 AA.
+
+### **Thông tin kiến trúc & điều hướng**
+- **Sidebar**: cố định bên trái với mục `Monitoring` (bắt buộc theo Design System). [[memory:7148354]]
+- **Breadcrumbs**: “Monitoring › Overview”.
+- **Liên kết nhanh subpages**:
+  - Monitoring › RS485 Bus
+  - Monitoring › Module [0xNN]
+  - Monitoring › Alerts
+  - Monitoring › Logs
+
+### **Cấu trúc layout (desktop ≥ 1280px)**
+- **Hàng top**: giữ Communication + thêm RS485 KPIs (compact: `error_rate_bus`, `p95_bus`, `throughput_bus`, `last_scan`).
+- **Khu trung tâm (ưu tiên)**: `RS485 Module Grid` 0x01–0x0F (thẻ lớn, click mở chi tiết).
+- **Panel phải**: `RS485 Bus Health` + `Discovery Status` + `Actions`.
+- **Bên dưới**: `Active Alerts` với bộ lọc “by module”.
+- **Logs**: chuyển sang subpage riêng, Overview chỉ tóm tắt dòng mới nhất (nếu cần).
+
+### **Section/ID chuẩn bị nhúng**
+```text
+#rs485-module-grid      #rs485-bus-health
+#discovery-status       #module-detail-modal
+#alerts-filter-by-module
+```
+
+### **Nội dung khối chính**
+- **RS485 Module Grid (`#rs485-module-grid`)**
+  - Địa chỉ 0x01–0x0F; thẻ gồm: name, address, status (Healthy/Warn/Error/Lost), `last_seen`, `error_rate`, `response_time_p95`, `fw_version`, badge `mandatory/optional`.
+  - Tương tác: click → mở `#module-detail-modal`.
+- **Panel phải: RS485 Bus Health (`#rs485-bus-health`)**
+  - KPIs: `error_rate_bus`, `response_time_p95_bus`, `throughput_bus`, `last_scan`.
+  - Actions: Scan Now, Restart Bus (ẩn/disabled nếu thiếu quyền).
+- **Panel phải: Discovery (`#discovery-status`)**
+  - Tiến trình: % scan, số module tìm thấy, collision theo địa chỉ.
+  - Chu kỳ: auto 60s (idle) / 300s (under load); manual luôn khả dụng.
+- **Active Alerts + Filter (`#alerts-filter-by-module`)**
+  - Bộ lọc theo `address/module`, `level`, `time range`; highlight module tương ứng.
+- **Module Detail Modal (`#module-detail-modal`)**
+  - Tabs: Overview | Telemetry | Alerts | Logs; Actions: Ping, Retry, Quarantine (theo quyền); sparkline health (error_rate/RTT).
+
+### **Telemetry & ngưỡng áp dụng toàn hệ**
+- **Cadence**: Mandatory 0x01–0x05: 1s; Optional 0x06–0x0F: 2s; burst on state-change (debounce 300ms).
+- **Trường tối thiểu**: `health`, `error_rate`, `response_time_p95`, `last_seen`, `fw_version`.
+- **Ngưỡng cảnh báo**:
+  - `error_rate`: Warn > 1%, Error > 3%.
+  - `response_time_p95`: Warn > 100ms, Error > 300ms.
+  - Lost module: Warn nếu `last_seen` > 3×WS interval; Error nếu > 10×.
+  - Bus health: Warn nếu `error_rate_bus` > 1% hoặc `throughput` giảm > 30%/5s; Error nếu `error_rate_bus` > 3% hoặc no-response > 3×scan window.
+
+### **Trạng thái & màu (badge)**
+- Healthy: xanh; Warn: vàng; Error: đỏ; Lost: xám/đỏ nhạt + icon mất kết nối.
+- Mandatory/Optional: badge nhỏ ở góc thẻ.
+
+### **Quyền & hành động**
+- Yêu cầu quyền “Operator”+ cho: Scan Now, Restart Bus, Ping, Retry, Quarantine.
+- Nếu thiếu quyền: nút disabled + tooltip giải thích.
+
+### **Responsive**
+- ≥1440px: Grid 4×2; panel phải 320–360px.
+- 1280–1439px: Grid 3×3; panel phải 300–320px.
+- 768–1279px: Panel phải xuống dưới grid; Grid 2×N.
+- <768px: Grid 1×N; modal full-screen.
+
+### **Accessibility**
+- ARIA live cho thay đổi status từng module; keyboard nav: arrow di chuyển thẻ, Enter mở modal, ESC đóng; focus rõ ràng; contrast đạt WCAG 2.1 AA.
+
+### **Tích hợp dữ liệu (Phase-in)**
+- **JS skeleton**: `updateRs485BusKpis(busMetrics)`, `renderModuleGrid(modules)`, `openModuleDetail(addr)`, `startDiscovery()`.
+- **Mock → WS/HTTP**: dùng mock theo 1–2s; map sang WS/HTTP khi backend sẵn sàng.
+- **Contract gợi ý**:
+  - Bus KPIs: `{ error_rate_bus, response_time_p95_bus, throughput_bus, last_scan }`
+  - Module: `{ addr, name, mandatory, health, error_rate, response_time_p95, last_seen, fw_version }`
+  - Discovery: `{ running, progress, found, collisions:[{addr, duplicates:[...]}], last_scan }`
+
+### **Điều chỉnh nội dung hiện có**
+- Giữ card Communication, thêm vùng RS485 KPIs.
+- Gỡ “Obstacle Count” khỏi Safety vì không thuộc phần cứng hiện tại. [[memory:7259686]]
+
+### **Rủi ro & kiểm soát**
+- Nhiễu bus tạo nhiều Warn: cho phép tùy chỉnh ngưỡng theo môi trường (config).
+- Nhiều module optional: bật phân trang/virtualization cho grid.
+- Trên mobile: panel phải tự động chuyển xuống dưới grid.
+
+### **Tiêu chí chấp nhận (QC)**
+- 100% module 0x01–0x0F hiển thị trạng thái trong ≤5s đầu.
+- Scan Now hoạt động, hiển thị tiến trình và kết quả.
+- Filter Alerts theo module hoạt động.
+- Keyboard nav đầy đủ; sidebar trái; breadcrumbs đúng.
+- Không có “Obstacle Count” trong Safety. [[memory:7259686]]
+
+### **Ghi chú giao cho Designer Leader**
+- Baseline RS485: 5 module mandatory (0x01–0x05). Cần xác nhận optional dùng 0x06–0x0F và cadence thực tế, để chốt layout phân trang/virtualization và KPI ngưỡng theo môi trường.
+
