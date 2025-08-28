@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHT-50 - Reports</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../themes/theme_oht50_unified.css">
+    <link rel="stylesheet" href="../../themes/theme_components.css">
+    <style>
+        .page-container{display:flex;flex-direction:column;min-height:100vh;background:var(--bg-secondary);padding-top:80px}
+        .top-navigation{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-lg);background:var(--bg-primary);border-bottom:var(--border-width-1) solid var(--border-color-light);box-shadow:var(--shadow-sm);z-index:var(--z-sticky)}
+        .nav-brand{display:flex;align-items:center;gap:var(--space-sm);font-family:var(--font-display);font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--primary-orange)}
+        .nav-emergency-controls{display:flex;align-items:center;gap:var(--space-sm);margin-left:var(--space-lg)}
+        .btn-emergency-nav{display:flex;align-items:center;gap:var(--space-xs);padding:var(--space-sm) var(--space-md);background:var(--safety-red);color:#fff;border:0;border-radius:var(--radius-md);font-size:var(--text-sm);font-weight:var(--font-bold);cursor:pointer;transition:all var(--transition-fast);box-shadow:var(--shadow-sm)}
+        .btn-emergency-nav:hover{background:var(--error-red-dark);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+        .btn-nav{display:flex;align-items:center;gap:var(--space-xs);padding:var(--space-sm) var(--space-md);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-md);font-size:var(--text-sm);font-weight:var(--font-medium);cursor:pointer;transition:all var(--transition-fast)}
+        .btn-warning-nav{background:var(--warning-yellow);color:var(--industrial-gray-900);border-color:var(--warning-yellow)}
+        .btn-warning-nav:hover{background:var(--warning-yellow-dark);color:#fff}
+        .btn-success-nav{background:var(--success-green);color:#fff;border-color:var(--success-green)}
+        .btn-success-nav:hover{background:var(--success-green-dark)}
+        .nav-menu{display:flex;align-items:center;gap:var(--space-lg)}
+        .nav-item{display:flex;align-items:center;gap:var(--space-xs);padding:var(--space-sm) var(--space-md);color:var(--industrial-gray-700);text-decoration:none;border-radius:var(--radius-md);transition:all var(--transition-fast);font-weight:var(--font-medium)}
+        .nav-item:hover{background:var(--industrial-gray-100);color:var(--primary-orange)}
+        .nav-item.active{background:var(--primary-orange);color:#fff}
+        .nav-actions{display:flex;align-items:center;gap:var(--space-sm)}
+        .nav-btn{display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:var(--bg-secondary);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-md);color:var(--industrial-gray-600);transition:all var(--transition-fast)}
+        .nav-btn:hover{background:var(--primary-orange);color:#fff;border-color:var(--primary-orange)}
+        .page-main{flex:1;padding:var(--space-lg)}
+        .page-content{max-width:1920px;margin:0 auto}
+        .breadcrumb-nav{display:flex;align-items:center;gap:var(--space-sm);padding:var(--space-sm) 0;margin-bottom:var(--space-lg)}
+        .breadcrumb-item{color:var(--industrial-gray-600);text-decoration:none;font-size:var(--text-sm)}
+        .breadcrumb-item:hover{color:var(--primary-orange)}
+        .breadcrumb-item.active{color:var(--industrial-gray-900);font-weight:var(--font-medium)}
+        .breadcrumb-separator{color:var(--industrial-gray-400)}
+        .content-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--space-lg)}
+        .page-header{margin-bottom:var(--space-xl)}
+        .page-title{font-size:var(--text-3xl);font-weight:var(--font-bold);color:var(--industrial-gray-900);margin-bottom:var(--space-sm)}
+        .page-description{font-size:var(--text-lg);color:var(--industrial-gray-600)}
+        
+        /* Reports Specific Styles */
+        .report-card{background:var(--bg-primary);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-lg);padding:var(--space-xl);box-shadow:var(--shadow-sm)}
+        .report-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-lg)}
+        .report-card-title{font-size:var(--text-xl);font-weight:var(--font-semibold);color:var(--industrial-gray-900)}
+        .report-status{padding:var(--space-xs) var(--space-sm);border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:var(--font-bold);text-transform:uppercase}
+        .status-available{background:var(--success-green);color:white}
+        .status-generating{background:var(--warning-yellow);color:var(--industrial-gray-900)}
+        .status-error{background:var(--error-red);color:white}
+        
+        /* Filter Controls */
+        .filter-controls{display:flex;gap:var(--space-md);margin-bottom:var(--space-lg);flex-wrap:wrap}
+        .filter-group{display:flex;flex-direction:column;gap:var(--space-xs)}
+        .filter-label{font-size:var(--text-sm);font-weight:var(--font-medium);color:var(--industrial-gray-700)}
+        .filter-input{padding:var(--space-sm) var(--space-md);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-md);font-size:var(--text-sm);min-width:150px}
+        .filter-input:focus{outline:none;border-color:var(--primary-orange);box-shadow:0 0 0 3px rgba(255, 165, 0, 0.1)}
+        
+        /* Report Types */
+        .report-types{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--space-lg);margin-bottom:var(--space-lg)}
+        .report-type{background:var(--bg-secondary);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-lg);padding:var(--space-lg);cursor:pointer;transition:all var(--transition-fast)}
+        .report-type:hover{background:var(--industrial-gray-100);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+        .report-type-header{display:flex;align-items:center;gap:var(--space-md);margin-bottom:var(--space-md)}
+        .report-type-icon{width:48px;height:48px;background:var(--primary-orange);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:white}
+        .report-type-title{font-size:var(--text-lg);font-weight:var(--font-semibold);color:var(--industrial-gray-900)}
+        .report-type-description{color:var(--industrial-gray-600);margin-bottom:var(--space-md)}
+        .report-type-actions{display:flex;gap:var(--space-sm)}
+        
+        /* Button Styles */
+        .btn-primary{background:var(--primary-orange);color:white;border:none;padding:var(--space-sm) var(--space-lg);border-radius:var(--radius-md);font-weight:var(--font-medium);cursor:pointer;transition:all var(--transition-fast);display:flex;align-items:center;gap:var(--space-sm)}
+        .btn-primary:hover{background:var(--primary-orange-dark);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+        .btn-secondary{background:var(--bg-secondary);color:var(--industrial-gray-700);border:var(--border-width-1) solid var(--border-color-light);padding:var(--space-sm) var(--space-lg);border-radius:var(--radius-md);font-weight:var(--font-medium);cursor:pointer;transition:all var(--transition-fast);display:flex;align-items:center;gap:var(--space-sm)}
+        .btn-secondary:hover{background:var(--industrial-gray-100)}
+        
+        /* Report List */
+        .report-list{max-height:400px;overflow-y:auto}
+        .report-item{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md);border-bottom:var(--border-width-1) solid var(--border-color-light);transition:all var(--transition-fast)}
+        .report-item:hover{background:var(--bg-secondary)}
+        .report-item-info{display:flex;flex-direction:column;gap:var(--space-xs)}
+        .report-item-title{font-weight:var(--font-medium);color:var(--industrial-gray-900)}
+        .report-item-meta{font-size:var(--text-sm);color:var(--industrial-gray-600)}
+        .report-item-actions{display:flex;gap:var(--space-sm)}
+        
+        /* Metrics Grid */
+        .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-md);margin-bottom:var(--space-lg)}
+        .metric-card{background:var(--bg-secondary);padding:var(--space-lg);border-radius:var(--radius-lg);text-align:center;border:var(--border-width-1) solid var(--border-color-light)}
+        .metric-value{font-size:var(--text-2xl);font-weight:var(--font-bold);color:var(--primary-orange);font-family:var(--font-mono)}
+        .metric-label{font-size:var(--text-sm);color:var(--industrial-gray-600);margin-top:var(--space-xs)}
+        .metric-change{font-size:var(--text-xs);margin-top:var(--space-xs)}
+        .metric-change.positive{color:var(--success-green)}
+        .metric-change.negative{color:var(--error-red)}
+        
+        /* Chart Placeholder */
+        .chart-placeholder{background:var(--bg-secondary);border:var(--border-width-1) solid var(--border-color-light);border-radius:var(--radius-lg);padding:var(--space-xl);text-align:center;color:var(--industrial-gray-500);min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:var(--space-md)}
+        
+        /* Responsive Design */
+        @media (max-width:1024px){.nav-menu{gap:var(--space-md)}.nav-item{padding:var(--space-xs) var(--space-sm);font-size:var(--text-sm)}.filter-controls{flex-direction:column}.report-types{grid-template-columns:1fr}}
+        @media (max-width:768px){.nav-menu{display:none}.nav-emergency-controls{margin-left:var(--space-sm);gap:var(--space-xs)}.btn-emergency-nav,.btn-nav{padding:var(--space-xs) var(--space-sm);font-size:var(--text-xs)}.btn-emergency-nav i,.btn-nav i{width:12px;height:12px}.page-container{padding-top:60px}.content-grid{grid-template-columns:repeat(6,1fr);gap:var(--space-md)}.metrics-grid{grid-template-columns:repeat(2,1fr)}}
+        @media (max-width:640px){.content-grid{grid-template-columns:repeat(2,1fr);gap:var(--space-sm)}.metrics-grid{grid-template-columns:1fr}}
+        
+        .skip-link{position:absolute;top:-40px;left:6px;background:var(--primary-orange);color:#fff;padding:var(--space-sm) var(--space-md);text-decoration:none;border-radius:var(--radius-md);z-index:var(--z-emergency)}
+        .skip-link:focus{top:6px}
+        .nav-item:focus-visible,.btn:focus-visible,.nav-btn:focus-visible,.report-type:focus-visible,.filter-input:focus-visible{outline:var(--border-width-2) solid var(--primary-orange);outline-offset:var(--space-xs)}
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div class="page-container">
+        <nav class="top-navigation" role="navigation" aria-label="Main navigation">
+            <div class="nav-brand">
+                <i data-lucide="activity" class="w-6 h-6" aria-hidden="true"></i>
+                <span>OHT-50</span>
+            </div>
+            <div class="nav-emergency-controls">
+                <button class="btn-emergency-nav" id="emergency-stop" aria-label="Emergency Stop">
+                    <i data-lucide="square" class="w-4 h-4" aria-hidden="true"></i>
+                    E-STOP
+                </button>
+                <button class="btn-nav btn-warning-nav" id="pause-system" aria-label="Pause System">
+                    <i data-lucide="pause" class="w-4 h-4" aria-hidden="true"></i>
+                    Pause
+                </button>
+                <button class="btn-nav btn-success-nav" id="reset-system" aria-label="Reset System">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+                    Reset
+                </button>
+            </div>
+            <div class="nav-menu">
+                <a href="../core_pages/2-1-dashboard-main.html" class="nav-item" aria-label="Dashboard">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4" aria-hidden="true"></i>
+                    Dashboard
+                </a>
+                <a href="../core_pages/3-1-control-panel.html" class="nav-item" aria-label="Control Panel">
+                    <i data-lucide="gamepad-2" class="w-4 h-4" aria-hidden="true"></i>
+                    Control Panel
+                </a>
+                <a href="../core_pages/4-1-map-interface.html" class="nav-item" aria-label="Map & Navigation">
+                    <i data-lucide="map" class="w-4 h-4" aria-hidden="true"></i>
+                    Map & Navigation
+                </a>
+                <a href="5-1-monitoring.html" class="nav-item" aria-label="Monitoring">
+                    <i data-lucide="monitor" class="w-4 h-4" aria-hidden="true"></i>
+                    Monitoring
+                </a>
+                <a href="6-1-configuration.html" class="nav-item" aria-label="Configuration">
+                    <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i>
+                    Configuration
+                </a>
+                <a href="7-1-reports.html" class="nav-item active" aria-current="page" aria-label="Reports">
+                    <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                    Reports
+                </a>
+                <a href="../advanced_pages/8-1-alerts.html" class="nav-item" aria-label="Alerts">
+                    <i data-lucide="alert-triangle" class="w-4 h-4" aria-hidden="true"></i>
+                    Alerts
+                </a>
+                <a href="../advanced_pages/9-1-voice-control.html" class="nav-item" aria-label="Voice Control">
+                    <i data-lucide="mic" class="w-4 h-4" aria-hidden="true"></i>
+                    Voice Control
+                </a>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn" aria-label="Notifications">
+                    <i data-lucide="bell" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+                <button class="nav-btn" aria-label="User menu">
+                    <i data-lucide="user" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+            </div>
+        </nav>
+        <main id="main-content" class="page-main">
+            <div class="page-content">
+                <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+                    <a href="../core_pages/2-1-dashboard-main.html" class="breadcrumb-item">Dashboard</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-item active">Reports</span>
+                </nav>
+                <header class="page-header">
+                    <h1 class="page-title">Reports</h1>
+                    <p class="page-description">System reports, analytics, and data export for OHT-50</p>
+                </header>
+                <div class="content-grid">
+                    <!-- Filter Controls -->
+                    <section class="report-card" style="grid-column: span 12;">
+                        <div class="report-card-header">
+                            <h2 class="report-card-title">Report Filters</h2>
+                        </div>
+                        <div class="filter-controls">
+                            <div class="filter-group">
+                                <label class="filter-label">Date Range</label>
+                                <select class="filter-input" id="date-range">
+                                    <option value="today">Today</option>
+                                    <option value="week" selected>This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                    <option value="year">This Year</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Report Type</label>
+                                <select class="filter-input" id="report-type">
+                                    <option value="all">All Reports</option>
+                                    <option value="operational">Operational</option>
+                                    <option value="performance">Performance</option>
+                                    <option value="safety">Safety</option>
+                                    <option value="maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Status</label>
+                                <select class="filter-input" id="report-status">
+                                    <option value="all">All Status</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Format</label>
+                                <select class="filter-input" id="export-format">
+                                    <option value="pdf">PDF</option>
+                                    <option value="excel">Excel</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="json">JSON</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Key Metrics -->
+                    <section class="report-card" style="grid-column: span 12;">
+                        <div class="report-card-header">
+                            <h2 class="report-card-title">Key Metrics</h2>
+                        </div>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value" id="total-operations">1,247</div>
+                                <div class="metric-label">Total Operations</div>
+                                <div class="metric-change positive">+12.5% vs last week</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="uptime-percentage">99.8%</div>
+                                <div class="metric-label">System Uptime</div>
+                                <div class="metric-change positive">+0.2% vs last week</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="avg-response-time">45ms</div>
+                                <div class="metric-label">Avg Response Time</div>
+                                <div class="metric-change negative">+5ms vs last week</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="safety-incidents">0</div>
+                                <div class="metric-label">Safety Incidents</div>
+                                <div class="metric-change positive">-2 vs last week</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="energy-consumption">2.4kWh</div>
+                                <div class="metric-label">Energy Consumption</div>
+                                <div class="metric-change negative">+0.3kWh vs last week</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="maintenance-hours">8.5h</div>
+                                <div class="metric-label">Maintenance Hours</div>
+                                <div class="metric-change positive">-2.1h vs last week</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Report Types -->
+                    <section class="report-card" style="grid-column: span 12;">
+                        <div class="report-card-header">
+                            <h2 class="report-card-title">Available Reports</h2>
+                        </div>
+                        <div class="report-types">
+                            <div class="report-type" data-report="operational">
+                                <div class="report-type-header">
+                                    <div class="report-type-icon">
+                                        <i data-lucide="activity" class="w-6 h-6" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="report-type-title">Operational Report</div>
+                                </div>
+                                <div class="report-type-description">
+                                    Comprehensive overview of system operations including uptime, performance metrics, and operational efficiency.
+                                </div>
+                                <div class="report-type-actions">
+                                    <button class="btn-primary" onclick="generateReport('operational')">
+                                        <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                                        Generate
+                                    </button>
+                                    <button class="btn-secondary" onclick="previewReport('operational')">
+                                        <i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i>
+                                        Preview
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="report-type" data-report="performance">
+                                <div class="report-type-header">
+                                    <div class="report-type-icon">
+                                        <i data-lucide="trending-up" class="w-6 h-6" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="report-type-title">Performance Report</div>
+                                </div>
+                                <div class="report-type-description">
+                                    Detailed analysis of system performance including response times, throughput, and resource utilization.
+                                </div>
+                                <div class="report-type-actions">
+                                    <button class="btn-primary" onclick="generateReport('performance')">
+                                        <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                                        Generate
+                                    </button>
+                                    <button class="btn-secondary" onclick="previewReport('performance')">
+                                        <i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i>
+                                        Preview
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="report-type" data-report="safety">
+                                <div class="report-type-header">
+                                    <div class="report-type-icon">
+                                        <i data-lucide="shield" class="w-6 h-6" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="report-type-title">Safety Report</div>
+                                </div>
+                                <div class="report-type-description">
+                                    Safety incident analysis, emergency stop events, and compliance monitoring for regulatory requirements.
+                                </div>
+                                <div class="report-type-actions">
+                                    <button class="btn-primary" onclick="generateReport('safety')">
+                                        <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                                        Generate
+                                    </button>
+                                    <button class="btn-secondary" onclick="previewReport('safety')">
+                                        <i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i>
+                                        Preview
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="report-type" data-report="maintenance">
+                                <div class="report-type-header">
+                                    <div class="report-type-icon">
+                                        <i data-lucide="wrench" class="w-6 h-6" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="report-type-title">Maintenance Report</div>
+                                </div>
+                                <div class="report-type-description">
+                                    Maintenance schedules, component health, predictive maintenance recommendations, and service history.
+                                </div>
+                                <div class="report-type-actions">
+                                    <button class="btn-primary" onclick="generateReport('maintenance')">
+                                        <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                                        Generate
+                                    </button>
+                                    <button class="btn-secondary" onclick="previewReport('maintenance')">
+                                        <i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i>
+                                        Preview
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Recent Reports -->
+                    <section class="report-card" style="grid-column: span 8;">
+                        <div class="report-card-header">
+                            <h2 class="report-card-title">Recent Reports</h2>
+                        </div>
+                        <div class="report-list">
+                            <div class="report-item">
+                                <div class="report-item-info">
+                                    <div class="report-item-title">Operational Report - Week 3</div>
+                                    <div class="report-item-meta">Generated: 2025-01-27 14:30 | Size: 2.4 MB</div>
+                                </div>
+                                <div class="report-item-actions">
+                                    <button class="btn-secondary" onclick="downloadReport('op-week3')">
+                                        <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                                        Download
+                                    </button>
+                                    <button class="btn-secondary" onclick="shareReport('op-week3')">
+                                        <i data-lucide="share" class="w-4 h-4" aria-hidden="true"></i>
+                                        Share
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="report-item">
+                                <div class="report-item-info">
+                                    <div class="report-item-title">Safety Report - January 2025</div>
+                                    <div class="report-item-meta">Generated: 2025-01-26 09:15 | Size: 1.8 MB</div>
+                                </div>
+                                <div class="report-item-actions">
+                                    <button class="btn-secondary" onclick="downloadReport('safety-jan25')">
+                                        <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                                        Download
+                                    </button>
+                                    <button class="btn-secondary" onclick="shareReport('safety-jan25')">
+                                        <i data-lucide="share" class="w-4 h-4" aria-hidden="true"></i>
+                                        Share
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="report-item">
+                                <div class="report-item-info">
+                                    <div class="report-item-title">Performance Report - Q4 2024</div>
+                                    <div class="report-item-meta">Generated: 2025-01-25 16:45 | Size: 3.2 MB</div>
+                                </div>
+                                <div class="report-item-actions">
+                                    <button class="btn-secondary" onclick="downloadReport('perf-q4-24')">
+                                        <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                                        Download
+                                    </button>
+                                    <button class="btn-secondary" onclick="shareReport('perf-q4-24')">
+                                        <i data-lucide="share" class="w-4 h-4" aria-hidden="true"></i>
+                                        Share
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="report-item">
+                                <div class="report-item-info">
+                                    <div class="report-item-title">Maintenance Report - December 2024</div>
+                                    <div class="report-item-meta">Generated: 2025-01-24 11:20 | Size: 2.1 MB</div>
+                                </div>
+                                <div class="report-item-actions">
+                                    <button class="btn-secondary" onclick="downloadReport('maint-dec24')">
+                                        <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                                        Download
+                                    </button>
+                                    <button class="btn-secondary" onclick="shareReport('maint-dec24')">
+                                        <i data-lucide="share" class="w-4 h-4" aria-hidden="true"></i>
+                                        Share
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Analytics Chart -->
+                    <section class="report-card" style="grid-column: span 4;">
+                        <div class="report-card-header">
+                            <h2 class="report-card-title">Analytics Overview</h2>
+                        </div>
+                        <div class="chart-placeholder">
+                            <i data-lucide="bar-chart-3" class="w-16 h-16" aria-hidden="true"></i>
+                            <div>
+                                <div style="font-weight: var(--font-semibold); margin-bottom: var(--space-xs);">Performance Trends</div>
+                                <div style="font-size: var(--text-sm);">Interactive chart showing system performance over time</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Bulk Export -->
+                    <section class="report-card" style="grid-column: span 12;">
+                        <div class="report-card-header">
+                            <h2 class="report-card-title">Bulk Export</h2>
+                        </div>
+                        <div style="display: flex; gap: var(--space-md); align-items: center; flex-wrap: wrap;">
+                            <button class="btn-primary" onclick="bulkExport('all')">
+                                <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                                Export All Reports
+                            </button>
+                            <button class="btn-secondary" onclick="bulkExport('monthly')">
+                                <i data-lucide="calendar" class="w-4 h-4" aria-hidden="true"></i>
+                                Export Monthly Reports
+                            </button>
+                            <button class="btn-secondary" onclick="bulkExport('quarterly')">
+                                <i data-lucide="calendar" class="w-4 h-4" aria-hidden="true"></i>
+                                Export Quarterly Reports
+                            </button>
+                            <button class="btn-secondary" onclick="scheduleReports()">
+                                <i data-lucide="clock" class="w-4 h-4" aria-hidden="true"></i>
+                                Schedule Reports
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        lucide.createIcons();
+        
+        class ReportsController {
+            constructor() {
+                this.initializeEventListeners();
+                this.initializeAccessibility();
+                this.startMetricsUpdates();
+            }
+            
+            initializeEventListeners() {
+                // Filter controls
+                document.getElementById('date-range').addEventListener('change', () => this.updateFilters());
+                document.getElementById('report-type').addEventListener('change', () => this.updateFilters());
+                document.getElementById('report-status').addEventListener('change', () => this.updateFilters());
+                document.getElementById('export-format').addEventListener('change', () => this.updateFilters());
+                
+                // Navigation emergency controls
+                document.getElementById('emergency-stop').addEventListener('click', () => this.emergencyStop());
+                document.getElementById('pause-system').addEventListener('click', () => this.pauseSystem());
+                document.getElementById('reset-system').addEventListener('click', () => this.resetSystem());
+            }
+            
+            initializeAccessibility() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        this.emergencyStop();
+                    }
+                });
+            }
+            
+            updateFilters() {
+                const dateRange = document.getElementById('date-range').value;
+                const reportType = document.getElementById('report-type').value;
+                const reportStatus = document.getElementById('report-status').value;
+                const exportFormat = document.getElementById('export-format').value;
+                
+                console.log('Filters updated:', { dateRange, reportType, reportStatus, exportFormat });
+                // Here you would typically update the report list based on filters
+            }
+            
+            startMetricsUpdates() {
+                setInterval(() => {
+                    // Simulate real-time metric updates
+                    const operations = Math.floor(Math.random() * 100) + 1200;
+                    const uptime = (Math.random() * 0.4 + 99.5).toFixed(1);
+                    const responseTime = Math.floor(Math.random() * 20) + 35;
+                    const energy = (Math.random() * 0.6 + 2.1).toFixed(1);
+                    
+                    document.getElementById('total-operations').textContent = operations.toLocaleString();
+                    document.getElementById('uptime-percentage').textContent = uptime + '%';
+                    document.getElementById('avg-response-time').textContent = responseTime + 'ms';
+                    document.getElementById('energy-consumption').textContent = energy + 'kWh';
+                }, 5000);
+            }
+            
+            emergencyStop() {
+                console.log('EMERGENCY STOP ACTIVATED');
+                alert('EMERGENCY STOP - All operations halted');
+            }
+            
+            pauseSystem() {
+                console.log('System Paused');
+            }
+            
+            resetSystem() {
+                console.log('System Reset');
+            }
+        }
+        
+        // Global functions for report actions
+        function generateReport(type) {
+            console.log(`Generating ${type} report...`);
+            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} report generation started. You will be notified when ready.`);
+        }
+        
+        function previewReport(type) {
+            console.log(`Previewing ${type} report...`);
+            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} report preview opened in new window.`);
+        }
+        
+        function downloadReport(id) {
+            console.log(`Downloading report: ${id}`);
+            alert(`Report ${id} download started.`);
+        }
+        
+        function shareReport(id) {
+            console.log(`Sharing report: ${id}`);
+            alert(`Report ${id} shared successfully.`);
+        }
+        
+        function bulkExport(type) {
+            console.log(`Bulk export: ${type}`);
+            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} bulk export started. This may take a few minutes.`);
+        }
+        
+        function scheduleReports() {
+            console.log('Opening report scheduler...');
+            alert('Report scheduler opened. Configure automatic report generation schedules.');
+        }
+        
+        // Initialize controller when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ReportsController();
+        });
+    </script>
+</body>
+</html>
