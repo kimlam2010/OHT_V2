@@ -14,6 +14,7 @@
 
 #include "api_endpoints.h"
 #include "hal_common.h"
+#include "safety_monitor.h"
 
 // External dependencies (to be integrated with existing managers)
 extern hal_status_t system_get_status(void);
@@ -188,20 +189,79 @@ hal_status_t api_handle_module_command(const api_mgr_http_request_t *request, ap
 hal_status_t api_handle_safety_status(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
     (void)request;
     
-    // Create safety status response
+    // Get real safety status from safety monitor
+    safety_monitor_status_t safety_status;
+    hal_status_t status = safety_monitor_get_status(&safety_status);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to get safety status");
+    }
+    
+    // Get E-Stop status
+    bool estop_active;
+    status = safety_monitor_is_estop_active(&estop_active);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to get E-Stop status");
+    }
+    
+    // Get basic safety zones
+    basic_safety_zones_t zones;
+    status = safety_monitor_get_basic_zones(&zones);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to get safety zones");
+    }
+    
+    // Create comprehensive safety status response
     api_safety_status_t safety = {
-        .estop_active = false,
-        .safety_ok = true,
-        .safety_level = 1,
-        .safety_message = "All safety systems operational",
-        .last_safety_check = hal_get_timestamp_ms()
+        .estop_active = estop_active,
+        .safety_ok = (safety_status.current_state == SAFETY_MONITOR_STATE_SAFE),
+        .safety_level = (uint32_t)safety_status.current_state,
+        .safety_message = "Safety system operational",
+        .last_safety_check = safety_status.last_update_time
     };
     
-    char json_buffer[1024];
-    hal_status_t result = api_create_safety_status_json(&safety, json_buffer, sizeof(json_buffer));
-    if (result != HAL_STATUS_OK) {
-        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to create safety status");
-    }
+    // Create detailed JSON response with safety zones
+    char json_buffer[2048];
+    snprintf(json_buffer, sizeof(json_buffer),
+             "{"
+             "\"estop_active\":%s,"
+             "\"safety_ok\":%s,"
+             "\"safety_level\":%u,"
+             "\"safety_message\":\"%s\","
+             "\"last_safety_check\":%lu,"
+             "\"current_state\":\"%s\","
+             "\"safety_zones\":{"
+             "\"enabled\":%s,"
+             "\"emergency_zone_mm\":%u,"
+             "\"warning_zone_mm\":%u,"
+             "\"safe_zone_mm\":%u,"
+             "\"min_distance_mm\":%u,"
+             "\"emergency_violated\":%s,"
+             "\"warning_violated\":%s,"
+             "\"safe_violated\":%s"
+             "},"
+             "\"violation_count\":%u,"
+             "\"fault_count\":%u"
+             "}",
+             estop_active ? "true" : "false",
+             safety.safety_ok ? "true" : "false",
+             safety.safety_level,
+             safety.safety_message,
+             safety.last_safety_check,
+             (safety_status.current_state == SAFETY_MONITOR_STATE_SAFE) ? "SAFE" : 
+             (safety_status.current_state == SAFETY_MONITOR_STATE_WARNING) ? "WARNING" :
+             (safety_status.current_state == SAFETY_MONITOR_STATE_CRITICAL) ? "CRITICAL" :
+             (safety_status.current_state == SAFETY_MONITOR_STATE_ESTOP) ? "ESTOP" :
+             (safety_status.current_state == SAFETY_MONITOR_STATE_FAULT) ? "FAULT" : "INIT",
+             zones.enabled ? "true" : "false",
+             zones.emergency_zone_mm,
+             zones.warning_zone_mm,
+             zones.safe_zone_mm,
+             zones.min_distance_mm,
+             zones.emergency_violated ? "true" : "false",
+             zones.warning_violated ? "true" : "false",
+             zones.safe_violated ? "true" : "false",
+             safety_status.violation_count,
+             safety_status.fault_count);
     
     return api_create_success_response(response, json_buffer);
 }
@@ -218,14 +278,142 @@ hal_status_t api_handle_safety_estop(const api_mgr_http_request_t *request, api_
         return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid E-Stop request format");
     }
     
-    // Mock E-Stop execution
+    // Trigger emergency stop via safety monitor
+    hal_status_t status = safety_monitor_trigger_emergency_stop(estop.estop_reason);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to trigger emergency stop");
+    }
+    
+    // Get updated E-Stop status
+    bool estop_active;
+    status = safety_monitor_is_estop_active(&estop_active);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to get E-Stop status");
+    }
+    
     estop.timestamp = hal_get_timestamp_ms();
     estop.acknowledged = true;
     
     char json_buffer[512];
     snprintf(json_buffer, sizeof(json_buffer),
-             "{\"estop_reason\":\"%s\",\"timestamp\":%lu,\"acknowledged\":%s,\"status\":\"executed\"}",
-             estop.estop_reason, estop.timestamp, estop.acknowledged ? "true" : "false");
+             "{"
+             "\"estop_reason\":\"%s\","
+             "\"timestamp\":%lu,"
+             "\"acknowledged\":%s,"
+             "\"status\":\"executed\","
+             "\"estop_active\":%s,"
+             "\"message\":\"Emergency stop triggered successfully\""
+             "}",
+             estop.estop_reason, 
+             estop.timestamp, 
+             estop.acknowledged ? "true" : "false",
+             estop_active ? "true" : "false");
+    
+    return api_create_success_response(response, json_buffer);
+}
+
+hal_status_t api_handle_safety_zones_get(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
+    (void)request;
+    
+    // Get safety zones from safety monitor
+    basic_safety_zones_t zones;
+    hal_status_t status = safety_monitor_get_basic_zones(&zones);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to get safety zones");
+    }
+    
+    // Create JSON response
+    char json_buffer[1024];
+    snprintf(json_buffer, sizeof(json_buffer),
+             "{"
+             "\"enabled\":%s,"
+             "\"emergency_zone_mm\":%u,"
+             "\"warning_zone_mm\":%u,"
+             "\"safe_zone_mm\":%u,"
+             "\"min_distance_mm\":%u,"
+             "\"min_distance_angle\":%u,"
+             "\"emergency_violated\":%s,"
+             "\"warning_violated\":%s,"
+             "\"safe_violated\":%s,"
+             "\"last_violation_time\":%lu"
+             "}",
+             zones.enabled ? "true" : "false",
+             zones.emergency_zone_mm,
+             zones.warning_zone_mm,
+             zones.safe_zone_mm,
+             zones.min_distance_mm,
+             zones.min_distance_angle,
+             zones.emergency_violated ? "true" : "false",
+             zones.warning_violated ? "true" : "false",
+             zones.safe_violated ? "true" : "false",
+             zones.last_violation_time);
+    
+    return api_create_success_response(response, json_buffer);
+}
+
+hal_status_t api_handle_safety_zones_set(const api_mgr_http_request_t *request, api_mgr_http_response_t *response) {
+    if (request->method != API_MGR_HTTP_PUT) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
+    }
+    
+    // Parse safety zones configuration from request body
+    basic_safety_zones_t zones = {0};
+    
+    // Simple JSON parsing for zones configuration
+    // Expected format: {"enabled":true,"emergency_zone_mm":500,"warning_zone_mm":1000,"safe_zone_mm":2000}
+    char *enabled_str = strstr(request->body, "\"enabled\":");
+    char *emergency_str = strstr(request->body, "\"emergency_zone_mm\":");
+    char *warning_str = strstr(request->body, "\"warning_zone_mm\":");
+    char *safe_str = strstr(request->body, "\"safe_zone_mm\":");
+    
+    if (enabled_str) {
+        enabled_str = strchr(enabled_str, ':') + 1;
+        zones.enabled = (strstr(enabled_str, "true") != NULL);
+    }
+    
+    if (emergency_str) {
+        emergency_str = strchr(emergency_str, ':') + 1;
+        zones.emergency_zone_mm = (uint16_t)strtoul(emergency_str, NULL, 10);
+    }
+    
+    if (warning_str) {
+        warning_str = strchr(warning_str, ':') + 1;
+        zones.warning_zone_mm = (uint16_t)strtoul(warning_str, NULL, 10);
+    }
+    
+    if (safe_str) {
+        safe_str = strchr(safe_str, ':') + 1;
+        zones.safe_zone_mm = (uint16_t)strtoul(safe_str, NULL, 10);
+    }
+    
+    // Validate zones configuration
+    if (zones.emergency_zone_mm >= zones.warning_zone_mm ||
+        zones.warning_zone_mm >= zones.safe_zone_mm) {
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid zone distances");
+    }
+    
+    // Set safety zones via safety monitor
+    hal_status_t status = safety_monitor_set_basic_zones(&zones);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to set safety zones");
+    }
+    
+    // Create success response
+    char json_buffer[512];
+    snprintf(json_buffer, sizeof(json_buffer),
+             "{"
+             "\"status\":\"updated\","
+             "\"enabled\":%s,"
+             "\"emergency_zone_mm\":%u,"
+             "\"warning_zone_mm\":%u,"
+             "\"safe_zone_mm\":%u,"
+             "\"timestamp\":%lu"
+             "}",
+             zones.enabled ? "true" : "false",
+             zones.emergency_zone_mm,
+             zones.warning_zone_mm,
+             zones.safe_zone_mm,
+             hal_get_timestamp_ms());
     
     return api_create_success_response(response, json_buffer);
 }
@@ -322,6 +510,145 @@ hal_status_t api_handle_telemetry(const api_mgr_http_request_t *request, api_mgr
     return api_create_success_response(response, json_buffer);
 }
 
+// Safety Configuration Management API Handlers
+
+hal_status_t api_handle_safety_config_get(const api_mgr_http_request_t *request, api_mgr_http_response_t *response)
+{
+    if (!request || !response) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (request->method != API_MGR_HTTP_GET) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
+    }
+    
+    // Export configuration as JSON
+    char json_buffer[2048];
+    size_t actual_size;
+    hal_status_t status = safety_monitor_export_config_json(json_buffer, sizeof(json_buffer), &actual_size);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to export configuration");
+    }
+    
+    // Set response
+    response->status_code = API_MGR_RESPONSE_OK;
+    response->content_type = API_MGR_CONTENT_TYPE_JSON;
+    strncpy(response->body, json_buffer, sizeof(response->body) - 1);
+    response->body[sizeof(response->body) - 1] = '\0';
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t api_handle_safety_config_set(const api_mgr_http_request_t *request, api_mgr_http_response_t *response)
+{
+    if (!request || !response) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (request->method != API_MGR_HTTP_PUT) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
+    }
+    
+    if (!request->body || strlen(request->body) == 0) {
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Missing configuration data");
+    }
+    
+    // Import configuration from JSON
+    hal_status_t status = safety_monitor_import_config_json(request->body);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid configuration data");
+    }
+    
+    // Set success response
+    response->status_code = API_MGR_RESPONSE_OK;
+    response->content_type = API_MGR_CONTENT_TYPE_JSON;
+    strcpy(response->body, "{\"status\":\"success\",\"message\":\"Configuration updated successfully\"}");
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t api_handle_safety_config_export(const api_mgr_http_request_t *request, api_mgr_http_response_t *response)
+{
+    if (!request || !response) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (request->method != API_MGR_HTTP_GET) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
+    }
+    
+    // Export configuration as JSON
+    char json_buffer[2048];
+    size_t actual_size;
+    hal_status_t status = safety_monitor_export_config_json(json_buffer, sizeof(json_buffer), &actual_size);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to export configuration");
+    }
+    
+    // Set response with filename for download
+    response->status_code = API_MGR_RESPONSE_OK;
+    response->content_type = API_MGR_CONTENT_TYPE_JSON;
+    strncpy(response->body, json_buffer, sizeof(response->body) - 1);
+    response->body[sizeof(response->body) - 1] = '\0';
+    
+    // Add filename header for download
+    strcpy(response->headers, "Content-Disposition: attachment; filename=\"safety_config.json\"\r\n");
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t api_handle_safety_config_import(const api_mgr_http_request_t *request, api_mgr_http_response_t *response)
+{
+    if (!request || !response) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (request->method != API_MGR_HTTP_POST) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
+    }
+    
+    if (!request->body || strlen(request->body) == 0) {
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Missing configuration data");
+    }
+    
+    // Import configuration from JSON
+    hal_status_t status = safety_monitor_import_config_json(request->body);
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_BAD_REQUEST, "Invalid configuration data");
+    }
+    
+    // Set success response
+    response->status_code = API_MGR_RESPONSE_OK;
+    response->content_type = API_MGR_CONTENT_TYPE_JSON;
+    strcpy(response->body, "{\"status\":\"success\",\"message\":\"Configuration imported successfully\"}");
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t api_handle_safety_config_reset(const api_mgr_http_request_t *request, api_mgr_http_response_t *response)
+{
+    if (!request || !response) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (request->method != API_MGR_HTTP_POST) {
+        return api_create_error_response(response, API_MGR_RESPONSE_METHOD_NOT_ALLOWED, "Method not allowed");
+    }
+    
+    // Reset configuration to factory defaults
+    hal_status_t status = safety_monitor_reset_config_to_factory();
+    if (status != HAL_STATUS_OK) {
+        return api_create_error_response(response, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "Failed to reset configuration");
+    }
+    
+    // Set success response
+    response->status_code = API_MGR_RESPONSE_OK;
+    response->content_type = API_MGR_CONTENT_TYPE_JSON;
+    strcpy(response->body, "{\"status\":\"success\",\"message\":\"Configuration reset to factory defaults\"}");
+    
+    return HAL_STATUS_OK;
+}
+
 // API Utility Functions
 
 hal_status_t api_endpoints_init(void) {
@@ -360,7 +687,7 @@ int api_extract_module_id(const char *path) {
     if (command_pos != NULL) {
         // Extract ID before /command
         char id_str[16];
-        int id_len = command_pos - id_start;
+        size_t id_len = command_pos - id_start;
         if (id_len >= sizeof(id_str)) {
             return -1;
         }

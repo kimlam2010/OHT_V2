@@ -14,6 +14,10 @@
 #include <stdbool.h>
 #include "hal_common.h"
 
+// Debug configuration
+// Uncomment to enable detailed LiDAR safety debugging
+// #define DEBUG_LIDAR_SAFETY
+
 // RPLIDAR C1M1 Specifications
 #define LIDAR_MAX_DISTANCE_MM     12000   // 12m max distance (white object)
 #define LIDAR_MIN_DISTANCE_MM      50     // 0.05m min distance

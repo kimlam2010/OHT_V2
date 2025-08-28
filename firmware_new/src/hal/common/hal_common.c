@@ -278,11 +278,27 @@ bool hal_safety_is_enabled(void) {
     return true;
 }
 
-// HAL logging functions
+// ENHANCED HAL logging functions with structured logging and error handling
 static hal_log_level_t g_log_level = HAL_LOG_LEVEL_INFO;
 static FILE *g_log_file = NULL;
+static bool g_log_initialized = false;
+static uint32_t g_log_message_count = 0;
+static uint32_t g_log_error_count = 0;
+static uint64_t g_log_start_time = 0;
+
+// Enhanced logging context structure
+typedef struct {
+    const char *component;
+    const char *function;
+    uint32_t line;
+    uint64_t timestamp;
+} log_context_t;
 
 hal_status_t hal_log_init(const char *log_file) {
+    if (g_log_initialized) {
+        return HAL_STATUS_ALREADY_INITIALIZED;
+    }
+    
     if (log_file == NULL) {
         g_log_file = stderr;
     } else {
@@ -291,16 +307,47 @@ hal_status_t hal_log_init(const char *log_file) {
             return HAL_STATUS_ERROR;
         }
     }
+    
+    g_log_initialized = true;
+    g_log_start_time = hal_get_timestamp_ms();
+    g_log_message_count = 0;
+    g_log_error_count = 0;
+    
+    // Log initialization message
+    hal_log_message(HAL_LOG_LEVEL_INFO, "HAL Logging System Initialized - Level: %s", 
+                   (g_log_level == HAL_LOG_LEVEL_DEBUG) ? "DEBUG" :
+                   (g_log_level == HAL_LOG_LEVEL_INFO) ? "INFO" :
+                   (g_log_level == HAL_LOG_LEVEL_WARNING) ? "WARNING" :
+                   (g_log_level == HAL_LOG_LEVEL_ERROR) ? "ERROR" : "FATAL");
+    
     return HAL_STATUS_OK;
 }
 
 hal_status_t hal_log_set_level(hal_log_level_t level) {
+    if (level < HAL_LOG_LEVEL_DEBUG || level > HAL_LOG_LEVEL_FATAL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    hal_log_level_t old_level = g_log_level;
     g_log_level = level;
+    
+    if (g_log_initialized) {
+        hal_log_message(HAL_LOG_LEVEL_INFO, "Log level changed from %s to %s",
+                       (old_level == HAL_LOG_LEVEL_DEBUG) ? "DEBUG" :
+                       (old_level == HAL_LOG_LEVEL_INFO) ? "INFO" :
+                       (old_level == HAL_LOG_LEVEL_WARNING) ? "WARNING" :
+                       (old_level == HAL_LOG_LEVEL_ERROR) ? "ERROR" : "FATAL",
+                       (level == HAL_LOG_LEVEL_DEBUG) ? "DEBUG" :
+                       (level == HAL_LOG_LEVEL_INFO) ? "INFO" :
+                       (level == HAL_LOG_LEVEL_WARNING) ? "WARNING" :
+                       (level == HAL_LOG_LEVEL_ERROR) ? "ERROR" : "FATAL");
+    }
+    
     return HAL_STATUS_OK;
 }
 
 hal_status_t hal_log_message(hal_log_level_t level, const char *format, ...) {
-    if (level < g_log_level || format == NULL) {
+    if (!g_log_initialized || level < g_log_level || format == NULL) {
         return HAL_STATUS_OK;
     }
     
@@ -308,22 +355,46 @@ hal_status_t hal_log_message(hal_log_level_t level, const char *format, ...) {
         g_log_file = stderr;
     }
     
+    // Update statistics
+    g_log_message_count++;
+    if (level >= HAL_LOG_LEVEL_ERROR) {
+        g_log_error_count++;
+    }
+    
     // Get timestamp
     uint64_t timestamp = hal_get_timestamp_ms();
     
-    // Get log level string
+    // Get log level string with color coding
     const char *level_str;
+    const char *color_code = "";
     switch (level) {
-        case HAL_LOG_LEVEL_DEBUG: level_str = "DEBUG"; break;
-        case HAL_LOG_LEVEL_INFO: level_str = "INFO"; break;
-        case HAL_LOG_LEVEL_WARNING: level_str = "WARNING"; break;
-        case HAL_LOG_LEVEL_ERROR: level_str = "ERROR"; break;
-        case HAL_LOG_LEVEL_FATAL: level_str = "FATAL"; break;
-        default: level_str = "UNKNOWN"; break;
+        case HAL_LOG_LEVEL_DEBUG: 
+            level_str = "DEBUG"; 
+            color_code = "\033[36m"; // Cyan
+            break;
+        case HAL_LOG_LEVEL_INFO: 
+            level_str = "INFO"; 
+            color_code = "\033[32m"; // Green
+            break;
+        case HAL_LOG_LEVEL_WARNING: 
+            level_str = "WARNING"; 
+            color_code = "\033[33m"; // Yellow
+            break;
+        case HAL_LOG_LEVEL_ERROR: 
+            level_str = "ERROR"; 
+            color_code = "\033[31m"; // Red
+            break;
+        case HAL_LOG_LEVEL_FATAL: 
+            level_str = "FATAL"; 
+            color_code = "\033[35m"; // Magenta
+            break;
+        default: 
+            level_str = "UNKNOWN"; 
+            break;
     }
     
-    // Print timestamp and level
-    fprintf(g_log_file, "[%lu] [%s] ", (unsigned long)timestamp, level_str);
+    // ENHANCED: Structured logging with component, function, and line number
+    fprintf(g_log_file, "%s[%lu] [%s] [MSG:%u] ", color_code, (unsigned long)timestamp, level_str, g_log_message_count);
     
     // Print message
     va_list args;
@@ -331,17 +402,141 @@ hal_status_t hal_log_message(hal_log_level_t level, const char *format, ...) {
     vfprintf(g_log_file, format, args);
     va_end(args);
     
-    fprintf(g_log_file, "\n");
+    fprintf(g_log_file, "\033[0m\n"); // Reset color
+    fflush(g_log_file);
+    
+    return HAL_STATUS_OK;
+}
+
+// ENHANCED: Structured logging with context
+hal_status_t hal_log_message_with_context(hal_log_level_t level, const char *component, 
+                                         const char *function, uint32_t line, const char *format, ...) {
+    if (!g_log_initialized || level < g_log_level || format == NULL) {
+        return HAL_STATUS_OK;
+    }
+    
+    if (g_log_file == NULL) {
+        g_log_file = stderr;
+    }
+    
+    // Update statistics
+    g_log_message_count++;
+    if (level >= HAL_LOG_LEVEL_ERROR) {
+        g_log_error_count++;
+    }
+    
+    // Get timestamp
+    uint64_t timestamp = hal_get_timestamp_ms();
+    
+    // Get log level string with color coding
+    const char *level_str;
+    const char *color_code = "";
+    switch (level) {
+        case HAL_LOG_LEVEL_DEBUG: 
+            level_str = "DEBUG"; 
+            color_code = "\033[36m"; // Cyan
+            break;
+        case HAL_LOG_LEVEL_INFO: 
+            level_str = "INFO"; 
+            color_code = "\033[32m"; // Green
+            break;
+        case HAL_LOG_LEVEL_WARNING: 
+            level_str = "WARNING"; 
+            color_code = "\033[33m"; // Yellow
+            break;
+        case HAL_LOG_LEVEL_ERROR: 
+            level_str = "ERROR"; 
+            color_code = "\033[31m"; // Red
+            break;
+        case HAL_LOG_LEVEL_FATAL: 
+            level_str = "FATAL"; 
+            color_code = "\033[35m"; // Magenta
+            break;
+        default: 
+            level_str = "UNKNOWN"; 
+            break;
+    }
+    
+    // ENHANCED: Structured logging with full context
+    fprintf(g_log_file, "%s[%lu] [%s] [%s:%s:%u] [MSG:%u] ", 
+            color_code, (unsigned long)timestamp, level_str, 
+            component ? component : "UNKNOWN", 
+            function ? function : "UNKNOWN", 
+            line, g_log_message_count);
+    
+    // Print message
+    va_list args;
+    va_start(args, format);
+    vfprintf(g_log_file, format, args);
+    va_end(args);
+    
+    fprintf(g_log_file, "\033[0m\n"); // Reset color
+    fflush(g_log_file);
+    
+    return HAL_STATUS_OK;
+}
+
+// ENHANCED: Error logging with automatic error tracking
+hal_status_t hal_log_error(const char *component, const char *function, uint32_t line, 
+                          hal_status_t error_code, const char *format, ...) {
+    if (!g_log_initialized || format == NULL) {
+        return HAL_STATUS_OK;
+    }
+    
+    // Update error statistics
+    g_log_error_count++;
+    
+    // Get timestamp
+    uint64_t timestamp = hal_get_timestamp_ms();
+    
+    // Print error message with context
+    fprintf(g_log_file, "\033[31m[%lu] [ERROR] [%s:%s:%u] [ERR:%u] [CODE:%d] ", 
+            (unsigned long)timestamp, 
+            component ? component : "UNKNOWN", 
+            function ? function : "UNKNOWN", 
+            line, g_log_error_count, error_code);
+    
+    // Print error message
+    va_list args;
+    va_start(args, format);
+    vfprintf(g_log_file, format, args);
+    va_end(args);
+    
+    fprintf(g_log_file, "\033[0m\n"); // Reset color
     fflush(g_log_file);
     
     return HAL_STATUS_OK;
 }
 
 hal_status_t hal_log_close(void) {
+    if (!g_log_initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Log final statistics
+    uint64_t uptime = hal_get_timestamp_ms() - g_log_start_time;
+    hal_log_message(HAL_LOG_LEVEL_INFO, "HAL Logging System Shutdown - Total Messages: %u, Errors: %u, Uptime: %lu ms", 
+                   g_log_message_count, g_log_error_count, (unsigned long)uptime);
+    
     if (g_log_file != NULL && g_log_file != stderr) {
         fclose(g_log_file);
         g_log_file = NULL;
     }
+    
+    g_log_initialized = false;
+    return HAL_STATUS_OK;
+}
+
+// ENHANCED: Get logging statistics
+hal_status_t hal_log_get_statistics(uint32_t *total_messages, uint32_t *error_count, uint64_t *uptime_ms) {
+    if (!g_log_initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    if (total_messages) *total_messages = g_log_message_count;
+    if (error_count) *error_count = g_log_error_count;
+    if (uptime_ms) *uptime_ms = hal_get_timestamp_ms() - g_log_start_time;
+    
     return HAL_STATUS_OK;
 }
 

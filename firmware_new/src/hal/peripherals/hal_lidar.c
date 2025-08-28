@@ -433,7 +433,8 @@ uint16_t lidar_calculate_min_distance(const lidar_scan_data_t *scan_data)
         return min_distance;
     }
     
-    // Debug: inspect input
+    // Debug: inspect input - ONLY WHEN DEBUG_LIDAR_SAFETY is defined
+#ifdef DEBUG_LIDAR_SAFETY
     printf("DEBUG: calc_min - point_count=%u, scan_complete=%d\n", (unsigned)scan_data->point_count, scan_data->scan_complete);
     if (scan_data->point_count > 0) {
         printf("DEBUG: calc_min - first distances: ");
@@ -442,6 +443,7 @@ uint16_t lidar_calculate_min_distance(const lidar_scan_data_t *scan_data)
         }
         printf("\n");
     }
+#endif
     
     for (int i = 0; i < (int)scan_data->point_count; i++) {
         if (scan_data->points[i].distance_mm > 0 && 
@@ -450,7 +452,17 @@ uint16_t lidar_calculate_min_distance(const lidar_scan_data_t *scan_data)
         }
     }
     
+    // Debug: result - ONLY WHEN DEBUG_LIDAR_SAFETY is defined
+#ifdef DEBUG_LIDAR_SAFETY
     printf("DEBUG: calc_min - result=%u\n", (unsigned)min_distance);
+#endif
+    
+    // Safety alert: Log when emergency threshold is reached
+    if (min_distance < LIDAR_EMERGENCY_STOP_MM) {
+        printf("[SAFETY] Emergency distance detected: %u mm (threshold: %u mm)\n", 
+               min_distance, LIDAR_EMERGENCY_STOP_MM);
+    }
+    
     return min_distance;
 }
 

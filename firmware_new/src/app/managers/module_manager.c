@@ -135,14 +135,10 @@ hal_status_t module_manager_stop(void) {
 }
 
 hal_status_t module_manager_discover_modules(void) {
-    printf("DEBUG: module_manager_discover_modules() called\n");
-    
     if (!g_module_manager.initialized) {
-        printf("DEBUG: Module manager not initialized\n");
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    printf("DEBUG: Calling perform_module_discovery()\n");
     return perform_module_discovery();
 }
 
@@ -443,24 +439,16 @@ hal_status_t module_manager_reset(void) {
 // Helper functions
 
 static hal_status_t perform_module_discovery(void) {
-    printf("DEBUG: perform_module_discovery() - starting scan\n");
-    
     hal_status_t overall_status = HAL_STATUS_OK;
     int discovered_count = 0;
     
     // Scan Modbus addresses 0x01-0x20
     for (uint8_t address = 0x01; address <= 0x20; address++) {
-        printf("DEBUG: Scanning address 0x%02X\n", address);
         hal_status_t status = discover_module_at_address(address);
         if (status == HAL_STATUS_OK) {
             discovered_count++;
-            printf("DEBUG: Module discovered at address 0x%02X\n", address);
-        } else {
-            printf("DEBUG: No module at address 0x%02X (status=%d)\n", address, status);
         }
     }
-    
-    printf("DEBUG: Discovery scan completed - found %d modules\n", discovered_count);
     
     // Check for offline modules
     check_offline_modules();
@@ -541,7 +529,8 @@ static module_health_t get_health_level(uint8_t percentage) {
 }
 
 static bool is_module_id_valid(uint8_t module_id) {
-    return module_id > 0 && module_id <= 255;
+    // module_id is uint8_t so it's always <= 255, just check > 0
+    return module_id > 0;
 }
 
 static int find_module_index(uint8_t module_id) {
@@ -557,18 +546,12 @@ static int find_module_index(uint8_t module_id) {
 // Auto-Discovery Implementation Functions
 
 static hal_status_t discover_module_at_address(uint8_t address) {
-    printf("DEBUG: discover_module_at_address(0x%02X)\n", address);
-    
-    // Read module identification registers (0x00F0-0x00FF)
-    uint16_t device_id = 0;
-    uint16_t module_type = 0;
+    uint16_t device_id, module_type;
     char version[16] = {0};
     
     // Read Device ID register (0x00F0) - use single register read
     hal_status_t status = comm_manager_modbus_read_holding_registers(
         address, 0x00F0, 1, &device_id);
-    
-    printf("DEBUG: Device ID read status=%d, value=0x%04X\n", status, device_id);
     
     if (status != HAL_STATUS_OK) {
         return status; // Module not responding
@@ -578,8 +561,6 @@ static hal_status_t discover_module_at_address(uint8_t address) {
     status = comm_manager_modbus_read_holding_registers(
         address, 0x00F7, 1, &module_type);
     
-    printf("DEBUG: Module Type read status=%d, value=0x%04X\n", status, module_type);
-    
     if (status != HAL_STATUS_OK) {
         return status;
     }
@@ -588,8 +569,6 @@ static hal_status_t discover_module_at_address(uint8_t address) {
     uint16_t version_regs[8];
     status = comm_manager_modbus_read_holding_registers(
         address, 0x00F8, 8, version_regs);
-    
-    printf("DEBUG: Version registers read status=%d\n", status);
     
     if (status != HAL_STATUS_OK) {
         return status;
@@ -611,15 +590,11 @@ static hal_status_t discover_module_at_address(uint8_t address) {
     }
     version[version_index] = '\0'; // Ensure null termination
     
-    printf("DEBUG: Converted version string: '%s'\n", version);
-    
     // Validate module type
     if (!is_valid_module_type(module_type)) {
         printf("Invalid module type 0x%04X at address 0x%02X\n", module_type, address);
         return HAL_STATUS_INVALID_PARAMETER;
     }
-    
-    printf("DEBUG: Module type 0x%04X is valid\n", module_type);
     
     // Create module info
     module_info_t module_info = {0};
@@ -632,9 +607,6 @@ static hal_status_t discover_module_at_address(uint8_t address) {
     snprintf(module_info.serial_number, sizeof(module_info.serial_number), 
              "SN%04X%02X", device_id, address);
     
-    printf("DEBUG: Created module info: ID=%d, Type=%s, Version=%s\n", 
-           module_info.module_id, module_manager_get_type_name(module_info.type), module_info.version);
-    
     // Read module capabilities based on type
     status = read_module_capabilities(address, module_info.type, &module_info.capabilities);
     if (status != HAL_STATUS_OK) {
@@ -644,7 +616,6 @@ static hal_status_t discover_module_at_address(uint8_t address) {
     
     // Register or update module
     status = module_manager_register_module(&module_info);
-    printf("DEBUG: Register module status=%d\n", status);
     
     if (status == HAL_STATUS_OK) {
         // Mark module as online in registry
@@ -659,44 +630,33 @@ static hal_status_t discover_module_at_address(uint8_t address) {
 }
 
 static bool is_valid_module_type(uint16_t module_type) {
-    printf("DEBUG: is_valid_module_type(0x%04X)\n", module_type);
     switch (module_type) {
         case MODULE_TYPE_POWER:
         case MODULE_TYPE_SAFETY:
         case MODULE_TYPE_TRAVEL_MOTOR:
         case MODULE_TYPE_DOCK:
-            printf("DEBUG: Module type 0x%04X is valid\n", module_type);
             return true;
         default:
-            printf("DEBUG: Module type 0x%04X is invalid\n", module_type);
             return false;
     }
 }
 
 static hal_status_t read_module_capabilities(uint8_t address, module_type_t type, uint32_t *capabilities) {
-    uint16_t capabilities_reg = 0;
+    (void)type; // Suppress unused parameter warning
+    if (capabilities == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
     
-    // Read capabilities register (0x00F6)
+    *capabilities = 0; // Default to no capabilities
+    
+    // Read capabilities register (0x0100) - use single register read
+    uint16_t caps_reg;
     hal_status_t status = comm_manager_modbus_read_holding_registers(
-        address, 0x00F6, 1, &capabilities_reg);
+        address, 0x0100, 1, &caps_reg);
     
-    if (status != HAL_STATUS_OK) {
-        return status;
+    if (status == HAL_STATUS_OK) {
+        *capabilities = caps_reg;
     }
-    
-    *capabilities = capabilities_reg;
-    
-    // Add default capabilities based on module type
-    if (type == MODULE_TYPE_POWER) {
-        *capabilities |= POWER_CAP_VOLTAGE_MONITOR | POWER_CAP_CURRENT_MONITOR;
-    } else if (type == MODULE_TYPE_TRAVEL_MOTOR) {
-        *capabilities |= (1 << 0) | (1 << 1); // Position and velocity control
-    } else if (type == MODULE_TYPE_SAFETY) {
-        *capabilities |= (1 << 0); // Basic safety monitoring
-    } else if (type == MODULE_TYPE_DOCK) {
-        *capabilities |= (1 << 0) | (1 << 1); // Location and docking
-    }
-    printf("DEBUG: Final capabilities=0x%04X\n", *capabilities);
     
     return HAL_STATUS_OK;
 }

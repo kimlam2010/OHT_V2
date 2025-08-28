@@ -27,6 +27,8 @@
 #define API_TELEMETRY         "/telemetry"
 #define API_SAFETY_STATUS     "/safety/status"
 #define API_SAFETY_ESTOP      "/safety/estop"
+#define API_SAFETY_ZONES      "/safety/zones"
+#define API_SAFETY_CONFIG     "/safety/config"
 #define API_CONFIG            "/config"
 #define API_DIAGNOSTICS       "/diagnostics"
 
@@ -183,6 +185,29 @@ hal_status_t api_handle_safety_status(const api_mgr_http_request_t *request, api
  * @return HAL status
  */
 hal_status_t api_handle_safety_estop(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle GET /api/v1/safety/zones
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_safety_zones_get(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+/**
+ * @brief Handle PUT /api/v1/safety/zones
+ * @param request HTTP request
+ * @param response HTTP response
+ * @return HAL status
+ */
+hal_status_t api_handle_safety_zones_set(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+
+// Safety Configuration Management
+hal_status_t api_handle_safety_config_get(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+hal_status_t api_handle_safety_config_set(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+hal_status_t api_handle_safety_config_export(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+hal_status_t api_handle_safety_config_import(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
+hal_status_t api_handle_safety_config_reset(const api_mgr_http_request_t *request, api_mgr_http_response_t *response);
 
 /**
  * @brief Handle GET /api/v1/config

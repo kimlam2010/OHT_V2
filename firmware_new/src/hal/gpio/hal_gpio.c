@@ -23,13 +23,18 @@ static struct {
     bool initialized;
     pthread_mutex_t mutex;
     gpio_statistics_t statistics;
-    relay_statistics_t relay_statistics;
     gpio_device_info_t device_info;
     uint64_t last_operation_time_us;
 } gpio_state = {0};
 
 // Internal function prototypes
 static uint64_t gpio_get_timestamp_us(void);
+
+// GPIO utility functions
+bool gpio_is_pin_valid(uint32_t pin);
+hal_status_t gpio_export_pin(uint32_t pin);
+hal_status_t gpio_unexport_pin(uint32_t pin);
+uint32_t gpio_get_pin_offset(const char *pin_name);
 
 /**
  * @brief Initialize GPIO HAL
@@ -62,7 +67,6 @@ hal_status_t hal_gpio_init(void)
     
     // Initialize statistics
     memset(&gpio_state.statistics, 0, sizeof(gpio_statistics_t));
-    memset(&gpio_state.relay_statistics, 0, sizeof(relay_statistics_t));
     gpio_state.last_operation_time_us = 0;
     
     gpio_state.initialized = true;
@@ -328,16 +332,7 @@ hal_status_t hal_gpio_health_check(void) {
     return HAL_STATUS_OK;
 }
 
-// Relay functions (stubs for now)
-hal_status_t hal_relay_init(const relay_config_t *config __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_deinit(void) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_set(uint8_t channel __attribute__((unused)), bool state __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_get(uint8_t channel __attribute__((unused)), bool *state __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_pulse(uint8_t channel __attribute__((unused)), uint32_t duration_ms __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_toggle(uint8_t channel __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_get_statistics(relay_statistics_t *statistics __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_reset_statistics(void) { return HAL_STATUS_OK; }
-hal_status_t hal_relay_health_check(void) { return HAL_STATUS_OK; }
+// Relay functions removed - moved to hal_relay.c to avoid duplicate definitions
 
 // Utility functions (Real implementation)
 hal_status_t gpio_validate_config(const gpio_config_t *config) {
@@ -368,21 +363,7 @@ hal_status_t gpio_validate_config(const gpio_config_t *config) {
     return HAL_STATUS_OK;
 }
 
-hal_status_t relay_validate_config(const relay_config_t *config) {
-    if (config == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    if (config->channel < 1 || config->channel > RELAY_MAX_CHANNELS) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    if (strlen(config->gpio_pin) == 0) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    return HAL_STATUS_OK;
-}
+// Removed relay_validate_config - it belongs to hal_relay.c
 
 uint32_t gpio_get_pin_offset(const char *pin_name) {
     if (pin_name == NULL) {

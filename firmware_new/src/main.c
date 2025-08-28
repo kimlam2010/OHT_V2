@@ -14,8 +14,10 @@
 #include "hal_led.h"
 #include "hal_estop.h"
 #include "hal_rs485.h"
+#include "hal_lidar.h"
 #include "system_state_machine.h"
 #include "safety_manager.h"
+#include "safety_monitor.h"
 #include "communication_manager.h"
 #include "module_manager.h"
 #include "power_module_handler.h"
@@ -170,8 +172,38 @@ int main(int argc, char **argv) {
         } else {
             printf("[MAIN] Communication manager initialized successfully\n");
         }
+
+        // LiDAR subsystem initialization
+        printf("[MAIN] Initializing LiDAR subsystem...\n");
+        lidar_config_t lidar_cfg = {
+            .device_path = "/dev/ttyUSB0",
+            .baud_rate = 460800,
+            .scan_rate_hz = 10,
+            .emergency_stop_mm = 500,
+            .warning_mm = 1000,
+            .safe_mm = 2000,
+            .sample_rate_hz = 5000,
+            .angular_resolution = 0.72f
+        };
+        
+        hal_status_t lidar_status = hal_lidar_init(&lidar_cfg);
+        if (lidar_status != HAL_STATUS_OK) {
+            fprintf(stderr, "[OHT-50] hal_lidar_init failed (status=%d), continuing...\n", lidar_status);
+        } else {
+            printf("[OHT-50] LiDAR initialized successfully\n");
+            
+            // Start LiDAR scanning
+            hal_status_t scan_status = hal_lidar_start_scanning();
+            if (scan_status != HAL_STATUS_OK) {
+                fprintf(stderr, "[OHT-50] hal_lidar_start_scanning failed (status=%d)\n", scan_status);
+            } else {
+                printf("[OHT-50] LiDAR scanning started\n");
+            }
+        }
+
+
     } else {
-        printf("[OHT-50] DRY-RUN: Skipping HAL init (LED, E-Stop, RS485)\n");
+        printf("[OHT-50] DRY-RUN: Skipping HAL init (LED, E-Stop, RS485, LiDAR)\n");
     }
 
     // 2) Initialize Safety Manager
@@ -377,6 +409,26 @@ int main(int argc, char **argv) {
             }
         }
 
+        // LiDAR data processing (every 100ms for safety)
+        static uint64_t last_lidar_poll_ms = 0;
+        if (!g_dry_run && (t - last_lidar_poll_ms) >= 100) {
+            lidar_scan_data_t scan_data;
+            if (hal_lidar_get_scan_data(&scan_data) == HAL_STATUS_OK) {
+                // Process LiDAR data for safety monitoring
+                if (g_debug_mode && scan_data.scan_complete) {
+                    printf("[LIDAR] Scan complete: %d points, min_dist=%dmm\n", 
+                           scan_data.point_count, 
+                           lidar_calculate_min_distance(&scan_data));
+                }
+                
+                // Check safety zones using LiDAR data
+                if (scan_data.scan_complete) {
+                    safety_monitor_check_basic_zones(&scan_data);
+                }
+            }
+            last_lidar_poll_ms = t;
+        }
+
         // Check for E-Stop triggered
         if (!g_dry_run) {
             bool estop_triggered = false;
@@ -418,6 +470,11 @@ int main(int argc, char **argv) {
         (void)system_state_machine_enter_shutdown();
     }
     if (!g_dry_run) {
+        // Stop LiDAR scanning
+        printf("[OHT-50] Stopping LiDAR scanning...\n");
+        (void)hal_lidar_stop_scanning();
+        (void)hal_lidar_deinit();
+        
         (void)hal_led_system_shutdown();
         (void)safety_manager_deinit();
         (void)hal_estop_deinit();

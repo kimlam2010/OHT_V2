@@ -182,6 +182,7 @@ hal_status_t hal_usb_send(const char *device_path, const uint8_t *data, size_t l
 
 hal_status_t hal_usb_receive(const char *device_path, uint8_t *data, size_t max_length, size_t *actual_length)
 {
+    (void)max_length; // Suppress unused parameter warning
     if (!device_path || !data || !actual_length || !usb_initialized) {
         return HAL_STATUS_ERROR;
     }
@@ -220,6 +221,7 @@ hal_status_t hal_usb_send_packet(const char *device_path, const usb_packet_t *pa
 
 hal_status_t hal_usb_receive_packet(const char *device_path, usb_packet_t *packet, uint32_t timeout_ms)
 {
+    (void)timeout_ms; // Suppress unused parameter warning
     if (!device_path || !packet || !usb_initialized) {
         return HAL_STATUS_ERROR;
     }
