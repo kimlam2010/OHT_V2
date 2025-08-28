@@ -22,7 +22,639 @@
     
     <style>
         /* Monitoring Interface specific styles */
-        .monitoring-grid {
+        /* Top Navigation (from foundation) */
+        .top-navigation {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--bg-primary);
+            border-bottom: var(--border-width-1) solid var(--border-color-light);
+            box-shadow: var(--shadow-sm);
+            z-index: var(--z-sticky);
+        }
+        .nav-brand { display:flex; align-items:center; gap: var(--space-sm); font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--primary-orange); }
+        .nav-menu { display:flex; align-items:center; gap: var(--space-lg); }
+        .nav-item { display:flex; align-items:center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); color: var(--industrial-gray-700); text-decoration:none; border-radius: var(--radius-md); transition: all var(--transition-fast); font-weight: var(--font-medium); }
+        .nav-item:hover { background: var(--industrial-gray-100); color: var(--primary-orange); }
+        .nav-item.active { background: var(--primary-orange); color: #fff; }
+        .nav-actions { display:flex; align-items:center; gap: var(--space-sm); }
+        .nav-btn { display:flex; align-items:center; justify-content:center; width:40px; height:40px; background: var(--bg-secondary); border: var(--border-width-1) solid var(--border-color-light); border-radius: var(--radius-md); color: var(--industrial-gray-600); transition: all var(--transition-fast); }
+        .nav-btn:hover { background: var(--primary-orange); color:#fff; border-color: var(--primary-orange); }
+        .nav-emergency-controls { display:flex; align-items:center; gap: var(--space-sm); margin-left: var(--space-lg); }
+        .btn-emergency-nav { display:flex; align-items:center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); background: var(--safety-red); color:#fff; border:none; border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: var(--font-bold); cursor:pointer; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
+        .btn-emergency-nav:hover { background: var(--error-red-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-nav { display:flex; align-items:center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border: var(--border-width-1) solid var(--border-color-light); border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: var(--font-medium); cursor:pointer; transition: all var(--transition-fast); }
+        .btn-warning-nav { background: var(--warning-yellow); color: var(--industrial-gray-900); border-color: var(--warning-yellow); }
+        .btn-warning-nav:hover { background: var(--warning-yellow-dark); color:#fff; }
+        .btn-success-nav { background: var(--success-green); color:#fff; border-color: var(--success-green); }
+        .btn-success-nav:hover { background: var(--success-green-dark); }
+
+        /* No left sidebar per latest spec */
+        .page-main { display:block; }
+        @media (max-width: 1024px) { .nav-menu{ display:none; } }
+
+        /* RS485 Module Grid Cards */
+        .rs485-module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+        }
+        
+        .module-card {
+            background: var(--bg-primary);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md);
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+        
+        .module-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .module-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-sm);
+        }
+        
+        .module-name {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            font-size: var(--text-base);
+        }
+        
+        .module-address {
+            font-family: var(--font-mono);
+            color: var(--industrial-gray-600);
+            font-size: var(--text-sm);
+        }
+        
+        .module-status {
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: var(--font-bold);
+            text-transform: uppercase;
+        }
+        
+        .module-status.healthy { background: var(--success-green-light); color: var(--success-green-dark); }
+        .module-status.warn { background: var(--warning-yellow-light); color: var(--warning-yellow-dark); }
+        .module-status.error { background: var(--error-red-light); color: var(--error-red-dark); }
+        .module-status.lost { background: var(--industrial-gray-200); color: var(--industrial-gray-600); }
+        
+        .module-badge {
+            display: inline-block;
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--industrial-gray-100);
+            color: var(--industrial-gray-700);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-xs);
+            font-weight: var(--font-medium);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .module-badge.mandatory { background: var(--primary-orange-light); color: var(--primary-orange-dark); }
+        .module-badge.optional { background: var(--industrial-gray-100); color: var(--industrial-gray-600); }
+        
+        .module-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+        }
+        
+        .module-metric {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+        
+        .metric-label {
+            font-size: var(--text-xs);
+            color: var(--industrial-gray-600);
+            font-weight: var(--font-medium);
+        }
+        
+        .metric-value {
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+        }
+
+        /* RS485 Bus Health Panel */
+        .rs485-bus-health {
+            background: var(--bg-primary);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+        
+        .bus-health-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+        }
+        
+        .bus-health-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+        }
+        
+        .bus-health-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        
+        .bus-status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success-green);
+            animation: pulse 2s infinite;
+        }
+        
+        .bus-status-indicator.warning { background: var(--warning-yellow); }
+        .bus-status-indicator.error { background: var(--error-red); }
+        .bus-status-indicator.offline { background: var(--industrial-gray-400); }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .bus-actions {
+            display: flex;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+        }
+        
+        .btn-bus-action {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--primary-orange);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .btn-bus-action:hover {
+            background: var(--primary-orange-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn-bus-action.secondary {
+            background: var(--industrial-gray-100);
+            color: var(--industrial-gray-700);
+            border: var(--border-width-1) solid var(--border-color-light);
+        }
+        
+        .btn-bus-action.secondary:hover {
+            background: var(--industrial-gray-200);
+        }
+        
+        .btn-bus-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .bus-kpis-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+        
+        .bus-kpi-card {
+            background: var(--industrial-gray-50);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+        }
+        
+        .bus-kpi-value {
+            font-family: var(--font-mono);
+            font-size: var(--text-xl);
+            font-weight: var(--font-bold);
+            color: var(--industrial-gray-900);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .bus-kpi-label {
+            font-size: var(--text-xs);
+            color: var(--industrial-gray-600);
+            font-weight: var(--font-medium);
+            text-transform: uppercase;
+        }
+        
+        /* Discovery Section */
+        .discovery-section {
+            background: var(--bg-primary);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+        }
+        
+        .discovery-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+        }
+        
+        .discovery-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+        }
+        
+        .discovery-progress {
+            background: var(--industrial-gray-100);
+            border-radius: var(--radius-full);
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: var(--space-md);
+        }
+        
+        .discovery-progress-bar {
+            height: 100%;
+            background: var(--primary-orange);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .discovery-status {
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-600);
+            margin-bottom: var(--space-md);
+        }
+        
+        .discovery-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-sm);
+        }
+        
+        .discovery-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm);
+            background: var(--industrial-gray-50);
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+        }
+        
+        .discovery-item.found {
+            background: var(--success-green-light);
+            color: var(--success-green-dark);
+        }
+        
+        .discovery-item.conflict {
+            background: var(--error-red-light);
+            color: var(--error-red-dark);
+        }
+        
+        .discovery-item-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        
+                 .discovery-item-icon.found { background: var(--success-green); }
+         .discovery-item-icon.conflict { background: var(--error-red); }
+
+         /* Module Detail Modal */
+         .module-detail-modal {
+             position: fixed;
+             top: 0;
+             left: 0;
+             right: 0;
+             bottom: 0;
+             background: rgba(0, 0, 0, 0.5);
+             display: none;
+             align-items: center;
+             justify-content: center;
+             z-index: var(--z-modal);
+         }
+         
+         .module-detail-modal[open] {
+             display: flex;
+         }
+         
+         .modal-content {
+             background: var(--bg-primary);
+             border-radius: var(--radius-lg);
+             box-shadow: var(--shadow-xl);
+             max-width: 800px;
+             width: 90%;
+             max-height: 90vh;
+             overflow: hidden;
+             display: flex;
+             flex-direction: column;
+         }
+         
+         .modal-header {
+             display: flex;
+             align-items: center;
+             justify-content: space-between;
+             padding: var(--space-lg);
+             border-bottom: var(--border-width-1) solid var(--border-color-light);
+             background: var(--industrial-gray-50);
+         }
+         
+         .modal-title {
+             font-size: var(--text-xl);
+             font-weight: var(--font-bold);
+             color: var(--industrial-gray-900);
+         }
+         
+         .modal-close {
+             background: none;
+             border: none;
+             color: var(--industrial-gray-600);
+             cursor: pointer;
+             padding: var(--space-sm);
+             border-radius: var(--radius-md);
+             transition: all var(--transition-fast);
+         }
+         
+         .modal-close:hover {
+             background: var(--industrial-gray-100);
+             color: var(--industrial-gray-900);
+         }
+         
+         .modal-tabs {
+             display: flex;
+             border-bottom: var(--border-width-1) solid var(--border-color-light);
+             background: var(--bg-primary);
+         }
+         
+         .modal-tab {
+             padding: var(--space-md) var(--space-lg);
+             background: none;
+             border: none;
+             color: var(--industrial-gray-600);
+             cursor: pointer;
+             font-weight: var(--font-medium);
+             border-bottom: 2px solid transparent;
+             transition: all var(--transition-fast);
+         }
+         
+         .modal-tab.active {
+             color: var(--primary-orange);
+             border-bottom-color: var(--primary-orange);
+             background: var(--primary-orange-light);
+         }
+         
+         .modal-tab:hover:not(.active) {
+             background: var(--industrial-gray-50);
+             color: var(--industrial-gray-900);
+         }
+         
+         .modal-body {
+             flex: 1;
+             overflow-y: auto;
+             padding: var(--space-lg);
+         }
+         
+         .tab-content {
+             display: none;
+         }
+         
+         .tab-content.active {
+             display: block;
+         }
+         
+         .module-overview {
+             display: grid;
+             grid-template-columns: repeat(2, 1fr);
+             gap: var(--space-lg);
+         }
+         
+         .overview-section {
+             background: var(--industrial-gray-50);
+             border-radius: var(--radius-md);
+             padding: var(--space-md);
+         }
+         
+         .overview-title {
+             font-size: var(--text-sm);
+             font-weight: var(--font-semibold);
+             color: var(--industrial-gray-700);
+             margin-bottom: var(--space-sm);
+             text-transform: uppercase;
+         }
+         
+         .overview-item {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             padding: var(--space-xs) 0;
+             border-bottom: 1px solid var(--border-color-light);
+         }
+         
+         .overview-item:last-child {
+             border-bottom: none;
+         }
+         
+         .overview-label {
+             font-size: var(--text-sm);
+             color: var(--industrial-gray-600);
+         }
+         
+         .overview-value {
+             font-family: var(--font-mono);
+             font-size: var(--text-sm);
+             font-weight: var(--font-semibold);
+             color: var(--industrial-gray-900);
+         }
+         
+         .module-actions {
+             display: flex;
+             gap: var(--space-sm);
+             margin-top: var(--space-lg);
+             padding-top: var(--space-lg);
+             border-top: var(--border-width-1) solid var(--border-color-light);
+         }
+         
+         .btn-module-action {
+             display: inline-flex;
+             align-items: center;
+             gap: var(--space-xs);
+             padding: var(--space-sm) var(--space-md);
+             border: var(--border-width-1) solid var(--border-color-light);
+             border-radius: var(--radius-md);
+             background: var(--bg-primary);
+             color: var(--industrial-gray-700);
+             font-size: var(--text-sm);
+             font-weight: var(--font-medium);
+             cursor: pointer;
+             transition: all var(--transition-fast);
+         }
+         
+         .btn-module-action:hover {
+             background: var(--industrial-gray-50);
+             border-color: var(--industrial-gray-300);
+         }
+         
+         .btn-module-action.danger {
+             color: var(--error-red);
+             border-color: var(--error-red-light);
+         }
+         
+         .btn-module-action.danger:hover {
+             background: var(--error-red-light);
+         }
+         
+         .btn-module-action:disabled {
+             opacity: 0.5;
+             cursor: not-allowed;
+         }
+         
+         .telemetry-chart {
+             height: 200px;
+             background: var(--industrial-gray-50);
+             border: var(--border-width-1) solid var(--border-color-light);
+             border-radius: var(--radius-md);
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             color: var(--industrial-gray-500);
+             font-size: var(--text-sm);
+         }
+         
+         .alerts-list {
+             max-height: 300px;
+             overflow-y: auto;
+         }
+         
+         .alert-item-small {
+             display: flex;
+             align-items: center;
+             gap: var(--space-sm);
+             padding: var(--space-sm);
+             margin-bottom: var(--space-xs);
+             background: var(--industrial-gray-50);
+             border-radius: var(--radius-sm);
+             border-left: 3px solid var(--industrial-gray-300);
+         }
+         
+         .alert-item-small.warning {
+             background: var(--warning-yellow-light);
+             border-left-color: var(--warning-yellow);
+         }
+         
+         .alert-item-small.error {
+             background: var(--error-red-light);
+             border-left-color: var(--error-red);
+         }
+         
+         .logs-list {
+             max-height: 300px;
+             overflow-y: auto;
+             font-family: var(--font-mono);
+             font-size: var(--text-xs);
+         }
+         
+         .log-item {
+             padding: var(--space-xs) var(--space-sm);
+             border-bottom: 1px solid var(--border-color-light);
+         }
+         
+         .log-item:last-child {
+             border-bottom: none;
+         }
+         
+         .log-timestamp-small {
+             color: var(--industrial-gray-500);
+             margin-right: var(--space-sm);
+         }
+         
+         .log-level-small {
+             font-weight: var(--font-semibold);
+             margin-right: var(--space-sm);
+         }
+         
+         .log-level-small.info { color: var(--info-blue); }
+         .log-level-small.warning { color: var(--warning-yellow); }
+         .log-level-small.error { color: var(--error-red); }
+         .log-level-small.success { color: var(--success-green); }
+
+         /* Alert Filter Styles */
+         .alerts-filter-container {
+             display: flex;
+             gap: var(--space-sm);
+             align-items: center;
+         }
+         
+         .module-filter-select,
+         .severity-filter-select {
+             padding: var(--space-xs) var(--space-sm);
+             border: var(--border-width-1) solid var(--border-color-light);
+             border-radius: var(--radius-md);
+             background: var(--bg-primary);
+             color: var(--industrial-gray-700);
+             font-size: var(--text-sm);
+             font-weight: var(--font-medium);
+             cursor: pointer;
+             transition: all var(--transition-fast);
+         }
+         
+         .module-filter-select:hover,
+         .severity-filter-select:hover {
+             border-color: var(--primary-orange);
+         }
+         
+         .module-filter-select:focus,
+         .severity-filter-select:focus {
+             outline: none;
+             border-color: var(--primary-orange);
+             box-shadow: 0 0 0 2px var(--primary-orange-light);
+         }
+         
+         .alert-item {
+             position: relative;
+         }
+         
+         .alert-module-badge {
+             position: absolute;
+             top: var(--space-sm);
+             right: var(--space-sm);
+             padding: var(--space-xs) var(--space-sm);
+             background: var(--industrial-gray-100);
+             color: var(--industrial-gray-700);
+             border-radius: var(--radius-sm);
+             font-size: var(--text-xs);
+             font-weight: var(--font-medium);
+             font-family: var(--font-mono);
+         }
+         
+         .alert-item.hidden {
+             display: none;
+         }
+
+         .monitoring-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
             gap: var(--space-lg);
@@ -279,6 +911,233 @@
                 font-size: var(--text-base);
             }
         }
+
+        /* Tab Navigation System - Option C */
+        .tab-navigation {
+            display: flex;
+            background: var(--bg-primary);
+            border-bottom: var(--border-width-1) solid var(--border-color-light);
+            margin-bottom: var(--space-lg);
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .tab-navigation::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-md) var(--space-lg);
+            background: none;
+            border: none;
+            color: var(--industrial-gray-600);
+            cursor: pointer;
+            font-weight: var(--font-medium);
+            font-size: var(--text-sm);
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+            min-width: 120px;
+            justify-content: center;
+        }
+        
+        .tab-item:hover {
+            background: var(--industrial-gray-50);
+            color: var(--industrial-gray-900);
+        }
+        
+        .tab-item.active {
+            color: var(--primary-orange);
+            border-bottom-color: var(--primary-orange);
+            background: var(--primary-orange-light);
+        }
+        
+        .tab-item .tab-icon {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .tab-content {
+            display: none !important;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .tab-content.active {
+            display: block !important;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* RS485 Modules Tab Specific Styles */
+        .rs485-tab-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: var(--space-lg);
+            height: calc(100vh - 200px);
+        }
+        
+        .rs485-main-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+        }
+        
+        .rs485-detail-panel {
+            background: var(--bg-primary);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            overflow-y: auto;
+            height: 100%;
+        }
+        
+        .rs485-detail-panel.hidden {
+            display: none;
+        }
+        
+        .rs485-detail-panel .detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-md);
+            border-bottom: var(--border-width-1) solid var(--border-color-light);
+        }
+        
+        .rs485-detail-panel .detail-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+        }
+        
+        .rs485-detail-panel .detail-close {
+            background: none;
+            border: none;
+            color: var(--industrial-gray-400);
+            cursor: pointer;
+            padding: var(--space-xs);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+        }
+        
+        .rs485-detail-panel .detail-close:hover {
+            background: var(--industrial-gray-100);
+            color: var(--industrial-gray-900);
+        }
+        
+        .rs485-detail-panel .detail-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+        }
+        
+        .rs485-detail-panel .detail-section {
+            background: var(--industrial-gray-50);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+        }
+        
+        .rs485-detail-panel .detail-section-title {
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-700);
+            margin-bottom: var(--space-sm);
+            text-transform: uppercase;
+        }
+        
+        .rs485-detail-panel .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-xs) 0;
+            border-bottom: 1px solid var(--border-color-light);
+        }
+        
+        .rs485-detail-panel .detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .rs485-detail-panel .detail-label {
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-600);
+        }
+        
+        .rs485-detail-panel .detail-value {
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+        }
+        
+        .rs485-detail-panel .detail-controls {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+        
+        .rs485-detail-panel .btn-detail-action {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--primary-orange);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-xs);
+            font-weight: var(--font-medium);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .rs485-detail-panel .btn-detail-action:hover {
+            background: var(--primary-orange-dark);
+            transform: translateY(-1px);
+        }
+        
+        .rs485-detail-panel .btn-detail-action.danger {
+            background: var(--safety-red);
+        }
+        
+        .rs485-detail-panel .btn-detail-action.danger:hover {
+            background: var(--error-red-dark);
+        }
+        
+        /* Responsive for RS485 Tab */
+        @media (max-width: 1200px) {
+            .rs485-tab-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+            }
+            
+            .rs485-detail-panel {
+                height: auto;
+                max-height: 400px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .tab-navigation {
+                margin-bottom: var(--space-md);
+            }
+            
+            .tab-item {
+                padding: var(--space-sm) var(--space-md);
+                min-width: 100px;
+                font-size: var(--text-xs);
+            }
+            
+            .rs485-tab-content {
+                gap: var(--space-md);
+            }
+        }
     </style>
 </head>
 <body>
@@ -287,33 +1146,101 @@
     
     <!-- Page Container -->
     <div class="page-container">
-        <!-- Header -->
-        <header class="page-header">
-            <div class="flex items-center gap-4">
-                <i data-lucide="activity" class="w-6 h-6 text-primary-orange" aria-hidden="true"></i>
-                <h1 class="text-2xl font-bold text-industrial-gray-900">OHT-50 Monitoring</h1>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-success-green rounded-full animate-pulse"></div>
-                    <span class="text-sm text-industrial-gray-600">Live Monitoring</span>
-                </div>
+        <!-- Top Navigation Bar (standard) -->
+        <nav class="top-navigation" role="navigation" aria-label="Main navigation">
+            <div class="nav-brand">
+                <i data-lucide="activity" class="w-6 h-6" aria-hidden="true"></i>
+                <span>OHT-50</span>
             </div>
-            <div class="flex items-center gap-4">
-                <button class="btn btn-secondary" id="refresh-data" aria-label="Refresh monitoring data">
+            <div class="nav-emergency-controls">
+                <button class="btn-emergency-nav" id="emergency-stop" aria-label="Emergency Stop - Press to stop all operations immediately">
+                    <i data-lucide="square" class="w-4 h-4" aria-hidden="true"></i>
+                    E-STOP
+                </button>
+                <button class="btn-nav btn-warning-nav" id="pause-system" aria-label="Pause System">
+                    <i data-lucide="pause" class="w-4 h-4" aria-hidden="true"></i>
+                    Pause
+                </button>
+                <button class="btn-nav btn-success-nav" id="reset-system" aria-label="Reset System">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+                    Reset
+                </button>
+            </div>
+            <div class="nav-menu">
+                <a href="../core_pages/2-1-dashboard-main.html" class="nav-item">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4" aria-hidden="true"></i>
+                    Dashboard
+                </a>
+                <a href="../core_pages/3-1-control-panel.html" class="nav-item">
+                    <i data-lucide="gamepad-2" class="w-4 h-4" aria-hidden="true"></i>
+                    Control Panel
+                </a>
+                <a href="../core_pages/4-1-map-interface.html" class="nav-item">
+                    <i data-lucide="map" class="w-4 h-4" aria-hidden="true"></i>
+                    Map & Navigation
+                </a>
+                <a href="../functional_pages/5-1-monitoring-interface.html" class="nav-item active" aria-current="page">
+                    <i data-lucide="monitor" class="w-4 h-4" aria-hidden="true"></i>
+                    Monitoring
+                </a>
+                <a href="../functional_pages/6-1-configuration.html" class="nav-item">
+                    <i data-lucide="settings" class="w-4 h-4" aria-hidden="true"></i>
+                    Configuration
+                </a>
+                <a href="../functional_pages/7-1-reports.html" class="nav-item">
+                    <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                    Reports
+                </a>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn" id="refresh-data" aria-label="Refresh monitoring data">
                     <i data-lucide="refresh-cw" class="w-5 h-5" aria-hidden="true"></i>
                 </button>
-                <button class="btn btn-secondary" aria-label="Export monitoring data">
-                    <i data-lucide="download" class="w-5 h-5" aria-hidden="true"></i>
+                <button class="nav-btn" aria-label="Notifications">
+                    <i data-lucide="bell" class="w-5 h-5" aria-hidden="true"></i>
                 </button>
-                <button class="btn btn-emergency" aria-label="Emergency Stop">
-                    <i data-lucide="square" class="w-5 h-5" aria-hidden="true"></i>
-                    <span>E-STOP</span>
+                <button class="nav-btn" aria-label="User menu">
+                    <i data-lucide="user" class="w-5 h-5" aria-hidden="true"></i>
                 </button>
             </div>
-        </header>
+        </nav>
 
         <!-- Main Content -->
-        <main id="main-content" class="page-main">
-            <div class="monitoring-grid">
+        <main id="main-content" class="page-main" style="padding-top:80px;">
+            <!-- Breadcrumbs -->
+            <nav class="breadcrumb-nav" aria-label="Breadcrumb" style="padding: 0 var(--space-lg); margin-top: var(--space-lg);">
+                <a href="../core_pages/2-1-dashboard-main.html" class="breadcrumb-item">Dashboard</a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-item active">Monitoring</span>
+            </nav>
+
+            <!-- Tab Navigation System - Option C -->
+            <div class="tab-navigation" role="tablist" aria-label="Monitoring tabs">
+                <button class="tab-item active" role="tab" aria-selected="true" aria-controls="tab-overview" id="tab-overview-btn" onclick="switchTab('tab-overview')">
+                    <i data-lucide="activity" class="tab-icon" aria-hidden="true"></i>
+                    System Overview
+                </button>
+                <button class="tab-item" role="tab" aria-selected="false" aria-controls="tab-rs485" id="tab-rs485-btn" onclick="switchTab('tab-rs485')">
+                    <i data-lucide="network" class="tab-icon" aria-hidden="true"></i>
+                    RS485 Modules
+                </button>
+                <button class="tab-item" role="tab" aria-selected="false" aria-controls="tab-alerts" id="tab-alerts-btn" onclick="switchTab('tab-alerts')">
+                    <i data-lucide="alert-triangle" class="tab-icon" aria-hidden="true"></i>
+                    Alerts & Events
+                </button>
+                <button class="tab-item" role="tab" aria-selected="false" aria-controls="tab-logs" id="tab-logs-btn" onclick="switchTab('tab-logs')">
+                    <i data-lucide="file-text" class="tab-icon" aria-hidden="true"></i>
+                    System Logs
+                </button>
+                <button class="tab-item" role="tab" aria-selected="false" aria-controls="tab-analytics" id="tab-analytics-btn" onclick="switchTab('tab-analytics')">
+                    <i data-lucide="bar-chart-3" class="tab-icon" aria-hidden="true"></i>
+                    Analytics
+                </button>
+            </div>
+
+            <!-- Tab Content: System Overview -->
+            <div id="tab-overview" class="tab-content active" role="tabpanel" aria-labelledby="tab-overview-btn">
+                <div class="monitoring-grid">
                 <!-- System Health Overview -->
                 <section class="col-span-3 telemetry-card">
                     <h3 class="text-lg font-semibold mb-4">System Health</h3>
@@ -400,15 +1327,82 @@
                             <span class="status-indicator status-healthy" id="safety-zone">CLEAR</span>
                         </div>
                         <div class="metric-display">
-                            <span class="metric-label">Obstacle Count</span>
-                            <span class="metric-value" id="obstacle-count">0</span>
-                        </div>
-                        <div class="metric-display">
                             <span class="metric-label">Emergency Contact</span>
                             <span class="metric-value" id="emergency-contact">+84 123 456 789</span>
                         </div>
                     </div>
                 </section>
+
+                <!-- RS485 Bus Health Panel -->
+                <section class="col-span-4 telemetry-card" aria-label="RS485 bus health">
+                    <div id="rs485-bus-health" class="rs485-bus-health">
+                        <div class="bus-health-header">
+                            <h3 class="bus-health-title">RS485 Bus Health</h3>
+                            <div class="bus-health-status">
+                                <div class="bus-status-indicator" id="bus-status-indicator"></div>
+                                <span class="text-sm font-medium" id="bus-status-text">Online</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bus-actions">
+                            <button id="btn-scan" class="btn-bus-action">
+                                <i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i>
+                                Scan Now
+                            </button>
+                            <button id="btn-restart" class="btn-bus-action secondary">
+                                <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+                                Restart Bus
+                            </button>
+                        </div>
+                        
+                        <div id="bus-kpis" class="bus-kpis-grid">
+                            <!-- Bus KPIs will be populated by JavaScript -->
+                        </div>
+                        
+                        <!-- Discovery Section -->
+                        <div id="discovery-status" class="discovery-section">
+                            <div class="discovery-header">
+                                <h4 class="discovery-title">Module Discovery</h4>
+                            </div>
+                            
+                            <div class="discovery-progress">
+                                <div class="discovery-progress-bar" id="disc-progress-bar"></div>
+                            </div>
+                            
+                            <div class="discovery-status" id="disc-progress">Ready to scan</div>
+                            
+                            <div class="discovery-results" id="disc-collisions">
+                                <!-- Discovery results will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- RS485 Modules Grid -->
+                <section class="col-span-8 telemetry-card" aria-label="RS485 modules">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">RS485 Modules</h3>
+                        <small class="text-industrial-gray-600">0x01 – 0x0F</small>
+                    </div>
+                    <div id="rs485-module-grid" class="rs485-module-grid" role="grid" aria-label="RS485 Module Grid"></div>
+                </section>
+
+                <aside class="col-span-4 space-y-4" aria-label="Bus health and discovery">
+                    <section id="rs485-bus-health" class="telemetry-card" aria-labelledby="bus-health-title">
+                        <h4 id="bus-health-title" class="text-base font-semibold mb-3">RS485 Bus Health</h4>
+                        <div id="bus-kpis" class="grid grid-cols-2 gap-3" aria-live="polite"></div>
+                        <div class="flex gap-2 mt-3">
+                            <button class="btn btn-secondary" id="btn-scan" title="Scan RS485 bus">Scan Now</button>
+                            <button class="btn btn-secondary" id="btn-restart" title="Requires Operator+">Restart Bus</button>
+                        </div>
+                    </section>
+
+                    <section id="discovery-status" class="telemetry-card" aria-labelledby="disc-title">
+                        <h4 id="disc-title" class="text-base font-semibold mb-3">Discovery</h4>
+                        <div id="disc-progress" class="text-sm text-industrial-gray-700">Idle</div>
+                        <ul id="disc-collisions" class="list-disc pl-5 mt-2 text-sm"></ul>
+                    </section>
+                </aside>
 
                 <!-- Real-time Charts -->
                 <section class="col-span-6 chart-container">
@@ -431,50 +1425,86 @@
                     </div>
                 </section>
 
-                <!-- Alert Management -->
-                <section class="col-span-6 alert-panel">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold">Active Alerts</h3>
-                        <button class="btn btn-secondary btn-sm" id="clear-alerts" aria-label="Clear all alerts">
-                            <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
-                            Clear All
-                        </button>
-                    </div>
-                    <div id="alerts-container" class="space-y-2">
-                        <div class="alert-item alert-info">
-                            <i data-lucide="info" class="alert-icon text-info-blue" aria-hidden="true"></i>
-                            <div class="alert-content">
-                                <div class="alert-title">System Update Available</div>
-                                <div class="alert-message">New firmware version v2.1.0 is ready for installation</div>
-                                <div class="alert-time">2 minutes ago</div>
-                            </div>
-                            <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
-                                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                        <div class="alert-item alert-warning">
-                            <i data-lucide="alert-triangle" class="alert-icon text-warning-yellow" aria-hidden="true"></i>
-                            <div class="alert-content">
-                                <div class="alert-title">High Memory Usage</div>
-                                <div class="alert-message">Memory usage is above 80% threshold</div>
-                                <div class="alert-time">5 minutes ago</div>
-                            </div>
-                            <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
-                                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                        <div class="alert-item alert-success">
-                            <i data-lucide="check-circle" class="alert-icon text-success-green" aria-hidden="true"></i>
-                            <div class="alert-content">
-                                <div class="alert-title">Safety Check Complete</div>
-                                <div class="alert-message">All safety systems verified and operational</div>
-                                <div class="alert-time">10 minutes ago</div>
-                            </div>
-                            <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
-                                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    </div>
+                                 <!-- Alert Management -->
+                 <section class="col-span-6 alert-panel">
+                     <div class="flex items-center justify-between mb-4">
+                         <h3 class="text-lg font-semibold">Active Alerts</h3>
+                         <div class="flex items-center gap-3">
+                             <div id="alerts-filter-by-module" class="alerts-filter-container" aria-label="Filter alerts by module">
+                                 <select id="module-filter-select" class="module-filter-select" aria-label="Filter by module">
+                                     <option value="all">All Modules</option>
+                                     <option value="0x01">Power (0x01)</option>
+                                     <option value="0x02">Safety (0x02)</option>
+                                     <option value="0x03">Travel (0x03)</option>
+                                     <option value="0x04">Dock & Location (0x04)</option>
+                                     <option value="0x05">Master (0x05)</option>
+                                     <option value="0x06">Lifter (0x06)</option>
+                                     <option value="0x07">Cargo (0x07)</option>
+                                 </select>
+                                 <select id="severity-filter-select" class="severity-filter-select" aria-label="Filter by severity">
+                                     <option value="all">All Severities</option>
+                                     <option value="critical">Critical</option>
+                                     <option value="warning">Warning</option>
+                                     <option value="info">Info</option>
+                                     <option value="success">Success</option>
+                                 </select>
+                             </div>
+                             <button class="btn btn-secondary btn-sm" id="clear-alerts" aria-label="Clear all alerts">
+                                 <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                                 Clear All
+                             </button>
+                         </div>
+                     </div>
+                                         <div id="alerts-container" class="space-y-2">
+                         <div class="alert-item alert-info" data-module="0x05" data-severity="info">
+                             <i data-lucide="info" class="alert-icon text-info-blue" aria-hidden="true"></i>
+                             <div class="alert-content">
+                                 <div class="alert-title">System Update Available</div>
+                                 <div class="alert-message">New firmware version v2.1.0 is ready for installation</div>
+                                 <div class="alert-time">2 minutes ago</div>
+                             </div>
+                             <div class="alert-module-badge">Master (0x05)</div>
+                             <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
+                                 <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                             </button>
+                         </div>
+                         <div class="alert-item alert-warning" data-module="0x02" data-severity="warning">
+                             <i data-lucide="alert-triangle" class="alert-icon text-warning-yellow" aria-hidden="true"></i>
+                             <div class="alert-content">
+                                 <div class="alert-title">High Error Rate Detected</div>
+                                 <div class="alert-message">Safety module error rate above 2% threshold</div>
+                                 <div class="alert-time">5 minutes ago</div>
+                             </div>
+                             <div class="alert-module-badge">Safety (0x02)</div>
+                             <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
+                                 <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                             </button>
+                         </div>
+                         <div class="alert-item alert-success" data-module="0x04" data-severity="success">
+                             <i data-lucide="check-circle" class="alert-icon text-success-green" aria-hidden="true"></i>
+                             <div class="alert-content">
+                                 <div class="alert-title">Dock & Location Operational</div>
+                                 <div class="alert-message">All positioning systems verified and operational</div>
+                                 <div class="alert-time">10 minutes ago</div>
+                             </div>
+                             <div class="alert-module-badge">Dock & Location (0x04)</div>
+                             <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
+                                 <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                             </button>
+                         </div>
+                         <div class="alert-item alert-critical" data-module="0x01" data-severity="critical">
+                             <i data-lucide="alert-circle" class="alert-icon text-error-red" aria-hidden="true"></i>
+                             <div class="alert-content">
+                                 <div class="alert-title">Power Module Critical</div>
+                                 <div class="alert-message">Battery level below 10% - immediate attention required</div>
+                                 <div class="alert-time">1 minute ago</div>
+                             </div>
+                             <div class="alert-module-badge">Power (0x01)</div>
+                             <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert">
+                                 <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                             </button>
+                         </div>
+                     </div>
                 </section>
 
                 <!-- System Logs -->
@@ -524,6 +1554,207 @@
                     </div>
                 </section>
             </div>
+            </div>
+
+            <!-- Tab Content: RS485 Modules -->
+            <div id="tab-rs485" class="tab-content" role="tabpanel" aria-labelledby="tab-rs485-btn">
+                <div class="rs485-tab-content">
+                    <!-- Main Content Area -->
+                    <div class="rs485-main-content">
+                        <!-- Top Controls -->
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-medium">RS485 Bus Health:</span>
+                                    <div class="bus-status-indicator" id="rs485-bus-status-indicator"></div>
+                                    <span class="text-sm font-medium" id="rs485-bus-status-text">Online</span>
+                                </div>
+                                <button id="rs485-btn-scan" class="btn-bus-action">
+                                    <i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i>
+                                    Scan Now
+                                </button>
+                                <button id="rs485-btn-restart" class="btn-bus-action secondary">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+                                    Restart Bus
+                                </button>
+                            </div>
+                            <button id="rs485-btn-add-module" class="btn-bus-action">
+                                <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                                Add Module
+                            </button>
+                        </div>
+
+                        <!-- Module Grid -->
+                        <div class="rs485-module-grid" id="rs485-module-grid">
+                            <!-- Module cards will be dynamically generated -->
+                        </div>
+                    </div>
+
+                    <!-- Detail Panel -->
+                    <div id="rs485-detail-panel" class="rs485-detail-panel hidden">
+                        <div class="detail-header">
+                            <h3 class="detail-title" id="detail-module-title">Select a Module</h3>
+                            <button class="detail-close" onclick="closeRs485Detail()" aria-label="Close detail panel">
+                                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="detail-content" id="detail-content">
+                            <div class="detail-section">
+                                <h4 class="detail-section-title">Module Status</h4>
+                                <div class="detail-item">
+                                    <span class="detail-label">Status:</span>
+                                    <span class="detail-value" id="detail-status">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Last Seen:</span>
+                                    <span class="detail-value" id="detail-last-seen">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Error Rate:</span>
+                                    <span class="detail-value" id="detail-error-rate">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Response Time:</span>
+                                    <span class="detail-value" id="detail-response-time">-</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <h4 class="detail-section-title">Real-time Values</h4>
+                                <div class="detail-item">
+                                    <span class="detail-label">Battery Level:</span>
+                                    <span class="detail-value" id="detail-battery">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Voltage:</span>
+                                    <span class="detail-value" id="detail-voltage">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Current:</span>
+                                    <span class="detail-value" id="detail-current">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Temperature:</span>
+                                    <span class="detail-value" id="detail-temperature">-</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <h4 class="detail-section-title">Module Controls</h4>
+                                <div class="detail-controls">
+                                    <button class="btn-detail-action" onclick="pingModule()">
+                                        <i data-lucide="radio" class="w-3 h-3" aria-hidden="true"></i>
+                                        Ping
+                                    </button>
+                                    <button class="btn-detail-action" onclick="resetModule()">
+                                        <i data-lucide="refresh-cw" class="w-3 h-3" aria-hidden="true"></i>
+                                        Reset
+                                    </button>
+                                    <button class="btn-detail-action" onclick="configureModule()">
+                                        <i data-lucide="settings" class="w-3 h-3" aria-hidden="true"></i>
+                                        Configure
+                                    </button>
+                                    <button class="btn-detail-action danger" onclick="quarantineModule()">
+                                        <i data-lucide="shield-x" class="w-3 h-3" aria-hidden="true"></i>
+                                        Quarantine
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Alerts & Events -->
+            <div id="tab-alerts" class="tab-content" role="tabpanel" aria-labelledby="tab-alerts-btn">
+                <div class="monitoring-grid">
+                    <section class="col-span-12 alert-panel">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Alert Management</h3>
+                            <div class="flex items-center gap-3">
+                                <div class="alerts-filter-container" aria-label="Filter alerts by module">
+                                    <select class="module-filter-select" aria-label="Filter by module">
+                                        <option value="all">All Modules</option>
+                                        <option value="0x01">Power (0x01)</option>
+                                        <option value="0x02">Safety (0x02)</option>
+                                        <option value="0x03">Travel (0x03)</option>
+                                        <option value="0x04">Dock & Location (0x04)</option>
+                                        <option value="0x05">Master (0x05)</option>
+                                        <option value="0x06">Lifter (0x06)</option>
+                                        <option value="0x07">Cargo (0x07)</option>
+                                    </select>
+                                    <select class="severity-filter-select" aria-label="Filter by severity">
+                                        <option value="all">All Severities</option>
+                                        <option value="critical">Critical</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="info">Info</option>
+                                        <option value="success">Success</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" aria-label="Clear all alerts">
+                                    <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                                    Clear All
+                                </button>
+                            </div>
+                        </div>
+                        <div id="alerts-container-enhanced" class="space-y-2">
+                            <!-- Enhanced alerts will be populated here -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Tab Content: System Logs -->
+            <div id="tab-logs" class="tab-content" role="tabpanel" aria-labelledby="tab-logs-btn">
+                <div class="monitoring-grid">
+                    <section class="col-span-12 chart-container">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">System Logs</h3>
+                            <div class="flex items-center gap-2">
+                                <select class="form-select" aria-label="Filter log level">
+                                    <option value="all">All Levels</option>
+                                    <option value="info">Info</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="error">Error</option>
+                                    <option value="success">Success</option>
+                                </select>
+                                <button class="btn btn-secondary btn-sm" aria-label="Export logs">
+                                    <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                                    Export
+                                </button>
+                            </div>
+                        </div>
+                        <div class="log-entries" id="log-entries-enhanced">
+                            <!-- Enhanced logs will be populated here -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Tab Content: Analytics -->
+            <div id="tab-analytics" class="tab-content" role="tabpanel" aria-labelledby="tab-analytics-btn">
+                <div class="monitoring-grid">
+                    <section class="col-span-12 chart-container">
+                        <h3 class="text-lg font-semibold mb-4">Performance Analytics</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="chart-placeholder">
+                                <div class="text-center">
+                                    <i data-lucide="trending-up" class="w-8 h-8 mx-auto mb-2 text-industrial-gray-400"></i>
+                                    <p>System Performance Trends</p>
+                                    <p class="text-xs">Advanced analytics coming soon</p>
+                                </div>
+                            </div>
+                            <div class="chart-placeholder">
+                                <div class="text-center">
+                                    <i data-lucide="bar-chart-3" class="w-8 h-8 mx-auto mb-2 text-industrial-gray-400"></i>
+                                    <p>Module Health Analytics</p>
+                                    <p class="text-xs">Advanced analytics coming soon</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
         </main>
 
         <!-- Footer -->
@@ -542,10 +1773,151 @@
                     Fullscreen
                 </button>
             </div>
-        </footer>
-    </div>
+                 </footer>
+     </div>
 
-    <script>
+     <!-- Module Detail Modal -->
+     <div id="module-detail-modal" class="module-detail-modal">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h2 class="modal-title" id="module-modal-title">Module Details</h2>
+                 <button class="modal-close" onclick="closeModuleDetail()" aria-label="Close modal">
+                     <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+                 </button>
+             </div>
+             
+             <div class="modal-tabs">
+                 <button class="modal-tab active" onclick="switchTab('overview')">Overview</button>
+                 <button class="modal-tab" onclick="switchTab('telemetry')">Telemetry</button>
+                 <button class="modal-tab" onclick="switchTab('alerts')">Alerts</button>
+                 <button class="modal-tab" onclick="switchTab('logs')">Logs</button>
+             </div>
+             
+             <div class="modal-body">
+                 <!-- Overview Tab -->
+                 <div id="overview-tab" class="tab-content active">
+                     <div class="module-overview">
+                         <div class="overview-section">
+                             <h3 class="overview-title">Module Information</h3>
+                             <div class="overview-item">
+                                 <span class="overview-label">Module Name</span>
+                                 <span class="overview-value" id="modal-module-name">-</span>
+                             </div>
+                             <div class="overview-item">
+                                 <span class="overview-label">Address</span>
+                                 <span class="overview-value" id="modal-module-addr">-</span>
+                             </div>
+                             <div class="overview-item">
+                                 <span class="overview-label">Type</span>
+                                 <span class="overview-value" id="modal-module-type">-</span>
+                             </div>
+                             <div class="overview-item">
+                                 <span class="overview-label">FW Version</span>
+                                 <span class="overview-value" id="modal-module-fw">-</span>
+                             </div>
+                         </div>
+                         
+                         <div class="overview-section">
+                             <h3 class="overview-title">Status & Health</h3>
+                             <div class="overview-item">
+                                 <span class="overview-label">Status</span>
+                                 <span class="overview-value" id="modal-module-status">-</span>
+                             </div>
+                             <div class="overview-item">
+                                 <span class="overview-label">Last Seen</span>
+                                 <span class="overview-value" id="modal-module-last-seen">-</span>
+                             </div>
+                             <div class="overview-item">
+                                 <span class="overview-label">Error Rate</span>
+                                 <span class="overview-value" id="modal-module-error-rate">-</span>
+                             </div>
+                             <div class="overview-item">
+                                 <span class="overview-label">Response P95</span>
+                                 <span class="overview-value" id="modal-module-response-p95">-</span>
+                             </div>
+                         </div>
+                     </div>
+                     
+                     <div class="module-actions">
+                         <button class="btn-module-action" onclick="pingModule()">
+                             <i data-lucide="radio" class="w-4 h-4" aria-hidden="true"></i>
+                             Ping Module
+                         </button>
+                         <button class="btn-module-action" onclick="retryModule()">
+                             <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+                             Retry Connection
+                         </button>
+                         <button class="btn-module-action danger" onclick="quarantineModule()">
+                             <i data-lucide="shield-x" class="w-4 h-4" aria-hidden="true"></i>
+                             Quarantine
+                         </button>
+                     </div>
+                 </div>
+                 
+                 <!-- Telemetry Tab -->
+                 <div id="telemetry-tab" class="tab-content">
+                     <div class="telemetry-chart">
+                         <div class="text-center">
+                             <i data-lucide="activity" class="w-8 h-8 mx-auto mb-2 text-industrial-gray-400"></i>
+                             <p>Telemetry History</p>
+                             <p class="text-xs">Chart.js integration for real-time data</p>
+                         </div>
+                     </div>
+                     
+                     <div class="module-actions">
+                         <button class="btn-module-action" onclick="exportTelemetry()">
+                             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                             Export Data
+                         </button>
+                         <button class="btn-module-action" onclick="clearTelemetry()">
+                             <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+                             Clear History
+                         </button>
+                     </div>
+                 </div>
+                 
+                 <!-- Alerts Tab -->
+                 <div id="alerts-tab" class="tab-content">
+                     <div class="alerts-list" id="modal-alerts-list">
+                         <!-- Alerts will be populated by JavaScript -->
+                     </div>
+                     
+                     <div class="module-actions">
+                         <button class="btn-module-action" onclick="acknowledgeAlerts()">
+                             <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+                             Acknowledge All
+                         </button>
+                         <button class="btn-module-action" onclick="clearAlerts()">
+                             <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                             Clear All
+                         </button>
+                     </div>
+                 </div>
+                 
+                 <!-- Logs Tab -->
+                 <div id="logs-tab" class="tab-content">
+                     <div class="logs-list" id="modal-logs-list">
+                         <!-- Logs will be populated by JavaScript -->
+                     </div>
+                     
+                     <div class="module-actions">
+                         <button class="btn-module-action" onclick="exportLogs()">
+                             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                             Export Logs
+                         </button>
+                         <button class="btn-module-action" onclick="clearLogs()">
+                             <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+                             Clear Logs
+                         </button>
+                     </div>
+                 </div>
+             </div>
+         </div>
+     </div>
+
+     <script>
+        // Initialize Lucide icons
+        lucide.createIcons && lucide.createIcons();
         class MonitoringController {
             constructor() {
                 this.isMonitoring = true;
@@ -817,10 +2189,1375 @@
             }
         }
         
-        // Initialize monitoring when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            new MonitoringController();
-        });
+                 // RS485 Module Functions & Health Thresholds
+         const mandatoryAddresses = [0x01,0x02,0x03,0x04,0x05];
+         const usedOptional = [0x06,0x07]; // 0x08–0x0F reserved
+
+         // Health Status Thresholds Configuration
+         const HEALTH_THRESHOLDS = {
+             // Module Health Thresholds
+             module: {
+                 error_rate: {
+                     healthy: 0.01,    // < 1%
+                     warning: 0.03,    // 1-3%
+                     error: 0.05       // > 3%
+                 },
+                 response_time_p95: {
+                     healthy: 100,     // < 100ms
+                     warning: 300,     // 100-300ms
+                     error: 500        // > 300ms
+                 },
+                 last_seen: {
+                     healthy: 30,      // < 30 seconds
+                     warning: 60,      // 30-60 seconds
+                     error: 120        // > 60 seconds
+                 }
+             },
+             
+             // Bus Health Thresholds
+             bus: {
+                 error_rate: {
+                     healthy: 0.02,    // < 2%
+                     warning: 0.05,    // 2-5%
+                     error: 0.10       // > 5%
+                 },
+                 response_time_p95: {
+                     healthy: 70,      // < 70ms
+                     warning: 150,     // 70-150ms
+                     error: 300        // > 150ms
+                 },
+                 throughput: {
+                     healthy: 50,      // > 50 fps
+                     warning: 30,      // 30-50 fps
+                     error: 20         // < 30 fps
+                 }
+             },
+             
+             // System Health Thresholds
+             system: {
+                 cpu_usage: {
+                     healthy: 70,      // < 70%
+                     warning: 85,      // 70-85%
+                     error: 95         // > 85%
+                 },
+                 memory_usage: {
+                     healthy: 80,      // < 80%
+                     warning: 90,      // 80-90%
+                     error: 95         // > 90%
+                 },
+                 disk_usage: {
+                     healthy: 85,      // < 85%
+                     warning: 95,      // 85-95%
+                     error: 98         // > 95%
+                 }
+             }
+         };
+
+         // Health Status Mappings
+         const HEALTH_STATUS = {
+             healthy: {
+                 class: 'healthy',
+                 color: 'var(--success-green)',
+                 icon: 'check-circle',
+                 text: 'Healthy',
+                 description: 'All systems operating normally'
+             },
+             warning: {
+                 class: 'warn',
+                 color: 'var(--warning-yellow)',
+                 icon: 'alert-triangle',
+                 text: 'Warning',
+                 description: 'Performance degradation detected'
+             },
+             error: {
+                 class: 'error',
+                 color: 'var(--error-red)',
+                 icon: 'alert-circle',
+                 text: 'Error',
+                 description: 'Critical issues detected'
+             },
+             lost: {
+                 class: 'lost',
+                 color: 'var(--industrial-gray-400)',
+                 icon: 'x-circle',
+                 text: 'Lost',
+                 description: 'Module not responding'
+             }
+         };
+
+         function healthClassFromMetrics(m) {
+             // Check if module is lost (no response for > 2 minutes)
+             const lastSeenSeconds = getSecondsSinceLastSeen(m.last_seen);
+             if (lastSeenSeconds > HEALTH_THRESHOLDS.module.last_seen.error) {
+                 return 'lost';
+             }
+             
+             // Check error rate thresholds
+             if (m.error_rate > HEALTH_THRESHOLDS.module.error_rate.error) {
+                 return 'error';
+             }
+             if (m.error_rate > HEALTH_THRESHOLDS.module.error_rate.warning) {
+                 return 'warn';
+             }
+             
+             // Check response time thresholds
+             if (m.response_time_p95 > HEALTH_THRESHOLDS.module.response_time_p95.error) {
+                 return 'error';
+             }
+             if (m.response_time_p95 > HEALTH_THRESHOLDS.module.response_time_p95.warning) {
+                 return 'warn';
+             }
+             
+             return 'healthy';
+         }
+         
+         function getBusHealthStatus(bus) {
+             // Check bus error rate
+             if (bus.error_rate_bus > HEALTH_THRESHOLDS.bus.error_rate.error) {
+                 return 'error';
+             }
+             if (bus.error_rate_bus > HEALTH_THRESHOLDS.bus.error_rate.warning) {
+                 return 'warning';
+             }
+             
+             // Check bus response time
+             if (bus.response_time_p95_bus > HEALTH_THRESHOLDS.bus.response_time_p95.error) {
+                 return 'error';
+             }
+             if (bus.response_time_p95_bus > HEALTH_THRESHOLDS.bus.response_time_p95.warning) {
+                 return 'warning';
+             }
+             
+             // Check bus throughput
+             if (bus.throughput_bus < HEALTH_THRESHOLDS.bus.throughput.error) {
+                 return 'error';
+             }
+             if (bus.throughput_bus < HEALTH_THRESHOLDS.bus.throughput.warning) {
+                 return 'warning';
+             }
+             
+             return 'healthy';
+         }
+         
+         function getSystemHealthStatus(metrics) {
+             const statuses = [];
+             
+             // Check CPU usage
+             if (metrics.cpu_usage > HEALTH_THRESHOLDS.system.cpu_usage.error) {
+                 statuses.push('error');
+             } else if (metrics.cpu_usage > HEALTH_THRESHOLDS.system.cpu_usage.warning) {
+                 statuses.push('warning');
+             } else {
+                 statuses.push('healthy');
+             }
+             
+             // Check memory usage
+             if (metrics.memory_usage > HEALTH_THRESHOLDS.system.memory_usage.error) {
+                 statuses.push('error');
+             } else if (metrics.memory_usage > HEALTH_THRESHOLDS.system.memory_usage.warning) {
+                 statuses.push('warning');
+             } else {
+                 statuses.push('healthy');
+             }
+             
+             // Check disk usage
+             if (metrics.disk_usage > HEALTH_THRESHOLDS.system.disk_usage.error) {
+                 statuses.push('error');
+             } else if (metrics.disk_usage > HEALTH_THRESHOLDS.system.disk_usage.warning) {
+                 statuses.push('warning');
+             } else {
+                 statuses.push('healthy');
+             }
+             
+             // Return worst status
+             if (statuses.includes('error')) return 'error';
+             if (statuses.includes('warning')) return 'warning';
+             return 'healthy';
+         }
+         
+         function getSecondsSinceLastSeen(lastSeenStr) {
+             // Parse last seen time string and return seconds since
+             const now = new Date();
+             const lastSeen = new Date(lastSeenStr);
+             return Math.floor((now - lastSeen) / 1000);
+         }
+         
+         function getHealthStatusInfo(status) {
+             return HEALTH_STATUS[status] || HEALTH_STATUS.healthy;
+         }
+
+        function updateRs485BusKpis(bus) {
+            const el = document.getElementById('bus-kpis');
+            if (!el) return;
+            el.innerHTML = `
+                <div class="bus-kpi-card">
+                    <div class="bus-kpi-value">${(bus.error_rate_bus*100).toFixed(2)}%</div>
+                    <div class="bus-kpi-label">Error Rate</div>
+                </div>
+                <div class="bus-kpi-card">
+                    <div class="bus-kpi-value">${bus.response_time_p95_bus} ms</div>
+                    <div class="bus-kpi-label">Response P95</div>
+                </div>
+                <div class="bus-kpi-card">
+                    <div class="bus-kpi-value">${bus.throughput_bus} fps</div>
+                    <div class="bus-kpi-label">Throughput</div>
+                </div>
+                <div class="bus-kpi-card">
+                    <div class="bus-kpi-value">${bus.last_scan}</div>
+                    <div class="bus-kpi-label">Last Scan</div>
+                </div>
+            `;
+            
+            // Update bus status
+            updateBusStatus(bus);
+        }
+        
+                 function updateBusStatus(bus) {
+             const indicator = document.getElementById('bus-status-indicator');
+             const statusText = document.getElementById('bus-status-text');
+             
+             if (!indicator || !statusText) return;
+             
+             const busStatus = getBusHealthStatus(bus);
+             const statusInfo = getHealthStatusInfo(busStatus);
+             
+             indicator.className = `bus-status-indicator ${busStatus}`;
+             statusText.textContent = statusInfo.text;
+             
+             // Add tooltip with description
+             statusText.title = statusInfo.description;
+         }
+
+        function renderModuleGrid(modules) {
+            const grid = document.getElementById('rs485-module-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            modules.forEach(m => {
+                const wrap = document.createElement('div');
+                wrap.className = 'module-card';
+                wrap.setAttribute('role','gridcell');
+                wrap.tabIndex = 0;
+                const statusClass = healthClassFromMetrics(m);
+                wrap.innerHTML = `
+                    <div class="module-card-header">
+                        <div>
+                            <div class="module-name">${m.name || 'Module'}</div>
+                            <div class="module-address">0x${m.addr.toString(16).padStart(2,'0').toUpperCase()}</div>
+                        </div>
+                        <span class="module-status ${statusClass}" aria-live="polite">${statusClass}</span>
+                    </div>
+                    <div class="module-badge ${m.mandatory ? 'mandatory' : 'optional'}">${m.mandatory ? 'Mandatory' : 'Optional'}</div>
+                    <div class="module-metrics">
+                        <div class="module-metric">
+                            <span class="metric-label">Last Seen</span>
+                            <span class="metric-value">${m.last_seen}</span>
+                        </div>
+                        <div class="module-metric">
+                            <span class="metric-label">FW Version</span>
+                            <span class="metric-value">${m.fw_version}</span>
+                        </div>
+                        <div class="module-metric">
+                            <span class="metric-label">Error Rate</span>
+                            <span class="metric-value">${(m.error_rate*100).toFixed(2)}%</span>
+                        </div>
+                        <div class="module-metric">
+                            <span class="metric-label">Response P95</span>
+                            <span class="metric-value">${m.response_time_p95} ms</span>
+                        </div>
+                    </div>
+                `;
+                wrap.addEventListener('click', () => openModuleDetail(m.addr));
+                wrap.addEventListener('keydown', (e) => { if (e.key === 'Enter') openModuleDetail(m.addr); });
+                grid.appendChild(wrap);
+            });
+        }
+
+        function openModuleDetail(addr) {
+            const dlg = document.getElementById('module-detail-modal');
+            const module = mockModules().find(m => m.addr === addr);
+            
+            if (!module) return;
+            
+            // Update modal title
+            document.getElementById('module-modal-title').textContent = `Module [0x${addr.toString(16).padStart(2,'0').toUpperCase()}]`;
+            
+            // Populate overview data
+            document.getElementById('modal-module-name').textContent = module.name;
+            document.getElementById('modal-module-addr').textContent = `0x${addr.toString(16).padStart(2,'0').toUpperCase()}`;
+            document.getElementById('modal-module-type').textContent = module.mandatory ? 'Mandatory' : 'Optional';
+            document.getElementById('modal-module-fw').textContent = module.fw_version;
+            document.getElementById('modal-module-status').textContent = healthClassFromMetrics(module).toUpperCase();
+            document.getElementById('modal-module-last-seen').textContent = module.last_seen;
+            document.getElementById('modal-module-error-rate').textContent = `${(module.error_rate*100).toFixed(2)}%`;
+            document.getElementById('modal-module-response-p95').textContent = `${module.response_time_p95} ms`;
+            
+            // Populate alerts and logs
+            populateModalAlerts(addr);
+            populateModalLogs(addr);
+            
+            // Show modal
+            dlg.setAttribute('open', '');
+        }
+        
+        function closeModuleDetail() {
+            const dlg = document.getElementById('module-detail-modal');
+            dlg.removeAttribute('open');
+        }
+        
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.modal-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        function populateModalAlerts(addr) {
+            const alertsList = document.getElementById('modal-alerts-list');
+            const alerts = generateMockAlerts(addr);
+            
+            alertsList.innerHTML = alerts.map(alert => `
+                <div class="alert-item-small ${alert.level}">
+                    <i data-lucide="${alert.icon}" class="w-4 h-4" aria-hidden="true"></i>
+                    <div>
+                        <div class="font-medium">${alert.title}</div>
+                        <div class="text-xs text-industrial-gray-600">${alert.message}</div>
+                    </div>
+                    <div class="text-xs text-industrial-gray-500 ml-auto">${alert.time}</div>
+                </div>
+            `).join('');
+        }
+        
+        function populateModalLogs(addr) {
+            const logsList = document.getElementById('modal-logs-list');
+            const logs = generateMockLogs(addr);
+            
+            logsList.innerHTML = logs.map(log => `
+                <div class="log-item">
+                    <span class="log-timestamp-small">${log.timestamp}</span>
+                    <span class="log-level-small ${log.level}">${log.level.toUpperCase()}</span>
+                    <span>${log.message}</span>
+                </div>
+            `).join('');
+        }
+        
+        function generateMockAlerts(addr) {
+            const levels = ['info', 'warning', 'error'];
+            const titles = [
+                'Module responding normally',
+                'High error rate detected',
+                'Connection timeout',
+                'Firmware update available',
+                'Temperature warning'
+            ];
+            const messages = [
+                'All systems operational',
+                'Error rate above 2% threshold',
+                'No response for 30 seconds',
+                'New firmware v1.3.0 available',
+                'Temperature approaching limit'
+            ];
+            
+            return Array.from({length: 3}, (_, i) => ({
+                level: levels[Math.floor(Math.random() * levels.length)],
+                icon: ['info', 'alert-triangle', 'alert-circle'][Math.floor(Math.random() * 3)],
+                title: titles[Math.floor(Math.random() * titles.length)],
+                message: messages[Math.floor(Math.random() * messages.length)],
+                time: `${Math.floor(Math.random() * 60)}m ago`
+            }));
+        }
+        
+        function generateMockLogs(addr) {
+            const levels = ['info', 'warning', 'error', 'success'];
+            const messages = [
+                'Module ping successful',
+                'Data transmission completed',
+                'Configuration updated',
+                'Error rate check passed',
+                'Connection established',
+                'Telemetry data received',
+                'Status check completed'
+            ];
+            
+            return Array.from({length: 10}, (_, i) => ({
+                timestamp: new Date(Date.now() - i * 60000).toLocaleTimeString(),
+                level: levels[Math.floor(Math.random() * levels.length)],
+                message: messages[Math.floor(Math.random() * messages.length)]
+            }));
+        }
+        
+        // Module action functions
+        function pingModule() {
+            const addr = getCurrentModuleAddr();
+            console.log(`Pinging module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}`);
+            // Add visual feedback
+            const btn = event.target.closest('.btn-module-action');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i>Pinging...';
+            setTimeout(() => {
+                btn.innerHTML = '<i data-lucide="radio" class="w-4 h-4" aria-hidden="true"></i>Ping Module';
+            }, 1000);
+        }
+        
+        function retryModule() {
+            const addr = getCurrentModuleAddr();
+            console.log(`Retrying connection to module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}`);
+            // Add visual feedback
+            const btn = event.target.closest('.btn-module-action');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i>Retrying...';
+            setTimeout(() => {
+                btn.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>Retry Connection';
+            }, 2000);
+        }
+        
+        function quarantineModule() {
+            const addr = getCurrentModuleAddr();
+            if (confirm(`Are you sure you want to quarantine module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}?`)) {
+                console.log(`Quarantining module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}`);
+                closeModuleDetail();
+            }
+        }
+        
+        function getCurrentModuleAddr() {
+            const title = document.getElementById('module-modal-title').textContent;
+            const match = title.match(/0x([0-9A-F]+)/);
+            return match ? parseInt(match[1], 16) : 0x01;
+        }
+        
+        function exportTelemetry() {
+            console.log('Exporting telemetry data...');
+            // Implementation for telemetry export
+        }
+        
+        function clearTelemetry() {
+            if (confirm('Are you sure you want to clear telemetry history?')) {
+                console.log('Clearing telemetry history...');
+            }
+        }
+        
+        function acknowledgeAlerts() {
+            console.log('Acknowledging all alerts...');
+            document.getElementById('modal-alerts-list').innerHTML = '';
+        }
+        
+        function clearAlerts() {
+            if (confirm('Are you sure you want to clear all alerts?')) {
+                console.log('Clearing all alerts...');
+                document.getElementById('modal-alerts-list').innerHTML = '';
+            }
+        }
+        
+        function clearLogs() {
+            if (confirm('Are you sure you want to clear all logs?')) {
+                console.log('Clearing all logs...');
+                document.getElementById('modal-logs-list').innerHTML = '';
+            }
+        }
+
+        function startDiscovery() {
+            const prog = document.getElementById('disc-progress');
+            const progressBar = document.getElementById('disc-progress-bar');
+            const list = document.getElementById('disc-collisions');
+            const scanBtn = document.getElementById('btn-scan');
+            
+            if (!prog || !progressBar || !list || !scanBtn) return;
+            
+            // Disable scan button during discovery
+            scanBtn.disabled = true;
+            scanBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i>Scanning...';
+            
+            let pct = 0;
+            list.innerHTML = '';
+            
+            const t = setInterval(() => {
+                pct += 10;
+                prog.textContent = `Scanning... ${pct}%`;
+                progressBar.style.width = `${pct}%`;
+                
+                if (pct >= 100) {
+                    clearInterval(t);
+                    prog.textContent = 'Scan complete · 7 modules found · 0 collisions';
+                    
+                    // Show discovery results
+                    showDiscoveryResults();
+                    
+                    // Re-enable scan button
+                    scanBtn.disabled = false;
+                    scanBtn.innerHTML = '<i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i>Scan Now';
+                }
+            }, 200);
+        }
+        
+        function showDiscoveryResults() {
+            const list = document.getElementById('disc-collisions');
+            if (!list) return;
+            
+            const modules = mockModules();
+            const foundModules = modules.map(m => ({
+                addr: m.addr,
+                name: m.name,
+                status: 'found'
+            }));
+            
+            list.innerHTML = foundModules.map(m => `
+                <div class="discovery-item ${m.status}">
+                    <div class="discovery-item-icon ${m.status}"></div>
+                    <span>0x${m.addr.toString(16).padStart(2,'0').toUpperCase()} - ${m.name}</span>
+                </div>
+            `).join('');
+        }
+
+        // Mock data for demo
+        function mockModules() {
+            const used = [...mandatoryAddresses, ...usedOptional];
+            return used.map((addr, i) => ({
+                addr,
+                name: ['Power','Safety','Travel','Dock & Location','Master','Lifter','Cargo'][i] || 'Module',
+                mandatory: mandatoryAddresses.includes(addr),
+                health: 'healthy',
+                error_rate: Math.random()*0.02,
+                response_time_p95: Math.floor(60 + Math.random()*120),
+                last_seen: new Date().toLocaleTimeString(),
+                fw_version: 'v1.2.' + (i+1)
+            }));
+        }
+        function mockBus() {
+            return {
+                error_rate_bus: Math.random()*0.02,
+                response_time_p95_bus: Math.floor(70 + Math.random()*100),
+                throughput_bus: Math.floor(40 + Math.random()*20),
+                last_scan: new Date().toLocaleTimeString()
+            };
+        }
+                 function tick() {
+             const modules = mockModules();
+             const bus = mockBus();
+             
+             renderModuleGrid(modules);
+             updateRs485BusKpis(bus);
+             
+             // Check for health threshold violations and generate alerts
+             checkHealthThresholds(modules, bus);
+             
+             requestAnimationFrame(() => {});
+         }
+         
+         function checkHealthThresholds(modules, bus) {
+             // Check module health thresholds
+             modules.forEach(module => {
+                 const healthStatus = healthClassFromMetrics(module);
+                 const moduleAddr = `0x${module.addr.toString(16).padStart(2,'0').toUpperCase()}`;
+                 
+                 // Generate alerts for warning and error states
+                 if (healthStatus === 'error') {
+                     addAlertWithModule('critical', 
+                         `${module.name} Module Critical`, 
+                         `Module ${moduleAddr} has critical health issues - Error rate: ${(module.error_rate*100).toFixed(2)}%, Response time: ${module.response_time_p95}ms`, 
+                         moduleAddr, 
+                         module.name);
+                 } else if (healthStatus === 'warn') {
+                     addAlertWithModule('warning', 
+                         `${module.name} Module Warning`, 
+                         `Module ${moduleAddr} showing performance degradation - Error rate: ${(module.error_rate*100).toFixed(2)}%, Response time: ${module.response_time_p95}ms`, 
+                         moduleAddr, 
+                         module.name);
+                 } else if (healthStatus === 'lost') {
+                     addAlertWithModule('critical', 
+                         `${module.name} Module Lost`, 
+                         `Module ${moduleAddr} is not responding - Last seen: ${module.last_seen}`, 
+                         moduleAddr, 
+                         module.name);
+                 }
+             });
+             
+             // Check bus health thresholds
+             const busStatus = getBusHealthStatus(bus);
+             if (busStatus === 'error') {
+                 addAlertWithModule('critical', 
+                     'RS485 Bus Critical', 
+                     `Bus has critical issues - Error rate: ${(bus.error_rate_bus*100).toFixed(2)}%, Response time: ${bus.response_time_p95_bus}ms, Throughput: ${bus.throughput_bus}fps`, 
+                     '0x00', 
+                     'RS485 Bus');
+             } else if (busStatus === 'warning') {
+                 addAlertWithModule('warning', 
+                     'RS485 Bus Warning', 
+                     `Bus showing performance issues - Error rate: ${(bus.error_rate_bus*100).toFixed(2)}%, Response time: ${bus.response_time_p95_bus}ms, Throughput: ${bus.throughput_bus}fps`, 
+                     '0x00', 
+                     'RS485 Bus');
+             }
+         }
+        tick();
+        setInterval(tick, 1500);
+
+                 // Alert Filter Functions
+         function initializeAlertFilters() {
+             const moduleFilter = document.getElementById('module-filter-select');
+             const severityFilter = document.getElementById('severity-filter-select');
+             
+             if (moduleFilter) {
+                 moduleFilter.addEventListener('change', filterAlerts);
+             }
+             
+             if (severityFilter) {
+                 severityFilter.addEventListener('change', filterAlerts);
+             }
+         }
+         
+         function filterAlerts() {
+             const moduleFilter = document.getElementById('module-filter-select')?.value || 'all';
+             const severityFilter = document.getElementById('severity-filter-select')?.value || 'all';
+             const alerts = document.querySelectorAll('.alert-item');
+             
+             alerts.forEach(alert => {
+                 const alertModule = alert.getAttribute('data-module');
+                 const alertSeverity = alert.getAttribute('data-severity');
+                 
+                 const moduleMatch = moduleFilter === 'all' || alertModule === moduleFilter;
+                 const severityMatch = severityFilter === 'all' || alertSeverity === severityFilter;
+                 
+                 if (moduleMatch && severityMatch) {
+                     alert.classList.remove('hidden');
+                 } else {
+                     alert.classList.add('hidden');
+                 }
+             });
+             
+             updateAlertCount();
+         }
+         
+         function updateAlertCount() {
+             const visibleAlerts = document.querySelectorAll('.alert-item:not(.hidden)').length;
+             const totalAlerts = document.querySelectorAll('.alert-item').length;
+             
+             // Update alert panel title to show count
+             const alertTitle = document.querySelector('.alert-panel h3');
+             if (alertTitle) {
+                 alertTitle.textContent = `Active Alerts (${visibleAlerts}/${totalAlerts})`;
+             }
+         }
+         
+         function addAlertWithModule(level, title, message, moduleAddr, moduleName) {
+             const alertsContainer = document.getElementById('alerts-container');
+             const alertItem = document.createElement('div');
+             
+             const icons = {
+                 info: 'info',
+                 warning: 'alert-triangle',
+                 error: 'alert-circle',
+                 success: 'check-circle',
+                 critical: 'alert-circle'
+             };
+             
+             const colors = {
+                 info: 'text-info-blue',
+                 warning: 'text-warning-yellow',
+                 error: 'text-error-red',
+                 success: 'text-success-green',
+                 critical: 'text-error-red'
+             };
+             
+             alertItem.className = `alert-item alert-${level}`;
+             alertItem.setAttribute('data-module', moduleAddr);
+             alertItem.setAttribute('data-severity', level);
+             
+             alertItem.innerHTML = `
+                 <i data-lucide="${icons[level]}" class="alert-icon ${colors[level]}" aria-hidden="true"></i>
+                 <div class="alert-content">
+                     <div class="alert-title">${title}</div>
+                     <div class="alert-message">${message}</div>
+                     <div class="alert-time">Just now</div>
+                 </div>
+                 <div class="alert-module-badge">${moduleName} (${moduleAddr})</div>
+                 <button class="btn btn-secondary btn-sm" aria-label="Dismiss alert" onclick="dismissAlert(this)">
+                     <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                 </button>
+             `;
+             
+             alertsContainer.insertBefore(alertItem, alertsContainer.firstChild);
+             
+             // Keep only last 10 alerts
+             while (alertsContainer.children.length > 10) {
+                 alertsContainer.removeChild(alertsContainer.lastChild);
+             }
+             
+             updateAlertCount();
+             
+             // Re-apply current filters
+             filterAlerts();
+         }
+         
+         function dismissAlert(button) {
+             const alertItem = button.closest('.alert-item');
+             alertItem.remove();
+             updateAlertCount();
+         }
+
+         // Tab Navigation System - Option C
+         function switchTab(targetTabId) {
+             console.log('switchTab called with:', targetTabId);
+             
+             // Get all tab buttons and contents
+             const tabButtons = document.querySelectorAll('.tab-item');
+             const tabContents = document.querySelectorAll('.tab-content');
+             
+             // Update tab buttons
+             tabButtons.forEach(btn => {
+                 btn.classList.remove('active');
+                 btn.setAttribute('aria-selected', 'false');
+             });
+             
+             // Find and activate the clicked button
+             const activeButton = document.querySelector(`[aria-controls="${targetTabId}"]`);
+             if (activeButton) {
+                 activeButton.classList.add('active');
+                 activeButton.setAttribute('aria-selected', 'true');
+             }
+             
+             // Update tab contents
+             tabContents.forEach(content => {
+                 content.classList.remove('active');
+             });
+             
+             // Show target content
+             const targetContent = document.getElementById(targetTabId);
+             if (targetContent) {
+                 targetContent.classList.add('active');
+                 console.log('Tab content activated:', targetTabId);
+             } else {
+                 console.error('Target content not found:', targetTabId);
+             }
+             
+             // Update breadcrumb
+             const breadcrumb = document.querySelector('.breadcrumb-item.active');
+             if (breadcrumb && activeButton) {
+                 const tabName = activeButton.textContent.trim();
+                 breadcrumb.textContent = `Monitoring › ${tabName}`;
+             }
+             
+             // Initialize tab-specific content
+             if (targetTabId === 'tab-rs485') {
+                 console.log('Initializing RS485 tab...');
+                 initializeRs485Tab();
+             }
+         }
+         
+         function initializeTabSystem() {
+             const tabButtons = document.querySelectorAll('.tab-item');
+             const tabContents = document.querySelectorAll('.tab-content');
+             
+             console.log('Initializing tab system...');
+             console.log('Found tab buttons:', tabButtons.length);
+             console.log('Found tab contents:', tabContents.length);
+             
+             if (tabButtons.length === 0) {
+                 console.error('No tab buttons found!');
+                 return;
+             }
+             
+             if (tabContents.length === 0) {
+                 console.error('No tab contents found!');
+                 return;
+             }
+             
+             tabButtons.forEach((button, index) => {
+                 console.log(`Setting up tab button ${index + 1}:`, button.textContent.trim());
+                 
+                 button.addEventListener('click', (event) => {
+                     event.preventDefault();
+                     console.log('Tab clicked:', button.textContent.trim());
+                     
+                     const targetTab = button.getAttribute('aria-controls');
+                     console.log('Target tab:', targetTab);
+                     
+                     // Update tab buttons
+                     tabButtons.forEach(btn => {
+                         btn.classList.remove('active');
+                         btn.setAttribute('aria-selected', 'false');
+                     });
+                     button.classList.add('active');
+                     button.setAttribute('aria-selected', 'true');
+                     
+                     // Update tab contents
+                     tabContents.forEach(content => {
+                         content.classList.remove('active');
+                     });
+                     
+                     const targetContent = document.getElementById(targetTab);
+                     if (targetContent) {
+                         targetContent.classList.add('active');
+                         console.log('Tab content activated:', targetTab);
+                     } else {
+                         console.error('Target content not found:', targetTab);
+                     }
+                     
+                     // Update breadcrumb
+                     const breadcrumb = document.querySelector('.breadcrumb-item.active');
+                     if (breadcrumb) {
+                         const tabName = button.textContent.trim();
+                         breadcrumb.textContent = `Monitoring › ${tabName}`;
+                     }
+                     
+                     // Initialize tab-specific content
+                     if (targetTab === 'tab-rs485') {
+                         console.log('Initializing RS485 tab...');
+                         initializeRs485Tab();
+                     } else {
+                         // Stop RS485 live updates when switching to other tabs
+                         stopRs485LiveUpdates();
+                     }
+                     
+                     // Visual feedback
+                     button.style.transform = 'scale(0.95)';
+                     setTimeout(() => {
+                         button.style.transform = '';
+                     }, 150);
+                 });
+             });
+             
+             console.log('Tab system initialization complete!');
+         }
+         
+         // RS485 Tab Management
+         function initializeRs485Tab() {
+             console.log('Initializing RS485 tab with live updates...');
+             
+             // Initialize RS485 module grid
+             renderRs485ModuleGrid();
+             
+             // Initialize RS485 event listeners
+             document.getElementById('rs485-btn-scan')?.addEventListener('click', startRs485Discovery);
+             document.getElementById('rs485-btn-restart')?.addEventListener('click', restartRs485Bus);
+             document.getElementById('rs485-btn-add-module')?.addEventListener('click', showAddModuleDialog);
+             
+             // Update RS485 bus status
+             updateRs485BusStatus();
+             
+             // Start live updates for RS485 modules
+             startRs485LiveUpdates();
+             
+             console.log('RS485 tab initialized with live updates');
+         }
+         
+         function renderRs485ModuleGrid() {
+             const grid = document.getElementById('rs485-module-grid');
+             if (!grid) return;
+             
+             grid.innerHTML = '';
+             
+             // Use global data if available, otherwise initialize
+             const modules = rs485ModulesData.length > 0 ? rs485ModulesData : mockRs485Modules();
+             if (rs485ModulesData.length === 0) {
+                 rs485ModulesData = modules;
+             }
+             
+             modules.forEach(module => {
+                 const card = document.createElement('div');
+                 card.className = 'module-card';
+                 card.setAttribute('role', 'gridcell');
+                 card.tabIndex = 0;
+                 
+                 const statusClass = getModuleStatusClass(module);
+                 
+                 card.innerHTML = `
+                     <div class="module-card-header">
+                         <div>
+                             <div class="module-name">${module.name}</div>
+                             <div class="module-address">${module.addr}</div>
+                         </div>
+                         <span class="module-status ${statusClass}" aria-live="polite">${module.status}</span>
+                     </div>
+                     <div class="module-badge ${module.mandatory ? 'mandatory' : 'optional'}">${module.mandatory ? 'Mandatory' : 'Optional'}</div>
+                     <div class="module-metrics">
+                         <div class="module-metric">
+                             <span class="metric-label">Last Seen</span>
+                             <span class="metric-value">${module.last_seen}</span>
+                         </div>
+                         <div class="module-metric">
+                             <span class="metric-label">Error Rate</span>
+                             <span class="metric-value">${module.error_rate}%</span>
+                         </div>
+                         <div class="module-metric">
+                             <span class="metric-label">Response Time</span>
+                             <span class="metric-value">${module.response_time}ms</span>
+                         </div>
+                         <div class="module-metric">
+                             <span class="metric-label">FW Version</span>
+                             <span class="metric-value">${module.fw_version}</span>
+                         </div>
+                     </div>
+                 `;
+                 
+                 card.addEventListener('click', () => openRs485Detail(module));
+                 card.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter') openRs485Detail(module);
+                 });
+                 
+                 grid.appendChild(card);
+             });
+         }
+         
+         function openRs485Detail(module) {
+             const detailPanel = document.getElementById('rs485-detail-panel');
+             const detailTitle = document.getElementById('detail-module-title');
+             
+             if (!detailPanel || !detailTitle) return;
+             
+             // Update detail panel title
+             detailTitle.textContent = `${module.name} (${module.addr})`;
+             
+             // Update module status
+             document.getElementById('detail-status').textContent = module.status;
+             document.getElementById('detail-last-seen').textContent = module.last_seen;
+             document.getElementById('detail-error-rate').textContent = `${module.error_rate}%`;
+             document.getElementById('detail-response-time').textContent = `${module.response_time}ms`;
+             
+             // Update real-time values
+             document.getElementById('detail-battery').textContent = `${module.real_time.battery}%`;
+             document.getElementById('detail-voltage').textContent = `${module.real_time.voltage}V`;
+             document.getElementById('detail-current').textContent = `${module.real_time.current}A`;
+             document.getElementById('detail-temperature').textContent = `${module.real_time.temperature}°C`;
+             
+             // Show detail panel
+             detailPanel.classList.remove('hidden');
+             
+             // Store current module for actions
+             window.currentRs485Module = module;
+         }
+         
+         function closeRs485Detail() {
+             const detailPanel = document.getElementById('rs485-detail-panel');
+             if (detailPanel) {
+                 detailPanel.classList.add('hidden');
+             }
+             window.currentRs485Module = null;
+         }
+         
+         // RS485 Module Actions
+         function pingModule() {
+             const module = window.currentRs485Module;
+             if (!module) return;
+             
+             console.log(`Pinging module ${module.addr}...`);
+             // TODO: Implement actual ping functionality
+             
+             // Show feedback
+             const button = event.target.closest('.btn-detail-action');
+             const originalText = button.innerHTML;
+             button.innerHTML = '<i data-lucide="check" class="w-3 h-3" aria-hidden="true"></i> Pong!';
+             button.style.background = 'var(--success-green)';
+             
+             setTimeout(() => {
+                 button.innerHTML = originalText;
+                 button.style.background = '';
+             }, 2000);
+         }
+         
+         function resetModule() {
+             const module = window.currentRs485Module;
+             if (!module) return;
+             
+             if (confirm(`Are you sure you want to reset module ${module.addr}?`)) {
+                 console.log(`Resetting module ${module.addr}...`);
+                 // TODO: Implement actual reset functionality
+                 
+                 // Show feedback
+                 const button = event.target.closest('.btn-detail-action');
+                 const originalText = button.innerHTML;
+                 button.innerHTML = '<i data-lucide="refresh-cw" class="w-3 h-3" aria-hidden="true"></i> Resetting...';
+                 button.disabled = true;
+                 
+                 setTimeout(() => {
+                     button.innerHTML = originalText;
+                     button.disabled = false;
+                 }, 3000);
+             }
+         }
+         
+         function configureModule() {
+             const module = window.currentRs485Module;
+             if (!module) return;
+             
+             console.log(`Opening configuration for module ${module.addr}...`);
+             // TODO: Implement configuration dialog
+             alert(`Configuration dialog for ${module.addr} - Coming soon!`);
+         }
+         
+         function quarantineModule() {
+             const module = window.currentRs485Module;
+             if (!module) return;
+             
+             if (confirm(`Are you sure you want to quarantine module ${module.addr}? This will disable all communication with this module.`)) {
+                 console.log(`Quarantining module ${module.addr}...`);
+                 // TODO: Implement actual quarantine functionality
+                 
+                 // Show feedback
+                 const button = event.target.closest('.btn-detail-action');
+                 const originalText = button.innerHTML;
+                 button.innerHTML = '<i data-lucide="shield-check" class="w-3 h-3" aria-hidden="true"></i> Quarantined';
+                 button.style.background = 'var(--warning-yellow)';
+                 
+                 setTimeout(() => {
+                     button.innerHTML = originalText;
+                     button.style.background = '';
+                 }, 3000);
+             }
+         }
+         
+         // RS485 Bus Management
+         function startRs485Discovery() {
+             const scanButton = document.getElementById('rs485-btn-scan');
+             if (!scanButton) return;
+             
+             scanButton.disabled = true;
+             scanButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i> Scanning...';
+             
+             // Simulate discovery process
+             setTimeout(() => {
+                 scanButton.disabled = false;
+                 scanButton.innerHTML = '<i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i> Scan Now';
+                 
+                 // Update module grid with new data
+                 renderRs485ModuleGrid();
+                 
+                 console.log('RS485 discovery completed');
+             }, 3000);
+         }
+         
+         function restartRs485Bus() {
+             if (confirm('Are you sure you want to restart the RS485 bus? This will temporarily interrupt all module communication.')) {
+                 console.log('Restarting RS485 bus...');
+                 
+                 const restartButton = document.getElementById('rs485-btn-restart');
+                 if (restartButton) {
+                     restartButton.disabled = true;
+                     restartButton.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i> Restarting...';
+                     
+                     setTimeout(() => {
+                         restartButton.disabled = false;
+                         restartButton.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i> Restart Bus';
+                         
+                         // Update bus status
+                         updateRs485BusStatus();
+                         
+                         console.log('RS485 bus restart completed');
+                     }, 5000);
+                 }
+             }
+         }
+         
+         function showAddModuleDialog() {
+             // TODO: Implement add module dialog
+             alert('Add Module Dialog - Coming soon!\n\nThis will allow you to:\n• Configure new module address\n• Set module type (Mandatory/Optional)\n• Define module parameters\n• Test module communication');
+         }
+         
+         function updateRs485BusStatus() {
+             const indicator = document.getElementById('rs485-bus-status-indicator');
+             const statusText = document.getElementById('rs485-bus-status-text');
+             
+             if (!indicator || !statusText) return;
+             
+             // Simulate bus status
+             const status = 'healthy'; // Could be 'healthy', 'warning', 'error'
+             
+             indicator.className = `bus-status-indicator ${status}`;
+             statusText.textContent = status === 'healthy' ? 'Online' : 'Warning';
+         }
+         
+         // Helper Functions
+         function getModuleStatusClass(module) {
+             if (module.status === 'healthy') return 'status-healthy';
+             if (module.status === 'warning') return 'status-warning';
+             if (module.status === 'error') return 'status-error';
+             return 'status-lost';
+         }
+         
+         // Global module data with live updates
+         let rs485ModulesData = [];
+         let rs485UpdateInterval = null;
+         
+         function mockRs485Modules() {
+             return [
+                 {
+                     addr: '0x01',
+                     name: 'Power',
+                     status: 'healthy',
+                     last_seen: '2s ago',
+                     error_rate: 0.02,
+                     response_time: 45,
+                     fw_version: 'v2.1.0',
+                     mandatory: true,
+                     real_time: {
+                         battery: 85,
+                         voltage: 24.2,
+                         current: 2.1,
+                         temperature: 42
+                     }
+                 },
+                 {
+                     addr: '0x02',
+                     name: 'Safety',
+                     status: 'warning',
+                     last_seen: '5s ago',
+                     error_rate: 2.1,
+                     response_time: 78,
+                     fw_version: 'v1.9.5',
+                     mandatory: true,
+                     real_time: {
+                         battery: 92,
+                         voltage: 24.0,
+                         current: 1.8,
+                         temperature: 38
+                     }
+                 },
+                 {
+                     addr: '0x03',
+                     name: 'Travel',
+                     status: 'healthy',
+                     last_seen: '1s ago',
+                     error_rate: 0.01,
+                     response_time: 32,
+                     fw_version: 'v2.0.1',
+                     mandatory: true,
+                     real_time: {
+                         battery: 78,
+                         voltage: 23.8,
+                         current: 3.2,
+                         temperature: 45
+                     }
+                 },
+                 {
+                     addr: '0x04',
+                     name: 'Dock & Location',
+                     status: 'healthy',
+                     last_seen: '3s ago',
+                     error_rate: 0.05,
+                     response_time: 55,
+                     fw_version: 'v1.8.2',
+                     mandatory: true,
+                     real_time: {
+                         battery: 88,
+                         voltage: 24.1,
+                         current: 1.5,
+                         temperature: 40
+                     }
+                 },
+                 {
+                     addr: '0x05',
+                     name: 'Master',
+                     status: 'healthy',
+                     last_seen: '1s ago',
+                     error_rate: 0.00,
+                     response_time: 12,
+                     fw_version: 'v2.2.0',
+                     mandatory: true,
+                     real_time: {
+                         battery: 95,
+                         voltage: 24.3,
+                         current: 0.8,
+                         temperature: 35
+                     }
+                 },
+                 {
+                     addr: '0x06',
+                     name: 'Lifter',
+                     status: 'healthy',
+                     last_seen: '2s ago',
+                     error_rate: 0.03,
+                     response_time: 67,
+                     fw_version: 'v1.7.8',
+                     mandatory: false,
+                     real_time: {
+                         battery: 82,
+                         voltage: 23.9,
+                         current: 2.5,
+                         temperature: 43
+                     }
+                 },
+                 {
+                     addr: '0x07',
+                     name: 'Cargo',
+                     status: 'healthy',
+                     last_seen: '1s ago',
+                     error_rate: 0.01,
+                     response_time: 41,
+                     fw_version: 'v1.9.0',
+                     mandatory: false,
+                     real_time: {
+                         battery: 90,
+                         voltage: 24.0,
+                         current: 1.2,
+                         temperature: 37
+                     }
+                 }
+             ];
+         }
+         
+         // Live update functions for RS485 modules
+         function startRs485LiveUpdates() {
+             console.log('Starting RS485 live updates...');
+             
+             // Initialize with mock data
+             rs485ModulesData = mockRs485Modules();
+             
+             // Start update interval (every 2 seconds)
+             rs485UpdateInterval = setInterval(() => {
+                 updateRs485ModuleData();
+             }, 2000);
+             
+             console.log('RS485 live updates started - updating every 2 seconds');
+         }
+         
+         function stopRs485LiveUpdates() {
+             if (rs485UpdateInterval) {
+                 clearInterval(rs485UpdateInterval);
+                 rs485UpdateInterval = null;
+                 console.log('RS485 live updates stopped');
+             }
+         }
+         
+         function updateRs485ModuleData() {
+             // Update each module with realistic changes
+             rs485ModulesData.forEach(module => {
+                 // Update last_seen
+                 const lastSeenSeconds = Math.floor(Math.random() * 5) + 1;
+                 module.last_seen = `${lastSeenSeconds}s ago`;
+                 
+                 // Update real-time values with small variations
+                 module.real_time.battery = Math.max(10, Math.min(100, module.real_time.battery + (Math.random() - 0.5) * 2));
+                 module.real_time.voltage = Math.max(20, Math.min(28, module.real_time.voltage + (Math.random() - 0.5) * 0.2));
+                 module.real_time.current = Math.max(0.1, Math.min(5, module.real_time.current + (Math.random() - 0.5) * 0.1));
+                 module.real_time.temperature = Math.max(20, Math.min(60, module.real_time.temperature + (Math.random() - 0.5) * 1));
+                 
+                 // Update error rate and response time
+                 module.error_rate = Math.max(0, Math.min(5, module.error_rate + (Math.random() - 0.5) * 0.1));
+                 module.response_time = Math.max(10, Math.min(100, module.response_time + (Math.random() - 0.5) * 5));
+                 
+                 // Occasionally change status (10% chance)
+                 if (Math.random() < 0.1) {
+                     const statuses = ['healthy', 'warning', 'error'];
+                     const currentIndex = statuses.indexOf(module.status);
+                     const newIndex = (currentIndex + 1) % statuses.length;
+                     module.status = statuses[newIndex];
+                 }
+             });
+             
+             // Update UI if RS485 tab is active
+             const activeTab = document.querySelector('.tab-content.active');
+             if (activeTab && activeTab.id === 'tab-rs485') {
+                 updateRs485ModuleGrid();
+                 updateRs485DetailPanel();
+             }
+             
+             console.log('RS485 module data updated:', rs485ModulesData.length, 'modules');
+         }
+         
+         function updateRs485ModuleGrid() {
+             const grid = document.getElementById('rs485-module-grid');
+             if (!grid) return;
+             
+             // Update existing cards instead of recreating them
+             const cards = grid.querySelectorAll('.module-card');
+             cards.forEach((card, index) => {
+                 const module = rs485ModulesData[index];
+                 if (!module) return;
+                 
+                 // Update status
+                 const statusElement = card.querySelector('.module-status');
+                 if (statusElement) {
+                     statusElement.className = `module-status ${getModuleStatusClass(module)}`;
+                     statusElement.textContent = module.status;
+                 }
+                 
+                 // Update metrics
+                 const metrics = card.querySelectorAll('.metric-value');
+                 if (metrics.length >= 4) {
+                     metrics[0].textContent = module.last_seen;
+                     metrics[1].textContent = `${module.error_rate.toFixed(2)}%`;
+                     metrics[2].textContent = `${Math.round(module.response_time)}ms`;
+                     metrics[3].textContent = module.fw_version;
+                 }
+             });
+         }
+         
+         function updateRs485DetailPanel() {
+             const detailPanel = document.getElementById('rs485-detail-panel');
+             if (!detailPanel || detailPanel.classList.contains('hidden')) {
+                 return;
+             }
+             
+             const module = window.currentRs485Module;
+             if (!module) return;
+             
+             // Find current module in updated data
+             const updatedModule = rs485ModulesData.find(m => m.addr === module.addr);
+             if (!updatedModule) return;
+             
+             // Update detail panel with new data
+             document.getElementById('detail-status').textContent = updatedModule.status;
+             document.getElementById('detail-last-seen').textContent = updatedModule.last_seen;
+             document.getElementById('detail-error-rate').textContent = `${updatedModule.error_rate.toFixed(2)}%`;
+             document.getElementById('detail-response-time').textContent = `${Math.round(updatedModule.response_time)}ms`;
+             
+             // Update real-time values
+             document.getElementById('detail-battery').textContent = `${Math.round(updatedModule.real_time.battery)}%`;
+             document.getElementById('detail-voltage').textContent = `${updatedModule.real_time.voltage.toFixed(1)}V`;
+             document.getElementById('detail-current').textContent = `${updatedModule.real_time.current.toFixed(1)}A`;
+             document.getElementById('detail-temperature').textContent = `${Math.round(updatedModule.real_time.temperature)}°C`;
+             
+             // Update current module reference
+             window.currentRs485Module = updatedModule;
+         }
+
+         // Initialize monitoring when DOM is loaded
+         document.addEventListener('DOMContentLoaded', () => {
+             // Initialize Lucide icons first
+             if (typeof lucide !== 'undefined') {
+                 lucide.createIcons();
+             }
+             
+             // Initialize tab system FIRST (before other controllers)
+             initializeTabSystem();
+             
+             // Initialize monitoring controller with error handling
+             try {
+                 new MonitoringController();
+             } catch (error) {
+                 console.warn('MonitoringController initialization warning:', error);
+             }
+             
+             // Initialize RS485 Event Listeners
+             document.getElementById('btn-scan')?.addEventListener('click', startDiscovery);
+             document.getElementById('btn-restart')?.addEventListener('click', () => {
+                 console.log('Restart RS485 Bus');
+                 startDiscovery();
+             });
+             
+             // Initialize alert filters
+             initializeAlertFilters();
+             updateAlertCount();
+             
+             // Debug: Test tab functionality
+             console.log('Tab system initialized. Testing tab switching...');
+             
+             // Add debug event listeners to verify tab buttons exist
+             const tabButtons = document.querySelectorAll('.tab-item');
+             console.log(`Found ${tabButtons.length} tab buttons:`, tabButtons);
+             
+             tabButtons.forEach((btn, index) => {
+                 btn.addEventListener('click', () => {
+                     console.log(`Tab ${index + 1} clicked:`, btn.textContent.trim());
+                 });
+             });
+         });
     </script>
 </body>
 </html>
