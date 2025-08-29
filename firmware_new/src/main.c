@@ -22,7 +22,6 @@
 #include "module_manager.h"
 #include "power_module_handler.h"
 #include "travel_motor_module_handler.h"
-#include "api_manager.h"
 #include "constants.h"
 
 static volatile sig_atomic_t g_should_run = 1;
@@ -174,6 +173,15 @@ int main(int argc, char **argv) {
             printf("[MAIN] Communication manager initialized successfully\n");
         }
 
+        // Initialize Module Manager
+        printf("[MAIN] Initializing module manager...\n");
+        hal_status_t module_status = module_manager_init();
+        if (module_status != HAL_STATUS_OK) {
+            printf("[MAIN] WARNING: module_manager_init failed (status=%d), continuing...\n", module_status);
+        } else {
+            printf("[MAIN] Module manager initialized successfully\n");
+        }
+
         // LiDAR subsystem initialization
         printf("[MAIN] Initializing LiDAR subsystem...\n");
         lidar_config_t lidar_cfg = {
@@ -243,36 +251,9 @@ int main(int argc, char **argv) {
         printf("[OHT-50] DRY-RUN: Skipping system_state_machine_init\n");
     }
 
-    // 4) Initialize API Manager for BE communication
+    // 4) Initialize API Manager for BE communication - DISABLED
     if (!g_dry_run) {
-        printf("[OHT-50] Initializing API Manager for BE communication...\n");
-        api_mgr_config_t api_config = {
-            .http_port = API_HTTP_PORT,
-            .websocket_port = API_WEBSOCKET_PORT,
-            .http_enabled = true,
-            .websocket_enabled = true,
-            .cors_enabled = true,
-            .cors_origin = "*",
-            .max_request_size = API_MAX_REQUEST_SIZE,
-            .max_response_size = API_MAX_RESPONSE_SIZE,
-            .request_timeout_ms = API_REQUEST_TIMEOUT_MS,
-            .websocket_timeout_ms = API_WEBSOCKET_TIMEOUT_MS,
-            .authentication_required = false,  // Disable for testing
-            .ssl_enabled = false,
-            .ssl_certificate_path = "",
-            .ssl_private_key_path = ""
-        };
-        
-        if (api_manager_init(&api_config) != HAL_STATUS_OK) {
-            fprintf(stderr, "[OHT-50] api_manager_init failed (continuing)\n");
-        } else {
-            printf("[OHT-50] API Manager initialized - HTTP:%u, WebSocket:%u\n", API_HTTP_PORT, API_WEBSOCKET_PORT);
-            if (api_manager_start_http_server() != HAL_STATUS_OK) {
-                fprintf(stderr, "[OHT-50] api_manager_start failed (continuing)\n");
-            } else {
-                printf("[OHT-50] API Manager started successfully\n");
-            }
-        }
+        printf("[OHT-50] API Manager initialization skipped (disabled)\n");
     } else {
         printf("[OHT-50] DRY-RUN: Skipping API Manager initialization\n");
     }
@@ -286,6 +267,7 @@ int main(int argc, char **argv) {
     uint64_t last_comm_poll_ms = now_ms();
     uint64_t last_discovery_poll_ms = now_ms();
     uint64_t last_motor_poll_ms = now_ms();
+    uint64_t last_module_manager_poll_ms = now_ms();
     bool heartbeat_on = false;
 
     // Power module handler instance
@@ -546,10 +528,8 @@ int main(int argc, char **argv) {
     printf("[OHT-50] Shutting down...\n");
     // Graceful shutdown
     if (!g_dry_run) {
-        // Stop API Manager
-        printf("[OHT-50] Stopping API Manager...\n");
-        (void)api_manager_stop_http_server();
-        (void)api_manager_deinit();
+        // Stop API Manager - DISABLED
+        printf("[OHT-50] API Manager shutdown skipped (disabled)\n");
         
         if (power_handler_initialized) {
             // (void)power_module_deinit(&power_handler); // Commented out - using global state

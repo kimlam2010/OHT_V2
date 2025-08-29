@@ -10,6 +10,7 @@
 #include "power_module_handler.h"
 #include "hal_rs485.h"
 #include "hal_common.h"
+#include "communication_manager.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -249,6 +250,341 @@ hal_status_t power_module_handler_write_register(uint16_t register_addr, uint16_
         return HAL_STATUS_ERROR;
     }
     
+    pthread_mutex_unlock(&power_module_state.mutex);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Check if timeout has occurred
+ * @param start_time Start timestamp in milliseconds
+ * @param timeout_ms Timeout duration in milliseconds
+ * @return true if timeout occurred, false otherwise
+ */
+bool power_module_check_timeout(uint64_t start_time, uint32_t timeout_ms)
+{
+    uint64_t current_time = power_module_get_timestamp_ms();
+    uint64_t elapsed_time = current_time - start_time;
+    
+    return (elapsed_time >= timeout_ms);
+}
+
+/**
+ * @brief Read register with timeout protection
+ * @param register_addr Register address to read
+ * @param value Pointer to store register value
+ * @param timeout_ms Timeout in milliseconds
+ * @return HAL status
+ */
+hal_status_t power_module_handler_read_register_with_timeout(uint16_t register_addr, uint16_t *value, uint32_t timeout_ms)
+{
+    hal_status_t status;
+    uint8_t tx_data[8];
+    uint8_t rx_data[8];
+    size_t rx_length;
+    uint64_t start_time = power_module_get_timestamp_ms();
+    
+    if (!value) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    pthread_mutex_lock(&power_module_state.mutex);
+    
+    if (!power_module_state.initialized) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Prepare Modbus read command
+    tx_data[0] = POWER_MODULE_ADDRESS;  // Slave address
+    tx_data[1] = 0x03;                  // Function code: Read Holding Registers
+    tx_data[2] = (register_addr >> 8) & 0xFF;  // Register address high
+    tx_data[3] = register_addr & 0xFF;         // Register address low
+    tx_data[4] = 0x00;                         // Number of registers high
+    tx_data[5] = 0x01;                         // Number of registers low (1 register)
+    
+    // Calculate CRC
+    uint16_t crc = modbus_calculate_crc(tx_data, 6);
+    tx_data[6] = crc & 0xFF;
+    tx_data[7] = (crc >> 8) & 0xFF;
+    
+    // Send command with timeout checking
+    status = hal_rs485_transmit(tx_data, 8);
+    if (status != HAL_STATUS_OK) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return status;
+    }
+    
+    // Check timeout before receive
+    if (power_module_check_timeout(start_time, timeout_ms)) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_TIMEOUT;
+    }
+    
+    // Receive response with timeout checking
+    status = hal_rs485_receive(rx_data, sizeof(rx_data), &rx_length);
+    if (status != HAL_STATUS_OK) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return status;
+    }
+    
+    // Check timeout after receive
+    if (power_module_check_timeout(start_time, timeout_ms)) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_TIMEOUT;
+    }
+    
+    // Validate response
+    if (rx_length < 7) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Check CRC
+    uint16_t rx_crc = (rx_data[rx_length-1] << 8) | rx_data[rx_length-2];
+    uint16_t calc_crc = modbus_calculate_crc(rx_data, rx_length-2);
+    if (rx_crc != calc_crc) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Extract register value
+    *value = (rx_data[3] << 8) | rx_data[4];
+    
+    pthread_mutex_unlock(&power_module_state.mutex);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Write register with timeout protection
+ * @param register_addr Register address to write
+ * @param value Register value to write
+ * @param timeout_ms Timeout in milliseconds
+ * @return HAL status
+ */
+hal_status_t power_module_handler_write_register_with_timeout(uint16_t register_addr, uint16_t value, uint32_t timeout_ms)
+{
+    hal_status_t status;
+    uint8_t tx_data[8];
+    uint8_t rx_data[8];
+    size_t rx_length;
+    uint64_t start_time = power_module_get_timestamp_ms();
+    
+    pthread_mutex_lock(&power_module_state.mutex);
+    
+    if (!power_module_state.initialized) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Prepare Modbus write command
+    tx_data[0] = POWER_MODULE_ADDRESS;  // Slave address
+    tx_data[1] = 0x06;                  // Function code: Write Single Register
+    tx_data[2] = (register_addr >> 8) & 0xFF;  // Register address high
+    tx_data[3] = register_addr & 0xFF;         // Register address low
+    tx_data[4] = (value >> 8) & 0xFF;          // Register value high
+    tx_data[5] = value & 0xFF;                 // Register value low
+    
+    // Calculate CRC
+    uint16_t crc = modbus_calculate_crc(tx_data, 6);
+    tx_data[6] = crc & 0xFF;
+    tx_data[7] = (crc >> 8) & 0xFF;
+    
+    // Send command with timeout checking
+    status = hal_rs485_transmit(tx_data, 8);
+    if (status != HAL_STATUS_OK) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return status;
+    }
+    
+    // Check timeout before receive
+    if (power_module_check_timeout(start_time, timeout_ms)) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_TIMEOUT;
+    }
+    
+    // Receive response with timeout checking
+    status = hal_rs485_receive(rx_data, sizeof(rx_data), &rx_length);
+    if (status != HAL_STATUS_OK) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return status;
+    }
+    
+    // Check timeout after receive
+    if (power_module_check_timeout(start_time, timeout_ms)) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_TIMEOUT;
+    }
+    
+    // Validate response
+    if (rx_length < 8) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Check CRC
+    uint16_t rx_crc = (rx_data[rx_length-1] << 8) | rx_data[rx_length-2];
+    uint16_t calc_crc = modbus_calculate_crc(rx_data, rx_length-2);
+    if (rx_crc != calc_crc) {
+        pthread_mutex_unlock(&power_module_state.mutex);
+        return HAL_STATUS_ERROR;
+    }
+    
+    pthread_mutex_unlock(&power_module_state.mutex);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Calculate retry delay with exponential backoff
+ * @param attempt Current attempt number (0-based)
+ * @param base_delay_ms Base delay in milliseconds
+ * @param multiplier Backoff multiplier
+ * @param max_delay_ms Maximum delay in milliseconds
+ * @return Calculated delay in milliseconds
+ */
+uint32_t power_module_calculate_retry_delay(uint8_t attempt, uint32_t base_delay_ms, 
+                                          uint32_t multiplier, uint32_t max_delay_ms)
+{
+    if (attempt == 0) {
+        return base_delay_ms;
+    }
+    
+    // Calculate exponential backoff: base_delay * (multiplier ^ attempt)
+    uint32_t delay = base_delay_ms;
+    for (uint8_t i = 0; i < attempt; i++) {
+        delay *= multiplier;
+        if (delay > max_delay_ms) {
+            delay = max_delay_ms;
+            break;
+        }
+    }
+    
+    return delay;
+}
+
+/**
+ * @brief Read register with retry mechanism
+ * @param register_addr Register address to read
+ * @param value Pointer to store register value
+ * @param max_retries Maximum number of retries
+ * @return HAL status
+ */
+hal_status_t power_module_handler_read_register_with_retry(uint16_t register_addr, uint16_t *value, uint8_t max_retries)
+{
+    hal_status_t status;
+    uint8_t retry_count = 0;
+    
+    while (retry_count <= max_retries) {
+        status = power_module_handler_read_register_with_timeout(register_addr, value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
+        
+        if (status == HAL_STATUS_OK) {
+            return HAL_STATUS_OK;
+        }
+        
+        retry_count++;
+        if (retry_count <= max_retries) {
+            // Calculate delay with exponential backoff
+            uint32_t delay_ms = power_module_calculate_retry_delay(retry_count - 1, 
+                                                                 POWER_MODULE_RETRY_DELAY_MS,
+                                                                 POWER_MODULE_RETRY_BACKOFF_MULTIPLIER,
+                                                                 POWER_MODULE_RETRY_MAX_DELAY_MS);
+            
+            printf("[POWER-RETRY] Register 0x%04X read failed (attempt %d/%d), retrying in %ums...\n", 
+                   register_addr, retry_count, max_retries + 1, delay_ms);
+            
+            // Sleep before retry
+            usleep(delay_ms * 1000); // Convert to microseconds
+        }
+    }
+    
+    printf("[POWER-ERROR] Register 0x%04X read failed after %d attempts\n", register_addr, max_retries + 1);
+    return status;
+}
+
+/**
+ * @brief Read battery data with retry mechanism
+ * @return HAL status
+ */
+hal_status_t power_module_read_battery_data_with_retry(void)
+{
+    hal_status_t status;
+    uint16_t value;
+    uint8_t retry_count = 0;
+    const uint8_t max_retries = POWER_MODULE_RETRY_COUNT_DEFAULT;
+    
+    // Lock mutex for data access
+    pthread_mutex_lock(&power_module_state.mutex);
+    
+    // Read battery voltage with retry
+    while (retry_count <= max_retries) {
+        status = power_module_handler_read_register_with_timeout(POWER_REG_BATTERY_VOLTAGE, &value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
+        if (status == HAL_STATUS_OK) {
+            // Protected by mutex in read_register_with_timeout function
+            power_module_state.data.battery_voltage = (float)value / 10.0f;
+            break;
+        }
+        
+        retry_count++;
+        if (retry_count <= max_retries) {
+            uint32_t delay_ms = power_module_calculate_retry_delay(retry_count - 1, 
+                                                                 POWER_MODULE_RETRY_DELAY_MS,
+                                                                 POWER_MODULE_RETRY_BACKOFF_MULTIPLIER,
+                                                                 POWER_MODULE_RETRY_MAX_DELAY_MS);
+            printf("[POWER-RETRY] Battery voltage read failed (attempt %d/%d), retrying in %ums...\n", 
+                   retry_count, max_retries + 1, delay_ms);
+            usleep(delay_ms * 1000);
+        }
+    }
+    
+    // Reset retry count for next operation
+    retry_count = 0;
+    
+    // Read battery current with retry
+    while (retry_count <= max_retries) {
+        status = power_module_handler_read_register_with_timeout(POWER_REG_BATTERY_CURRENT, &value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
+        if (status == HAL_STATUS_OK) {
+            power_module_state.data.battery_current = (float)value / 10.0f;
+            break;
+        }
+        
+        retry_count++;
+        if (retry_count <= max_retries) {
+            uint32_t delay_ms = power_module_calculate_retry_delay(retry_count - 1, 
+                                                                 POWER_MODULE_RETRY_DELAY_MS,
+                                                                 POWER_MODULE_RETRY_BACKOFF_MULTIPLIER,
+                                                                 POWER_MODULE_RETRY_MAX_DELAY_MS);
+            printf("[POWER-RETRY] Battery current read failed (attempt %d/%d), retrying in %ums...\n", 
+                   retry_count, max_retries + 1, delay_ms);
+            usleep(delay_ms * 1000);
+        }
+    }
+    
+    // Reset retry count for next operation
+    retry_count = 0;
+    
+    // Read battery SOC with retry
+    while (retry_count <= max_retries) {
+        status = power_module_handler_read_register_with_timeout(POWER_REG_BATTERY_SOC, &value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
+        if (status == HAL_STATUS_OK) {
+            power_module_state.data.battery_soc = (uint8_t)value;
+            break;
+        }
+        
+        retry_count++;
+        if (retry_count <= max_retries) {
+            uint32_t delay_ms = power_module_calculate_retry_delay(retry_count - 1, 
+                                                                 POWER_MODULE_RETRY_DELAY_MS,
+                                                                 POWER_MODULE_RETRY_BACKOFF_MULTIPLIER,
+                                                                 POWER_MODULE_RETRY_MAX_DELAY_MS);
+            printf("[POWER-RETRY] Battery SOC read failed (attempt %d/%d), retrying in %ums...\n", 
+                   retry_count, max_retries + 1, delay_ms);
+            usleep(delay_ms * 1000);
+        }
+    }
+    
+    // Unlock mutex after data access
     pthread_mutex_unlock(&power_module_state.mutex);
     
     return HAL_STATUS_OK;
@@ -520,32 +856,46 @@ static hal_status_t power_module_read_battery_data(void)
     hal_status_t status;
     uint16_t value;
     
-    // Read battery voltage
-    status = power_module_handler_read_register(POWER_REG_BATTERY_VOLTAGE, &value);
+    // Lock mutex for data access
+    pthread_mutex_lock(&power_module_state.mutex);
+    
+    // Read battery voltage with timeout
+    status = power_module_handler_read_register_with_timeout(POWER_REG_BATTERY_VOLTAGE, &value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
     if (status == HAL_STATUS_OK) {
         power_module_state.data.battery_voltage = (float)value / 10.0f;
+    } else if (status == HAL_STATUS_TIMEOUT) {
+        printf("[POWER-TIMEOUT] Battery voltage read timeout\n");
     }
     
-    // Read battery current
-    status = power_module_handler_read_register(POWER_REG_BATTERY_CURRENT, &value);
+    // Read battery current with timeout
+    status = power_module_handler_read_register_with_timeout(POWER_REG_BATTERY_CURRENT, &value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
     if (status == HAL_STATUS_OK) {
         power_module_state.data.battery_current = (float)value / 10.0f;
+    } else if (status == HAL_STATUS_TIMEOUT) {
+        printf("[POWER-TIMEOUT] Battery current read timeout\n");
     }
     
-    // Read battery temperature (using correct register from reference)
-    status = power_module_handler_read_register(POWER_REG_TEMPERATURE, &value);
+    // Read battery temperature with timeout
+    status = power_module_handler_read_register_with_timeout(POWER_REG_TEMPERATURE, &value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
     if (status == HAL_STATUS_OK) {
         // power_module_state.data.battery_temp = (float)value; // Not available in struct
+    } else if (status == HAL_STATUS_TIMEOUT) {
+        printf("[POWER-TIMEOUT] Battery temperature read timeout\n");
     }
     
-    // Read battery SOC
-    status = power_module_handler_read_register(POWER_REG_BATTERY_SOC, &value);
+    // Read battery SOC with timeout
+    status = power_module_handler_read_register_with_timeout(POWER_REG_BATTERY_SOC, &value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
     if (status == HAL_STATUS_OK) {
         power_module_state.data.battery_soc = (uint8_t)value;
+    } else if (status == HAL_STATUS_TIMEOUT) {
+        printf("[POWER-TIMEOUT] Battery SOC read timeout\n");
     }
     
     // Note: battery_health, battery_cycles, time_to_empty, time_to_full not available in reference
     // These fields will remain at default values
+    
+    // Unlock mutex after data access
+    pthread_mutex_unlock(&power_module_state.mutex);
     
     return HAL_STATUS_OK;
 }
@@ -559,8 +909,8 @@ static hal_status_t power_module_read_charging_data(void)
     hal_status_t status;
     uint16_t value;
     
-    // Read charge status
-    status = power_module_handler_read_register(POWER_REG_CHARGE_STATUS, &value);
+    // Read charge status with retry
+    status = power_module_handler_read_register_with_retry(POWER_REG_CHARGE_STATUS, &value, POWER_MODULE_RETRY_COUNT_DEFAULT);
     if (status == HAL_STATUS_OK) {
         power_module_state.data.charge_status = (uint8_t)value;
     }
@@ -844,39 +1194,47 @@ static void power_module_update_capabilities(void)
  */
 hal_status_t power_module_handler_auto_detect(uint8_t slave_id, uint32_t timeout_ms __attribute__((unused)))
 {
+    printf("[POWER-AUTO] Auto-detect called for slave_id=0x%02X\n", slave_id);
+    
     if (slave_id < 1 || slave_id > 247) {
+        printf("[POWER-AUTO] Invalid slave_id %d\n", slave_id);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
+    // Note: Auto-detect can work without power module handler being initialized
+    // because it uses direct Modbus communication
     if (!power_module_state.initialized) {
-        return HAL_STATUS_NOT_INITIALIZED;
+        printf("[POWER-AUTO] Power module handler not initialized, but auto-detect can still work\n");
+        // Continue with auto-detect using direct Modbus communication
     }
     
-    pthread_mutex_lock(&power_module_state.mutex);
-    
-    // Read module type to verify it's a power module
-    uint16_t module_type;
-    hal_status_t status = power_module_handler_read_register(POWER_REG_MODULE_TYPE, &module_type);
-    
+    // Use direct Modbus communication for auto-detect
+    uint16_t module_type = 0;
+    hal_status_t status = comm_manager_modbus_read_holding_registers(slave_id, POWER_REG_MODULE_TYPE, 1, &module_type);
+    printf("[POWER-AUTO] Read MODULE_TYPE (0x%04X) = 0x%04X, status=%d\n", POWER_REG_MODULE_TYPE, module_type, status);
+
     if (status == HAL_STATUS_OK && module_type == 0x0002) {
-        // Read device ID to confirm
-        uint16_t device_id;
-        status = power_module_handler_read_register(POWER_REG_DEVICE_ID, &device_id);
+        power_module_state.status.online = true;
+        power_module_state.status.last_communication_ms = power_module_get_timestamp_ms();
+        printf("[POWER-AUTO] ✅ Module type OK (0x%04X). Marking online.\n", module_type);
+    } else {
+        // Fallback: try reading device id and consider non-zero as valid
+        uint16_t device_id = 0;
+        hal_status_t dev_status = comm_manager_modbus_read_holding_registers(slave_id, POWER_REG_DEVICE_ID, 1, &device_id);
+        printf("[POWER-AUTO] Fallback: Read DEVICE_ID (0x%04X) = 0x%04X, status=%d\n", POWER_REG_DEVICE_ID, device_id, dev_status);
         
-        if (status == HAL_STATUS_OK && device_id == slave_id) {
+        if (dev_status == HAL_STATUS_OK && device_id != 0x0000) {
             power_module_state.status.online = true;
             power_module_state.status.last_communication_ms = power_module_get_timestamp_ms();
-            printf("Power module detected at slave ID %d\n", slave_id);
+            printf("[POWER-AUTO] ✅ Fallback online by DEVICE_ID=0x%04X (module_type=0x%04X).\n", device_id, module_type);
+            status = HAL_STATUS_OK;
         } else {
             power_module_state.status.online = false;
+            printf("[POWER-AUTO] ❌ Auto-detect failed: module_type=0x%04X, device_id=0x%04X\n", module_type, device_id);
             status = HAL_STATUS_ERROR;
         }
-    } else {
-        power_module_state.status.online = false;
-        status = HAL_STATUS_ERROR;
     }
     
-    pthread_mutex_unlock(&power_module_state.mutex);
     return status;
 }
 
@@ -1057,10 +1415,10 @@ static hal_status_t power_module_poll_data(void)
     
     printf("[POWER-POLL] Starting data poll...\n");
     
-    // Poll battery data
-    status = power_module_read_battery_data();
+    // Poll battery data with retry mechanism
+    status = power_module_read_battery_data_with_retry();
     if (status != HAL_STATUS_OK) {
-        printf("[POWER-POLL] Battery data read failed: %d\n", status);
+        printf("[POWER-POLL] Battery data read failed after retries: %d\n", status);
     }
     
     // Poll charging data
@@ -1087,10 +1445,8 @@ static hal_status_t power_module_poll_data(void)
         printf("[POWER-POLL] System info read failed: %d\n", status);
     }
     
-    // Update timestamp
+    // Update timestamp and status atomically (protected by mutex)
     power_module_state.last_update_ms = current_time;
-    
-    // Update status
     power_module_state.status.online = true;
     power_module_state.status.last_communication_ms = current_time;
     

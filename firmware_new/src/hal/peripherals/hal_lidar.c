@@ -445,10 +445,13 @@ uint16_t lidar_calculate_min_distance(const lidar_scan_data_t *scan_data)
 #endif
     
     // Safety alert: Log when emergency threshold is reached
+    // Temporarily disabled to reduce log noise during module discovery testing
+    /*
     if (min_distance < LIDAR_EMERGENCY_STOP_MM) {
         printf("[SAFETY] Emergency distance detected: %u mm (threshold: %u mm)\n", 
                min_distance, LIDAR_EMERGENCY_STOP_MM);
     }
+    */
     
     return min_distance;
 }

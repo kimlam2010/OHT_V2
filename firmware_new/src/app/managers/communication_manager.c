@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "communication_manager.h"
 #include "hal_common.h"
 #include "module_manager.h"
@@ -40,6 +41,39 @@ static struct {
     uint32_t total_response_time;
     uint32_t response_count;
 } g_comm_manager;
+
+// Thread-safety guard for shared manager state
+static pthread_mutex_t g_comm_manager_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#define COMM_LOCK()   pthread_mutex_lock(&g_comm_manager_mutex)
+#define COMM_UNLOCK() pthread_mutex_unlock(&g_comm_manager_mutex)
+
+// Parameter validation helpers (moved up to avoid implicit declarations)
+static inline bool comm_is_valid_slave_id(uint8_t slave_id) {
+	return slave_id >= 1 && slave_id <= 247;
+}
+
+static inline bool comm_is_valid_register_range(uint16_t start_address, uint16_t quantity) {
+	if (quantity == 0) return false;
+	// Ensure start + quantity - 1 does not overflow 0xFFFF
+	uint32_t end = (uint32_t)start_address + (uint32_t)quantity - 1U;
+	return end <= 0xFFFFU;
+}
+
+static inline bool comm_is_valid_quantity_regs(uint16_t quantity) {
+	// Modbus max for read holding/input registers is 125
+	return quantity >= 1 && quantity <= 125;
+}
+
+static inline bool comm_is_valid_quantity_write_regs(uint16_t quantity) {
+	// Modbus max for write multiple registers is 123
+	return quantity >= 1 && quantity <= 123;
+}
+
+static inline bool comm_is_valid_quantity_coils(uint16_t quantity) {
+	// Modbus max for read coils is 2000
+	return quantity >= 1 && quantity <= 2000;
+}
 
 // Forward declarations
 static hal_status_t init_rs485(void);
@@ -102,6 +136,8 @@ hal_status_t comm_manager_init(const comm_mgr_config_t *config) {
         g_comm_manager.status.last_error = COMM_MGR_ERROR_RS485_INIT_FAILED;
         g_comm_manager.status.error_count++;
         g_comm_manager.status.last_error_time = hal_get_timestamp_us();
+        // Cleanup on error
+        memset(&g_comm_manager, 0, sizeof(g_comm_manager));
         return status;
     }
     
@@ -116,6 +152,8 @@ hal_status_t comm_manager_init(const comm_mgr_config_t *config) {
         g_comm_manager.status.last_error = COMM_MGR_ERROR_RS485_INIT_FAILED;
         g_comm_manager.status.error_count++;
         g_comm_manager.status.last_error_time = hal_get_timestamp_us();
+        // Cleanup on error
+        memset(&g_comm_manager, 0, sizeof(g_comm_manager));
         return status;
     }
     printf("[COMM] RS485 device opened successfully\n");
@@ -126,6 +164,8 @@ hal_status_t comm_manager_init(const comm_mgr_config_t *config) {
         g_comm_manager.status.last_error = COMM_MGR_ERROR_MODBUS_INIT_FAILED;
         g_comm_manager.status.error_count++;
         g_comm_manager.status.last_error_time = hal_get_timestamp_us();
+        // Cleanup on error
+        memset(&g_comm_manager, 0, sizeof(g_comm_manager));
         return status;
     }
     
@@ -156,6 +196,9 @@ hal_status_t comm_manager_deinit(void) {
     
     // Clear communication manager
     memset(&g_comm_manager, 0, sizeof(g_comm_manager));
+    
+    // Cleanup mutex
+    pthread_mutex_destroy(&g_comm_manager_mutex);
     
     return HAL_STATUS_OK;
 }
@@ -236,6 +279,12 @@ hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr) {
                 
                 module_type_t t = probe_module_type(addr);
                 registry_mark_online(addr, t, "");
+                
+                // Call module discovery for full registration and auto-detect
+                printf("[SCAN] Calling module discovery for address 0x%02X\n", addr);
+                hal_status_t discovery_status = module_manager_discover_modules();
+                printf("[SCAN] Module discovery result: %d\n", discovery_status);
+                
                 found = true;
                 miss_count[addr - start_addr] = 0; // Reset miss count
                 break;
@@ -289,24 +338,29 @@ hal_status_t comm_manager_update(void) {
     
     uint64_t current_time = hal_get_timestamp_us();
     
-    // Check for response timeout
-    if (g_comm_manager.waiting_for_response) {
-        if (current_time >= g_comm_manager.response_timeout) {
-            g_comm_manager.waiting_for_response = false;
-            g_comm_manager.status.statistics.timeout_count++;
-            g_comm_manager.status.last_error = COMM_MGR_ERROR_TIMEOUT;
-            g_comm_manager.status.error_count++;
-            g_comm_manager.status.last_error_time = current_time;
-            
-            handle_communication_event(COMM_MGR_EVENT_TIMEOUT, NULL);
-        }
+    // Check for response timeout (thread-safe)
+    COMM_LOCK();
+    bool waiting = g_comm_manager.waiting_for_response;
+    uint64_t deadline = g_comm_manager.response_timeout;
+    COMM_UNLOCK();
+    if (waiting && current_time >= deadline) {
+        COMM_LOCK();
+        g_comm_manager.waiting_for_response = false;
+        g_comm_manager.status.statistics.timeout_count++;
+        g_comm_manager.status.last_error = COMM_MGR_ERROR_TIMEOUT;
+        g_comm_manager.status.error_count++;
+        g_comm_manager.status.last_error_time = current_time;
+        COMM_UNLOCK();
+        handle_communication_event(COMM_MGR_EVENT_TIMEOUT, NULL);
     }
     
-    // Update connection uptime
+    // Update connection uptime (thread-safe)
+    COMM_LOCK();
     if (g_comm_manager.status.status == COMM_MGR_STATUS_CONNECTED) {
-        g_comm_manager.status.connection_uptime_ms = 
+        g_comm_manager.status.connection_uptime_ms =
             (current_time - g_comm_manager.connection_start_time) / 1000ULL;
     }
+    COMM_UNLOCK();
     
     // Update HAL RS485 (if function exists)
     // hal_rs485_update();  // Commented out - function may not exist
@@ -376,7 +430,9 @@ hal_status_t comm_manager_set_callback(comm_mgr_event_callback_t callback) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
+    COMM_LOCK();
     g_comm_manager.event_callback = callback;
+    COMM_UNLOCK();
     return HAL_STATUS_OK;
 }
 
@@ -397,6 +453,9 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
     hal_status_t status = build_modbus_request(request, frame, &frame_length);
     if (status != HAL_STATUS_OK) {
         printf("[MODBUS] ERROR: build_modbus_request failed (status=%d)\n", status);
+        // Ensure comm state is clean on error
+        g_comm_manager.waiting_for_response = false;
+        g_comm_manager.response_timeout = 0;
         return status;
     }
     
@@ -409,7 +468,9 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
     // Send frame with retries
     uint32_t retry_count = 0;
     while (retry_count <= g_comm_manager.config.retry_count) {
+        COMM_LOCK();
         g_comm_manager.status.statistics.total_transmissions++;
+        COMM_UNLOCK();
         
         printf("[MODBUS] Attempt %u/%u: sending frame...\n", retry_count + 1, g_comm_manager.config.retry_count + 1);
         
@@ -433,9 +494,11 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
         printf("[MODBUS] Frame sent, waiting for response...\n");
         
         // Wait for response
+        COMM_LOCK();
         g_comm_manager.waiting_for_response = true;
-        g_comm_manager.response_timeout = hal_get_timestamp_us() + 
-                                        (g_comm_manager.config.timeout_ms * 1000ULL);
+        g_comm_manager.response_timeout = hal_get_timestamp_us() +
+                                          (g_comm_manager.config.timeout_ms * 1000ULL);
+        COMM_UNLOCK();
         
         uint64_t start_time = hal_get_timestamp_us();
         
@@ -451,8 +514,10 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
             }
             printf("\n");
             
+            COMM_LOCK();
             g_comm_manager.waiting_for_response = false;
             g_comm_manager.status.statistics.successful_transmissions++;
+            COMM_UNLOCK();
             
             // Parse response
             status = parse_modbus_response(response_frame, response_frame_length, response);
@@ -467,13 +532,14 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
                 printf("[MODBUS] Response parsed successfully\n");
                 // Update statistics
                 uint64_t response_time = hal_get_timestamp_us() - start_time;
+                COMM_LOCK();
                 g_comm_manager.status.statistics.total_response_time += (uint32_t)(response_time / 1000ULL);
                 g_comm_manager.status.statistics.response_count++;
-                g_comm_manager.status.statistics.average_response_time_ms = 
-                    g_comm_manager.status.statistics.total_response_time / 
+                g_comm_manager.status.statistics.average_response_time_ms =
+                    g_comm_manager.status.statistics.total_response_time /
                     g_comm_manager.status.statistics.response_count;
-                
                 g_comm_manager.last_communication_time = hal_get_timestamp_us();
+                COMM_UNLOCK();
                 handle_communication_event(COMM_MGR_EVENT_RESPONSE_RECEIVED, response);
                 return HAL_STATUS_OK;
             } else {
@@ -491,6 +557,9 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
     }
     
     printf("[MODBUS] ERROR: Max retries exceeded\n");
+    // Ensure comm state is clean on exit
+    g_comm_manager.waiting_for_response = false;
+    g_comm_manager.response_timeout = 0;
     handle_communication_event(COMM_MGR_EVENT_MAX_RETRIES_EXCEEDED, NULL);
     return HAL_STATUS_ERROR;
 }
@@ -498,6 +567,12 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
 hal_status_t comm_manager_modbus_read_holding_registers(uint8_t slave_id, uint16_t start_address, 
                                                        uint16_t quantity, uint16_t *data) {
     if (!g_comm_manager.initialized || data == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    // Bounds & parameter checks
+    if (!comm_is_valid_slave_id(slave_id) ||
+        !comm_is_valid_quantity_regs(quantity) ||
+        !comm_is_valid_register_range(start_address, quantity)) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
@@ -539,6 +614,12 @@ hal_status_t comm_manager_modbus_read_input_registers(uint8_t slave_id, uint16_t
     if (!g_comm_manager.initialized || data == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
+    // Bounds & parameter checks
+    if (!comm_is_valid_slave_id(slave_id) ||
+        !comm_is_valid_quantity_regs(quantity) ||
+        !comm_is_valid_register_range(start_address, quantity)) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
     
     comm_mgr_modbus_request_t request = {
         .slave_id = slave_id,
@@ -577,6 +658,9 @@ hal_status_t comm_manager_modbus_write_single_register(uint8_t slave_id, uint16_
     if (!g_comm_manager.initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
+    if (!comm_is_valid_slave_id(slave_id)) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
     
     uint8_t data[2] = {(uint8_t)(value >> 8), (uint8_t)(value & 0xFF)};
     
@@ -596,6 +680,12 @@ hal_status_t comm_manager_modbus_write_single_register(uint8_t slave_id, uint16_
 hal_status_t comm_manager_modbus_write_multiple_registers(uint8_t slave_id, uint16_t start_address, 
                                                          uint16_t quantity, const uint16_t *data) {
     if (!g_comm_manager.initialized || data == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    // Bounds & parameter checks
+    if (!comm_is_valid_slave_id(slave_id) ||
+        !comm_is_valid_quantity_write_regs(quantity) ||
+        !comm_is_valid_register_range(start_address, quantity)) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
@@ -622,6 +712,7 @@ hal_status_t comm_manager_modbus_write_multiple_registers(uint8_t slave_id, uint
     comm_mgr_modbus_response_t response = {0};
     hal_status_t status = comm_manager_modbus_send_request(&request, &response);
     
+    // Always free allocated memory, regardless of success/failure
     free(byte_data);
     return status;
 }
@@ -629,6 +720,12 @@ hal_status_t comm_manager_modbus_write_multiple_registers(uint8_t slave_id, uint
 hal_status_t comm_manager_modbus_read_coils(uint8_t slave_id, uint16_t start_address, 
                                            uint16_t quantity, uint8_t *data) {
     if (!g_comm_manager.initialized || data == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    // Bounds & parameter checks
+    if (!comm_is_valid_slave_id(slave_id) ||
+        !comm_is_valid_quantity_coils(quantity) ||
+        !comm_is_valid_register_range(start_address, quantity)) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
@@ -651,6 +748,9 @@ hal_status_t comm_manager_modbus_read_coils(uint8_t slave_id, uint16_t start_add
 hal_status_t comm_manager_modbus_write_single_coil(uint8_t slave_id, uint16_t address, bool value) {
     if (!g_comm_manager.initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
+    }
+    if (!comm_is_valid_slave_id(slave_id)) {
+        return HAL_STATUS_INVALID_PARAMETER;
     }
     
     uint8_t data[2] = {value ? 0xFF : 0x00, 0x00};

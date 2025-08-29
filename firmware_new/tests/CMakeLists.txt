@@ -12,7 +12,6 @@ add_executable(test_basic_integration
 target_include_directories(test_basic_integration PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/gpio
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
 )
@@ -20,7 +19,6 @@ target_include_directories(test_basic_integration PRIVATE
 target_link_libraries(test_basic_integration
     hal_common
     hal_gpio
-    app_api
     unity
 )
 
@@ -51,6 +49,35 @@ target_link_libraries(test_module_discovery
 
 # Add module discovery test to CTest
 add_test(NAME test_module_discovery COMMAND test_module_discovery)
+
+# Managers integration test
+add_executable(test_managers_integration
+    integration/test_managers_integration.c
+)
+
+target_include_directories(test_managers_integration PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/rs485
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/safety
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/peripherals
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/mocks
+)
+
+target_link_libraries(test_managers_integration
+    hal_common
+    hal_communication
+    hal_safety
+    hal_peripherals
+    app_managers
+    app_modules
+    unity
+)
+
+# Add managers integration test to CTest
+add_test(NAME test_managers_integration COMMAND test_managers_integration)
 
 # Basic performance testing suite
 add_executable(test_basic_performance
@@ -92,67 +119,61 @@ target_link_libraries(test_enhanced_logging
 # Add enhanced logging test to CTest
 add_test(NAME test_enhanced_logging COMMAND test_enhanced_logging)
 
-# Performance testing suite
-add_executable(test_performance_load
-    performance/test_performance_load.c
-)
+# Performance testing suite - DISABLED (depends on removed app_api)
+# add_executable(test_performance_load
+#     performance/test_performance_load.c
+# )
+#
+# target_include_directories(test_performance_load PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/rs485
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
+# )
+#
+# target_link_libraries(test_performance_load
+#     hal_common
+#     hal_communication
+#     app_core
+#     app_managers
+#     app_modules
+#     unity
+#     pthread
+#     m
+# )
+#
+# add_test(NAME test_performance_load COMMAND test_performance_load)
 
-target_include_directories(test_performance_load PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/rs485
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/mocks
-)
-
-target_link_libraries(test_performance_load
-    hal_common
-    hal_communication
-    app_core
-    app_managers
-    app_modules
-    app_api
-    unity
-    pthread
-    m
-)
-
-# Add performance load test to CTest
-add_test(NAME test_performance_load COMMAND test_performance_load)
-
-# Stress testing suite
-add_executable(test_stress_testing
-    performance/test_stress_testing.c
-)
-
-target_include_directories(test_stress_testing PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/rs485
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/mocks
-)
-
-target_link_libraries(test_stress_testing
-    hal_common
-    hal_communication
-    app_core
-    app_managers
-    app_modules
-    app_api
-    unity
-    pthread
-    m
-)
-
-# Add stress testing to CTest
-add_test(NAME test_stress_testing COMMAND test_stress_testing)
+# Stress testing suite - DISABLED (depends on removed app_api)
+# add_executable(test_stress_testing
+#     performance/test_stress_testing.c
+# )
+#
+# target_include_directories(test_stress_testing PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/rs485
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
+# )
+#
+# target_link_libraries(test_stress_testing
+#     hal_common
+#     hal_communication
+#     app_core
+#     app_managers
+#     app_modules
+#     unity
+#     pthread
+#     m
+# )
+#
+# add_test(NAME test_stress_testing COMMAND test_stress_testing)
 
 # Safety validation testing suite
 add_executable(test_safety_validation
@@ -171,7 +192,6 @@ target_include_directories(test_safety_validation_simple PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
 )
@@ -183,7 +203,6 @@ target_link_libraries(test_safety_validation_simple
     app_core
     app_managers
     app_modules
-    app_api
     unity
     pthread
     m
@@ -196,7 +215,6 @@ target_include_directories(test_safety_validation PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
 )
@@ -208,7 +226,6 @@ target_link_libraries(test_safety_validation
     app_core
     app_managers
     app_modules
-    app_api
     unity
     pthread
 )
@@ -231,7 +248,6 @@ target_include_directories(test_safety_basic PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
 )
@@ -243,7 +259,6 @@ target_link_libraries(test_safety_basic
     app_core
     app_managers
     app_modules
-    app_api
     pthread
     m
 )
@@ -270,7 +285,6 @@ target_include_directories(safety_monitor_test_runner_mock PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/safety
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/storage
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
     ${CMAKE_CURRENT_SOURCE_DIR}/unit
 )
 
@@ -281,7 +295,6 @@ target_link_libraries(safety_monitor_test_runner_mock
     hal_safety
     hal_storage
     app_core
-    app_api
 )
 
 target_include_directories(safety_monitor_test_runner PRIVATE
@@ -291,7 +304,6 @@ target_include_directories(safety_monitor_test_runner PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/safety
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/storage
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/unit
     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
@@ -304,7 +316,6 @@ target_link_libraries(safety_monitor_test_runner
     hal_safety
     hal_storage
     app_core
-    app_api
     unity
     pthread
     m
@@ -325,7 +336,6 @@ target_include_directories(test_safety_basic_mock PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/core
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/managers
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/modules
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/api
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/unity
@@ -338,7 +348,6 @@ target_link_libraries(test_safety_basic_mock
     app_core
     app_managers
     app_modules
-    app_api
     unity
     pthread
     m

@@ -290,45 +290,83 @@ target_link_libraries(test_communication_manager
 #     unity
 # )
 
-# Power Module Handler tests - DISABLED
-# add_executable(test_power_module_handler
-#     app/test_power_module_handler.c
-# )
-# 
-# target_include_directories(test_power_module_handler PRIVATE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/modules
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
-# )
-# 
-# target_link_libraries(test_power_module_handler
-#     app_modules
-#     hal_common
-#     hal_communication
-#     unity
-#     pthread
-# )
-
-# Module Discovery tests
-add_executable(test_module_discovery_unit
-    app/test_module_discovery.c
+# Power Module Handler tests
+add_executable(test_power_module_handler
+    app/test_power_module_handler.c
+    ../../src/app/modules/power_module_handler.c
 )
 
-target_include_directories(test_module_discovery_unit PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/peripherals
+target_include_directories(test_power_module_handler PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/modules
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
 )
 
-target_link_libraries(test_module_discovery_unit
+target_link_libraries(test_power_module_handler
     hal_common
+    hal_communication
     unity
-    app_managers
+    pthread
 )
+
+# Power Module Timeout tests
+add_executable(test_power_module_timeout
+    app/test_power_module_timeout.c
+    ../../src/app/modules/power_module_handler.c
+)
+
+target_include_directories(test_power_module_timeout PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_power_module_timeout
+    hal_common
+    hal_communication
+    unity
+    pthread
+)
+
+# Power Module Validation tests
+add_executable(test_power_module_validation
+    app/test_power_module_validation.c
+    ../../src/app/modules/power_module_handler.c
+)
+
+target_include_directories(test_power_module_validation PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+)
+
+target_link_libraries(test_power_module_validation
+    hal_common
+    hal_communication
+    unity
+    pthread
+)
+
+# Module Discovery tests - DISABLED due to multiple definition conflicts
+# add_executable(test_module_discovery_unit
+#     app/test_module_discovery.c
+# )
+# 
+# target_include_directories(test_module_discovery_unit PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/peripherals
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+# )
+# 
+# target_link_libraries(test_module_discovery_unit
+#     hal_common
+#     unity
+#     app_managers
+# )
 
 # Application Telemetry Manager tests
 add_executable(test_telemetry_manager
@@ -367,7 +405,9 @@ add_test(NAME test_communication_manager COMMAND test_communication_manager)
 # add_test(NAME test_safety_module_handler COMMAND test_safety_module_handler)
 # add_test(NAME test_travel_motor_module_handler COMMAND test_travel_motor_module_handler)
 # add_test(NAME test_dock_module_handler COMMAND test_dock_module_handler)
-# add_test(NAME test_power_module_handler COMMAND test_power_module_handler)
+add_test(NAME test_power_module_handler COMMAND test_power_module_handler)
+add_test(NAME test_power_module_timeout COMMAND test_power_module_timeout)
+add_test(NAME test_power_module_validation COMMAND test_power_module_validation)
 add_test(NAME test_telemetry_manager COMMAND test_telemetry_manager)
 
 # Enable testing

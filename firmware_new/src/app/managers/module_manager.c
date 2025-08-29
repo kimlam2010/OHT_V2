@@ -10,6 +10,7 @@
 #include "module_manager.h"
 #include "communication_manager.h"
 #include "hal_common.h"
+#include "power_module_handler.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -62,6 +63,7 @@ static uint8_t calculate_health_percentage(const module_status_info_t *status);
 static module_health_t get_health_level(uint8_t percentage);
 static bool is_module_id_valid(uint8_t module_id);
 static int find_module_index(uint8_t module_id);
+static uint32_t get_default_capabilities(module_type_t type);
 
 // Module Manager Implementation
 
@@ -138,7 +140,19 @@ hal_status_t module_manager_discover_modules(void) {
     if (!g_module_manager.initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
+    // Ensure communication manager is initialized before discovery
+    comm_mgr_status_info_t comm_status;
+    hal_status_t comm_status_result = comm_manager_get_status(&comm_status);
+    printf("[MODULE] Communication manager status check: result=%d, status=%d\n", 
+           comm_status_result, comm_status.status);
     
+    if (comm_status_result != HAL_STATUS_OK ||
+        comm_status.status == COMM_MGR_STATUS_DISCONNECTED) {
+        printf("[MODULE] Module discovery blocked: communication manager not ready\n");
+        return HAL_STATUS_INVALID_STATE;
+    }
+    
+    printf("[MODULE] Starting module discovery...\n");
     return perform_module_discovery();
 }
 
@@ -284,6 +298,11 @@ hal_status_t module_manager_get_registered_modules(uint8_t *module_ids, uint32_t
     
     if (module_ids == NULL || actual_count == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (max_count == 0) {
+        *actual_count = 0;
+        return HAL_STATUS_OK;
     }
     
     uint32_t count = 0;
@@ -442,8 +461,8 @@ static hal_status_t perform_module_discovery(void) {
     hal_status_t overall_status = HAL_STATUS_OK;
     int discovered_count = 0;
     
-    // Scan Modbus addresses 0x01-0x20
-    for (uint8_t address = 0x01; address <= 0x20; address++) {
+    // Scan Modbus addresses 0x01-0x08 (reduced range for faster scanning)
+    for (uint8_t address = 0x01; address <= 0x08; address++) {
         hal_status_t status = discover_module_at_address(address);
         if (status == HAL_STATUS_OK) {
             discovered_count++;
@@ -462,28 +481,59 @@ static hal_status_t perform_health_check(uint8_t module_id) {
         return HAL_STATUS_NOT_FOUND;
     }
     
-    // Simulate health check
-    uint32_t response_time = 50; // Simulated response time
-    uint8_t health_percentage = 95; // Simulated health percentage
+    // Real health check: measure response time and check module status
+    uint64_t start_time = hal_get_timestamp_us();
     
-    // Update module status
-    g_module_manager.modules[index].status.health_percentage = health_percentage;
-    g_module_manager.modules[index].status.health = get_health_level(health_percentage);
-    g_module_manager.modules[index].status.response_time_ms = response_time;
-    g_module_manager.modules[index].last_health_check = hal_get_timestamp_us();
+    // Try to read Device ID register (0x00F0) to check if module is responsive
+    uint16_t device_id;
+    hal_status_t status = comm_manager_modbus_read_holding_registers(
+        module_id, 0x00F0, 1, &device_id);
     
-    // Update statistics
-    if (g_module_manager.modules[index].status.status == MODULE_STATUS_ONLINE) {
-        g_module_manager.statistics.online_modules++;
-    }
+    uint64_t end_time = hal_get_timestamp_us();
+    uint32_t response_time = (uint32_t)((end_time - start_time) / 1000ULL); // Convert to ms
     
-    if (response_time > g_module_manager.config.response_timeout_ms) {
+    if (status == HAL_STATUS_OK) {
+        // Module is responsive, calculate health percentage
+        uint8_t health_percentage = 100;
+        
+        // Calculate health percentage based on response time
+        if (response_time > 1000) {
+            health_percentage = 50; // Slow response
+        } else if (response_time > 500) {
+            health_percentage = 75; // Moderate response
+        }
+        
+        // Reduce health based on error count (if available)
+        if (g_module_manager.modules[index].status.error_count > 10) {
+            health_percentage = 25; // High error rate
+        } else if (g_module_manager.modules[index].status.error_count > 5) {
+            health_percentage = 50; // Moderate error rate
+        }
+        
+        // Ensure health is within valid range
+        if (health_percentage > 100) health_percentage = 100;
+        
+        // Update module status
+        g_module_manager.modules[index].status.health_percentage = health_percentage;
+        g_module_manager.modules[index].status.health = get_health_level(health_percentage);
+        g_module_manager.modules[index].status.response_time_ms = response_time;
+        g_module_manager.modules[index].status.status = MODULE_STATUS_ONLINE;
+        g_module_manager.modules[index].last_health_check = hal_get_timestamp_us();
+        
+        printf("[MODULE] Health check for module %u: response_time=%ums, health=%u%%\n", 
+               module_id, response_time, health_percentage);
+    } else {
+        // Module not responsive
+        g_module_manager.modules[index].status.health_percentage = 0;
+        g_module_manager.modules[index].status.health = MODULE_HEALTH_FAILED;
+        g_module_manager.modules[index].status.response_time_ms = response_time;
         g_module_manager.modules[index].status.status = MODULE_STATUS_ERROR;
-        g_module_manager.statistics.error_modules++;
-        g_module_manager.statistics.online_modules--;
+        g_module_manager.modules[index].last_health_check = hal_get_timestamp_us();
+        
+        printf("[MODULE] Health check failed for module %u: status=%d\n", module_id, status);
     }
     
-    return HAL_STATUS_OK;
+    return status;
 }
 
 __attribute__((unused))
@@ -546,8 +596,11 @@ static int find_module_index(uint8_t module_id) {
 // Auto-Discovery Implementation Functions
 
 static hal_status_t discover_module_at_address(uint8_t address) {
-    uint16_t device_id, module_type;
-    char version[16] = {0};
+	if (address < 0x01 || address > 0x08) {
+		return HAL_STATUS_INVALID_PARAMETER;
+	}
+	uint16_t device_id, module_type;
+	char version[16] = {0};
     
     // Read Device ID register (0x00F0) - use single register read
     hal_status_t status = comm_manager_modbus_read_holding_registers(
@@ -565,30 +618,33 @@ static hal_status_t discover_module_at_address(uint8_t address) {
         return status;
     }
     
-    // Read Version registers (0x00F8-0x00FF) - 8 registers for version string
+    // Try to read Version registers (0x00F8-0x00FF) - optional, not all modules support this
     uint16_t version_regs[8];
     status = comm_manager_modbus_read_holding_registers(
         address, 0x00F8, 8, version_regs);
     
-    if (status != HAL_STATUS_OK) {
-        return status;
-    }
-    
-    // Convert version registers to string
-    int version_index = 0;
-    for (int i = 0; i < 8 && version_index < 15; i++) {
-        // Each register contains 2 ASCII characters
-        char high_byte = (version_regs[i] >> 8) & 0xFF;
-        char low_byte = version_regs[i] & 0xFF;
-        
-        if (high_byte != 0) {
-            version[version_index++] = high_byte;
+    if (status == HAL_STATUS_OK) {
+        // Convert version registers to string
+        int version_index = 0;
+        for (int i = 0; i < 8 && version_index < 15; i++) {
+            // Each register contains 2 ASCII characters
+            char high_byte = (version_regs[i] >> 8) & 0xFF;
+            char low_byte = version_regs[i] & 0xFF;
+            
+            if (high_byte != 0) {
+                version[version_index++] = high_byte;
+            }
+            if (low_byte != 0 && version_index < 15) {
+                version[version_index++] = low_byte;
+            }
         }
-        if (low_byte != 0 && version_index < 15) {
-            version[version_index++] = low_byte;
-        }
+        version[version_index] = '\0'; // Ensure null termination
+        printf("[MODULE] Version read successfully: '%s'\n", version);
+    } else {
+        // Version registers not supported, use default version
+        strcpy(version, "v1.0.0");
+        printf("[MODULE] Version registers not supported, using default: '%s'\n", version);
     }
-    version[version_index] = '\0'; // Ensure null termination
     
     // Validate module type
     if (!is_valid_module_type(module_type)) {
@@ -607,23 +663,40 @@ static hal_status_t discover_module_at_address(uint8_t address) {
     snprintf(module_info.serial_number, sizeof(module_info.serial_number), 
              "SN%04X%02X", device_id, address);
     
-    // Read module capabilities based on type
+    // Try to read module capabilities based on type (optional)
     status = read_module_capabilities(address, module_info.type, &module_info.capabilities);
-    if (status != HAL_STATUS_OK) {
-        printf("Failed to read capabilities for module at 0x%02X\n", address);
-        // Continue anyway, capabilities will be 0
+    if (status == HAL_STATUS_OK) {
+        printf("[MODULE] Capabilities read successfully for module 0x%02X\n", address);
+    } else {
+        printf("[MODULE] Capabilities not supported for module 0x%02X, using defaults\n", address);
+        // Use default capabilities based on module type
+        module_info.capabilities = get_default_capabilities(module_info.type);
     }
+    
+    printf("[MODULE] Attempting to register module: address=0x%02X, type=0x%04X, device_id=0x%04X\n", 
+           address, module_info.type, device_id);
     
     // Register or update module
     status = module_manager_register_module(&module_info);
+    printf("[MODULE] module_manager_register_module result: %d\n", status);
     
     if (status == HAL_STATUS_OK) {
         // Mark module as online in registry
         registry_mark_online(address, module_info.type, version);
+        printf("[MODULE] Module registered successfully: address=0x%02X, type=0x%04X\n", address, module_info.type);
+        
+        // Call module-specific auto-detect for power modules
+        if (module_info.type == MODULE_TYPE_POWER) {
+            printf("[MODULE] Calling power module auto-detect for address 0x%02X\n", address);
+            hal_status_t auto_detect_status = power_module_handler_auto_detect(address, 1000);
+            printf("[MODULE] Power auto-detect result: %d\n", auto_detect_status);
+        }
         
         if (g_module_manager.event_callback) {
             g_module_manager.event_callback(MODULE_EVENT_DISCOVERED, address, &module_info);
         }
+    } else {
+        printf("[MODULE] Failed to register module: address=0x%02X, status=%d\n", address, status);
     }
     
     return status;
@@ -642,11 +715,13 @@ static bool is_valid_module_type(uint16_t module_type) {
 }
 
 static hal_status_t read_module_capabilities(uint8_t address, module_type_t type, uint32_t *capabilities) {
-    (void)type; // Suppress unused parameter warning
-    if (capabilities == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
+	(void)type;
+	if (capabilities == NULL) {
+		return HAL_STATUS_INVALID_PARAMETER;
+	}
+	if (address < 0x01 || address > 0x20) {
+		return HAL_STATUS_INVALID_PARAMETER;
+	}
     *capabilities = 0; // Default to no capabilities
     
     // Read capabilities register (0x0100) - use single register read
@@ -691,4 +766,32 @@ static void check_offline_modules(void) {
             }
         }
     }
+}
+
+static uint32_t get_default_capabilities(module_type_t type) {
+    uint32_t capabilities = 0;
+    
+    switch (type) {
+        case MODULE_TYPE_POWER:
+            capabilities = 0x07;  // FC3|FC6|FC16 supported
+            break;
+            
+        case MODULE_TYPE_SAFETY:
+            capabilities = 0x03;  // FC3|FC6 supported
+            break;
+            
+        case MODULE_TYPE_TRAVEL_MOTOR:
+            capabilities = 0x07;  // FC3|FC6|FC16 supported
+            break;
+            
+        case MODULE_TYPE_DOCK:
+            capabilities = 0x03;  // FC3|FC6 supported
+            break;
+            
+        default:
+            capabilities = 0x03;  // Default to FC3|FC6
+            break;
+    }
+    
+    return capabilities;
 }

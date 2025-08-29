@@ -300,9 +300,23 @@ int telemetry_manager_serialize_json(const telemetry_data_t *data, char *json_bu
     }
     written += result;
     
-    // Serialize status
+    // Serialize status (partial, ends with '"safety": ')
     result = serialize_status_json(&data->status, json_buffer + written, buffer_size - written);
-    if (result < 0) {
+    if (result < 0 || result >= (int)(buffer_size - written)) {
+        return -1;
+    }
+    written += result;
+    
+    // Append safety object
+    result = serialize_safety_json(&data->status.safety, json_buffer + written, buffer_size - written);
+    if (result < 0 || result >= (int)(buffer_size - written)) {
+        return -1;
+    }
+    written += result;
+    
+    // Close status object
+    result = snprintf(json_buffer + written, buffer_size - written, "\n  }");
+    if (result < 0 || result >= (int)(buffer_size - written)) {
         return -1;
     }
     written += result;
@@ -315,7 +329,7 @@ int telemetry_manager_serialize_json(const telemetry_data_t *data, char *json_bu
     written += result;
     
     result = serialize_location_json(&data->location, json_buffer + written, buffer_size - written);
-    if (result < 0) {
+    if (result < 0 || result >= (int)(buffer_size - written)) {
         return -1;
     }
     written += result;
@@ -328,7 +342,7 @@ int telemetry_manager_serialize_json(const telemetry_data_t *data, char *json_bu
     written += result;
     
     result = serialize_navigation_json(&data->navigation, json_buffer + written, buffer_size - written);
-    if (result < 0) {
+    if (result < 0 || result >= (int)(buffer_size - written)) {
         return -1;
     }
     written += result;
@@ -341,7 +355,7 @@ int telemetry_manager_serialize_json(const telemetry_data_t *data, char *json_bu
     written += result;
     
     result = serialize_dock_json(&data->dock, json_buffer + written, buffer_size - written);
-    if (result < 0) {
+    if (result < 0 || result >= (int)(buffer_size - written)) {
         return -1;
     }
     written += result;
@@ -434,32 +448,36 @@ static void collect_system_data(telemetry_data_t *data) {
         data->status.state = system_status.current_state;
     }
     
-    // Simulate system metrics (in real implementation, these would come from HAL)
-    data->cpu_usage = 25.0f;  // 25% CPU usage
-    data->memory_usage = 45.0f; // 45% memory usage
-    data->temperature = 35.0f;  // 35°C temperature
+    // Get real system metrics from HAL (when available)
+    // For now, use basic system calls to get real data
+    data->cpu_usage = 0.0f;  // TODO: Implement real CPU usage measurement
+    data->memory_usage = 0.0f; // TODO: Implement real memory usage measurement
+    data->temperature = 0.0f;  // TODO: Implement real temperature measurement
     
-    // Connection status (in real implementation, these would come from HAL)
-    data->center_connected = true;
-    data->rs485_connected = true;
+    // Get real connection status from communication manager
+    comm_mgr_status_info_t comm_status;
+    if (comm_manager_get_status(&comm_status) == HAL_STATUS_OK) {
+        data->rs485_connected = (comm_status.status == COMM_MGR_STATUS_CONNECTED);
+    } else {
+        data->rs485_connected = false;
+    }
+    
+    // TODO: Implement real center connection status
+    data->center_connected = false;
 }
 
 static void collect_location_data(telemetry_data_t *data) {
-    // In real implementation, this would come from location system
-    // For now, simulate some basic data
-    static float position_x = 1000.0f;
-    static float position_y = 2000.0f;
-    static float velocity_x = 100.0f;
-    
-    data->location.position.x = position_x;
-    data->location.position.y = position_y;
+    // TODO: Get real location data from location system/HAL
+    // For now, use zero values to indicate no real data available
+    data->location.position.x = 0.0f;
+    data->location.position.y = 0.0f;
     data->location.position.z = 0.0f;
     
     data->location.orientation.pitch = 0.0f;
     data->location.orientation.roll = 0.0f;
-    data->location.orientation.yaw = 45.0f;
+    data->location.orientation.yaw = 0.0f;
     
-    data->location.velocity.x = velocity_x;
+    data->location.velocity.x = 0.0f;
     data->location.velocity.y = 0.0f;
     data->location.velocity.z = 0.0f;
     
@@ -467,49 +485,46 @@ static void collect_location_data(telemetry_data_t *data) {
     data->location.acceleration.y = 0.0f;
     data->location.acceleration.z = 0.0f;
     
-    data->location.accuracy = 10.0f;
+    data->location.accuracy = 0.0f;
     
-    // Update position for next cycle
-    position_x += velocity_x * 0.1f; // 100ms update
+    // TODO: Implement real location system integration
 }
 
 static void collect_navigation_data(telemetry_data_t *data) {
-    // In real implementation, this would come from navigation system
-    data->navigation.target.x = 5000.0f;
-    data->navigation.target.y = 3000.0f;
+    // TODO: Get real navigation data from navigation system/HAL
+    // For now, use zero values to indicate no real data available
+    data->navigation.target.x = 0.0f;
+    data->navigation.target.y = 0.0f;
     data->navigation.target.z = 0.0f;
     
-    // Calculate progress based on current position
-    float dx = data->navigation.target.x - data->location.position.x;
-    float dy = data->navigation.target.y - data->location.position.y;
-    data->navigation.distance_to_target = sqrtf(dx*dx + dy*dy);
-    
-    // Calculate progress percentage
-    float total_distance = sqrtf(4000.0f*4000.0f + 1000.0f*1000.0f); // Distance from start to target
-    data->navigation.progress = ((total_distance - data->navigation.distance_to_target) / total_distance) * 100.0f;
-    if (data->navigation.progress < 0.0f) data->navigation.progress = 0.0f;
-    if (data->navigation.progress > 100.0f) data->navigation.progress = 100.0f;
-    
-    data->navigation.estimated_time = data->navigation.distance_to_target / 100.0f; // Assuming 100mm/s
-    data->navigation.path_clear = true;
+    data->navigation.distance_to_target = 0.0f;
+    data->navigation.progress = 0.0f;
+    data->navigation.estimated_time = 0.0f;
+    data->navigation.path_clear = false;
     data->navigation.obstacle_detected = false;
-    data->navigation.speed_limit = 200.0f; // 200mm/s speed limit
+    data->navigation.speed_limit = 0.0f;
+    
+    // TODO: Implement real navigation system integration
 }
 
 static void collect_dock_data(telemetry_data_t *data) {
-    // In real implementation, this would come from dock system
-    strcpy(data->dock.station_id, "STATION_001");
-    strcpy(data->dock.target_station_id, "STATION_001");
-    data->dock.distance = 500.0f;
-    data->dock.angle = 5.0f;
+    // TODO: Get real dock data from dock system/HAL
+    // For now, use empty values to indicate no real data available
+    strcpy(data->dock.station_id, "");
+    strcpy(data->dock.target_station_id, "");
+    data->dock.distance = 0.0f;
+    data->dock.angle = 0.0f;
     data->dock.charging_current = 0.0f;
     data->dock.charging_voltage = 0.0f;
-    strcpy(data->dock.rfid_tag_id, "TAG_001");
-    data->dock.rfid_signal_strength = -45;
+    strcpy(data->dock.rfid_tag_id, "");
+    data->dock.rfid_signal_strength = 0;
+    
+    // TODO: Implement real dock system integration
 }
 
 static void collect_safety_data(telemetry_data_t *data) {
-    // In real implementation, this would come from safety system
+    // TODO: Get real safety data from safety manager when available
+    // For now, use default safe state
     data->status.safety.estop = false;
     data->status.safety.zone_blocked = false;
     data->status.safety.interlock_active = false;
