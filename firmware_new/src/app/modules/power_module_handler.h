@@ -27,6 +27,21 @@
 #define POWER_CAP_CHARGING_CONTROL    (1 << 8)
 #define POWER_CAP_POWER_DISTRIBUTION  (1 << 9)
 
+// Timeout constants for different operations
+#define POWER_MODULE_TIMEOUT_READ_REGISTER_MS      500   // Read single register
+#define POWER_MODULE_TIMEOUT_WRITE_REGISTER_MS     500   // Write single register
+#define POWER_MODULE_TIMEOUT_READ_DATA_MS          1000  // Read complete data set
+#define POWER_MODULE_TIMEOUT_AUTO_DETECT_MS        2000  // Auto detect module
+#define POWER_MODULE_TIMEOUT_POLL_INTERVAL_MS      100   // Polling interval
+#define POWER_MODULE_TIMEOUT_CONNECTION_MS         5000  // Connection timeout
+#define POWER_MODULE_TIMEOUT_RESPONSE_MS           1000  // Response timeout
+
+// Retry constants
+#define POWER_MODULE_RETRY_COUNT_DEFAULT           3     // Default retry count
+#define POWER_MODULE_RETRY_DELAY_MS                50    // Base delay between retries
+#define POWER_MODULE_RETRY_BACKOFF_MULTIPLIER      2     // Exponential backoff multiplier
+#define POWER_MODULE_RETRY_MAX_DELAY_MS            1000  // Maximum delay between retries
+
 // Power module alarm bit definitions
 #define POWER_ALARM_OVERVOLTAGE    (1 << 0)
 #define POWER_ALARM_UNDERVOLTAGE   (1 << 1)
@@ -416,5 +431,59 @@ hal_status_t power_module_handler_get_system_status(uint16_t *system_status, uin
  * @return HAL status
  */
 hal_status_t power_module_handler_poll_data(void);
+
+// Timeout handling functions
+/**
+ * @brief Read register with timeout protection
+ * @param register_addr Register address to read
+ * @param value Pointer to store register value
+ * @param timeout_ms Timeout in milliseconds
+ * @return HAL status
+ */
+hal_status_t power_module_handler_read_register_with_timeout(uint16_t register_addr, uint16_t *value, uint32_t timeout_ms);
+
+/**
+ * @brief Write register with timeout protection
+ * @param register_addr Register address to write
+ * @param value Register value to write
+ * @param timeout_ms Timeout in milliseconds
+ * @return HAL status
+ */
+hal_status_t power_module_handler_write_register_with_timeout(uint16_t register_addr, uint16_t value, uint32_t timeout_ms);
+
+/**
+ * @brief Check if timeout has occurred
+ * @param start_time Start timestamp in milliseconds
+ * @param timeout_ms Timeout duration in milliseconds
+ * @return true if timeout occurred, false otherwise
+ */
+bool power_module_check_timeout(uint64_t start_time, uint32_t timeout_ms);
+
+// Retry mechanism functions
+/**
+ * @brief Calculate retry delay with exponential backoff
+ * @param attempt Current attempt number (0-based)
+ * @param base_delay_ms Base delay in milliseconds
+ * @param multiplier Backoff multiplier
+ * @param max_delay_ms Maximum delay in milliseconds
+ * @return Calculated delay in milliseconds
+ */
+uint32_t power_module_calculate_retry_delay(uint8_t attempt, uint32_t base_delay_ms, 
+                                          uint32_t multiplier, uint32_t max_delay_ms);
+
+/**
+ * @brief Read register with retry mechanism
+ * @param register_addr Register address to read
+ * @param value Pointer to store register value
+ * @param max_retries Maximum number of retries
+ * @return HAL status
+ */
+hal_status_t power_module_handler_read_register_with_retry(uint16_t register_addr, uint16_t *value, uint8_t max_retries);
+
+/**
+ * @brief Read battery data with retry mechanism
+ * @return HAL status
+ */
+hal_status_t power_module_read_battery_data_with_retry(void);
 
 #endif // POWER_MODULE_HANDLER_H

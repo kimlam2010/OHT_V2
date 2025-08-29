@@ -75,11 +75,15 @@ hal_status_t safety_manager_init(const safety_config_t *config) {
     g_safety_manager.last_update_time = g_safety_manager.start_time;
     g_safety_manager.initialized = true;
     
-    // Set E-Stop callback
-    hal_estop_set_callback(estop_callback);
+    // Set E-Stop callback (guard return code)
+    if (hal_estop_set_callback(estop_callback) != HAL_STATUS_OK) {
+        printf("[SAFETY] WARNING: hal_estop_set_callback failed\n");
+    }
     
-    // Set initial LED pattern for safety
-    hal_led_error_set(LED_STATE_OFF);
+    // Set initial LED pattern for safety (guard return code)
+    if (hal_led_error_set(LED_STATE_OFF) != HAL_STATUS_OK) {
+        printf("[SAFETY] WARNING: hal_led_error_set failed\n");
+    }
     
     return HAL_STATUS_OK;
 }
@@ -200,9 +204,13 @@ hal_status_t safety_manager_handle_estop_trigger(void) {
     g_safety_manager.estop_count++;
     g_safety_manager.status.level = SAFETY_LEVEL_EMERGENCY;
     
-    // Update LED pattern
-    hal_led_error_set(LED_STATE_ON);
-    hal_led_system_set(LED_STATE_BLINK_FAST);
+    // Update LED pattern (guard return codes)
+    if (hal_led_error_set(LED_STATE_ON) != HAL_STATUS_OK) {
+        printf("[SAFETY] WARNING: hal_led_error_set failed\n");
+    }
+    if (hal_led_system_set(LED_STATE_BLINK_FAST) != HAL_STATUS_OK) {
+        printf("[SAFETY] WARNING: hal_led_system_set failed\n");
+    }
     
     return safety_manager_process_event(SAFETY_EVENT_EMERGENCY_STOP);
 }
@@ -215,9 +223,13 @@ hal_status_t safety_manager_handle_estop_reset(void) {
     g_safety_manager.estop_triggered = false;
     g_safety_manager.status.last_event = SAFETY_EVENT_ESTOP_RELEASED;
     
-    // Update LED pattern
-    hal_led_error_set(LED_STATE_OFF);
-    hal_led_system_set(LED_STATE_ON);
+    // Update LED pattern (guard return codes)
+    if (hal_led_error_set(LED_STATE_OFF) != HAL_STATUS_OK) {
+        printf("[SAFETY] WARNING: hal_led_error_set failed\n");
+    }
+    if (hal_led_system_set(LED_STATE_ON) != HAL_STATUS_OK) {
+        printf("[SAFETY] WARNING: hal_led_system_set failed\n");
+    }
     
     handle_safety_event(SAFETY_EVENT_FAULT_CLEARED);
     

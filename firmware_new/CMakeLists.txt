@@ -37,8 +37,8 @@ target_link_libraries(oht50_main
     app_core
     app_managers
     app_modules
-    app_api
-    http_server
+    # app_api - Disabled, no source files
+    # http_server - Disabled, no source files
     utils
 )
 
