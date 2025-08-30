@@ -8,8 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import settings
-# from app.core.monitoring import setup_monitoring
+from app.core.monitoring import setup_monitoring
+from app.core.database import init_db
+from app.core.security import create_default_roles, create_default_admin_user
 from app.api.v1 import router as api_v1_router
+from app.api.websocket import router as websocket_router
 
 
 def create_app() -> FastAPI:
@@ -39,11 +42,12 @@ def create_app() -> FastAPI:
     )
     
     # Setup monitoring
-    # if settings.enable_metrics:
-    #     setup_monitoring(app)
+    if settings.enable_metrics:
+        setup_monitoring(app)
     
     # Include API routers
     app.include_router(api_v1_router, prefix="/api/v1")
+    app.include_router(websocket_router, prefix="/ws")
     
     @app.get("/")
     async def root():
@@ -51,7 +55,8 @@ def create_app() -> FastAPI:
         return {
             "message": "OHT-50 Backend API",
             "version": settings.app_version,
-            "status": "running"
+            "status": "running",
+            "docs": "/docs" if settings.debug else None
         }
     
     @app.get("/health")
@@ -59,9 +64,24 @@ def create_app() -> FastAPI:
         """Health check endpoint"""
         return {"status": "healthy"}
     
-    # Register endpoints to avoid unused function warnings
-    app.get("/")(root)
-    app.get("/health")(health_check)
+    # Database initialization
+    @app.on_event("startup")
+    async def startup_event():
+        """Initialize database and create default data"""
+        try:
+            # Initialize database
+            await init_db()
+            print("Database initialized successfully")
+            
+            # Create default roles and admin user
+            from app.core.database import AsyncSessionLocal
+            async with AsyncSessionLocal() as db:
+                await create_default_roles(db)
+                await create_default_admin_user(db)
+            print("Default roles and admin user created")
+            
+        except Exception as e:
+            print(f"Startup error: {e}")
     
     return app
 
