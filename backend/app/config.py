@@ -4,7 +4,8 @@ Configuration management for OHT-50 Backend
 
 import os
 from typing import Optional
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
 
 class Settings(BaseSettings):
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
     )
     
     # Security
-    jwt_secret: str = Field(env="JWT_SECRET")
+    jwt_secret: str = Field(default="your-secret-key-change-in-production", env="JWT_SECRET")
     jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
     jwt_expiry: int = Field(default=3600, env="JWT_EXPIRY")  # 1 hour
     
