@@ -59,6 +59,10 @@ def create_app() -> FastAPI:
         """Health check endpoint"""
         return {"status": "healthy"}
     
+    # Register endpoints to avoid unused function warnings
+    app.get("/")(root)
+    app.get("/health")(health_check)
+    
     return app
 
 
@@ -66,7 +70,7 @@ def main():
     """Main application entry point"""
     app = create_app()
     
-    uvicorn.run(
+    uvicorn.run(  # type: ignore
         app,
         host=settings.host,
         port=settings.port,
