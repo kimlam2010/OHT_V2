@@ -1,0 +1,842 @@
+# 🚀 BACKEND DEVELOPMENT RULES - OHT-50
+
+**Phiên bản:** 1.0  
+**Ngày cập nhật:** 2025-01-28  
+**Mục tiêu:** Chuẩn hóa quy trình phát triển backend cho OHT-50 với focus vào performance, security và integration
+
+---
+
+## 🎯 **VAI TRÒ & TRÁCH NHIỆM**
+
+### **BACKEND TEAM LEAD**
+- **Quản lý tổng thể:** Architecture, performance, security, integration
+- **Quality Control:** Review tất cả deliverables trước khi approve
+- **Coordination:** Đảm bảo consistency giữa các services
+- **Technical Leadership:** Đảm bảo technical excellence
+
+### **CORE DEVELOPERS**
+- **Service Implementation:** Robot Control, Telemetry, Safety, LiDAR Processing
+- **API Development:** REST API, WebSocket, Real-time communication
+- **Database Design:** SQLite, Redis, Data modeling
+- **Integration:** Firmware, Hardware, Frontend integration
+
+### **DEVOPS ENGINEER**
+- **Infrastructure:** Docker, CI/CD, Monitoring, Deployment
+- **Performance:** Load testing, Optimization, Scaling
+- **Security:** Security scanning, Compliance, Hardening
+- **Operations:** Backup, Recovery, Maintenance
+
+---
+
+## 🚨 **CRITICAL REQUIREMENTS (BẮT BUỘC)**
+
+### **1. PERFORMANCE FIRST APPROACH**
+```
+❌ KHÔNG BAO GIỜ compromise performance cho features
+✅ LUÔN LUÔN optimize cho real-time requirements
+✅ MỖI API endpoint phải meet performance targets
+✅ TEST performance: API < 50ms, WebSocket < 20ms, DB < 10ms
+```
+
+### **2. SECURITY BY DESIGN**
+```
+BEFORE APPROVAL:
+□ Security review completed
+□ Authentication/Authorization implemented
+□ Data encryption configured
+□ Input validation active
+□ Audit logging enabled
+```
+
+### **3. INTEGRATION COMPLIANCE**
+```
+MUST FOLLOW:
+- RS485 Modbus RTU protocol cho firmware communication
+- WebSocket real-time cho frontend communication
+- REST API standards cho external integration
+- Database schema theo REQ_BE_03
+- Security standards theo REQ_BE_04
+```
+
+---
+
+## 📋 **QUY TRÌNH DEVELOPMENT 5 BƯỚC (BẮT BUỘC)**
+
+### **BƯỚC 1: ARCHITECTURE REVIEW**
+```
+Backend Team Lead MUST:
+□ Review service architecture design
+□ Validate performance requirements
+□ Confirm security implementation
+□ Approve technical approach
+```
+
+### **BƯỚC 2: SERVICE IMPLEMENTATION**
+```
+Core Developers MUST:
+□ Implement service theo design patterns
+□ Add comprehensive error handling
+□ Implement logging và monitoring
+□ Test service functionality
+□ Validate performance metrics
+```
+
+### **BƯỚC 3: INTEGRATION TESTING**
+```
+DevOps Engineer MUST:
+□ Test service integration
+□ Validate communication protocols
+□ Test performance under load
+□ Verify security implementation
+□ Test error recovery
+```
+
+### **BƯỚC 4: QUALITY GATE**
+```
+Backend Team Lead MUST:
+□ Review complete implementation
+□ Validate performance requirements
+□ Check security compliance
+□ Approve for deployment
+□ Update documentation
+```
+
+### **BƯỚC 5: DEPLOYMENT & MONITORING**
+```
+DevOps Engineer MUST:
+□ Deploy to staging environment
+□ Monitor performance metrics
+□ Validate security compliance
+□ Deploy to production
+□ Setup monitoring alerts
+```
+
+---
+
+## 🏗️ **ARCHITECTURE STANDARDS**
+
+### **Service Architecture (BẮT BUỘC)**
+```python
+# Service Base Class
+class BaseService:
+    def __init__(self):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.metrics = MetricsCollector()
+        self.cache = RedisCache()
+        
+    async def handle_request(self, request: Request) -> Response:
+        """Standard request handling with performance monitoring"""
+        start_time = time.time()
+        try:
+            # Validate request
+            await self.validate_request(request)
+            
+            # Process request
+            result = await self.process_request(request)
+            
+            # Log metrics
+            self.metrics.record_success(time.time() - start_time)
+            
+            return Response(success=True, data=result)
+            
+        except Exception as e:
+            self.metrics.record_error(time.time() - start_time, str(e))
+            self.logger.error(f"Request failed: {e}")
+            raise
+```
+
+### **API Standards (BẮT BUỘC)**
+```python
+# API Response Format
+class APIResponse:
+    def __init__(self, success: bool, data: Any = None, 
+                 message: str = "", error_code: str = None):
+        self.success = success
+        self.data = data
+        self.message = message
+        self.error_code = error_code
+        self.timestamp = datetime.utcnow().isoformat()
+        self.request_id = str(uuid.uuid4())
+
+# Performance Monitoring
+class PerformanceMiddleware:
+    async def __call__(self, request: Request, call_next):
+        start_time = time.time()
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        
+        # Record performance metrics
+        if process_time > 0.1:  # Log slow requests
+            logger.warning(f"Slow request: {request.url} took {process_time}s")
+            
+        return response
+```
+
+---
+
+## 🔧 **TECHNICAL STANDARDS**
+
+### **Database Standards (BẮT BUỘC)**
+```sql
+-- Performance optimized schema
+CREATE TABLE robot_status (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    robot_id VARCHAR(50) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    position_x DECIMAL(10,3),
+    position_y DECIMAL(10,3),
+    battery_level INTEGER,
+    temperature DECIMAL(5,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for performance
+CREATE INDEX idx_robot_status_robot_id ON robot_status(robot_id);
+CREATE INDEX idx_robot_status_updated ON robot_status(updated_at);
+CREATE INDEX idx_robot_status_status ON robot_status(status);
+```
+
+### **Security Standards (BẮT BUỘC)**
+```python
+# Authentication Middleware
+class AuthMiddleware:
+    def __init__(self, jwt_secret: str):
+        self.jwt_secret = jwt_secret
+        
+    async def authenticate(self, request: Request) -> Optional[User]:
+        token = request.headers.get("Authorization")
+        if not token or not token.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Invalid token")
+            
+        try:
+            payload = jwt.decode(token[7:], self.jwt_secret, algorithms=["HS256"])
+            return await self.get_user(payload["user_id"])
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token expired")
+        except jwt.InvalidTokenError:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+# Input Validation
+class InputValidator:
+    @staticmethod
+    def validate_robot_command(command: Dict) -> bool:
+        required_fields = ["command_type", "parameters"]
+        if not all(field in command for field in required_fields):
+            raise ValueError("Missing required fields")
+            
+        if command["command_type"] not in ["move", "stop", "pause", "resume"]:
+            raise ValueError("Invalid command type")
+            
+        return True
+```
+
+### **Integration Standards (BẮT BUỘC)**
+```python
+# RS485 Communication Service
+class RS485CommunicationService:
+    def __init__(self, port: str = "/dev/ttyOHT485", baud_rate: int = 115200):
+        self.port = port
+        self.baud_rate = baud_rate
+        self.timeout = 1.0
+        self.retry_count = 3
+        
+    async def read_register(self, module_address: int, register_address: int) -> int:
+        """Read Modbus register with retry mechanism"""
+        for attempt in range(self.retry_count):
+            try:
+                # Implement Modbus RTU read
+                return await self._modbus_read(module_address, register_address)
+            except Exception as e:
+                if attempt == self.retry_count - 1:
+                    raise
+                await asyncio.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                
+    async def write_register(self, module_address: int, register_address: int, value: int) -> bool:
+        """Write Modbus register with validation"""
+        try:
+            # Implement Modbus RTU write
+            result = await self._modbus_write(module_address, register_address, value)
+            
+            # Verify write
+            read_value = await self.read_register(module_address, register_address)
+            return read_value == value
+        except Exception as e:
+            logger.error(f"Write register failed: {e}")
+            return False
+```
+
+---
+
+## 📊 **PERFORMANCE REQUIREMENTS**
+
+### **Response Time Targets (BẮT BUỘC)**
+```yaml
+Performance Targets:
+  API Endpoints:
+    GET /robot/status: "< 50ms"
+    POST /robot/control: "< 100ms"
+    GET /telemetry/current: "< 50ms"
+    POST /safety/emergency: "< 10ms"
+    
+  WebSocket Events:
+    Telemetry updates: "< 20ms"
+    Status changes: "< 50ms"
+    Alert notifications: "< 100ms"
+    
+  Database Operations:
+    Simple queries: "< 5ms"
+    Complex queries: "< 50ms"
+    Write operations: "< 10ms"
+    
+  System Performance:
+    CPU usage: "< 60%"
+    Memory usage: "< 3GB"
+    Network latency: "< 1ms"
+    Uptime: "> 99.9%"
+```
+
+### **Performance Monitoring (BẮT BUỘC)**
+```python
+# Performance Monitoring Service
+class PerformanceMonitor:
+    def __init__(self):
+        self.metrics = {}
+        self.alerts = []
+        
+    async def record_metric(self, metric_name: str, value: float, tags: Dict = None):
+        """Record performance metric"""
+        timestamp = time.time()
+        self.metrics[metric_name] = {
+            "value": value,
+            "timestamp": timestamp,
+            "tags": tags or {}
+        }
+        
+        # Check thresholds
+        await self.check_thresholds(metric_name, value)
+        
+    async def check_thresholds(self, metric_name: str, value: float):
+        """Check performance thresholds and generate alerts"""
+        thresholds = {
+            "api_response_time": 100,  # ms
+            "websocket_latency": 50,   # ms
+            "database_query_time": 10, # ms
+            "cpu_usage": 80,           # %
+            "memory_usage": 85         # %
+        }
+        
+        if metric_name in thresholds and value > thresholds[metric_name]:
+            alert = {
+                "metric": metric_name,
+                "value": value,
+                "threshold": thresholds[metric_name],
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            self.alerts.append(alert)
+            await self.send_alert(alert)
+```
+
+---
+
+## 🔒 **SECURITY REQUIREMENTS**
+
+### **Security Implementation (BẮT BUỘC)**
+```python
+# Security Configuration
+SECURITY_CONFIG = {
+    "jwt_secret": os.getenv("JWT_SECRET"),
+    "jwt_expiry": 3600,  # 1 hour
+    "password_min_length": 12,
+    "max_login_attempts": 5,
+    "lockout_duration": 1800,  # 30 minutes
+    "session_timeout": 86400,  # 24 hours
+    "rate_limit": {
+        "requests_per_minute": 1000,
+        "burst_limit": 100
+    }
+}
+
+# Security Middleware
+class SecurityMiddleware:
+    def __init__(self):
+        self.rate_limiter = RateLimiter()
+        self.input_validator = InputValidator()
+        
+    async def __call__(self, request: Request, call_next):
+        # Rate limiting
+        if not await self.rate_limiter.check_limit(request):
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+            
+        # Input validation
+        if request.method in ["POST", "PUT", "PATCH"]:
+            await self.input_validator.validate_request(request)
+            
+        # Security headers
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        
+        return response
+```
+
+---
+
+## 🔗 **INTEGRATION REQUIREMENTS**
+
+### **Firmware Integration (BẮT BUỘC)**
+```python
+# Firmware Integration Service
+class FirmwareIntegrationService:
+    def __init__(self):
+        self.rs485_service = RS485CommunicationService()
+        self.module_manager = ModuleManager()
+        
+    async def initialize_modules(self):
+        """Initialize and discover connected modules"""
+        modules = await self.module_manager.discover_modules()
+        for module_id, module_info in modules.items():
+            await self.validate_module(module_id, module_info)
+            
+    async def send_command(self, module_id: str, command: Dict) -> bool:
+        """Send command to firmware module"""
+        try:
+            # Validate command
+            self.validate_command(command)
+            
+            # Send via RS485
+            module_address = await self.module_manager.get_module_address(module_id)
+            register_address = self.get_command_register(command["type"])
+            value = self.encode_command(command)
+            
+            success = await self.rs485_service.write_register(
+                module_address, register_address, value
+            )
+            
+            if success:
+                await self.log_command(module_id, command, "success")
+            else:
+                await self.log_command(module_id, command, "failed")
+                
+            return success
+            
+        except Exception as e:
+            await self.log_command(module_id, command, "error", str(e))
+            raise
+```
+
+### **Frontend Integration (BẮT BUỘC)**
+```python
+# WebSocket Service
+class WebSocketService:
+    def __init__(self):
+        self.connections = set()
+        self.message_queue = asyncio.Queue()
+        
+    async def broadcast_telemetry(self, telemetry_data: Dict):
+        """Broadcast telemetry data to all connected clients"""
+        message = {
+            "type": "telemetry",
+            "data": telemetry_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        await self.broadcast_message(message)
+        
+    async def broadcast_status(self, status_data: Dict):
+        """Broadcast status changes to all connected clients"""
+        message = {
+            "type": "status_change",
+            "data": status_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        await self.broadcast_message(message)
+        
+    async def broadcast_alert(self, alert_data: Dict):
+        """Broadcast alerts to all connected clients"""
+        message = {
+            "type": "alert",
+            "data": alert_data,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        await self.broadcast_message(message)
+```
+
+---
+
+## 🧪 **TESTING REQUIREMENTS**
+
+### **Testing Standards (BẮT BUỘC)**
+```python
+# Test Base Class
+class BaseTestCase:
+    def setUp(self):
+        self.app = create_test_app()
+        self.client = TestClient(self.app)
+        self.db = create_test_database()
+        
+    async def test_api_performance(self, endpoint: str, method: str = "GET", 
+                                  data: Dict = None, max_time: float = 0.1):
+        """Test API endpoint performance"""
+        start_time = time.time()
+        
+        if method == "GET":
+            response = self.client.get(endpoint)
+        elif method == "POST":
+            response = self.client.post(endpoint, json=data)
+        elif method == "PUT":
+            response = self.client.put(endpoint, json=data)
+        elif method == "DELETE":
+            response = self.client.delete(endpoint)
+            
+        response_time = time.time() - start_time
+        
+        self.assertLess(response_time, max_time, 
+                       f"Response time {response_time}s exceeds limit {max_time}s")
+        self.assertEqual(response.status_code, 200)
+
+# Performance Test
+class PerformanceTestCase(BaseTestCase):
+    async def test_robot_status_endpoint(self):
+        """Test robot status endpoint performance"""
+        await self.test_api_performance("/api/v1/robot/status", max_time=0.05)
+        
+    async def test_telemetry_endpoint(self):
+        """Test telemetry endpoint performance"""
+        await self.test_api_performance("/api/v1/telemetry/current", max_time=0.05)
+        
+    async def test_emergency_stop(self):
+        """Test emergency stop performance"""
+        await self.test_api_performance("/api/v1/safety/emergency", 
+                                       method="POST", max_time=0.01)
+```
+
+---
+
+## 📈 **MONITORING REQUIREMENTS**
+
+### **Monitoring Implementation (BẮT BUỘC)**
+```python
+# Monitoring Service
+class MonitoringService:
+    def __init__(self):
+        self.metrics_collector = MetricsCollector()
+        self.alert_manager = AlertManager()
+        self.health_checker = HealthChecker()
+        
+    async def start_monitoring(self):
+        """Start all monitoring services"""
+        # Start metrics collection
+        asyncio.create_task(self.metrics_collector.start())
+        
+        # Start health checks
+        asyncio.create_task(self.health_checker.start())
+        
+        # Start alert monitoring
+        asyncio.create_task(self.alert_manager.start())
+        
+    async def record_system_metrics(self):
+        """Record system performance metrics"""
+        # CPU usage
+        cpu_percent = psutil.cpu_percent(interval=1)
+        await self.metrics_collector.record("system.cpu_usage", cpu_percent)
+        
+        # Memory usage
+        memory = psutil.virtual_memory()
+        await self.metrics_collector.record("system.memory_usage", memory.percent)
+        
+        # Disk usage
+        disk = psutil.disk_usage('/')
+        await self.metrics_collector.record("system.disk_usage", disk.percent)
+        
+        # Network I/O
+        network = psutil.net_io_counters()
+        await self.metrics_collector.record("system.network_bytes_sent", network.bytes_sent)
+        await self.metrics_collector.record("system.network_bytes_recv", network.bytes_recv)
+```
+
+---
+
+## 🚀 **DEPLOYMENT REQUIREMENTS**
+
+### **Deployment Standards (BẮT BUỘC)**
+```yaml
+# Docker Configuration
+Dockerfile:
+  Base Image: "python:3.11-slim"
+  Security: "Non-root user execution"
+  Optimization: "Multi-stage build"
+  Health Check: "HTTP health endpoint"
+  
+# Docker Compose
+docker-compose.yml:
+  Services:
+    backend:
+      build: "."
+      ports: ["8000:8000"]
+      environment:
+        - ENVIRONMENT=production
+        - DATABASE_URL=sqlite:///oht50.db
+        - REDIS_URL=redis://redis:6379
+      depends_on: ["redis", "database"]
+      restart: "unless-stopped"
+      
+    redis:
+      image: "redis:7-alpine"
+      ports: ["6379:6379"]
+      volumes: ["redis_data:/data"]
+      
+    database:
+      image: "sqlite:latest"
+      volumes: ["db_data:/var/lib/sqlite"]
+      
+# Deployment Script
+deploy.sh:
+  - "Build Docker images"
+  - "Run security scans"
+  - "Execute tests"
+  - "Deploy to staging"
+  - "Run integration tests"
+  - "Deploy to production"
+  - "Verify deployment"
+  - "Setup monitoring"
+```
+
+---
+
+## 📚 **DOCUMENTATION REQUIREMENTS**
+
+### **Documentation Standards (BẮT BUỘC)**
+```markdown
+# API Documentation Template
+
+## Endpoint: GET /api/v1/robot/status
+
+### Description
+Get current robot status and telemetry data.
+
+### Performance Requirements
+- Response time: < 50ms
+- Throughput: 1000+ requests/second
+- Availability: > 99.9%
+
+### Request
+```http
+GET /api/v1/robot/status
+Authorization: Bearer <token>
+```
+
+### Response
+```json
+{
+  "success": true,
+  "data": {
+    "robot_id": "OHT-50-001",
+    "status": "idle",
+    "position": {"x": 150.5, "y": 200.3},
+    "battery_level": 87,
+    "temperature": 42.5
+  },
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### Error Codes
+- 401: Unauthorized
+- 500: Internal Server Error
+
+### Security
+- Authentication required
+- Rate limited: 1000 requests/minute
+- Audit logged: Yes
+```
+
+---
+
+## 🔍 **QUALITY CONTROL CHECKLIST**
+
+### **Code Review Checklist (MUST PASS)**
+```
+□ Performance requirements met
+□ Security implementation complete
+□ Error handling comprehensive
+□ Logging và monitoring added
+□ Tests written và passing
+□ Documentation updated
+□ Code follows standards
+□ Integration tested
+□ Performance tested
+□ Security scanned
+```
+
+### **Deployment Checklist (MUST PASS)**
+```
+□ All tests passing
+□ Performance benchmarks met
+□ Security scan clean
+□ Documentation complete
+□ Monitoring configured
+□ Backup systems ready
+□ Rollback plan prepared
+□ Team notified
+□ Stakeholders informed
+□ Production ready
+```
+
+---
+
+## 🚨 **COMMON MISTAKES TO AVOID**
+
+### **PERFORMANCE MISTAKES**
+```
+❌ Ignoring performance requirements
+❌ Not monitoring response times
+❌ Missing database indexes
+❌ Inefficient queries
+❌ No caching strategy
+❌ Blocking operations in async code
+```
+
+### **SECURITY MISTAKES**
+```
+❌ Missing input validation
+❌ No authentication checks
+❌ Hardcoded secrets
+❌ Missing audit logging
+❌ No rate limiting
+❌ Insecure communication
+```
+
+### **INTEGRATION MISTAKES**
+```
+❌ Not testing firmware integration
+❌ Missing error handling
+❌ No retry mechanisms
+❌ Inconsistent data formats
+❌ No monitoring for external services
+❌ Missing fallback mechanisms
+```
+
+---
+
+## 📁 **FILE STRUCTURE & NAMING**
+
+### **File Organization**
+```
+backend/
+├── app/
+│   ├── api/
+│   │   ├── v1/
+│   │   │   ├── robot.py
+│   │   │   ├── telemetry.py
+│   │   │   ├── safety.py
+│   │   │   └── lidar.py
+│   │   └── websocket.py
+│   ├── services/
+│   │   ├── robot_control.py
+│   │   ├── telemetry.py
+│   │   ├── safety.py
+│   │   └── lidar_processing.py
+│   ├── models/
+│   │   ├── robot.py
+│   │   ├── telemetry.py
+│   │   └── safety.py
+│   └── core/
+│       ├── security.py
+│       ├── monitoring.py
+│       └── integration.py
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── performance/
+├── docs/
+│   ├── api.md
+│   ├── deployment.md
+│   └── monitoring.md
+└── docker/
+    ├── Dockerfile
+    └── docker-compose.yml
+```
+
+### **Naming Conventions**
+```
+- Service files: {service_name}_service.py
+- API files: {resource_name}.py
+- Model files: {entity_name}.py
+- Test files: test_{module_name}.py
+- Config files: {environment}.yaml
+```
+
+---
+
+## 🎯 **SUCCESS METRICS**
+
+### **Performance Success**
+```
+✅ 100% API endpoints meet performance targets
+✅ 100% WebSocket events meet latency requirements
+✅ 100% Database queries meet response time targets
+✅ 0 performance regressions
+✅ 0 critical performance issues
+```
+
+### **Security Success**
+```
+✅ 100% security requirements implemented
+✅ 0 security vulnerabilities
+✅ 100% authentication/authorization working
+✅ 0 unauthorized access incidents
+✅ 100% audit logging complete
+```
+
+### **Integration Success**
+```
+✅ 100% firmware integration working
+✅ 100% frontend integration complete
+✅ 100% real-time communication stable
+✅ 0 integration failures
+✅ 100% error recovery working
+```
+
+---
+
+## 🚀 **IMPLEMENTATION GUIDELINES**
+
+### **For Backend Team Lead**
+1. **Always prioritize performance và security**
+2. **Review architecture decisions carefully**
+3. **Ensure comprehensive testing coverage**
+4. **Monitor system performance continuously**
+5. **Maintain technical documentation**
+
+### **For Core Developers**
+1. **Follow performance requirements strictly**
+2. **Implement comprehensive error handling**
+3. **Add logging và monitoring to all services**
+4. **Write tests for all functionality**
+5. **Document code và APIs thoroughly**
+
+### **For DevOps Engineer**
+1. **Automate deployment processes**
+2. **Monitor system performance**
+3. **Ensure security compliance**
+4. **Maintain backup systems**
+5. **Optimize infrastructure**
+
+---
+
+**🚨 REMEMBER: Performance và Security are NOT optional - they're the foundation of reliable backend systems!**
+
+**Changelog v1.0:**
+- ✅ Created comprehensive backend development rules
+- ✅ Added performance requirements và monitoring
+- ✅ Added security standards và implementation
+- ✅ Added integration requirements
+- ✅ Added testing standards
+- ✅ Added deployment guidelines
+- ✅ Added quality control checklist
+
+**🚨 Lưu ý:** Backend team phải tuân thủ strict performance, security, và integration standards để đảm bảo system reliability và safety.
