@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import settings
-from app.core.monitoring import setup_monitoring
+# from app.core.monitoring import setup_monitoring
 from app.api.v1 import router as api_v1_router
 
 
@@ -39,8 +39,8 @@ def create_app() -> FastAPI:
     )
     
     # Setup monitoring
-    if settings.enable_metrics:
-        setup_monitoring(app)
+    # if settings.enable_metrics:
+    #     setup_monitoring(app)
     
     # Include API routers
     app.include_router(api_v1_router, prefix="/api/v1")
