@@ -1,11 +1,9 @@
 """
-Configuration management for OHT-50 Backend
+Configuration settings for OHT-50 Backend
 """
 
-import os
-from typing import Optional
+from typing import List
 from pydantic_settings import BaseSettings
-from pydantic import Field
 
 
 class Settings(BaseSettings):
@@ -14,55 +12,44 @@ class Settings(BaseSettings):
     # Application
     app_name: str = "OHT-50 Backend"
     app_version: str = "1.0.0"
-    debug: bool = Field(default=False, env="DEBUG")
+    debug: bool = False
     
     # Server
-    host: str = Field(default="0.0.0.0", env="HOST")
-    port: int = Field(default=8000, env="PORT")
+    host: str = "0.0.0.0"
+    port: int = 8000
+    max_workers: int = 1
     
     # Database
-    database_url: str = Field(
-        default="sqlite+aiosqlite:///./oht50.db",
-        env="DATABASE_URL"
-    )
-    
-    # Redis
-    redis_url: str = Field(
-        default="redis://localhost:6379",
-        env="REDIS_URL"
-    )
+    database_url: str = "sqlite+aiosqlite:///./oht50.db"
+    database_echo: bool = False
     
     # Security
-    jwt_secret: str = Field(default="your-secret-key-change-in-production", env="JWT_SECRET")
-    jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
-    jwt_expiry: int = Field(default=3600, env="JWT_EXPIRY")  # 1 hour
+    secret_key: str = "your-secret-key-here"
+    jwt_secret: str = "your-secret-key-here"
+    jwt_algorithm: str = "HS256"
+    jwt_expiry_minutes: int = 30
     
-    # Rate Limiting
-    rate_limit_requests: int = Field(default=1000, env="RATE_LIMIT_REQUESTS")
-    rate_limit_window: int = Field(default=60, env="RATE_LIMIT_WINDOW")  # 1 minute
-    
-    # Hardware Integration
-    rs485_port: str = Field(default="/dev/ttyOHT485", env="RS485_PORT")
-    rs485_baud_rate: int = Field(default=115200, env="RS485_BAUD_RATE")
-    rs485_timeout: float = Field(default=1.0, env="RS485_TIMEOUT")
-    
-    # Performance
-    max_workers: int = Field(default=4, env="MAX_WORKERS")
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    # API
+    api_prefix: str = "/api/v1"
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080"]
     
     # Monitoring
-    enable_metrics: bool = Field(default=True, env="ENABLE_METRICS")
-    metrics_port: int = Field(default=9090, env="METRICS_PORT")
+    enable_metrics: bool = True
+    prometheus_port: int = 9090
+    log_level: str = "INFO"
+    
+    # Firmware Integration
+    firmware_url: str = "http://localhost:8081"
+    firmware_websocket_url: str = "ws://localhost:8081/ws"
+    firmware_timeout: int = 10
+    
+    # Performance
+    max_connections: int = 100
+    request_timeout: int = 30
     
     class Config:
         env_file = ".env"
-        case_sensitive = False
 
 
 # Global settings instance
 settings = Settings()
-
-
-def get_settings() -> Settings:
-    """Get application settings"""
-    return settings

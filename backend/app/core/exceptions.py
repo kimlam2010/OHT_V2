@@ -5,33 +5,48 @@ Custom exceptions for OHT-50 Backend
 from fastapi import HTTPException, status
 
 
-class OHT50Exception(Exception):
-    """Base exception for OHT-50 Backend"""
+class BackendException(Exception):
+    """Base exception for backend errors"""
     pass
 
 
-class RobotControlException(OHT50Exception):
-    """Exception for robot control errors"""
+class DatabaseException(BackendException):
+    """Database operation failed"""
     pass
 
 
-class RS485CommunicationException(OHT50Exception):
-    """Exception for RS485 communication errors"""
+class AuthenticationException(BackendException):
+    """Authentication failed"""
     pass
 
 
-class SafetyException(OHT50Exception):
-    """Exception for safety system errors"""
+class AuthorizationException(BackendException):
+    """Authorization failed"""
     pass
 
 
-class TelemetryException(OHT50Exception):
-    """Exception for telemetry errors"""
+class ValidationException(BackendException):
+    """Data validation failed"""
     pass
 
 
-class ConfigurationException(OHT50Exception):
-    """Exception for configuration errors"""
+class ConfigurationException(BackendException):
+    """Configuration error"""
+    pass
+
+
+class MonitoringException(BackendException):
+    """Monitoring system error"""
+    pass
+
+
+class FirmwareCommunicationException(BackendException):
+    """Firmware communication failed"""
+    pass
+
+
+class RS485CommunicationException(BackendException):
+    """RS485 communication failed"""
     pass
 
 

@@ -1,23 +1,23 @@
 """
-API v1 package for OHT-50 Backend
+API v1 Router Aggregation
+
+This module aggregates all v1 API routers into a single router.
 """
 
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/v1", tags=["v1"])
+from app.api.v1 import auth, robot, telemetry, safety, config, monitoring
 
-# Import and include all v1 routers here
-from .robot import router as robot_router
-# from .telemetry import router as telemetry_router
-# from .safety import router as safety_router
-# from .config import router as config_router
-# from .auth import router as auth_router
+# Create main v1 router
+router = APIRouter(prefix="/api/v1")
 
-router.include_router(robot_router)
-# router.include_router(telemetry_router)
-# router.include_router(safety_router)
-# router.include_router(config_router)
-# router.include_router(auth_router)
+# Include all v1 routers
+router.include_router(auth.router, tags=["authentication"])
+router.include_router(robot.router, tags=["robot"])
+router.include_router(telemetry.router, tags=["telemetry"])
+router.include_router(safety.router, tags=["safety"])
+router.include_router(config.router, tags=["configuration"])
+router.include_router(monitoring.router, tags=["monitoring"])
 
 @router.get("/")
 async def v1_root():
