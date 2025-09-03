@@ -38,6 +38,24 @@ class Settings(BaseSettings):
     prometheus_port: int = 9090
     log_level: str = "INFO"
     
+    # Redis
+    redis_url: str = "redis://localhost:6379"
+    
+    # JWT Settings
+    jwt_expiry: str = "3600"
+    
+    # Rate Limiting
+    rate_limit_requests: str = "1000"
+    rate_limit_window: str = "60"
+    
+    # RS485 Settings
+    rs485_port: str = "/dev/ttyOHT485"
+    rs485_baud_rate: str = "115200"
+    rs485_timeout: str = "1.0"
+    
+    # Metrics
+    metrics_port: str = "9090"
+    
     # Firmware Integration
     firmware_url: str = "http://localhost:8081"
     firmware_websocket_url: str = "ws://localhost:8081/ws"

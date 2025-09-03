@@ -58,14 +58,20 @@ class AuditLogger:
             True if logged successfully, False otherwise
         """
         try:
+            # Store event_type in details since it's not a field in AuditLog model
+            audit_details = details or {}
+            if event_type:
+                audit_details["event_type"] = event_type
+            if user_agent:
+                audit_details["user_agent"] = user_agent
+            
             audit_log = AuditLog(
-                event_type=event_type,
                 user_id=user_id,
                 resource=resource,
                 action=action,
-                details=details or {},
+                details=audit_details,
                 ip_address=ip_address,
-                user_agent=user_agent,
+                success=True,  # Default to success for security events
                 timestamp=datetime.utcnow()
             )
             
@@ -150,12 +156,16 @@ class AuditLogger:
     async def log_system_event(self, event_type: str, details: Dict[str, Any], user_id: Optional[int] = None) -> bool:
         """Log system-level events"""
         try:
+            # Store event_type in details since it's not a field in AuditLog model
+            system_details = details or {}
+            system_details["event_type"] = event_type
+            
             audit_log = AuditLog(
-                event_type=event_type,
-                user_id=user_id,
+                user_id=user_id or 0,  # Use 0 for system events without user
                 resource="system",
                 action="system_event",
-                details=details,
+                details=system_details,
+                success=True,  # Default to success for system events
                 timestamp=datetime.utcnow()
             )
             

@@ -179,8 +179,8 @@ class UserManagementService:
                 # Hash new password
                 update_data["password_hash"] = get_password_hash(user_data.password)
                 
-            if user_data.is_active is not None:
-                update_data["is_active"] = user_data.is_active
+            # Note: UserUpdate schema doesn't have is_active field
+            # This field is handled separately through activate_user/deactivate_user methods
                 
             # Add update timestamp
             update_data["updated_at"] = datetime.utcnow()

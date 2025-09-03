@@ -168,6 +168,88 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail="Failed to get user information"
         )
 
+async def create_default_roles(db):
+    """Create default roles in database if they don't exist"""
+    try:
+        from sqlalchemy import text
+        
+        # Check if admin role exists
+        result = await db.execute(
+            text("SELECT id FROM roles WHERE role_name = 'admin'")
+        )
+        if result.fetchone() is None:
+            await db.execute(text("""
+                INSERT INTO roles (role_name, description, permissions, is_active, created_at, updated_at) 
+                VALUES ('admin', 'Administrator role', '["robot", "telemetry", "safety", "config", "users", "audit"]', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """))
+            await db.commit()
+            logger.info("Admin role created successfully")
+
+        # Check if operator role exists
+        result = await db.execute(
+            text("SELECT id FROM roles WHERE role_name = 'operator'")
+        )
+        if result.fetchone() is None:
+            await db.execute(text("""
+                INSERT INTO roles (role_name, description, permissions, is_active, created_at, updated_at) 
+                VALUES ('operator', 'Operator role', '["robot", "telemetry", "safety"]', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """))
+            await db.commit()
+            logger.info("Operator role created successfully")
+
+        # Check if viewer role exists
+        result = await db.execute(
+            text("SELECT id FROM roles WHERE role_name = 'viewer'")
+        )
+        if result.fetchone() is None:
+            await db.execute(text("""
+                INSERT INTO roles (role_name, description, permissions, is_active, created_at, updated_at) 
+                VALUES ('viewer', 'Viewer role', '["robot", "telemetry", "safety", "config"]', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """))
+            await db.commit()
+            logger.info("Viewer role created successfully")
+
+        logger.info("Default roles created successfully")
+        
+    except Exception as e:
+        logger.error(f"Failed to create default roles: {e}")
+        await db.rollback()
+        raise
+
+async def create_default_admin_user(db):
+    """Create default admin user in database"""
+    try:
+        from sqlalchemy import text
+        
+        # Check if admin user already exists
+        result = await db.execute(
+            text("SELECT id FROM users WHERE username = 'admin'")
+        )
+        
+        if result.fetchone() is None:
+            # Create admin user
+            admin_password_hash = get_password_hash("admin123")
+            await db.execute(text("""
+                INSERT INTO users (username, email, password_hash, role, is_active, created_at, updated_at)
+                VALUES (:username, :email, :password_hash, :role, :is_active, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """), {
+                "username": "admin",
+                "email": "admin@oht50.local",
+                "password_hash": admin_password_hash,
+                "role": "admin",
+                "is_active": True
+            })
+            
+            await db.commit()
+            logger.info("Default admin user created successfully")
+        else:
+            logger.info("Admin user already exists")
+            
+    except Exception as e:
+        logger.error(f"Failed to create default admin user: {e}")
+        await db.rollback()
+        raise
+
 def require_permission(resource: str, permission: str):
     """RBAC permission decorator"""
     async def permission_checker(
