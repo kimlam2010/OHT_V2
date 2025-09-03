@@ -6,6 +6,7 @@ This is the main entry point for the OHT-50 backend system.
 
 import os
 import logging
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,13 +45,23 @@ async def lifespan(app: FastAPI):
             await create_test_admin_user()
             logger.info("✅ Test admin user created")
         
-        # Start monitoring service
-        await monitoring_service.start_monitoring(interval_seconds=30)
-        logger.info("✅ Monitoring service started")
+        # Start monitoring service (with timeout)
+        try:
+            await asyncio.wait_for(monitoring_service.start_monitoring(interval_seconds=30), timeout=10.0)
+            logger.info("✅ Monitoring service started")
+        except asyncio.TimeoutError:
+            logger.warning("⚠️ Monitoring service startup timeout, continuing without it")
+        except Exception as e:
+            logger.warning(f"⚠️ Monitoring service failed to start: {e}, continuing without it")
         
-        # Start WebSocket service
-        await websocket_service.start()
-        logger.info("✅ WebSocket service started")
+        # Start WebSocket service (skip in development if hangs)
+        try:
+            await asyncio.wait_for(websocket_service.start(), timeout=10.0)
+            logger.info("✅ WebSocket service started")
+        except asyncio.TimeoutError:
+            logger.warning("⚠️ WebSocket service startup timeout, continuing without it")
+        except Exception as e:
+            logger.warning(f"⚠️ WebSocket service failed to start: {e}, continuing without it")
         
         logger.info("🚀 OHT-50 Backend started successfully")
         

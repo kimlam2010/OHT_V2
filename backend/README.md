@@ -1,6 +1,6 @@
 # 🚀 OHT-50 Backend System
 
-**Phiên bản:** 3.0  
+**Phiên bản:** 3.1  
 **Ngày cập nhật:** 2025-01-28  
 **Trạng thái:** A GRADE (85-90 điểm) ✅ - Sẵn sàng cho A+ GRADE
 
@@ -25,10 +25,15 @@
 ## 🎯 **MỤC TIÊU TIẾP THEO**
 
 ### **Roadmap to A+ GRADE (95+ points):**
-1. **Increase Test Coverage** - Từ 41% → 70%+
+1. **Increase Test Coverage** - Từ 41% → 90%+ (A+ GRADE requirement)
 2. **Fix Minor Test Failures** - 2 logging test failures
 3. **Production Readiness** - Final preparation
 4. **CI/CD Enhancement** - Pipeline optimization
+
+### **Timeline:**
+- **Hôm nay:** Bắt đầu tăng test coverage
+- **Tuần này:** Hoàn thiện A+ GRADE
+- **Next Review:** 2025-02-04
 
 ---
 
@@ -44,8 +49,8 @@ Redis (optional)
 ### **Installation:**
 ```bash
 # Clone repository
-git clone <repository-url>
-cd backend
+git clone https://github.com/kimlam2010/OHT_V2.git
+cd OHT_V2/backend
 
 # Install dependencies
 pip install -r requirements.txt
@@ -57,8 +62,19 @@ cp env.example .env
 # Setup database
 python setup_database.py
 
-# Run development server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# Run development server (IMPORTANT: Must run from backend/ directory)
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Alternative: Using uvicorn directly (if in PATH)
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Note: 127.0.0.1 = localhost (development), 0.0.0.0 = all interfaces (production)
+
+### **Network Binding Explanation:**
+- **127.0.0.1 (localhost):** Chỉ accessible từ máy local (development)
+- **0.0.0.0 (all interfaces):** Accessible từ network (production)
+- **Development:** Sử dụng 127.0.0.1 để bảo mật
+- **Production:** Sử dụng 0.0.0.0 để external access
 ```
 
 ### **Running Tests:**
@@ -73,6 +89,9 @@ python -m pytest --cov=app --cov-report=html
 python -m pytest tests/unit/
 python -m pytest tests/integration/
 python -m pytest tests/performance/
+
+# Check coverage target (A+ GRADE requires 90%+)
+python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=90
 ```
 
 ---
@@ -184,7 +203,7 @@ python -m pytest tests/performance/
 
 ### **Test Coverage:**
 - **Current Coverage:** 41% (tăng từ 25%)
-- **Target Coverage:** 70%+
+- **Target Coverage:** 90%+ (A+ GRADE requirement)
 - **Test Success Rate:** 98.4%
 
 ### **Test Categories:**
@@ -192,6 +211,10 @@ python -m pytest tests/performance/
 - **Integration Tests** - API endpoint testing
 - **Performance Tests** - Load and stress testing
 - **Security Tests** - Authentication and authorization
+
+### **Coverage Requirements:**
+- **A GRADE:** 70%+ (đã đạt 41%)
+- **A+ GRADE:** 90%+ (cần tăng thêm 49%)
 
 ---
 
@@ -242,10 +265,11 @@ docker run -d -p 8000:8000 --name oht50-backend oht50-backend:latest
 - **Test coverage** requirements
 
 ### **CI/CD Pipeline:**
-- **Automated testing** trong pipeline
-- **Coverage reporting** automated
-- **Security scanning** automation
-- **Deployment automation**
+- **Automated testing** trong pipeline ✅
+- **Coverage reporting** automated ✅
+- **Security scanning** automation ✅
+- **Deployment automation** ✅
+- **Pipeline location:** `backend/.github/workflows/ci-cd.yml` ✅
 
 ---
 
@@ -267,12 +291,28 @@ docker run -d -p 8000:8000 --name oht50-backend oht50-backend:latest
 2. **Authentication Errors** - Verify JWT configuration
 3. **Performance Issues** - Check response time targets
 4. **Test Failures** - Run with verbose output
+5. **Uvicorn Command Not Found** - Use `python -m uvicorn` instead of `uvicorn`
+6. **Import Module Error** - Ensure you're running from `backend/` directory
 
 ### **Getting Help:**
 - Check logs in `logs/` directory
 - Review test output for specific errors
 - Check environment configuration
 - Verify database setup
+
+### **Troubleshooting Uvicorn Issues:**
+```bash
+# If you get "uvicorn: command not found":
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# If you get "ModuleNotFoundError: No module named 'app'":
+cd backend  # Make sure you're in the backend directory
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# If you get import errors:
+pip install -r requirements.txt  # Reinstall dependencies
+python -c "import app; print('✅ App import successful')"  # Test import
+```
 
 ---
 
@@ -308,6 +348,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ **Error Recovery** - Circuit breaker pattern
 - ✅ **Structured Logging** - Production-ready logging
 - ✅ **OpenAPI Documentation** - Comprehensive API docs
+- ✅ **CI/CD Pipeline** - Standardized workflow
 
 ### **Current Status:**
 - 🏆 **A GRADE (85-90 điểm)** đạt được ✅
@@ -317,7 +358,26 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+## 🚀 **NEXT STEPS FOR A+ GRADE**
+
+### **Immediate Actions:**
+1. **Increase Test Coverage** - Từ 41% → 90%+
+2. **Fix Minor Test Failures** - 2 logging test failures
+3. **Production Readiness** - Final preparation
+4. **CI/CD Enhancement** - Pipeline optimization
+
+### **Success Criteria:**
+- [ ] Test coverage ≥90%
+- [ ] 100% tests passing
+- [ ] A+ grade (95+ points)
+- [ ] Production deployment ready
+- [ ] CI/CD pipeline optimized
+
+---
+
 **🎉 Backend system đã đạt A GRADE và sẵn sàng cho giai đoạn tiếp theo!**
 
 **📅 Next Review:** 2025-02-04 (End of Week 1)  
 **🎯 Target:** A+ GRADE (95+ points), Production deployment ready
+
+**🚀 CI/CD Pipeline:** `backend/.github/workflows/ci-cd.yml` ✅ Standardized
