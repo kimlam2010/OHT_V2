@@ -19,11 +19,14 @@ class RobotCommand(BaseModel):
 
 
 class RobotStatusResponse(BaseModel):
+    robot_id: str
     status: str
     position: Dict[str, float]
     battery_level: int
     temperature: float
     timestamp: str
+    created_at: str
+    updated_at: str
 
 
 @router.get("/status", response_model=RobotStatusResponse)

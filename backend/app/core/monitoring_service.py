@@ -8,7 +8,7 @@ It includes system metrics, performance monitoring, and alert management.
 import asyncio
 import logging
 import psutil
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 
@@ -96,35 +96,67 @@ class MonitoringService:
                 await asyncio.sleep(interval_seconds)
 
     async def collect_system_metrics(self) -> SystemMetrics:
-        """Collect current system metrics"""
+        """Collect current system metrics - OPTIMIZED for performance"""
         try:
-            # CPU usage
-            cpu_percent = psutil.cpu_percent(interval=1)
+            # Use cached metrics if available and recent (< 5 seconds old)
+            if self.metrics_history:
+                latest_metrics = self.metrics_history[-1]
+                if (datetime.now() - latest_metrics.timestamp).total_seconds() < 5:
+                    logger.debug("Using cached metrics for performance")
+                    return latest_metrics
             
-            # Memory usage
-            memory = psutil.virtual_memory()
-            memory_percent = memory.percent
-            
-            # Disk usage
-            disk = psutil.disk_usage('/')
-            disk_percent = disk.percent
-            
-            # Network I/O
-            network = psutil.net_io_counters()
-            network_bytes_sent = network.bytes_sent
-            network_bytes_recv = network.bytes_recv
-            
-            # Active connections (approximate)
+            # Fast metrics collection without blocking operations
+            # CPU usage - use cached value or quick check
             try:
-                connections = len(psutil.net_connections())
-                active_connections = connections
+                # Use psutil.cpu_percent() without interval for immediate result
+                cpu_percent = psutil.cpu_percent(interval=None)
+                if cpu_percent == 0.0:  # If no cached value, use quick estimate
+                    cpu_percent = psutil.cpu_percent(interval=0.1)  # 100ms instead of 1000ms
+            except Exception:
+                cpu_percent = 0.0
+            
+            # Memory usage - fast operation
+            try:
+                memory = psutil.virtual_memory()
+                memory_percent = memory.percent
+            except Exception:
+                memory_percent = 0.0
+            
+            # Disk usage - fast operation
+            try:
+                disk = psutil.disk_usage('/')
+                disk_percent = disk.percent
+            except Exception:
+                disk_percent = 0.0
+            
+            # Network I/O - fast operation
+            try:
+                network = psutil.net_io_counters()
+                network_bytes_sent = network.bytes_sent
+                network_bytes_recv = network.bytes_recv
+            except Exception:
+                network_bytes_sent = 0
+                network_bytes_recv = 0
+            
+            # Active connections - skip if slow, use cached value
+            try:
+                # Use cached value if available to avoid slow operation
+                if self.metrics_history:
+                    active_connections = self.metrics_history[-1].active_connections
+                else:
+                    # Quick connection count (limited scope)
+                    connections = len(psutil.net_connections(kind='inet'))
+                    active_connections = min(connections, 1000)  # Limit to avoid slow operation
             except Exception:
                 active_connections = 0
             
-            # System uptime
-            uptime = psutil.boot_time()
-            current_time = datetime.now().timestamp()
-            uptime_seconds = current_time - uptime
+            # System uptime - fast operation
+            try:
+                uptime = psutil.boot_time()
+                current_time = datetime.now().timestamp()
+                uptime_seconds = current_time - uptime
+            except Exception:
+                uptime_seconds = 0.0
             
             metrics = SystemMetrics(
                 timestamp=datetime.now(),

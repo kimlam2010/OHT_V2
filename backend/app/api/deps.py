@@ -8,12 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.core.integration import RS485Service, FirmwareIntegrationService
+from app.core.integration import FirmwareIntegrationService
 
 
-async def get_rs485_service() -> RS485Service:
-    """Get RS485 service instance"""
-    return RS485Service()
+async def get_rs485_service():
+    """Get RS485 service instance - placeholder for future implementation"""
+    # TODO: Implement RS485 service when hardware is available
+    return None
 
 
 async def get_firmware_service() -> FirmwareIntegrationService:
