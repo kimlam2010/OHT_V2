@@ -15,16 +15,16 @@ class Robot(Base):
     robot_id = Column(String(50), unique=True, index=True, nullable=False, default="OHT-50-001")
     status = Column(String(20), nullable=False, default="idle")  # idle, moving, paused, error, estop
     mode = Column(String(20), nullable=False, default="auto")  # auto, manual, semi
-    position_x = Column(Float, nullable=True)
-    position_y = Column(Float, nullable=True)
-    position_z = Column(Float, nullable=True)
-    velocity_x = Column(Float, nullable=True)
-    velocity_y = Column(Float, nullable=True)
-    velocity_z = Column(Float, nullable=True)
+    position_x = Column(Float, nullable=True)   # type: ignore
+    position_y = Column(Float, nullable=True)   # type: ignore
+    position_z = Column(Float, nullable=True)   # type: ignore
+    velocity_x = Column(Float, nullable=True)   # type: ignore
+    velocity_y = Column(Float, nullable=True)   # type: ignore
+    velocity_z = Column(Float, nullable=True)   # type: ignore
     battery_level = Column(Integer, nullable=True)  # percentage
-    battery_voltage = Column(Float, nullable=True)
-    temperature = Column(Float, nullable=True)
-    speed = Column(Float, nullable=True)
+    battery_voltage = Column(Float, nullable=True)   # type: ignore
+    temperature = Column(Float, nullable=True)   # type: ignore
+    speed = Column(Float, nullable=True)   # type: ignore
     safety_status = Column(String(20), default="safe")
     last_command_id = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

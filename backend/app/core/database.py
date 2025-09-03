@@ -1,26 +1,25 @@
 """
-Database configuration for OHT-50 Backend
+Database configuration and connection management
 """
 
-import asyncio
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from typing import AsyncGenerator, Dict, Any
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.pool import QueuePool
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.pool import StaticPool, QueuePool
-from sqlalchemy import event
+from contextlib import asynccontextmanager
 
 from app.config import settings
 
-# Create async engine with connection pooling
+# Create async engine with optimized connection pooling
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
     poolclass=QueuePool,
-    pool_size=20,  # Number of connections to maintain
-    max_overflow=80,  # Additional connections when pool is full
-    pool_pre_ping=True,  # Validate connections before use
+    pool_size=10,  # Reduced from 20 for better performance
+    max_overflow=20,  # Reduced from 100 for better memory management
+    pool_pre_ping=True,
     pool_recycle=3600,  # Recycle connections every hour
-    connect_args={"check_same_thread": False} if "sqlite" in settings.database_url else {}
+    pool_timeout=30,  # Timeout for getting connection from pool
 )
 
 # Create async session factory
@@ -28,8 +27,8 @@ AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
+    autoflush=False,
     autocommit=False,
-    autoflush=False
 )
 
 # Base class for models
@@ -48,73 +47,109 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def init_db() -> None:
-    """Initialize database with all tables"""
-    async with engine.begin() as conn:
-        # Import all models to ensure they are registered
-        from app.models import robot, telemetry, safety, user
-        
-        # Create all tables
-        await conn.run_sync(Base.metadata.create_all)
-        
-        # Create indexes for performance
-        await create_indexes(conn)
+@asynccontextmanager
+async def get_db_context():
+    """Context manager for database sessions"""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
-async def create_indexes(conn) -> None:
-    """Create additional indexes for performance"""
-    # Robot status indexes
-    await conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_robot_status_robot_id 
-        ON robots(robot_id)
-    """)
-    await conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_robot_status_updated 
-        ON robots(updated_at)
-    """)
-    
-    # Telemetry indexes
-    await conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_telemetry_current_robot_timestamp 
-        ON telemetry_current(robot_id, timestamp)
-    """)
-    await conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_telemetry_history_robot_timestamp 
-        ON telemetry_history(robot_id, timestamp)
-    """)
-    
-    # Safety indexes
-    await conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_safety_logs_robot_timestamp 
-        ON safety_logs(robot_id, timestamp)
-    """)
-    await conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_safety_alerts_robot_status 
-        ON safety_alerts(robot_id, status)
-    """)
-    
-    # User indexes
-    await conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_user_sessions_token 
-        ON user_sessions(session_token)
-    """)
-    await conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_user_sessions_expires 
-        ON user_sessions(expires_at)
-    """)
-
-
-async def close_db() -> None:
-    """Close database connections"""
-    await engine.dispose()
-
-
-# Database health check
-async def check_db_health() -> bool:
-    """Check database connectivity"""
+async def init_db():
+    """Initialize database with optimized settings"""
     try:
-        async with AsyncSessionLocal() as session:
-            await session.execute("SELECT 1")
-            return True
-    except Exception:
-        return False
+        # Test connection
+        from sqlalchemy import text
+        async with engine.begin() as conn:
+            await conn.run_sync(lambda sync_conn: sync_conn.execute(text("SELECT 1")))
+        
+        print("Database connection established successfully")
+        
+        # Create tables if they don't exist
+        # Base is defined in this file, no need to import
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        
+        print("Database tables created/verified successfully")
+        
+    except Exception as e:
+        print(f"Database initialization failed: {e}")
+        raise
+
+
+async def close_db():
+    """Close database connections properly"""
+    try:
+        await engine.dispose()
+        print("Database connections closed successfully")
+    except Exception as e:
+        print(f"Error closing database connections: {e}")
+
+
+# Health check function
+async def check_db_health() -> Dict[str, Any]:
+    """Check database health and connection pool status"""
+    try:
+        from sqlalchemy import text
+        async with engine.begin() as conn:
+            await conn.run_sync(lambda sync_conn: sync_conn.execute(text("SELECT 1")))
+        
+        # Get pool status (simplified to avoid type issues)
+        pool_status = {
+            "pool_size": getattr(engine.pool, 'size', lambda: 0)(),
+            "checked_in": getattr(engine.pool, 'checkedin', lambda: 0)(),
+            "checked_out": getattr(engine.pool, 'checkedout', lambda: 0)(),
+            "overflow": getattr(engine.pool, 'overflow', lambda: 0)(),
+        }
+        
+        return {
+            "status": "healthy",
+            "pool_status": pool_status
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e)
+        }
+
+
+async def create_test_admin_user():
+    """Create test admin user for testing"""
+    try:
+        from sqlalchemy import text
+        from app.core.security import get_password_hash
+        
+        async with get_db_context() as db:
+            # Check if admin user exists
+            result = await db.execute(
+                text("SELECT id FROM users WHERE username = 'admin'")
+            )
+            admin_user = result.fetchone()
+            
+            if not admin_user:
+                # Create admin user
+                await db.execute(
+                    text("""
+                    INSERT INTO users (username, email, password_hash, role, is_active)
+                    VALUES (:username, :email, :password_hash, :role, :is_active)
+                    """),
+                    {
+                        "username": "admin",
+                        "email": "admin@test.com",
+                        "password_hash": get_password_hash("admin123"),
+                        "role": "admin",
+                        "is_active": True
+                    }
+                )
+                await db.commit()
+                print("Created test admin user: admin/admin123")
+            else:
+                print("Test admin user already exists")
+                
+    except Exception as e:
+        print(f"Failed to create test admin user: {e}")

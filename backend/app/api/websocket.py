@@ -1,174 +1,337 @@
 """
-WebSocket endpoints for OHT-50 Backend
+WebSocket API endpoints for real-time communication
+
+This module provides WebSocket endpoints for real-time monitoring and communication.
 """
 
-import json
 import logging
-from typing import Dict, Set
-from fastapi import WebSocket, WebSocketDisconnect, APIRouter
+from typing import Dict, Any
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
+from datetime import datetime
+
+from app.core.websocket_service import websocket_service, WebSocketMessage
+from app.core.monitoring_service import monitoring_service
+from app.core.production_rbac import require_permission
+from app.models.user import User
+from app.core.security import get_current_user
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
-
-
-class WebSocketManager:
-    """WebSocket connection manager"""
-    
-    def __init__(self):
-        self.active_connections: Set[WebSocket] = set()
-        self.connection_types: Dict[WebSocket, str] = {}  # client type
-    
-    async def connect(self, websocket: WebSocket, client_type: str = "general"):
-        """Accept WebSocket connection"""
-        await websocket.accept()
-        self.active_connections.add(websocket)
-        self.connection_types[websocket] = client_type
-        logger.info(f"WebSocket connected: {client_type}")
-    
-    def disconnect(self, websocket: WebSocket):
-        """Remove WebSocket connection"""
-        self.active_connections.discard(websocket)
-        self.connection_types.pop(websocket, None)
-        logger.info("WebSocket disconnected")
-    
-    async def send_personal_message(self, message: dict, websocket: WebSocket):
-        """Send message to specific WebSocket"""
-        try:
-            await websocket.send_text(json.dumps(message))
-        except Exception as e:
-            logger.error(f"Failed to send personal message: {e}")
-            self.disconnect(websocket)
-    
-    async def broadcast(self, message: dict, client_type: str = None):
-        """Broadcast message to all connections or specific type"""
-        disconnected = set()
-        
-        for websocket in self.active_connections:
-            if client_type is None or self.connection_types.get(websocket) == client_type:
-                try:
-                    await websocket.send_text(json.dumps(message))
-                except Exception as e:
-                    logger.error(f"Failed to broadcast message: {e}")
-                    disconnected.add(websocket)
-        
-        # Remove disconnected websockets
-        for websocket in disconnected:
-            self.disconnect(websocket)
-
-
-# Global WebSocket manager
-websocket_manager = WebSocketManager()
+router = APIRouter(tags=["websocket"])
 
 
 @router.get("/ws")
 async def get_websocket_page():
-    """WebSocket test page"""
-    html = """
+    """Get WebSocket test page"""
+    html_content = """
     <!DOCTYPE html>
     <html>
-        <head>
-            <title>OHT-50 WebSocket Test</title>
-        </head>
-        <body>
-            <h1>OHT-50 WebSocket Test</h1>
+    <head>
+        <title>OHT-50 WebSocket Test</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+            .connected { background-color: #d4edda; color: #155724; }
+            .disconnected { background-color: #f8d7da; color: #721c24; }
+            .message { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin: 5px 0; border-radius: 3px; }
+            .controls { margin: 20px 0; }
+            button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+            .connect { background-color: #28a745; color: white; }
+            .disconnect { background-color: #dc3545; color: white; }
+            .subscribe { background-color: #007bff; color: white; }
+            .unsubscribe { background-color: #6c757d; color: white; }
+            input[type="text"] { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>OHT-50 WebSocket Test Interface</h1>
+            
+            <div id="status" class="status disconnected">
+                Status: Disconnected
+            </div>
+            
+            <div class="controls">
+                <button id="connectBtn" class="connect" onclick="connect()">Connect</button>
+                <button id="disconnectBtn" class="disconnect" onclick="disconnect()" disabled>Disconnect</button>
+                <br><br>
+                <input type="text" id="subscriptionType" placeholder="Subscription type (e.g., telemetry, alerts)" value="telemetry">
+                <button id="subscribeBtn" class="subscribe" onclick="subscribe()" disabled>Subscribe</button>
+                <button id="unsubscribeBtn" class="unsubscribe" onclick="unsubscribe()" disabled>Unsubscribe</button>
+            </div>
+            
+            <h3>Messages</h3>
             <div id="messages"></div>
-            <script>
-                var ws = new WebSocket("ws://localhost:8000/ws/telemetry");
-                ws.onmessage = function(event) {
-                    var messages = document.getElementById('messages');
-                    var message = document.createElement('div');
-                    var content = document.createTextNode(event.data);
-                    message.appendChild(content);
-                    messages.appendChild(message);
+        </div>
+
+        <script>
+            let ws = null;
+            let isConnected = false;
+
+            function updateStatus(connected, message) {
+                const statusDiv = document.getElementById('status');
+                statusDiv.className = connected ? 'status connected' : 'status disconnected';
+                statusDiv.textContent = 'Status: ' + message;
+                
+                document.getElementById('connectBtn').disabled = connected;
+                document.getElementById('disconnectBtn').disabled = !connected;
+                document.getElementById('subscribeBtn').disabled = !connected;
+                document.getElementById('unsubscribeBtn').disabled = !connected;
+            }
+
+            function addMessage(message) {
+                const messagesDiv = document.getElementById('messages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <strong>${message.type}</strong><br>
+                    <small>${message.timestamp}</small><br>
+                    <pre>${JSON.stringify(message.data, null, 2)}</pre>
+                `;
+                messagesDiv.insertBefore(messageDiv, messagesDiv.firstChild);
+            }
+
+            function connect() {
+                if (ws) {
+                    ws.close();
+                }
+
+                ws = new WebSocket('ws://localhost:8000/ws/telemetry');
+                
+                ws.onopen = function(event) {
+                    isConnected = true;
+                    updateStatus(true, 'Connected');
+                    addMessage({
+                        type: 'connection',
+                        timestamp: new Date().toLocaleTimeString(),
+                        data: { message: 'WebSocket connection established' }
+                    });
                 };
-            </script>
-        </body>
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+                        addMessage({
+                            type: message.type,
+                            timestamp: new Date(message.timestamp).toLocaleTimeString(),
+                            data: message.data
+                        });
+                    } catch (e) {
+                        addMessage({
+                            type: 'error',
+                            timestamp: new Date().toLocaleTimeString(),
+                            data: { error: 'Failed to parse message', raw: event.data }
+                        });
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    isConnected = false;
+                    updateStatus(false, 'Disconnected');
+                    addMessage({
+                        type: 'connection',
+                        timestamp: new Date().toLocaleTimeString(),
+                        data: { message: 'WebSocket connection closed' }
+                    });
+                };
+                
+                ws.onerror = function(error) {
+                    addMessage({
+                        type: 'error',
+                        timestamp: new Date().toLocaleTimeString(),
+                        data: { error: 'WebSocket error', details: error }
+                    });
+                };
+            }
+
+            function disconnect() {
+                if (ws) {
+                    ws.close();
+                    ws = null;
+                }
+            }
+
+            function subscribe() {
+                if (ws && isConnected) {
+                    const subscriptionType = document.getElementById('subscriptionType').value;
+                    const message = {
+                        type: 'subscribe',
+                        data: { type: subscriptionType }
+                    };
+                    ws.send(JSON.stringify(message));
+                }
+            }
+
+            function unsubscribe() {
+                if (ws && isConnected) {
+                    const subscriptionType = document.getElementById('subscriptionType').value;
+                    const message = {
+                        type: 'unsubscribe',
+                        data: { type: subscriptionType }
+                    };
+                    ws.send(JSON.stringify(message));
+                }
+            }
+
+            // Auto-connect on page load
+            window.onload = function() {
+                setTimeout(connect, 1000);
+            };
+        </script>
+    </body>
     </html>
     """
-    return HTMLResponse(html)
+    return HTMLResponse(content=html_content)
 
 
 @router.websocket("/ws/telemetry")
-async def websocket_telemetry(websocket: WebSocket):
+async def websocket_telemetry_endpoint(websocket: WebSocket):
     """WebSocket endpoint for telemetry data"""
-    await websocket_manager.connect(websocket, "telemetry")
-    
     try:
-        while True:
-            # Keep connection alive
-            data = await websocket.receive_text()
-            # Echo back for testing
-            await websocket_manager.send_personal_message(
-                {"type": "echo", "data": data}, 
-                websocket
+        # Connect to WebSocket service
+        await websocket_service.connect(websocket, {"type": "telemetry"})
+        
+        # Send initial telemetry data
+        try:
+            telemetry_data = await monitoring_service.get_current_metrics()
+            message = WebSocketMessage(
+                type="telemetry_update",
+                data={
+                    "cpu_percent": telemetry_data.cpu_percent,
+                    "memory_percent": telemetry_data.memory_percent,
+                    "disk_percent": telemetry_data.disk_percent,
+                    "active_connections": telemetry_data.active_connections
+                },
+                timestamp=telemetry_data.timestamp
             )
-    except WebSocketDisconnect:
-        websocket_manager.disconnect(websocket)
+            await websocket_service.send_to_client(websocket, message)
+        except Exception as e:
+            logger.error(f"❌ Failed to send initial telemetry: {e}")
+        
+        # Handle WebSocket communication
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                await websocket_service.handle_message(websocket, data)
+                
+        except WebSocketDisconnect:
+            logger.info("🔌 WebSocket client disconnected")
+        except Exception as e:
+            logger.error(f"❌ WebSocket communication error: {e}")
+            
+    except Exception as e:
+        logger.error(f"❌ WebSocket endpoint error: {e}")
+    finally:
+        # Clean up connection
+        await websocket_service.disconnect(websocket)
 
 
-@router.websocket("/ws/control")
-async def websocket_control(websocket: WebSocket):
-    """WebSocket endpoint for control commands"""
-    await websocket_manager.connect(websocket, "control")
-    
+@router.websocket("/ws/monitoring")
+async def websocket_monitoring_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for monitoring data"""
     try:
-        while True:
-            data = await websocket.receive_text()
-            command = json.loads(data)
-            
-            # Process control command
-            logger.info(f"Received control command: {command}")
-            
-            # Send acknowledgment
-            await websocket_manager.send_personal_message(
-                {"type": "ack", "command": command}, 
-                websocket
+        # Connect to WebSocket service
+        await websocket_service.connect(websocket, {"type": "monitoring"})
+        
+        # Send initial monitoring data
+        try:
+            health_data = await monitoring_service.get_system_health()
+            message = WebSocketMessage(
+                type="system_health",
+                data=health_data,
+                timestamp=datetime.now()
             )
-    except WebSocketDisconnect:
-        websocket_manager.disconnect(websocket)
+            await websocket_service.send_to_client(websocket, message)
+        except Exception as e:
+            logger.error(f"❌ Failed to send initial health data: {e}")
+        
+        # Handle WebSocket communication
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                await websocket_service.handle_message(websocket, data)
+                
+        except WebSocketDisconnect:
+            logger.info("🔌 WebSocket client disconnected")
+        except Exception as e:
+            logger.error(f"❌ WebSocket communication error: {e}")
+            
+    except Exception as e:
+        logger.error(f"❌ WebSocket endpoint error: {e}")
+    finally:
+        # Clean up connection
+        await websocket_service.disconnect(websocket)
 
 
 @router.websocket("/ws/alerts")
-async def websocket_alerts(websocket: WebSocket):
+async def websocket_alerts_endpoint(websocket: WebSocket):
     """WebSocket endpoint for alert notifications"""
-    await websocket_manager.connect(websocket, "alerts")
-    
     try:
-        while True:
-            # Keep connection alive
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        websocket_manager.disconnect(websocket)
+        # Connect to WebSocket service
+        await websocket_service.connect(websocket, {"type": "alerts"})
+        
+        # Send initial alerts data
+        try:
+            active_alerts = await monitoring_service.get_active_alerts()
+            message = WebSocketMessage(
+                type="alerts_update",
+                data={
+                    "alerts_count": len(active_alerts),
+                    "alerts": [
+                        {
+                            "id": alert.id,
+                            "level": alert.level,
+                            "message": alert.message,
+                            "timestamp": alert.timestamp.isoformat()
+                        }
+                        for alert in active_alerts
+                    ]
+                },
+                timestamp=datetime.now()
+            )
+            await websocket_service.send_to_client(websocket, message)
+        except Exception as e:
+            logger.error(f"❌ Failed to send initial alerts: {e}")
+        
+        # Handle WebSocket communication
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                await websocket_service.handle_message(websocket, data)
+                
+        except WebSocketDisconnect:
+            logger.info("🔌 WebSocket client disconnected")
+        except Exception as e:
+            logger.error(f"❌ WebSocket communication error: {e}")
+            
+    except Exception as e:
+        logger.error(f"❌ WebSocket endpoint error: {e}")
+    finally:
+        # Clean up connection
+        await websocket_service.disconnect(websocket)
 
 
-# Utility functions for broadcasting
-async def broadcast_telemetry(telemetry_data: dict):
-    """Broadcast telemetry data to all telemetry clients"""
-    message = {
-        "type": "telemetry",
-        "data": telemetry_data,
-        "timestamp": "2025-01-28T10:30:00Z"
-    }
-    await websocket_manager.broadcast(message, "telemetry")
-
-
-async def broadcast_alert(alert_data: dict):
-    """Broadcast alert to all alert clients"""
-    message = {
-        "type": "alert",
-        "data": alert_data,
-        "timestamp": "2025-01-28T10:30:00Z"
-    }
-    await websocket_manager.broadcast(message, "alerts")
-
-
-async def broadcast_status(status_data: dict):
-    """Broadcast status change to all clients"""
-    message = {
-        "type": "status_change",
-        "data": status_data,
-        "timestamp": "2025-01-28T10:30:00Z"
-    }
-    await websocket_manager.broadcast(message)
+@router.get("/ws/status")
+async def get_websocket_status(
+    current_user: User = Depends(require_permission("system", "read"))
+) -> Dict[str, Any]:
+    """Get WebSocket service status"""
+    try:
+        stats = await websocket_service.get_connection_stats()
+        
+        return {
+            "success": True,
+            "data": stats,
+            "message": "WebSocket status retrieved successfully"
+        }
+    except Exception as e:
+        logger.error(f"❌ WebSocket status retrieval failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve WebSocket status"
+        )

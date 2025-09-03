@@ -4,8 +4,8 @@ Models package for OHT-50 Backend
 
 from .robot import Robot, RobotCommand, RobotConfiguration
 from .telemetry import TelemetryCurrent, TelemetryHistory, TelemetryAlert, SensorData
-from .safety import SafetyStatus, SafetyLog, SafetyAlert, SafetyZone
-from .user import User, UserSession, UserPermission, Role
+from .user import User, AuditLog
+from .safety import SafetyAlert, SafetyZone
 
 __all__ = [
     # Robot models
@@ -19,15 +19,11 @@ __all__ = [
     "TelemetryAlert",
     "SensorData",
     
-    # Safety models
-    "SafetyStatus",
-    "SafetyLog",
-    "SafetyAlert", 
-    "SafetyZone",
-    
     # User models
     "User",
-    "UserSession",
-    "UserPermission",
-    "Role",
+    "AuditLog",
+    
+    # Safety models
+    "SafetyAlert",
+    "SafetyZone",
 ]

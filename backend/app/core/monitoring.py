@@ -5,11 +5,10 @@ Performance monitoring and metrics for OHT-50 Backend
 import time
 import psutil
 import asyncio
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any, Optional, Callable, List
+from datetime import datetime, timezone
 from fastapi import FastAPI, Request, Response
 from prometheus_client import Counter, Histogram, Gauge, Summary, generate_latest, CONTENT_TYPE_LATEST
-from prometheus_client.core import REGISTRY
 
 # Metrics
 REQUEST_COUNT = Counter(
@@ -85,35 +84,34 @@ DATABASE_QUERY_TIME = Summary(
 class PerformanceMiddleware:
     """Middleware for performance monitoring"""
     
-    async def __call__(self, request: Request, call_next):
-        start_time = time.time()
-        
-        response = await call_next(request)
-        
-        duration = time.time() - start_time
-        
-        # Record request metrics
-        REQUEST_COUNT.labels(
-            method=request.method,
-            endpoint=request.url.path,
-            status=response.status_code
-        ).inc()
-        
-        REQUEST_DURATION.labels(
-            method=request.method,
-            endpoint=request.url.path
-        ).observe(duration)
-        
-        # Record API response time
-        API_RESPONSE_TIME.labels(
-            endpoint=request.url.path
-        ).observe(duration)
-        
-        # Log slow requests
-        if duration > 0.1:  # 100ms threshold
-            print(f"Slow request: {request.method} {request.url.path} took {duration:.3f}s")
-        
-        return response
+    def __init__(self, app: FastAPI):
+        self.app = app
+    
+    async def __call__(self, scope: Dict[str, Any], receive: Callable[[], Any], send: Callable):  # type: ignore
+        if scope["type"] == "http":
+            request = Request(scope, receive)
+            start_time = time.time()
+            
+            async def send_wrapper(message):  # type: ignore
+                if message["type"] == "http.response.start":
+                    duration = time.time() - start_time
+                    # Record request metrics
+                    REQUEST_COUNT.labels(
+                        method=request.method,
+                        endpoint=request.url.path,
+                        status=message.get("status", 200)  # type: ignore
+                    ).inc()
+                    
+                    REQUEST_DURATION.labels(
+                        method=request.method,
+                        endpoint=request.url.path
+                    ).observe(duration)
+                
+                return await send(message)  # type: ignore
+            
+            return await self.app(scope, receive, send_wrapper)  # type: ignore
+        else:
+            return await self.app(scope, receive, send)  # type: ignore
 
 
 class SystemMonitor:
@@ -180,14 +178,14 @@ class AlertManager:
     """Alert management service"""
     
     def __init__(self):
-        self.alerts = []
-        self.alert_callbacks = []
+        self.alerts: List[Dict[str, Any]] = []
+        self.alert_callbacks: List[Callable[[Dict[str, Any]], None]] = []
     
-    def add_alert_callback(self, callback):
+    def add_alert_callback(self, callback: Callable[[Dict[str, Any]], None]):
         """Add alert callback function"""
         self.alert_callbacks.append(callback)
     
-    async def create_alert(self, alert_type: str, severity: str, message: str, data: Optional[Dict] = None):
+    async def create_alert(self, alert_type: str, severity: str, message: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Create and broadcast alert"""
         alert = {
             "id": f"alert_{int(time.time())}",
@@ -195,7 +193,7 @@ class AlertManager:
             "severity": severity,
             "message": message,
             "data": data or {},
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         self.alerts.append(alert)
@@ -209,13 +207,13 @@ class AlertManager:
         # Call alert callbacks
         for callback in self.alert_callbacks:
             try:
-                await callback(alert)
+                callback(alert)  # Remove await since callback is not async
             except Exception as e:
                 print(f"Alert callback error: {e}")
         
         return alert
     
-    def get_alerts(self, severity: Optional[str] = None, limit: int = 100) -> list:
+    def get_alerts(self, severity: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
         """Get alerts with optional filtering"""
         alerts = self.alerts
         
@@ -229,7 +227,7 @@ class MetricsCollector:
     """Custom metrics collector"""
     
     def __init__(self):
-        self.custom_metrics = {}
+        self.custom_metrics: Dict[str, Gauge] = {}
     
     def record_metric(self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None):
         """Record custom metric"""
@@ -240,7 +238,7 @@ class MetricsCollector:
                 list(labels.keys()) if labels else []
             )
         
-        metric = self.custom_metrics[metric_name]
+        metric: Gauge = self.custom_metrics[metric_name]
         if labels:
             metric.labels(**labels).set(value)
         else:
@@ -287,7 +285,7 @@ def setup_monitoring(app: FastAPI) -> None:
     
     # Add metrics endpoint
     @app.get("/metrics")
-    async def metrics():
+    async def metrics():  # type: ignore
         """Prometheus metrics endpoint"""
         return Response(
             content=generate_latest(),
@@ -296,11 +294,11 @@ def setup_monitoring(app: FastAPI) -> None:
     
     # Add health check endpoint
     @app.get("/health")
-    async def health_check():
+    async def health_check():  # type: ignore
         """Health check endpoint"""
         health_status = {
             "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "version": "1.0.0",
             "checks": {
                 "system": "ok",
@@ -312,22 +310,23 @@ def setup_monitoring(app: FastAPI) -> None:
     
     # Add system info endpoint
     @app.get("/system/info")
-    async def system_info():
+    async def system_info():  # type: ignore
         """System information endpoint"""
         return {
             "cpu_percent": psutil.cpu_percent(),
             "memory_percent": psutil.virtual_memory().percent,
             "disk_percent": psutil.disk_usage('/').percent,
             "uptime": time.time() - psutil.boot_time(),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     # Start system monitoring
-    @app.on_event("startup")
     async def startup_event():
         await system_monitor.start_monitoring()
     
     # Stop system monitoring
-    @app.on_event("shutdown")
     async def shutdown_event():
         await system_monitor.stop_monitoring()
+    
+    app.add_event_handler("startup", startup_event)  # type: ignore
+    app.add_event_handler("shutdown", shutdown_event)  # type: ignore

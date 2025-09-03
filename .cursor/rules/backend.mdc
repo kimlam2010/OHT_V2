@@ -53,14 +53,67 @@ BEFORE APPROVAL:
 □ Audit logging enabled
 ```
 
-### **3. INTEGRATION COMPLIANCE**
+### **3. ARCHITECTURE COMPLIANCE (BẮT BUỘC)**
+```
+MUST FOLLOW ARCHITECTURE DOCUMENTS:
+- ĐỌC docs/03-ARCHITECTURE/ TRƯỚC KHI IMPLEMENT
+- ĐỌC ADR-004-COMMUNICATION_PROTOCOLS.md cho giao tiếp
+- ĐỌC ADR-001-SYSTEM_ARCHITECTURE.md cho kiến trúc tổng thể
+- ĐỌC ARCHITECTURE_REVIEW_SUMMARY.md cho tổng quan
+
+ARCHITECTURE HIỂU ĐÚNG:
+┌─────────────────────────────────────┐
+│         Protocol Gateway            │  ← FIRMWARE LÀM VIỆC NÀY
+└─────────────────┬───────────────────┘
+                  │
+    ┌─────────────┼─────────────┐
+    │             │             │
+┌───▼───┐   ┌────▼────┐   ┌────▼────┐
+│ HTTP  │   │WebSocket│   │  RS485  │
+│ REST  │   │Streaming│   │ Modbus  │
+└───────┘   └─────────┘   └─────────┘
+    │             │             │
+┌───▼───┐   ┌────▼────┐   ┌────▼────┐
+│Center │   │Frontend │   │Hardware │
+│System │   │  UI     │   │Modules  │
+└───────┘   └─────────┘   └─────────┘
+
+BACKEND CHỈ GIAO TIẾP VỚI FIRMWARE QUA HTTP/REST API!
+BACKEND KHÔNG BAO GIỜ TRỰC TIẾP RS485!
+```
+
+### **4. INTEGRATION COMPLIANCE**
 ```
 MUST FOLLOW:
-- RS485 Modbus RTU protocol cho firmware communication
+- HTTP/REST API cho Firmware communication
 - WebSocket real-time cho frontend communication
 - REST API standards cho external integration
 - Database schema theo REQ_BE_03
 - Security standards theo REQ_BE_04
+```
+
+### **5. HARDWARE & FIRMWARE INTEGRATION (BẮT BUỘC)**
+```
+❌ KHÔNG BAO GIỜ mock data với hardware và firmware
+❌ KHÔNG BAO GIỜ Backend trực tiếp giao tiếp RS485
+✅ LUÔN LUÔN giao tiếp với Firmware qua HTTP/REST API
+✅ LUÔN LUÔN để Firmware làm Protocol Gateway
+✅ PHẢI báo rõ khi sử dụng mock data (chỉ cho development)
+✅ PHẢI test với Firmware thật trước khi deploy
+
+FIRMWARE INTEGRATION RULES:
+□ Backend chỉ giao tiếp với Firmware qua HTTP API
+□ Firmware mới là người giao tiếp RS485 với hardware
+□ Backend không bao giờ biết về RS485 protocol
+□ Backend chỉ gửi commands và nhận data từ Firmware
+□ Mock data chỉ dùng cho unit testing Firmware API
+
+MOCK DATA RULES:
+□ Chỉ được dùng cho unit testing
+□ Phải có flag rõ ràng: use_mock=True
+□ Phải log warning khi sử dụng mock
+□ Không được dùng trong production
+□ Phải có comment giải thích lý do mock
 ```
 
 ---
@@ -70,9 +123,11 @@ MUST FOLLOW:
 ### **BƯỚC 1: ARCHITECTURE REVIEW**
 ```
 Backend Team Lead MUST:
+□ ĐỌC docs/03-ARCHITECTURE/ TRƯỚC KHI REVIEW
 □ Review service architecture design
 □ Validate performance requirements
 □ Confirm security implementation
+□ Confirm Firmware integration approach (HTTP API, NOT RS485)
 □ Approve technical approach
 ```
 
@@ -238,37 +293,66 @@ class InputValidator:
 
 ### **Integration Standards (BẮT BUỘC)**
 ```python
-# RS485 Communication Service
-class RS485CommunicationService:
-    def __init__(self, port: str = "/dev/ttyOHT485", baud_rate: int = 115200):
-        self.port = port
-        self.baud_rate = baud_rate
-        self.timeout = 1.0
-        self.retry_count = 3
+# Firmware Integration Service - MUST USE REAL FIRMWARE
+class FirmwareIntegrationService:
+    def __init__(self, firmware_url: str = "http://localhost:8081"):
+        self.firmware_url = firmware_url
+        self.http_client = httpx.AsyncClient(base_url=firmware_url)
         
-    async def read_register(self, module_address: int, register_address: int) -> int:
-        """Read Modbus register with retry mechanism"""
-        for attempt in range(self.retry_count):
-            try:
-                # Implement Modbus RTU read
-                return await self._modbus_read(module_address, register_address)
-            except Exception as e:
-                if attempt == self.retry_count - 1:
-                    raise
-                await asyncio.sleep(0.1 * (attempt + 1))  # Exponential backoff
-                
-    async def write_register(self, module_address: int, register_address: int, value: int) -> bool:
-        """Write Modbus register with validation"""
+        # WARNING: This service MUST connect to real Firmware
+        # DO NOT use mock data in production
+        logger.warning("Firmware Integration: Connecting to REAL Firmware at %s", firmware_url)
+        
+    async def get_robot_status(self) -> Dict[str, Any]:
+        """Get robot status from Firmware via HTTP API"""
         try:
-            # Implement Modbus RTU write
-            result = await self._modbus_write(module_address, register_address, value)
-            
-            # Verify write
-            read_value = await self.read_register(module_address, register_address)
-            return read_value == value
+            response = await self.http_client.get("/api/v1/robot/status")
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise FirmwareCommunicationException(f"Failed to get robot status: {response.status_code}")
         except Exception as e:
-            logger.error(f"Write register failed: {e}")
+            logger.error("❌ Failed to get robot status: %s", e)
+            raise FirmwareCommunicationException(f"Robot status request failed: {e}")
+            
+    async def send_robot_command(self, command: Dict[str, Any]) -> bool:
+        """Send robot command to Firmware via HTTP API"""
+        try:
+            response = await self.http_client.post("/api/v1/robot/command", json=command)
+            if response.status_code == 200:
+                result = response.json()
+                return result.get("success", False)
+            else:
+                logger.error("❌ Robot command failed: %s", response.status_code)
+                return False
+        except Exception as e:
+            logger.error("❌ Failed to send robot command: %s", e)
             return False
+
+# MOCK FIRMWARE SERVICE - FOR DEVELOPMENT ONLY
+class MockFirmwareService:
+    def __init__(self):
+        # WARNING: This is MOCK data - NOT for production use
+        logger.warning("🧪 MOCK Firmware Service: Using simulated data - NOT real Firmware!")
+        self.mock_data = self._initialize_mock_data()
+        
+    def _initialize_mock_data(self):
+        # MOCK DATA - ONLY FOR UNIT TESTING
+        # DO NOT USE IN PRODUCTION
+        return {
+            "robot_status": {
+                "status": "idle",
+                "position": {"x": 150.5, "y": 200.3},
+                "battery_level": 87,
+                "temperature": 42.5
+            },
+            "telemetry": {
+                "motor_speed": 1500,
+                "motor_temperature": 45,
+                "dock_status": "ready",
+                "safety_status": "normal"
+            }
+        }
 ```
 
 ---
@@ -392,43 +476,61 @@ class SecurityMiddleware:
 
 ### **Firmware Integration (BẮT BUỘC)**
 ```python
-# Firmware Integration Service
+# Firmware Integration Service - HTTP API ONLY
 class FirmwareIntegrationService:
-    def __init__(self):
-        self.rs485_service = RS485CommunicationService()
-        self.module_manager = ModuleManager()
+    def __init__(self, firmware_url: str = "http://localhost:8081"):
+        self.firmware_url = firmware_url
+        self.http_client = httpx.AsyncClient(base_url=firmware_url)
         
-    async def initialize_modules(self):
-        """Initialize and discover connected modules"""
-        modules = await self.module_manager.discover_modules()
-        for module_id, module_info in modules.items():
-            await self.validate_module(module_id, module_info)
+    async def get_robot_status(self) -> Dict[str, Any]:
+        """Get robot status from Firmware via HTTP API"""
+        try:
+            response = await self.http_client.get("/api/v1/robot/status")
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise FirmwareCommunicationException(f"Failed to get robot status: {response.status_code}")
+        except Exception as e:
+            logger.error("❌ Failed to get robot status: %s", e)
+            raise FirmwareCommunicationException(f"Robot status request failed: {e}")
             
-    async def send_command(self, module_id: str, command: Dict) -> bool:
-        """Send command to firmware module"""
+    async def send_robot_command(self, command: Dict[str, Any]) -> bool:
+        """Send robot command to Firmware via HTTP API"""
         try:
             # Validate command
             self.validate_command(command)
             
-            # Send via RS485
-            module_address = await self.module_manager.get_module_address(module_id)
-            register_address = self.get_command_register(command["type"])
-            value = self.encode_command(command)
-            
-            success = await self.rs485_service.write_register(
-                module_address, register_address, value
-            )
-            
-            if success:
-                await self.log_command(module_id, command, "success")
-            else:
-                await self.log_command(module_id, command, "failed")
+            # Send via HTTP API to Firmware
+            response = await self.http_client.post("/api/v1/robot/command", json=command)
+            if response.status_code == 200:
+                result = response.json()
+                success = result.get("success", False)
                 
-            return success
-            
+                if success:
+                    await self.log_command(command, "success")
+                else:
+                    await self.log_command(command, "failed")
+                    
+                return success
+            else:
+                await self.log_command(command, "error", f"HTTP {response.status_code}")
+                return False
+                
         except Exception as e:
-            await self.log_command(module_id, command, "error", str(e))
+            await self.log_command(command, "error", str(e))
             raise
+            
+    async def get_telemetry_data(self) -> Dict[str, Any]:
+        """Get telemetry data from Firmware via HTTP API"""
+        try:
+            response = await self.http_client.get("/api/v1/telemetry/current")
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise FirmwareCommunicationException(f"Failed to get telemetry: {response.status_code}")
+        except Exception as e:
+            logger.error("❌ Failed to get telemetry: %s", e)
+            raise FirmwareCommunicationException(f"Telemetry request failed: {e}")
 ```
 
 ### **Frontend Integration (BẮT BUỘC)**
@@ -675,6 +777,10 @@ Authorization: Bearer <token>
 □ Integration tested
 □ Performance tested
 □ Security scanned
+□ Architecture documents read và understood
+□ Firmware integration via HTTP API (NOT RS485)
+□ Mock data warnings implemented
+□ Real Firmware connection tested
 ```
 
 ### **Deployment Checklist (MUST PASS)**
@@ -689,6 +795,10 @@ Authorization: Bearer <token>
 □ Team notified
 □ Stakeholders informed
 □ Production ready
+□ Real Firmware integration tested
+□ No mock data in production code
+□ Firmware HTTP API verified
+□ Firmware connection validated
 ```
 
 ---
@@ -723,6 +833,11 @@ Authorization: Bearer <token>
 ❌ Inconsistent data formats
 ❌ No monitoring for external services
 ❌ Missing fallback mechanisms
+❌ Using mock data in production
+❌ Backend trực tiếp giao tiếp RS485 (SAI KIẾN TRÚC)
+❌ Không đọc tài liệu kiến trúc trước khi implement
+❌ Không hiểu Protocol Gateway architecture
+❌ Không warning về mock data usage
 ```
 
 ---
@@ -804,6 +919,9 @@ backend/
 ✅ 100% real-time communication stable
 ✅ 0 integration failures
 ✅ 100% error recovery working
+✅ 100% real Firmware integration working
+✅ 0 mock data usage in production
+✅ 100% Firmware HTTP API integration
 ```
 
 ---
@@ -823,6 +941,12 @@ backend/
 3. **Add logging và monitoring to all services**
 4. **Write tests for all functionality**
 5. **Document code và APIs thoroughly**
+6. **ĐỌC tài liệu kiến trúc trước khi implement**
+7. **Always use real Firmware integration via HTTP API**
+8. **Never use mock data in production**
+9. **Always warn when using mock data**
+10. **KHÔNG BAO GIỜ trực tiếp giao tiếp RS485**
+11. **Để Firmware làm Protocol Gateway**
 
 ### **For DevOps Engineer**
 1. **Automate deployment processes**
@@ -835,6 +959,27 @@ backend/
 
 **🚨 REMEMBER: Performance và Security are NOT optional - they're the foundation of reliable backend systems!**
 
+**Changelog v1.2:**
+- ✅ Fixed Architecture Compliance rules (BẮT BUỘC)
+- ✅ Added requirement to READ architecture documents
+- ✅ Corrected Firmware integration approach (HTTP API, NOT RS485)
+- ✅ Updated Integration Standards với HTTP API examples
+- ✅ Fixed Firmware Integration service examples
+- ✅ Updated Code Review checklist với architecture validation
+- ✅ Updated Deployment checklist với Firmware HTTP API validation
+- ✅ Updated Core Developers guidelines với architecture reading requirement
+- ✅ Fixed Integration Success metrics cho Firmware HTTP API
+- ✅ Added Protocol Gateway architecture diagram
+
+**Changelog v1.1:**
+- ✅ Added Hardware & Firmware Integration rules (BẮT BUỘC)
+- ✅ Added Mock Data restrictions và warnings
+- ✅ Added Firmware HAL RS485 requirements
+- ✅ Updated Code Review checklist với hardware integration
+- ✅ Updated Deployment checklist với real hardware validation
+- ✅ Added Integration Success metrics cho hardware
+- ✅ Updated Core Developers guidelines với hardware requirements
+
 **Changelog v1.0:**
 - ✅ Created comprehensive backend development rules
 - ✅ Added performance requirements và monitoring
@@ -844,4 +989,6 @@ backend/
 - ✅ Added deployment guidelines
 - ✅ Added quality control checklist
 
-**🚨 Lưu ý:** Backend team phải tuân thủ strict performance, security, và integration standards để đảm bảo system reliability và safety.
+**🚨 Lưu ý:** Backend team phải tuân thủ strict performance, security, và integration standards để đảm bảo system reliability và safety. **KHÔNG BAO GIỜ sử dụng mock data với hardware và firmware trong production!**
+
+**🚨 KIẾN TRÚC QUAN TRỌNG:** Backend CHỈ giao tiếp với Firmware qua HTTP/REST API. **KHÔNG BAO GIỜ trực tiếp giao tiếp RS485!** Firmware mới là người làm Protocol Gateway và giao tiếp với hardware.

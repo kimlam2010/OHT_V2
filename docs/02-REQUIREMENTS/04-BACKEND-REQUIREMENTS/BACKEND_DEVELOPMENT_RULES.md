@@ -58,6 +58,22 @@ MUST FOLLOW:
 - Security standards theo REQ_BE_04
 ```
 
+### **4. HARDWARE & FIRMWARE INTEGRATION (BẮT BUỘC)**
+```
+❌ KHÔNG BAO GIỜ mock data với hardware và firmware
+✅ LUÔN LUÔN kết nối thật với RS485 hardware
+✅ LUÔN LUÔN sử dụng Firmware HAL RS485
+✅ PHẢI báo rõ khi sử dụng mock data (chỉ cho development)
+✅ PHẢI test với hardware thật trước khi deploy
+
+MOCK DATA RULES:
+□ Chỉ được dùng cho unit testing
+□ Phải có flag rõ ràng: use_mock=True
+□ Phải log warning khi sử dụng mock
+□ Không được dùng trong production
+□ Phải có comment giải thích lý do mock
+```
+
 ---
 
 ## 📋 **QUY TRÌNH DEVELOPMENT 5 BƯỚC (BẮT BUỘC)**
@@ -233,7 +249,7 @@ class InputValidator:
 
 ### **Integration Standards (BẮT BUỘC)**
 ```python
-# RS485 Communication Service
+# RS485 Communication Service - MUST USE REAL HARDWARE
 class RS485CommunicationService:
     def __init__(self, port: str = "/dev/ttyOHT485", baud_rate: int = 115200):
         self.port = port
@@ -241,11 +257,15 @@ class RS485CommunicationService:
         self.timeout = 1.0
         self.retry_count = 3
         
+        # WARNING: This service MUST connect to real RS485 hardware
+        # DO NOT use mock data in production
+        logger.warning("RS485 Service: Connecting to REAL hardware at %s", port)
+        
     async def read_register(self, module_address: int, register_address: int) -> int:
-        """Read Modbus register with retry mechanism"""
+        """Read Modbus register with retry mechanism - REAL HARDWARE ONLY"""
         for attempt in range(self.retry_count):
             try:
-                # Implement Modbus RTU read
+                # MUST use Firmware HAL RS485 for real communication
                 return await self._modbus_read(module_address, register_address)
             except Exception as e:
                 if attempt == self.retry_count - 1:
@@ -253,17 +273,36 @@ class RS485CommunicationService:
                 await asyncio.sleep(0.1 * (attempt + 1))  # Exponential backoff
                 
     async def write_register(self, module_address: int, register_address: int, value: int) -> bool:
-        """Write Modbus register with validation"""
+        """Write Modbus register with validation - REAL HARDWARE ONLY"""
         try:
-            # Implement Modbus RTU write
+            # MUST use Firmware HAL RS485 for real communication
             result = await self._modbus_write(module_address, register_address, value)
             
-            # Verify write
+            # Verify write with real hardware
             read_value = await self.read_register(module_address, register_address)
             return read_value == value
         except Exception as e:
             logger.error(f"Write register failed: {e}")
             return False
+
+# MOCK DATA SERVICE - FOR DEVELOPMENT ONLY
+class MockRS485Service:
+    def __init__(self):
+        # WARNING: This is MOCK data - NOT for production use
+        logger.warning("MOCK RS485 Service: Using simulated data - NOT real hardware!")
+        self.mock_data = self._initialize_mock_data()
+        
+    def _initialize_mock_data(self):
+        # MOCK DATA - ONLY FOR UNIT TESTING
+        # DO NOT USE IN PRODUCTION
+        return {
+            # Simulated motor data
+            1: {30001: 1, 30002: 1500, 30005: 45},
+            # Simulated dock data  
+            2: {30001: 0, 30002: 150, 30003: 200},
+            # Simulated safety data
+            3: {30001: 0, 30002: 0, 30006: 0}
+        }
 ```
 
 ---
@@ -670,6 +709,10 @@ Authorization: Bearer <token>
 □ Integration tested
 □ Performance tested
 □ Security scanned
+□ Hardware integration verified (no mock in production)
+□ Firmware HAL RS485 used correctly
+□ Mock data warnings implemented
+□ Real hardware connection tested
 ```
 
 ### **Deployment Checklist (MUST PASS)**
@@ -684,6 +727,10 @@ Authorization: Bearer <token>
 □ Team notified
 □ Stakeholders informed
 □ Production ready
+□ Real hardware integration tested
+□ No mock data in production code
+□ Firmware HAL RS485 verified
+□ Hardware connection validated
 ```
 
 ---
@@ -718,6 +765,10 @@ Authorization: Bearer <token>
 ❌ Inconsistent data formats
 ❌ No monitoring for external services
 ❌ Missing fallback mechanisms
+❌ Using mock data in production
+❌ Not connecting to real hardware
+❌ Not using Firmware HAL RS485
+❌ Not warning about mock data usage
 ```
 
 ---
@@ -799,6 +850,9 @@ backend/
 ✅ 100% real-time communication stable
 ✅ 0 integration failures
 ✅ 100% error recovery working
+✅ 100% real hardware integration working
+✅ 0 mock data usage in production
+✅ 100% Firmware HAL RS485 integration
 ```
 
 ---
@@ -818,6 +872,10 @@ backend/
 3. **Add logging và monitoring to all services**
 4. **Write tests for all functionality**
 5. **Document code và APIs thoroughly**
+6. **Always use real hardware integration**
+7. **Never use mock data in production**
+8. **Always warn when using mock data**
+9. **Use Firmware HAL RS485 for hardware communication**
 
 ### **For DevOps Engineer**
 1. **Automate deployment processes**
@@ -830,6 +888,15 @@ backend/
 
 **🚨 REMEMBER: Performance và Security are NOT optional - they're the foundation of reliable backend systems!**
 
+**Changelog v1.1:**
+- ✅ Added Hardware & Firmware Integration rules (BẮT BUỘC)
+- ✅ Added Mock Data restrictions và warnings
+- ✅ Added Firmware HAL RS485 requirements
+- ✅ Updated Code Review checklist với hardware integration
+- ✅ Updated Deployment checklist với real hardware validation
+- ✅ Added Integration Success metrics cho hardware
+- ✅ Updated Core Developers guidelines với hardware requirements
+
 **Changelog v1.0:**
 - ✅ Created comprehensive backend development rules
 - ✅ Added performance requirements và monitoring
@@ -839,4 +906,4 @@ backend/
 - ✅ Added deployment guidelines
 - ✅ Added quality control checklist
 
-**🚨 Lưu ý:** Backend team phải tuân thủ strict performance, security, và integration standards để đảm bảo system reliability và safety.
+**🚨 Lưu ý:** Backend team phải tuân thủ strict performance, security, và integration standards để đảm bảo system reliability và safety. **KHÔNG BAO GIỜ sử dụng mock data với hardware và firmware trong production!**
