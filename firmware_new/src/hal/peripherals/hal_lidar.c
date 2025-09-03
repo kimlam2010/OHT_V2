@@ -551,15 +551,10 @@ static void* lidar_scan_thread(void *arg __attribute__((unused)))
 
 static hal_status_t lidar_open_device(void)
 {
-    // Try to open device, but don't fail if it's not available in test environment
+    // Real device opening implementation
     lidar_state.device_fd = open(lidar_state.config.device_path, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (lidar_state.device_fd < 0) {
-        // In test environment, use a mock file descriptor
-        if (strstr(lidar_state.config.device_path, "test") != NULL || 
-            access(lidar_state.config.device_path, F_OK) != 0) {
-            lidar_state.device_fd = -1; // Mock for test
-            return HAL_STATUS_OK; // Allow test to continue
-        }
+        printf("Failed to open LiDAR device %s: %s\n", lidar_state.config.device_path, strerror(errno));
         return HAL_STATUS_ERROR;
     }
     return HAL_STATUS_OK;
@@ -617,13 +612,14 @@ static hal_status_t lidar_configure_serial(void)
 
 static hal_status_t lidar_send_command(const uint8_t *command, size_t len)
 {
-    // If device is not open (test environment), simulate success
+    // Real command sending implementation
     if (lidar_state.device_fd < 0) {
-        return HAL_STATUS_OK;
+        return HAL_STATUS_NOT_INITIALIZED;
     }
     
     ssize_t written = write(lidar_state.device_fd, command, len);
     if (written != (ssize_t)len) {
+        printf("Failed to send LiDAR command: written=%zd, expected=%zu\n", written, len);
         return HAL_STATUS_ERROR;
     }
     
@@ -632,10 +628,9 @@ static hal_status_t lidar_send_command(const uint8_t *command, size_t len)
 
 static hal_status_t lidar_read_response(uint8_t *buffer, size_t max_len, size_t *actual_len)
 {
-    // If device is not open (test environment), simulate no data
+    // Real response reading implementation
     if (lidar_state.device_fd < 0) {
-        *actual_len = 0;
-        return HAL_STATUS_OK;
+        return HAL_STATUS_NOT_INITIALIZED;
     }
     
     ssize_t bytes_read = read(lidar_state.device_fd, buffer, max_len);
@@ -645,6 +640,7 @@ static hal_status_t lidar_read_response(uint8_t *buffer, size_t max_len, size_t 
             *actual_len = 0;
             return HAL_STATUS_OK;
         }
+        printf("Failed to read LiDAR response: %s\n", strerror(errno));
         return HAL_STATUS_ERROR;
     }
     

@@ -86,30 +86,34 @@ hal_status_t hal_network_init(const network_config_t *config) {
     network_status.connection_time = 0;
     network_status.disconnect_count = 0;
 
-    // Initialize Ethernet (simplified for testing)
+    // Initialize Ethernet interface
     printf("Ethernet interface check...\n");
     bool eth_up;
     char eth_ip[16];
     hal_status_t status = get_interface_status(NETWORK_ETH_INTERFACE, &eth_up, eth_ip);
     if (status != HAL_STATUS_OK) {
-        printf("Ethernet interface not found, but continuing...\n");
-    } else {
-        printf("Ethernet interface found: %s\n", eth_up ? "UP" : "DOWN");
+        printf("Ethernet interface not found\n");
+        return status;
     }
+    printf("Ethernet interface found: %s\n", eth_up ? "UP" : "DOWN");
 
-    // Initialize WiFi (simplified for testing)
+    // Initialize WiFi interface
     printf("WiFi interface check...\n");
     bool wifi_up;
     char wifi_ip[16];
     status = get_interface_status(NETWORK_WIFI_INTERFACE, &wifi_up, wifi_ip);
     if (status != HAL_STATUS_OK) {
-        printf("WiFi interface not found, but continuing...\n");
-    } else {
-        printf("WiFi interface found: %s\n", wifi_up ? "UP" : "DOWN");
+        printf("WiFi interface not found\n");
+        return status;
     }
+    printf("WiFi interface found: %s\n", wifi_up ? "UP" : "DOWN");
 
-    // Don't start monitor thread for now (simplified testing)
-    network_thread_running = false;
+    // Start network monitor thread
+    network_thread_running = true;
+    if (pthread_create(&network_monitor_thread, NULL, network_monitor_thread_func, NULL) != 0) {
+        printf("Failed to create network monitor thread\n");
+        return HAL_STATUS_ERROR;
+    }
 
     network_initialized = true;
     printf("Network system initialized successfully\n");
@@ -130,12 +134,13 @@ hal_status_t hal_network_deinit(void) {
         network_monitor_thread = 0;
     }
 
-    // Disconnect networks (simplified)
+    // Disconnect networks
     if (network_status.state == NETWORK_STATE_CONNECTED) {
         if (network_status.active_type == NETWORK_TYPE_ETHERNET) {
             hal_ethernet_disconnect();
+        } else if (network_status.active_type == NETWORK_TYPE_WIFI) {
+            hal_wifi_disconnect();
         }
-        // Simplified WiFi disconnect
         network_status.state = NETWORK_STATE_DISCONNECTED;
         strcpy(network_status.ip_address, "0.0.0.0");
     }
@@ -351,29 +356,62 @@ hal_status_t hal_ethernet_init(void) {
 hal_status_t hal_ethernet_connect(void) {
     printf("Connecting Ethernet...\n");
 
-    // Simplified implementation for testing (no actual network commands)
-    printf("Simulating Ethernet connection...\n");
+    // Real Ethernet connection implementation
+    printf("Connecting Ethernet...\n");
     
-    // Simulate successful connection
-    strcpy(network_status.ip_address, "192.168.1.100");
-    strcpy(network_status.mac_address, "aa:bb:cc:dd:ee:ff");
-    network_status.state = NETWORK_STATE_CONNECTED;
-    network_status.active_type = NETWORK_TYPE_ETHERNET;
-    network_status.speed_mbps = 1000;
+    // Bring interface up
+    char command[256];
+    snprintf(command, sizeof(command), "ifconfig %s up", NETWORK_ETH_INTERFACE);
+    char output[512];
+    hal_status_t status = execute_command(command, output, sizeof(output));
+    if (status != HAL_STATUS_OK) {
+        printf("Failed to bring Ethernet interface up\n");
+        return status;
+    }
     
-    printf("Ethernet connected: %s\n", network_status.ip_address);
-    return HAL_STATUS_OK;
+    // Get IP address via DHCP
+    if (network_config.dhcp_enabled) {
+        snprintf(command, sizeof(command), "dhclient %s", NETWORK_ETH_INTERFACE);
+        status = execute_command(command, output, sizeof(output));
+        if (status != HAL_STATUS_OK) {
+            printf("Failed to get DHCP lease for Ethernet\n");
+            return status;
+        }
+    }
+    
+    // Get actual IP and MAC address
+    bool up;
+    char ip_address[16];
+    status = get_interface_status(NETWORK_ETH_INTERFACE, &up, ip_address);
+    if (status == HAL_STATUS_OK && up) {
+        strcpy(network_status.ip_address, ip_address);
+        get_mac_address(NETWORK_ETH_INTERFACE, network_status.mac_address);
+        network_status.state = NETWORK_STATE_CONNECTED;
+        network_status.active_type = NETWORK_TYPE_ETHERNET;
+        hal_ethernet_get_speed(&network_status.speed_mbps);
+        
+        printf("Ethernet connected: %s\n", network_status.ip_address);
+        return HAL_STATUS_OK;
+    }
+    
+    printf("Ethernet connection failed\n");
+    return HAL_STATUS_ERROR;
 }
 
 hal_status_t hal_ethernet_disconnect(void) {
     printf("Disconnecting Ethernet...\n");
 
-    // Simplified implementation for testing
+    // Real Ethernet disconnect implementation
+    char command[256];
+    snprintf(command, sizeof(command), "ifconfig %s down", NETWORK_ETH_INTERFACE);
+    char output[512];
+    hal_status_t status = execute_command(command, output, sizeof(output));
+    
     network_status.state = NETWORK_STATE_DISCONNECTED;
     strcpy(network_status.ip_address, "0.0.0.0");
     printf("Ethernet disconnected\n");
 
-    return HAL_STATUS_OK;
+    return status;
 }
 
 hal_status_t hal_ethernet_get_status(network_status_t *status) {
@@ -583,44 +621,49 @@ hal_status_t hal_wifi_get_status(network_status_t *status) {
 }
 
 hal_status_t hal_wifi_scan(char (*networks)[32], uint32_t max_networks, uint32_t *count) {
+    // Real WiFi scanning implementation
     if (networks == NULL || count == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
 
     printf("Scanning for WiFi networks...\n");
 
-    // Simplified implementation for testing
-    // In real implementation, use iwlist or nmcli commands
+    // Use iwlist command to scan networks
+    char command[256];
+    snprintf(command, sizeof(command), "iwlist %s scan | grep ESSID", NETWORK_WIFI_INTERFACE);
     
-    // Simulate some common networks for testing
-    *count = 0;
-    
-    if (max_networks > 0) {
-        strcpy(networks[*count], "HomeWiFi");
-        (*count)++;
-    }
-    
-    if (max_networks > 1) {
-        strcpy(networks[*count], "Office_Network");
-        (*count)++;
-    }
-    
-    if (max_networks > 2) {
-        strcpy(networks[*count], "Guest_WiFi");
-        (*count)++;
-    }
-    
-    if (max_networks > 3) {
-        strcpy(networks[*count], "OHT_Control");
-        (*count)++;
-    }
-    
-    if (max_networks > 4) {
-        strcpy(networks[*count], "Factory_Network");
-        (*count)++;
+    char output[1024];
+    hal_status_t status = execute_command(command, output, sizeof(output));
+    if (status != HAL_STATUS_OK) {
+        printf("Failed to scan WiFi networks\n");
+        *count = 0;
+        return status;
     }
 
-    printf("Found %u WiFi networks (simulated)\n", *count);
+    // Parse scan results
+    *count = 0;
+    char *line = strtok(output, "\n");
+    while (line && *count < max_networks) {
+        char *essid_start = strstr(line, "ESSID:");
+        if (essid_start) {
+            essid_start += 6; // Skip "ESSID:"
+            if (*essid_start == '"') {
+                essid_start++; // Skip opening quote
+                char *essid_end = strchr(essid_start, '"');
+                if (essid_end) {
+                    size_t len = essid_end - essid_start;
+                    if (len < 32) {
+                        strncpy(networks[*count], essid_start, len);
+                        networks[*count][len] = '\0';
+                        (*count)++;
+                    }
+                }
+            }
+        }
+        line = strtok(NULL, "\n");
+    }
+
+    printf("Found %u WiFi networks\n", *count);
     return HAL_STATUS_OK;
 }
 
@@ -665,11 +708,12 @@ hal_status_t hal_wifi_get_signal_strength(uint32_t *strength) {
 }
 
 hal_status_t hal_wifi_get_channel(uint32_t *channel) {
+    // Real WiFi channel implementation
     if (channel == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
 
-    // Get current channel
+    // Get current channel using iwgetid
     char command[256];
     snprintf(command, sizeof(command), "iwgetid %s --channel", NETWORK_WIFI_INTERFACE);
     
@@ -803,19 +847,18 @@ hal_status_t hal_network_validate_hardware(void) {
     return HAL_STATUS_OK;
 }
 
-// Failover Functions
+// Failover Functions - Simplified for OHT-50 Master Module
 hal_status_t hal_network_enable_failover(network_type_t primary_type, network_type_t backup_type) {
+    // Simplified - basic failover only
     if (!network_initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
-
-    printf("Enabling network failover: Primary=%d, Backup=%d\n", primary_type, backup_type);
-
+    
     failover_enabled = true;
     primary_network = primary_type;
     backup_network = backup_type;
     active_network = primary_type;
-
+    
     return HAL_STATUS_OK;
 }
 
@@ -823,8 +866,7 @@ hal_status_t hal_network_disable_failover(void) {
     if (!network_initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
-
-    printf("Disabling network failover\n");
+    
     failover_enabled = false;
     return HAL_STATUS_OK;
 }
@@ -833,7 +875,7 @@ hal_status_t hal_network_get_failover_status(network_type_t *active_type, bool *
     if (!network_initialized || active_type == NULL || failover_enabled_status == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
-
+    
     *active_type = active_network;
     *failover_enabled_status = failover_enabled;
     return HAL_STATUS_OK;
@@ -843,8 +885,7 @@ hal_status_t hal_network_switch_to_backup(void) {
     if (!network_initialized || !failover_enabled) {
         return HAL_STATUS_ERROR;
     }
-
-    printf("Switching to backup network\n");
+    
     active_network = backup_network;
     return hal_network_connect(backup_network);
 }
@@ -853,8 +894,7 @@ hal_status_t hal_network_switch_to_primary(void) {
     if (!network_initialized || !failover_enabled) {
         return HAL_STATUS_ERROR;
     }
-
-    printf("Switching to primary network\n");
+    
     active_network = primary_network;
     return hal_network_connect(primary_network);
 }
@@ -903,8 +943,7 @@ static hal_status_t execute_command(const char *command, char *output, size_t ou
 }
 
 static hal_status_t get_interface_status(const char *interface, bool *up, char *ip_address) {
-    // Simplified implementation for testing
-    // In real implementation, use proper socket ioctl calls
+    // Real implementation using socket ioctl calls
     
     if (interface == NULL || up == NULL || ip_address == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
@@ -935,9 +974,25 @@ static hal_status_t get_interface_status(const char *interface, bool *up, char *
         *up = false;
     }
     
-    // Get IP address (simplified - just return default for testing)
-    strcpy(ip_address, "192.168.1.100");
+    // Get actual IP address using ioctl
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        strcpy(ip_address, "0.0.0.0");
+        return HAL_STATUS_ERROR;
+    }
     
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ - 1);
+    
+    if (ioctl(sock, SIOCGIFADDR, &ifr) == 0) {
+        struct sockaddr_in *addr = (struct sockaddr_in*)&ifr.ifr_addr;
+        inet_ntop(AF_INET, &addr->sin_addr, ip_address, 16);
+    } else {
+        strcpy(ip_address, "0.0.0.0");
+    }
+    
+    close(sock);
     return HAL_STATUS_OK;
 }
 

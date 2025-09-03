@@ -20,20 +20,9 @@ static power_module_data_t test_data;
 static power_module_status_t test_status;
 
 // Mock functions - replace real HAL functions
-#define hal_rs485_transmit mock_hal_rs485_transmit
-#define hal_rs485_receive mock_hal_rs485_receive
-#define modbus_calculate_crc mock_modbus_calculate_crc
-
-static hal_status_t mock_hal_rs485_transmit(const uint8_t *data, size_t length);
-static hal_status_t mock_hal_rs485_receive(uint8_t *data, size_t max_length, size_t *received_length);
-static uint16_t mock_modbus_calculate_crc(const uint8_t *data, size_t length);
-
-// Test data
-static uint8_t mock_tx_buffer[256];
-static uint8_t mock_rx_buffer[256];
-static size_t mock_tx_length = 0;
-static size_t mock_rx_length = 0;
-static bool mock_communication_success = true;
+// Mock function definitions - REMOVED (using real HAL functions)
+// Mock function declarations - REMOVED (using real HAL functions)
+// Test data - REMOVED (using real HAL functions)
 
 // Validation ranges
 #define MIN_VOLTAGE_MV 3000   // 3.0V minimum
@@ -87,12 +76,7 @@ void setUp(void)
     memset(&test_data, 0, sizeof(power_module_data_t));
     memset(&test_status, 0, sizeof(power_module_status_t));
     
-    // Reset mock data
-    mock_tx_length = 0;
-    mock_rx_length = 0;
-    mock_communication_success = true;
-    memset(mock_tx_buffer, 0, sizeof(mock_tx_buffer));
-    memset(mock_rx_buffer, 0, sizeof(mock_rx_buffer));
+    // Reset mock data - REMOVED (using real HAL functions)
 }
 
 void tearDown(void)
@@ -101,55 +85,7 @@ void tearDown(void)
     power_module_handler_deinit();
 }
 
-// Mock implementations
-static hal_status_t mock_hal_rs485_transmit(const uint8_t *data, size_t length)
-{
-    if (!mock_communication_success) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    if (length > sizeof(mock_tx_buffer)) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    memcpy(mock_tx_buffer, data, length);
-    mock_tx_length = length;
-    
-    return HAL_STATUS_OK;
-}
-
-static hal_status_t mock_hal_rs485_receive(uint8_t *data, size_t max_length, size_t *received_length)
-{
-    if (!mock_communication_success) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    if (mock_rx_length > max_length) {
-        return HAL_STATUS_ERROR;
-    }
-    
-    memcpy(data, mock_rx_buffer, mock_rx_length);
-    *received_length = mock_rx_length;
-    
-    return HAL_STATUS_OK;
-}
-
-static uint16_t mock_modbus_calculate_crc(const uint8_t *data, size_t length)
-{
-    // Simple mock CRC calculation
-    uint16_t crc = 0xFFFF;
-    for (size_t i = 0; i < length; i++) {
-        crc ^= data[i];
-        for (int j = 0; j < 8; j++) {
-            if (crc & 0x0001) {
-                crc = (crc >> 1) ^ 0xA001;
-            } else {
-                crc = crc >> 1;
-            }
-        }
-    }
-    return crc;
-}
+// Mock implementations - REMOVED (using real HAL functions)
 
 // Validation helper functions
 static bool validate_voltage_range(uint16_t voltage_mv)

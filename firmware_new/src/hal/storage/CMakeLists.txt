@@ -1,18 +1,18 @@
 # HAL Storage Library
 # Configuration persistence
 
-# Create library
-add_library(hal_storage STATIC
-    hal_config_persistence.c
-)
+# Create library - DISABLED (no source files)
+# add_library(hal_storage STATIC
+#     # Configuration persistence removed - using simple JSON/INI files
+# )
 
-# Include directories
-target_include_directories(hal_storage PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
-)
-
-# Link dependencies
-target_link_libraries(hal_storage
-    hal_common
-)
+# Include directories - DISABLED
+# target_include_directories(hal_storage PUBLIC
+#     ${CMAKE_CURRENT_SOURCE_DIR}
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
+# )
+# 
+# # Link dependencies
+# target_link_libraries(hal_storage
+#     hal_common
+# )
