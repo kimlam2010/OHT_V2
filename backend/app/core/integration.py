@@ -4,8 +4,8 @@ Firmware Integration Service - Real HTTP API Communication
 
 import httpx
 import logging
-from typing import Dict, Any, Optional
-from datetime import datetime
+from typing import Dict, Any
+from datetime import datetime, timezone
 
 from app.config import settings
 
@@ -109,6 +109,38 @@ class FirmwareIntegrationService:
             logger.error(f"Firmware telemetry error: {e}")
             raise FirmwareCommunicationException(f"Firmware telemetry error: {e}")
     
+    async def emergency_stop(self) -> bool:
+        """Send emergency stop command to Firmware via HTTP API"""
+        try:
+            response = await self.http_client.post(
+                "/api/v1/robot/emergency-stop",
+                json={"command": "emergency_stop", "timestamp": datetime.now(timezone.utc).isoformat()}
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                success = result.get("success", False)
+                
+                if success:
+                    logger.info("Emergency stop command sent successfully")
+                else:
+                    logger.warning(f"Emergency stop failed: {result.get('message', 'Unknown error')}")
+                
+                return success
+            else:
+                logger.error(f"Emergency stop request failed: HTTP {response.status_code}")
+                return False
+                
+        except httpx.TimeoutException:
+            logger.error("Emergency stop timeout")
+            return False
+        except httpx.ConnectError:
+            logger.error("Emergency stop connection failed")
+            return False
+        except Exception as e:
+            logger.error(f"Emergency stop communication error: {e}")
+            return False
+    
     async def get_safety_status(self) -> Dict[str, Any]:
         """Get safety status from Firmware via HTTP API"""
         try:
@@ -183,6 +215,7 @@ class MockFirmwareService:
         # MOCK DATA - ONLY FOR UNIT TESTING
         # DO NOT USE IN PRODUCTION
         return {
+            "robot_id": "OHT-50-001",
             "status": "idle",
             "position": {"x": 150.5, "y": 200.3},
             "battery_level": 87,
@@ -190,12 +223,36 @@ class MockFirmwareService:
             "motor_speed": 1500,
             "motor_temperature": 45,
             "dock_status": "ready",
-            "safety_status": "normal"
+            "safety_status": "normal",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
         }
         
     async def get_robot_status(self) -> Dict[str, Any]:
         """Mock robot status"""
-        return self.mock_data
+        try:
+            logger.info("🧪 MOCK: Returning robot status")
+            # Add timestamp to mock data
+            mock_data = self.mock_data.copy()
+            mock_data["timestamp"] = datetime.now(timezone.utc).isoformat()
+            return mock_data
+        except Exception as e:
+            logger.error(f"🧪 MOCK: Error in get_robot_status: {e}")
+            # Return safe mock data
+            return {
+                "robot_id": "OHT-50-001",
+                "status": "idle",
+                "position": {"x": 150.5, "y": 200.3},
+                "battery_level": 87,
+                "temperature": 42.5,
+                "motor_speed": 1500,
+                "motor_temperature": 45,
+                "dock_status": "ready",
+                "safety_status": "normal",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
         
     async def send_robot_command(self, command: Dict[str, Any]) -> bool:
         """Mock robot command - ALWAYS SUCCESS for testing"""
@@ -230,7 +287,7 @@ class MockFirmwareService:
             "status": "normal",
             "emergency_stop": False,
             "safety_zones": ["zone1", "zone2"],
-            "last_check": datetime.utcnow().isoformat()
+            "last_check": datetime.now(timezone.utc).isoformat()
         }
         
     async def health_check(self) -> bool:

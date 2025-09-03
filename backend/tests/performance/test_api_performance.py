@@ -9,21 +9,37 @@ from httpx import AsyncClient
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
-from app.main import create_app
+from app.main import app
 from app.core.database import get_db_context
-from app.core.security import create_access_token, get_password_hash
+from app.core.security import create_access_token, get_password_hash, get_current_user
+from app.models.user import User
 
 
 @pytest.fixture
-def app():
-    """Create test app"""
-    return create_app()
+def test_app():
+    """Get test application instance with authentication override"""
+    import os
+    os.environ["TESTING"] = "true"
+    
+    # Override authentication dependency for testing
+    async def override_get_current_user():
+        """Override authentication for testing"""
+        return User(
+            id=1,
+            username="admin",
+            email="admin@test.com",
+            role="administrator",
+            is_active=True
+        )
+    
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    return app
 
 
 @pytest.fixture
-def async_client(app):
+def async_client(test_app):
     """Create async test client"""
-    return AsyncClient(app=app, base_url="http://test")
+    return AsyncClient(app=test_app, base_url="http://test")
 
 
 @pytest.fixture
