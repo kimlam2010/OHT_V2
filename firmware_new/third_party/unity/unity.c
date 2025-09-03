@@ -64,6 +64,9 @@ void unity_run_test(void (*test_func)(void), const char* test_name) {
     printf("Running: %s", test_name);
     fflush(stdout);
     
+    // Reset failure state for this test
+    unity_state.test_failures = 0;
+    
     // Run the test
     test_func();
     
@@ -71,7 +74,7 @@ void unity_run_test(void (*test_func)(void), const char* test_name) {
         printf(" ❌ FAILED\n");
         printf("   File: %s:%d\n", unity_state.file_name, unity_state.line_number);
         printf("   Message: %s\n", unity_state.failure_message);
-        unity_state.test_failures = 0; // Reset for next test
+        // Don't reset test_failures here - let unity_end() handle the total count
     } else {
         printf(" ✅ PASSED\n");
     }

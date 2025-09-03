@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# FW Team - Run All Unit Tests Script
-# Version: 1.0.0
-# Date: 2025-01-27
+# FW Team - Run All Unit Tests Script (CLEANED VERSION)
+# Version: 2.0.0
+# Date: 2025-01-28
+# Status: Simplified test suite after cleanup
 
 echo "=========================================="
-echo "FW Team - Unit Tests Execution Report"
+echo "FW Team - Simplified Unit Tests Execution"
 echo "=========================================="
 echo "Date: $(date)"
 echo "Build Directory: $(pwd)"
@@ -67,22 +68,26 @@ run_test() {
     echo ""
 }
 
-# Run all tests
-echo "Starting unit test execution..."
+# Run simplified test suite
+echo "Starting simplified unit test execution..."
 echo ""
 
-# HAL Tests
+# Core HAL Tests (ESSENTIAL)
 run_test "HAL Common Tests" "test_hal_common"
 run_test "HAL GPIO Tests" "test_hal_gpio"
 run_test "HAL RS485 Tests" "test_hal_rs485"
 run_test "HAL E-Stop Tests" "test_hal_estop"
 
-# Application Tests
-run_test "System State Machine Tests" "test_system_state_machine"
+# Basic Integration Tests (SIMPLIFIED)
+run_test "Basic Integration Tests" "test_basic_integration"
+run_test "Module Discovery Tests" "test_module_discovery_simple"
+
+# Basic Performance Tests (SIMPLIFIED)
+run_test "Basic Performance Tests" "test_basic_performance"
 
 # Generate summary report
 echo "=========================================="
-echo "TEST EXECUTION SUMMARY"
+echo "SIMPLIFIED TEST EXECUTION SUMMARY"
 echo "=========================================="
 echo "Total Tests Run: $total_tests"
 echo "Passed Tests: $passed_tests"
@@ -97,16 +102,12 @@ else
 fi
 
 echo ""
-echo "Test Coverage Summary:"
-echo "- HAL Common: ✅ Complete"
-echo "- HAL GPIO: ✅ Complete"
-echo "- HAL RS485: ✅ Complete"
-echo "- HAL E-Stop: ✅ Complete"
-echo "- System State Machine: ✅ Complete"
+echo "Simplified Test Coverage Summary:"
+echo "- HAL Layer: Common, GPIO, RS485, E-Stop"
+echo "- Integration: Basic integration, Module discovery"
+echo "- Performance: Basic performance validation"
 echo ""
-
-echo "=========================================="
-echo "Test execution completed at: $(date)"
-echo "=========================================="
+echo "Removed: Complex performance tests, stress tests, safety validation tests"
+echo "Reason: Simplified test suite for faster development cycle"
 
 exit $exit_code

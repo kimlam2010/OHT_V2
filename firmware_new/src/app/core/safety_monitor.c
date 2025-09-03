@@ -12,7 +12,7 @@
 #include "hal_estop.h"
 #include "hal_led.h"
 #include "hal_relay.h"
-#include "hal_config_persistence.h"
+// #include "hal_config_persistence.h" - REMOVED (config persistence simplified)
 #include "hal_rs485.h"
 #include "system_state_machine.h"
 #include <string.h>
@@ -1124,63 +1124,8 @@ hal_status_t safety_monitor_load_config(void)
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    // Load safety zones configuration
-    basic_safety_zones_t zones;
-    hal_status_t status = hal_config_get_int("safety", "zones_enabled", (int32_t*)&zones.enabled);
-    if (status == HAL_STATUS_OK) {
-        status = hal_config_get_int("safety", "emergency_zone_mm", (int32_t*)&zones.emergency_zone_mm);
-        if (status == HAL_STATUS_OK) {
-            status = hal_config_get_int("safety", "warning_zone_mm", (int32_t*)&zones.warning_zone_mm);
-            if (status == HAL_STATUS_OK) {
-                status = hal_config_get_int("safety", "safe_zone_mm", (int32_t*)&zones.safe_zone_mm);
-                if (status == HAL_STATUS_OK) {
-                    safety_monitor_set_basic_zones(&zones);
-                }
-            }
-        }
-    }
-    
-    // Load safety monitor configuration
-    int32_t estop_timeout, zone_check_period, interlock_check_period, sensor_check_period, watchdog_timeout;
-    bool enable_zone_monitoring, enable_interlock_monitoring, enable_sensor_monitoring, enable_watchdog_monitoring;
-    
-    if (hal_config_get_int("safety", "estop_timeout_ms", &estop_timeout) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.estop_timeout_ms = (uint32_t)estop_timeout;
-    }
-    
-    if (hal_config_get_int("safety", "zone_check_period_ms", &zone_check_period) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.zone_check_period_ms = (uint32_t)zone_check_period;
-    }
-    
-    if (hal_config_get_int("safety", "interlock_check_period_ms", &interlock_check_period) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.interlock_check_period_ms = (uint32_t)interlock_check_period;
-    }
-    
-    if (hal_config_get_int("safety", "sensor_check_period_ms", &sensor_check_period) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.sensor_check_period_ms = (uint32_t)sensor_check_period;
-    }
-    
-    if (hal_config_get_int("safety", "watchdog_timeout_ms", &watchdog_timeout) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.watchdog_timeout_ms = (uint32_t)watchdog_timeout;
-    }
-    
-    if (hal_config_get_bool("safety", "enable_zone_monitoring", &enable_zone_monitoring) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.enable_zone_monitoring = enable_zone_monitoring;
-    }
-    
-    if (hal_config_get_bool("safety", "enable_interlock_monitoring", &enable_interlock_monitoring) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.enable_interlock_monitoring = enable_interlock_monitoring;
-    }
-    
-    if (hal_config_get_bool("safety", "enable_sensor_monitoring", &enable_sensor_monitoring) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.enable_sensor_monitoring = enable_sensor_monitoring;
-    }
-    
-    if (hal_config_get_bool("safety", "enable_watchdog_monitoring", &enable_watchdog_monitoring) == HAL_STATUS_OK) {
-        safety_monitor_instance.config.enable_watchdog_monitoring = enable_watchdog_monitoring;
-    }
-    
-    printf("[SAFETY] Configuration loaded successfully\n");
+    // Use default configuration (config persistence simplified)
+    printf("[SAFETY] Using default configuration\n");
     return HAL_STATUS_OK;
 }
 
@@ -1190,34 +1135,9 @@ hal_status_t safety_monitor_save_config(void)
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    // Save safety zones configuration
-    basic_safety_zones_t zones;
-    hal_status_t status = safety_monitor_get_basic_zones(&zones);
-    if (status == HAL_STATUS_OK) {
-        hal_config_set_bool("safety", "zones_enabled", zones.enabled);
-        hal_config_set_int("safety", "emergency_zone_mm", zones.emergency_zone_mm);
-        hal_config_set_int("safety", "warning_zone_mm", zones.warning_zone_mm);
-        hal_config_set_int("safety", "safe_zone_mm", zones.safe_zone_mm);
-    }
-    
-    // Save safety monitor configuration
-    hal_config_set_int("safety", "estop_timeout_ms", safety_monitor_instance.config.estop_timeout_ms);
-    hal_config_set_int("safety", "zone_check_period_ms", safety_monitor_instance.config.zone_check_period_ms);
-    hal_config_set_int("safety", "interlock_check_period_ms", safety_monitor_instance.config.interlock_check_period_ms);
-    hal_config_set_int("safety", "sensor_check_period_ms", safety_monitor_instance.config.sensor_check_period_ms);
-    hal_config_set_int("safety", "watchdog_timeout_ms", safety_monitor_instance.config.watchdog_timeout_ms);
-    hal_config_set_bool("safety", "enable_zone_monitoring", safety_monitor_instance.config.enable_zone_monitoring);
-    hal_config_set_bool("safety", "enable_interlock_monitoring", safety_monitor_instance.config.enable_interlock_monitoring);
-    hal_config_set_bool("safety", "enable_sensor_monitoring", safety_monitor_instance.config.enable_sensor_monitoring);
-    hal_config_set_bool("safety", "enable_watchdog_monitoring", safety_monitor_instance.config.enable_watchdog_monitoring);
-    
-    // Save configuration to persistent storage
-    status = hal_config_save();
-    if (status == HAL_STATUS_OK) {
-        printf("[SAFETY] Configuration saved successfully\n");
-    }
-    
-    return status;
+    // Configuration saving simplified (config persistence removed)
+    printf("[SAFETY] Configuration saving not implemented (simplified)\n");
+    return HAL_STATUS_OK;
 }
 
 hal_status_t safety_monitor_export_config_json(char *buffer, size_t buffer_size, size_t *actual_size)

@@ -10,7 +10,7 @@
 #include "unity.h"
 #include "hal_rs485.h"
 #include "hal_common.h"
-#include "mock_rs485.h"
+// No mock includes needed
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h> // Added for debug printing
@@ -21,8 +21,7 @@ static modbus_config_t test_modbus_config;
 
 void setUp(void)
 {
-    // Reset mock state
-    mock_rs485_reset();
+    // Initialize test environment (no mock reset needed)
     
     // Initialize test configuration
     memset(&test_config, 0, sizeof(rs485_config_t));
