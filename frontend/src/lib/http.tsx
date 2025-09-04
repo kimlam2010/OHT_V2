@@ -6,7 +6,6 @@ import { HTTPError } from '@/types/error'
 const nprogress = NProgressCustom()
 
 const http = axios.create({
-  baseURL: '/api/v1',
   timeout: 20000,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
@@ -14,11 +13,11 @@ const http = axios.create({
 
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (config.headers['x-api'] === 'hardware') {
-      config.baseURL = import.meta.env.VITE_API_URL_HARDWARE
+    if (config.headers['x-api'] === 'software') {
+      config.baseURL = `${import.meta.env.VITE_BACKEND_URL}/api/v1`
     }
     else {
-      config.baseURL = import.meta.env.VITE_API_URL_SOFTWARE
+      config.baseURL = `${import.meta.env.VITE_FIRMWARE_URL}/api/v1`
     }
     if (!config.doNotShowLoading) {
       nprogress.start()
