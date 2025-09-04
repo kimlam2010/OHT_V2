@@ -20,6 +20,7 @@ from app.core.websocket_service import websocket_service
 # Import API routers
 from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control
 from app.api import websocket
+from app.config import Settings
 
 # Configure logging
 logging.basicConfig(
@@ -187,10 +188,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+settings = Settings()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=settings.cors_origins,  # Configure appropriately for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
