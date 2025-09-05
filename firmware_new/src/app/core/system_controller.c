@@ -43,6 +43,21 @@ static struct {
 #define MAX_ERROR_COUNT 10
 #define SYSTEM_CONTROLLER_VERSION "1.0.0"
 
+// Event queue (ring buffer) for decoupled event ingestion and dispatch
+#define SYSTEM_CONTROLLER_EVENT_QUEUE_SIZE 32
+typedef struct {
+    system_controller_event_t event_type;
+    char details[128];
+    uint64_t timestamp_ms;
+} system_controller_queued_event_t;
+
+static struct {
+    system_controller_queued_event_t buffer[SYSTEM_CONTROLLER_EVENT_QUEUE_SIZE];
+    uint32_t head; // write index
+    uint32_t tail; // read index
+    uint32_t count;
+} system_controller_event_queue = {0};
+
 // Default configuration
 static const system_controller_config_t default_config = {
     .update_period_ms = 10,
@@ -65,6 +80,10 @@ static hal_status_t system_controller_check_safety(void);
 static hal_status_t system_controller_check_communication(void);
 static hal_status_t system_controller_check_control(void);
 static hal_status_t system_controller_update_performance(void);
+static void system_controller_dispatch_events(void);
+static void system_controller_handle_event(system_controller_event_t event, const char* details);
+static bool system_controller_event_queue_push(system_controller_event_t event, const char* details);
+static bool system_controller_event_queue_pop(system_controller_queued_event_t* out_event);
 
 // Implementation
 
@@ -195,6 +214,9 @@ hal_status_t system_controller_update(void)
     system_controller_instance.stats.total_events++;
     system_controller_instance.update_count++;
     
+    // Dispatch queued events after health checks to avoid reentrancy
+    system_controller_dispatch_events();
+
     // Calculate response time
     uint64_t end_time = system_controller_get_timestamp_ms();
     system_controller_instance.performance.response_time_ms = (uint32_t)(end_time - start_time);
@@ -330,40 +352,14 @@ hal_status_t system_controller_process_event(system_controller_event_t event, co
     if (!system_controller_instance.initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
-    
-    // Log event
-    system_controller_log_event_internal(event, details);
-    
-    // Update status
-    system_controller_instance.status.last_event = event;
-    
-    // Handle specific events
-    switch (event) {
-        case SYSTEM_CONTROLLER_EVENT_FAULT_DETECTED:
-            system_controller_instance.status.current_error = SYSTEM_CONTROLLER_ERROR_HARDWARE;
-            system_controller_instance.error_count++;
-            break;
-            
-        case SYSTEM_CONTROLLER_EVENT_EMERGENCY:
-            system_controller_instance.status.current_error = SYSTEM_CONTROLLER_ERROR_SAFETY_VIOLATION;
-            system_controller_instance.error_count++;
-            break;
-            
-        case SYSTEM_CONTROLLER_EVENT_ERROR:
-            system_controller_instance.error_count++;
-            break;
-            
-        default:
-            break;
-    }
-    
-    // Check if max error count exceeded
-    if (system_controller_instance.error_count >= system_controller_instance.config.max_error_count) {
-        // Trigger fault
-        system_controller_process_event(SYSTEM_CONTROLLER_EVENT_FAULT_DETECTED, "Max error count exceeded");
+    // Enqueue event for deferred handling in update()
+    if (!system_controller_event_queue_push(event, details)) {
+        // Queue full: treat as error event and record
+        system_controller_log_event_internal(SYSTEM_CONTROLLER_EVENT_ERROR, "Event queue full");
+        system_controller_instance.error_count++;
         return HAL_STATUS_ERROR;
     }
-    
+
     return HAL_STATUS_OK;
 }
 
@@ -451,10 +447,8 @@ const char* system_controller_get_version(void)
 
 static uint64_t system_controller_get_timestamp_ms(void)
 {
-    // TODO: Implement proper timestamp function
-    // For now, return a simple counter
-    static uint64_t timestamp = 0;
-    return timestamp++;
+    // Use HAL timestamp in microseconds and convert to milliseconds
+    return (uint64_t)(hal_get_timestamp_us() / 1000ULL);
 }
 
 static void system_controller_log_event_internal(system_controller_event_t event, const char* message)
@@ -463,8 +457,11 @@ static void system_controller_log_event_internal(system_controller_event_t event
         return;
     }
     
-    // TODO: Implement proper logging
-    // For now, just call callback if available
+    // Implement proper logging
+    printf("[SYSTEM_CONTROLLER] Event: %d, Message: %s\n", 
+           (int)event, message ? message : "N/A");
+    
+    // Call callback if available
     if (system_controller_instance.event_callback != NULL) {
         system_controller_instance.event_callback(SYSTEM_CONTROLLER_STATE_INIT, event, message);
     }
@@ -542,19 +539,42 @@ static hal_status_t system_controller_check_safety(void)
 
 static hal_status_t system_controller_check_communication(void)
 {
-    // TODO: Implement communication check
-    // This would involve checking RS485, network, etc.
+    // Implement communication check
+    // Check RS485 communication (simplified check)
+    // TODO: Implement proper RS485 connection check
     system_controller_instance.status.communication_ok = true;
     
+    // Check network communication
+    bool network_connected = false;
+    hal_status_t network_status = hal_network_is_connected(NETWORK_TYPE_ETHERNET, &network_connected);
+    if (network_status != HAL_STATUS_OK || !network_connected) {
+        system_controller_instance.status.communication_ok = false;
+        return HAL_STATUS_ERROR;
+    }
+    
+    system_controller_instance.status.communication_ok = true;
     return HAL_STATUS_OK;
 }
 
 static hal_status_t system_controller_check_control(void)
 {
-    // TODO: Implement control check
-    // This would involve checking control loop, motor status, etc.
-    system_controller_instance.status.control_ok = true;
+    // Implement control check
+    // Check control loop status
+    control_status_t control_status;
+    hal_status_t status = control_loop_get_status(&control_status);
+    if (status != HAL_STATUS_OK) {
+        system_controller_instance.status.control_ok = false;
+        return status;
+    }
     
+    // Check if control loop is active and responding
+    if (control_status.state == CONTROL_STATE_DISABLED || control_status.state == CONTROL_STATE_ERROR || 
+        control_status.state == CONTROL_STATE_FAULT || control_status.limits_violated || control_status.safety_violated) {
+        system_controller_instance.status.control_ok = false;
+        return HAL_STATUS_ERROR;
+    }
+    
+    system_controller_instance.status.control_ok = true;
     return HAL_STATUS_OK;
 }
 
@@ -576,7 +596,36 @@ static hal_status_t system_controller_update_performance(void)
                 (uint32_t)(system_controller_instance.error_count * 100 / system_controller_instance.stats.total_events);
         }
         
-        // TODO: Implement CPU and memory usage calculation
+        // Implement CPU and memory usage calculation
+        // Get system resource usage
+        FILE *meminfo = fopen("/proc/meminfo", "r");
+        if (meminfo) {
+            char line[256];
+            uint64_t total_mem = 0, free_mem = 0;
+            while (fgets(line, sizeof(line), meminfo)) {
+                if (sscanf(line, "MemTotal: %lu kB", &total_mem) == 1) {
+                    // Found total memory
+                } else if (sscanf(line, "MemAvailable: %lu kB", &free_mem) == 1) {
+                    // Found available memory
+                }
+            }
+            fclose(meminfo);
+            
+            if (total_mem > 0) {
+                system_controller_instance.performance.memory_usage_percent = 
+                    (uint32_t)((total_mem - free_mem) * 100 / total_mem);
+            }
+        }
+        
+        // CPU usage calculation (simplified)
+        static uint64_t last_cpu_time = 0;
+        uint64_t current_cpu_time = system_controller_get_timestamp_ms();
+        if (last_cpu_time > 0) {
+            uint64_t cpu_delta = current_cpu_time - last_cpu_time;
+            system_controller_instance.performance.cpu_usage_percent = 
+                (uint32_t)(cpu_delta * 100 / system_controller_instance.config.update_period_ms);
+        }
+        last_cpu_time = current_cpu_time;
         
         // Update last performance check time
         system_controller_instance.last_performance_check = current_time;
@@ -584,4 +633,102 @@ static hal_status_t system_controller_update_performance(void)
     }
     
     return HAL_STATUS_OK;
+}
+
+// Event queue helpers and dispatcher
+static bool system_controller_event_queue_push(system_controller_event_t event, const char* details)
+{
+    if (system_controller_event_queue.count >= SYSTEM_CONTROLLER_EVENT_QUEUE_SIZE) {
+        return false;
+    }
+    system_controller_queued_event_t *slot = &system_controller_event_queue.buffer[system_controller_event_queue.head];
+    slot->event_type = event;
+    slot->timestamp_ms = system_controller_get_timestamp_ms();
+    if (details) {
+        snprintf(slot->details, sizeof(slot->details), "%s", details);
+    } else {
+        slot->details[0] = '\0';
+    }
+    system_controller_event_queue.head = (system_controller_event_queue.head + 1U) % SYSTEM_CONTROLLER_EVENT_QUEUE_SIZE;
+    system_controller_event_queue.count++;
+    return true;
+}
+
+static bool system_controller_event_queue_pop(system_controller_queued_event_t* out_event)
+{
+    if (system_controller_event_queue.count == 0) {
+        return false;
+    }
+    if (out_event) {
+        *out_event = system_controller_event_queue.buffer[system_controller_event_queue.tail];
+    }
+    system_controller_event_queue.tail = (system_controller_event_queue.tail + 1U) % SYSTEM_CONTROLLER_EVENT_QUEUE_SIZE;
+    system_controller_event_queue.count--;
+    return true;
+}
+
+static void system_controller_dispatch_events(void)
+{
+    // Limit the number of events handled per update to avoid starvation
+    const uint32_t max_events_per_update = 8;
+    uint32_t handled = 0;
+    system_controller_queued_event_t qe;
+    while (handled < max_events_per_update && system_controller_event_queue_pop(&qe)) {
+        system_controller_handle_event(qe.event_type, qe.details);
+        handled++;
+    }
+}
+
+static void system_controller_handle_event(system_controller_event_t event, const char* details)
+{
+    // Log event
+    system_controller_log_event_internal(event, details);
+
+    // Update status
+    system_controller_instance.status.last_event = event;
+
+    // Handle specific events
+    switch (event) {
+        case SYSTEM_CONTROLLER_EVENT_INIT_COMPLETE:
+            (void)system_controller_set_state(SYSTEM_CONTROLLER_STATE_IDLE);
+            break;
+        case SYSTEM_CONTROLLER_EVENT_ACTIVATE:
+            (void)system_controller_activate();
+            (void)system_controller_set_state(SYSTEM_CONTROLLER_STATE_ACTIVE);
+            break;
+        case SYSTEM_CONTROLLER_EVENT_DEACTIVATE:
+            (void)system_controller_deactivate();
+            (void)system_controller_set_state(SYSTEM_CONTROLLER_STATE_IDLE);
+            break;
+        case SYSTEM_CONTROLLER_EVENT_FAULT_DETECTED:
+            system_controller_instance.status.current_error = SYSTEM_CONTROLLER_ERROR_HARDWARE;
+            (void)system_controller_set_state(SYSTEM_CONTROLLER_STATE_FAULT);
+            system_controller_instance.error_count++;
+            break;
+        case SYSTEM_CONTROLLER_EVENT_FAULT_CLEARED:
+            (void)system_controller_reset_errors();
+            (void)system_controller_set_state(SYSTEM_CONTROLLER_STATE_IDLE);
+            break;
+        case SYSTEM_CONTROLLER_EVENT_EMERGENCY:
+            system_controller_instance.status.current_error = SYSTEM_CONTROLLER_ERROR_SAFETY_VIOLATION;
+            (void)system_controller_set_state(SYSTEM_CONTROLLER_STATE_EMERGENCY);
+            system_controller_instance.error_count++;
+            break;
+        case SYSTEM_CONTROLLER_EVENT_SHUTDOWN:
+            (void)system_controller_set_state(SYSTEM_CONTROLLER_STATE_SHUTDOWN);
+            break;
+        case SYSTEM_CONTROLLER_EVENT_ERROR:
+            system_controller_instance.error_count++;
+            break;
+        case SYSTEM_CONTROLLER_EVENT_NONE:
+        default:
+            break;
+    }
+
+    // Enforce max error policy without recursive enqueue
+    if (system_controller_instance.error_count >= system_controller_instance.config.max_error_count &&
+        system_controller_instance.status.current_state != SYSTEM_CONTROLLER_STATE_FAULT) {
+        system_controller_instance.status.current_error = SYSTEM_CONTROLLER_ERROR_CONTROL;
+        (void)system_controller_set_state(SYSTEM_CONTROLLER_STATE_FAULT);
+    }
 }

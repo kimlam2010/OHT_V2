@@ -198,15 +198,80 @@ void registry_set_legacy_callback(registry_event_callback_t cb) {
 }
 
 int registry_load_yaml(const char *path) {
-    // TODO: Implement YAML loading
-    (void)path;
-    return 0;
+    if (path == NULL) {
+        printf("[REGISTRY] Error: YAML path is NULL\n");
+        return -1;
+    }
+    
+    printf("[REGISTRY] Loading YAML configuration from: %s\n", path);
+    
+    // TODO: Implement actual YAML parsing library (e.g., libyaml)
+    // For now, simulate YAML loading with basic file operations
+    FILE *file = fopen(path, "r");
+    if (file == NULL) {
+        printf("[REGISTRY] Warning: Cannot open YAML file: %s (using defaults)\n", path);
+        return 0; // Use default configuration
+    }
+    
+    // Simulate YAML parsing - read file and extract module configurations
+    char line[256];
+    int modules_loaded = 0;
+    
+    while (fgets(line, sizeof(line), file) != NULL) {
+        // Simulate parsing YAML lines
+        if (strstr(line, "module_id:") != NULL) {
+            modules_loaded++;
+        }
+    }
+    
+    fclose(file);
+    
+    printf("[REGISTRY] YAML loaded: %d modules configured\n", modules_loaded);
+    return modules_loaded;
 }
 
 int registry_save_yaml(const char *path) {
-    // TODO: Implement YAML saving
-    (void)path;
-    return 0;
+    if (path == NULL) {
+        printf("[REGISTRY] Error: YAML path is NULL\n");
+        return -1;
+    }
+    
+    printf("[REGISTRY] Saving YAML configuration to: %s\n", path);
+    
+    // TODO: Implement actual YAML generation library (e.g., libyaml)
+    // For now, simulate YAML saving with basic file operations
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        printf("[REGISTRY] Error: Cannot create YAML file: %s\n", path);
+        return -1;
+    }
+    
+    // Simulate YAML generation - write module configurations
+    fprintf(file, "# OHT-50 Module Registry Configuration\n");
+    fprintf(file, "# Generated on: %s\n", __DATE__ " " __TIME__);
+    fprintf(file, "\n");
+    
+    // Write module configurations
+    int modules_saved = 0;
+    for (size_t i = 0; i < g_count; i++) {
+        if (g_modules[i].address != 0) { // Valid module
+            fprintf(file, "module_%zu:\n", i);
+            fprintf(file, "  address: %d\n", g_modules[i].address);
+            fprintf(file, "  type: %d\n", g_modules[i].type);
+            fprintf(file, "  name: \"%s\"\n", g_modules[i].name);
+            fprintf(file, "  status: %d\n", g_modules[i].status);
+            fprintf(file, "  last_seen_ms: %lu\n", g_modules[i].last_seen_ms);
+            fprintf(file, "  capabilities: %u\n", g_modules[i].capabilities);
+            fprintf(file, "  version: \"%s\"\n", g_modules[i].version);
+            fprintf(file, "\n");
+            modules_saved++;
+        }
+    }
+    
+    fclose(file);
+    
+    printf("[REGISTRY] YAML saved: %d modules exported\n", modules_saved);
+    return modules_saved;
 }
 
 void registry_set_scanning(bool scanning) {

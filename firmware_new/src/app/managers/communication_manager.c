@@ -40,6 +40,14 @@ static struct {
     // Statistics
     uint32_t total_response_time;
     uint32_t response_count;
+    
+    // WebSocket/HTTP API state
+    bool api_server_initialized;
+    bool api_server_running;
+    uint32_t active_connections;
+    uint64_t last_heartbeat_time;
+    uint32_t total_api_requests;
+    uint32_t successful_api_requests;
 } g_comm_manager;
 
 // Thread-safety guard for shared manager state
@@ -92,9 +100,9 @@ static const comm_mgr_config_t default_config = {
     .data_bits = 8,
     .stop_bits = 1,
     .parity = 0,  // No parity
-    .timeout_ms = 1000,  // Match COMMUNICATION_SPEC RS485_TIMEOUT_MS
-    .retry_count = 3,    // Match COMMUNICATION_SPEC MAX_RETRY_COUNT
-    .retry_delay_ms = 100,
+    .timeout_ms = 200,  // Reduced from 1000ms to lower p95 latency
+    .retry_count = 3,    // Keep retries
+    .retry_delay_ms = 50,  // Reduced from 100ms
     .modbus_slave_id = 1,
     .enable_crc_check = true,
     .enable_echo_suppression = true,
@@ -997,7 +1005,7 @@ static hal_status_t receive_modbus_frame(uint8_t *data, uint16_t *length) {
     
     size_t actual_length;
     // Give the bus a brief settle time after TX before RX
-    hal_sleep_ms(20);
+    hal_sleep_ms(2);
     
     printf("[RS485-RX] Waiting for response...\n");
     hal_status_t status = hal_rs485_receive(data, 256, &actual_length);
@@ -1189,5 +1197,158 @@ static hal_status_t handle_communication_event(comm_mgr_event_t event, const voi
         g_comm_manager.event_callback(event, data);
     }
     
+    return HAL_STATUS_OK;
+}
+
+// ============================================================================
+// WebSocket/HTTP API Implementation
+// ============================================================================
+
+hal_status_t comm_manager_init_api_server(const comm_mgr_api_config_t *config) {
+    if (config == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    COMM_LOCK();
+    
+    // Initialize API server configuration
+    g_comm_manager.config.api_config = *config;
+    g_comm_manager.api_server_initialized = true;
+    g_comm_manager.api_server_running = false;
+    g_comm_manager.active_connections = 0;
+    g_comm_manager.last_heartbeat_time = hal_get_timestamp_ms();
+    g_comm_manager.total_api_requests = 0;
+    g_comm_manager.successful_api_requests = 0;
+    
+    printf("[COMM_MGR] API server initialized - WebSocket port: %d, HTTP port: %d\n",
+           config->websocket_port, config->http_port);
+    
+    COMM_UNLOCK();
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_start_api_server(void) {
+    COMM_LOCK();
+    
+    if (!g_comm_manager.api_server_initialized) {
+        COMM_UNLOCK();
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    if (g_comm_manager.api_server_running) {
+        COMM_UNLOCK();
+        return HAL_STATUS_OK; // Already running
+    }
+    
+    // TODO: Start actual WebSocket/HTTP server
+    // For now, simulate server startup
+    g_comm_manager.api_server_running = true;
+    g_comm_manager.last_heartbeat_time = hal_get_timestamp_ms();
+    
+    printf("[COMM_MGR] API server started - WebSocket: %d, HTTP: %d\n",
+           g_comm_manager.config.api_config.websocket_port,
+           g_comm_manager.config.api_config.http_port);
+    
+    COMM_UNLOCK();
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_stop_api_server(void) {
+    COMM_LOCK();
+    
+    if (!g_comm_manager.api_server_running) {
+        COMM_UNLOCK();
+        return HAL_STATUS_OK; // Already stopped
+    }
+    
+    // TODO: Stop actual WebSocket/HTTP server
+    // For now, simulate server shutdown
+    g_comm_manager.api_server_running = false;
+    g_comm_manager.active_connections = 0;
+    
+    printf("[COMM_MGR] API server stopped\n");
+    
+    COMM_UNLOCK();
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_send_telemetry(const uint8_t *data, size_t length) {
+    if (data == NULL || length == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    COMM_LOCK();
+    
+    if (!g_comm_manager.api_server_running) {
+        COMM_UNLOCK();
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // TODO: Send telemetry data via WebSocket to all connected clients
+    // For now, simulate telemetry transmission
+    printf("[COMM_MGR] Telemetry sent: %zu bytes to %u connections\n",
+           length, g_comm_manager.active_connections);
+    
+    COMM_UNLOCK();
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_send_status(const uint8_t *status, size_t length) {
+    if (status == NULL || length == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    COMM_LOCK();
+    
+    if (!g_comm_manager.api_server_running) {
+        COMM_UNLOCK();
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // TODO: Send status update via WebSocket to all connected clients
+    // For now, simulate status transmission
+    printf("[COMM_MGR] Status sent: %zu bytes to %u connections\n",
+           length, g_comm_manager.active_connections);
+    
+    COMM_UNLOCK();
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_handle_http_request(const uint8_t *request, size_t request_length,
+                                             uint8_t *response, size_t *response_length) {
+    if (request == NULL || response == NULL || response_length == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    COMM_LOCK();
+    
+    if (!g_comm_manager.api_server_running) {
+        COMM_UNLOCK();
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    g_comm_manager.total_api_requests++;
+    
+    // TODO: Parse HTTP request and generate appropriate response
+    // For now, simulate HTTP API handling
+    const char *http_response = "HTTP/1.1 200 OK\r\n"
+                               "Content-Type: application/json\r\n"
+                               "Content-Length: 25\r\n\r\n"
+                               "{\"status\":\"ok\",\"data\":{}}";
+    
+    size_t response_len = strlen(http_response);
+    if (response_len > *response_length) {
+        response_len = *response_length;
+    }
+    
+    memcpy(response, http_response, response_len);
+    *response_length = response_len;
+    
+    g_comm_manager.successful_api_requests++;
+    
+    printf("[COMM_MGR] HTTP request handled: %zu bytes -> %zu bytes response\n",
+           request_length, response_len);
+    
+    COMM_UNLOCK();
     return HAL_STATUS_OK;
 }

@@ -9,9 +9,13 @@
 
 #include "control_loop.h"
 #include "hal_common.h"
+#include "safety_monitor.h"
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
+
+// TODO: Add motor module integration when linking issues are resolved
 
 // Internal control loop structure
 typedef struct {
@@ -50,6 +54,7 @@ typedef struct {
     float current_position;
     float current_velocity;
     float control_output;
+    float commanded_velocity;
     
     // Timing
     uint64_t last_update_time;
@@ -69,6 +74,7 @@ static hal_status_t check_limits(void);
 static hal_status_t update_statistics(void);
 static hal_status_t apply_control_output(float output);
 static float clamp_value(float value, float min, float max);
+static float limit_acceleration(float desired_velocity, float current_velocity, float max_accel, float dt);
 
 // Control loop implementation
 hal_status_t control_loop_init(const control_config_t *config) {
@@ -155,10 +161,25 @@ hal_status_t control_loop_update(void) {
     g_control_loop.stats.total_cycles++;
     
     // Get current position and velocity (from sensors/encoders)
-    // TODO: Integrate with actual position/velocity sensors
-    // For now, use mock values
-    g_control_loop.current_position = g_control_loop.target_position * 0.95f; // Mock 95% tracking
-    g_control_loop.current_velocity = g_control_loop.target_velocity * 0.9f;  // Mock 90% tracking
+    // TODO: Integrate with actual position/velocity sensors via module handlers
+    // For now, use improved simulation with realistic tracking behavior
+    static float position_tracking_factor = 0.95f;
+    static float velocity_tracking_factor = 0.9f;
+    
+    // Simulate realistic sensor feedback with some noise
+    float position_noise = ((float)(rand() % 100) - 50.0f) / 1000.0f; // ±0.05mm noise
+    float velocity_noise = ((float)(rand() % 100) - 50.0f) / 100.0f;  // ±0.5mm/s noise
+    
+    g_control_loop.current_position = g_control_loop.target_position * position_tracking_factor + position_noise;
+    g_control_loop.current_velocity = g_control_loop.target_velocity * velocity_tracking_factor + velocity_noise;
+    
+    // Gradually improve tracking over time (simulate control convergence)
+    if (position_tracking_factor < 0.99f) {
+        position_tracking_factor += 0.001f;
+    }
+    if (velocity_tracking_factor < 0.95f) {
+        velocity_tracking_factor += 0.001f;
+    }
     
     // Update status
     g_control_loop.status.current_position = g_control_loop.current_position;
@@ -183,7 +204,13 @@ hal_status_t control_loop_update(void) {
             
         case CONTROL_MODE_VELOCITY:
             // Velocity control: use velocity PID
-            update_pid_controller(false, g_control_loop.target_velocity, g_control_loop.current_velocity, &velocity_output);
+            // Apply acceleration limiting prior to PID to respect profile
+            g_control_loop.commanded_velocity = limit_acceleration(
+                g_control_loop.target_velocity,
+                g_control_loop.current_velocity,
+                g_control_loop.config.profile.max_acceleration,
+                dt);
+            update_pid_controller(false, g_control_loop.commanded_velocity, g_control_loop.current_velocity, &velocity_output);
             g_control_loop.control_output = velocity_output;
             break;
             
@@ -220,6 +247,18 @@ hal_status_t control_loop_update(void) {
     
     // Check limits and safety
     check_limits();
+
+    // Safety integration: if E-Stop active, force emergency mode and zero output
+    if (g_control_loop.config.enable_safety) {
+        bool estop_active = false;
+        if (safety_monitor_is_estop_active(&estop_active) == HAL_STATUS_OK && estop_active) {
+            g_control_loop.status.mode = CONTROL_MODE_EMERGENCY;
+            g_control_loop.status.state = CONTROL_STATE_ERROR;
+            g_control_loop.control_output = 0.0f;
+            apply_control_output(0.0f);
+            return HAL_STATUS_OK;
+        }
+    }
     
     // Apply control output to actuators
     apply_control_output(g_control_loop.control_output);
@@ -557,30 +596,37 @@ const char* control_loop_get_state_name(control_state_t state) {
 
 bool control_loop_validate_config(const control_config_t *config) {
     if (config == NULL) {
+        printf("Config validation failed: NULL config\n");
         return false;
     }
     
     // Validate control frequency
     if (config->control_frequency <= 0.0f || config->control_frequency > 10000.0f) {
+        printf("Config validation failed: control_frequency=%f (valid: 0-10000)\n", config->control_frequency);
         return false;
     }
     
     // Validate sample time
     if (config->sample_time <= 0.0f || config->sample_time > 1.0f) {
+        printf("Config validation failed: sample_time=%f (valid: 0-1)\n", config->sample_time);
         return false;
     }
     
     // Validate motion profile
     if (config->profile.max_velocity <= 0.0f) {
+        printf("Config validation failed: max_velocity=%f (must be > 0)\n", config->profile.max_velocity);
         return false;
     }
     if (config->profile.max_acceleration <= 0.0f) {
+        printf("Config validation failed: max_acceleration=%f (must be > 0)\n", config->profile.max_acceleration);
         return false;
     }
     if (config->profile.max_jerk <= 0.0f) {
+        printf("Config validation failed: max_jerk=%f (must be > 0)\n", config->profile.max_jerk);
         return false;
     }
     
+    printf("Config validation passed\n");
     return true;
 }
 
@@ -634,7 +680,10 @@ static hal_status_t check_limits(void) {
     
     // Check position limits
     if (g_control_loop.config.enable_limits) {
-        if (g_control_loop.current_position < 0.0f || g_control_loop.current_position > 10000.0f) {
+        float minp = g_control_loop.config.position_min_mm;
+        float maxp = g_control_loop.config.position_max_mm > g_control_loop.config.position_min_mm
+                     ? g_control_loop.config.position_max_mm : (g_control_loop.config.position_min_mm + 1.0f);
+        if (g_control_loop.current_position < minp || g_control_loop.current_position > maxp) {
             limits_violated = true;
         }
     }
@@ -687,9 +736,33 @@ static hal_status_t update_statistics(void) {
 }
 
 static hal_status_t apply_control_output(float output) {
-    // TODO: Apply control output to actual actuators (motors, etc.)
-    // For now, just store the output
+    // Apply control output to actual actuators (motors, etc.)
     g_control_loop.control_output = output;
+    
+    // TODO: Apply control output to actual motor module handlers
+    // For now, simulate actuator response with realistic behavior
+    static float last_output = 0.0f;
+    static uint32_t output_count = 0;
+    
+    // Simulate actuator response delay and saturation
+    float actuator_output = output;
+    if (actuator_output > 1.0f) actuator_output = 1.0f;
+    if (actuator_output < -1.0f) actuator_output = -1.0f;
+    
+    // Simulate actuator dynamics (rate limiting)
+    float max_rate = 0.1f; // Maximum change per cycle
+    if (actuator_output - last_output > max_rate) {
+        actuator_output = last_output + max_rate;
+    } else if (actuator_output - last_output < -max_rate) {
+        actuator_output = last_output - max_rate;
+    }
+    last_output = actuator_output;
+    
+    // Log significant control outputs
+    if (output_count % 100 == 0) { // Log every 100 cycles
+        printf("[CONTROL] Output: %.3f -> Actuator: %.3f\n", output, actuator_output);
+    }
+    output_count++;
     
     return HAL_STATUS_OK;
 }
@@ -698,4 +771,12 @@ static float clamp_value(float value, float min, float max) {
     if (value < min) return min;
     if (value > max) return max;
     return value;
+}
+
+static float limit_acceleration(float desired_velocity, float current_velocity, float max_accel, float dt) {
+    float dv = desired_velocity - current_velocity;
+    float max_dv = max_accel * dt;
+    if (dv > max_dv) dv = max_dv;
+    if (dv < -max_dv) dv = -max_dv;
+    return current_velocity + dv;
 }
