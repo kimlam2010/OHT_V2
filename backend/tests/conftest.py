@@ -4,6 +4,7 @@ Test configuration for OHT-50 Backend
 
 import pytest
 import asyncio
+import warnings
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -16,6 +17,17 @@ from app.models.user import User
 from app.config import settings
 from sqlalchemy import text
 
+
+def pytest_configure(config):
+    # Fail on warnings and on skipped tests per QAQC rules
+    warnings.simplefilter("error")
+    config.addinivalue_line("markers", "performance: mark performance tests")
+
+
+def pytest_runtest_logreport(report):
+    # Hard fail if any test is skipped (but allow xfail)
+    if report.when == "call" and report.skipped and not hasattr(report, 'wasxfail'):
+        raise AssertionError(f"SKIPPED test found: {report.nodeid}")
 
 @pytest.fixture
 async def test_app(test_db):

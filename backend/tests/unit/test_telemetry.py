@@ -53,10 +53,16 @@ class TestTelemetryService:
     
     @pytest.mark.asyncio
     async def test_get_module_status(self):
-        """Test get module status - skip for now as MockFirmwareService doesn't support this"""
-        pytest.skip("Module status not supported in MockFirmwareService")
+        """Test get module status - now supported by MockFirmwareService"""
+        os.environ["TESTING"] = "true"
+        result = await telemetry_service.get_module_status(module_id="mod-001")
+        assert result.get("status") in ["online", "offline", "error"]
+        assert result.get("module_id") == "mod-001"
     
     @pytest.mark.asyncio
     async def test_discover_modules(self):
-        """Test discover modules - skip for now as MockFirmwareService doesn't support this"""
-        pytest.skip("Module discovery not supported in MockFirmwareService")
+        """Test discover modules - now supported by MockFirmwareService"""
+        os.environ["TESTING"] = "true"
+        modules = await telemetry_service.discover_modules()
+        assert isinstance(modules, list)
+        assert len(modules) >= 1
