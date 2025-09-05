@@ -139,6 +139,14 @@ typedef struct {
     uint32_t timeout_count;        // Timeout count
     uint32_t error_count;          // Error count
     uint64_t total_uptime;         // Total uptime
+    // Week1 metrics additions
+    uint32_t discovery_success;     // Successful discoveries
+    uint32_t discovery_fail;        // Failed discoveries
+    uint32_t discovery_total_ms;    // Total time for last full-bus scan
+    uint32_t discovery_p95_ms;      // p95 per-address discovery duration (last scan)
+    uint32_t discovery_p99_ms;      // p99 per-address discovery duration (last scan)
+    uint32_t health_checks;         // Number of health checks performed
+    uint32_t health_timeouts;       // Health check timeouts
 } module_stats_t;
 
 // Event callback function type
@@ -152,6 +160,8 @@ hal_status_t module_manager_stop(void);
 
 // Module Discovery
 hal_status_t module_manager_discover_modules(void);
+// Periodic polling/update for registered modules (data polling + telemetry hook)
+hal_status_t module_manager_update(void);
 hal_status_t module_manager_register_module(const module_info_t *info);
 hal_status_t module_manager_unregister_module(uint8_t module_id);
 

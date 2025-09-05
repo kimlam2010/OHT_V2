@@ -16,6 +16,7 @@
 #include "hal_rs485.h"
 #include "hal_lidar.h"
 #include "system_state_machine.h"
+#include "system_controller.h"
 #include "safety_manager.h"
 #include "safety_monitor.h"
 #include "communication_manager.h"
@@ -232,7 +233,30 @@ int main(int argc, char **argv) {
         printf("[OHT-50] DRY-RUN: Skipping safety_manager_init\n");
     }
 
-    // 3) Initialize System State Machine
+    // 3) Initialize System Controller
+    if (!g_dry_run) {
+        system_controller_config_t sys_ctrl_cfg = {
+            .update_period_ms = 100,
+            .timeout_ms = 5000,
+            .error_retry_count = 3,
+            .error_retry_delay_ms = 1000,
+            .enable_auto_recovery = true,
+            .enable_error_logging = true,
+            .enable_performance_monitoring = true,
+            .enable_diagnostics = true,
+            .max_error_count = 10,
+            .error_reset_timeout_ms = 5000
+        };
+        if (system_controller_init(&sys_ctrl_cfg) != HAL_STATUS_OK) {
+            fprintf(stderr, "[OHT-50] system_controller_init failed (continuing)\n");
+        } else {
+            printf("[OHT-50] System Controller initialized successfully\n");
+        }
+    } else {
+        printf("[OHT-50] DRY-RUN: Skipping system_controller_init\n");
+    }
+
+    // 4) Initialize System State Machine
     if (!g_dry_run) {
         system_config_t sys_cfg = {
             .state_timeout_ms = STATE_TIMEOUT_MS,
@@ -251,14 +275,54 @@ int main(int argc, char **argv) {
         printf("[OHT-50] DRY-RUN: Skipping system_state_machine_init\n");
     }
 
-    // 4) Initialize API Manager for BE communication - DISABLED
+    // 4) Initialize Communication Manager API Server
     if (!g_dry_run) {
-        printf("[OHT-50] API Manager initialization skipped (disabled)\n");
+        comm_mgr_api_config_t api_config = {
+            .websocket_port = 8080,
+            .http_port = 8081,
+            .max_connections = 10,
+            .heartbeat_interval_ms = 5000,
+            .connection_timeout_ms = 30000,
+            .enable_ssl = false,
+            .ssl_cert_path = "",
+            .ssl_key_path = ""
+        };
+        
+        if (comm_manager_init_api_server(&api_config) != HAL_STATUS_OK) {
+            fprintf(stderr, "[OHT-50] comm_manager_init_api_server failed (continuing)\n");
+        } else {
+            printf("[OHT-50] Communication Manager API server initialized\n");
+            
+            if (comm_manager_start_api_server() != HAL_STATUS_OK) {
+                fprintf(stderr, "[OHT-50] comm_manager_start_api_server failed (continuing)\n");
+            } else {
+                printf("[OHT-50] Communication Manager API server started\n");
+            }
+        }
     } else {
-        printf("[OHT-50] DRY-RUN: Skipping API Manager initialization\n");
+        printf("[OHT-50] DRY-RUN: Skipping Communication Manager API server initialization\n");
     }
 
-    // 5) Application loop
+    // 5) Initialize Module Registry and load YAML configuration
+    if (!g_dry_run) {
+        if (registry_init() != 0) {
+            fprintf(stderr, "[OHT-50] registry_init failed (continuing)\n");
+        } else {
+            printf("[OHT-50] Module Registry initialized\n");
+            
+            // Load YAML configuration
+            int modules_loaded = registry_load_yaml("/etc/oht50/modules.yaml");
+            if (modules_loaded >= 0) {
+                printf("[OHT-50] Module Registry: %d modules loaded from YAML\n", modules_loaded);
+            } else {
+                printf("[OHT-50] Module Registry: Using default configuration\n");
+            }
+        }
+    } else {
+        printf("[OHT-50] DRY-RUN: Skipping Module Registry initialization\n");
+    }
+
+    // 6) Application loop
     printf("[OHT-50] Entering main loop. Press Ctrl+C to exit.\n");
     fflush(stdout);
     uint64_t last_led_toggle_ms = now_ms();
@@ -374,6 +438,36 @@ int main(int argc, char **argv) {
         }
         if (!g_dry_run) {
             (void)safety_manager_update();
+        }
+
+        // System Controller update (every 100ms)
+        if (!g_dry_run) {
+            hal_status_t sys_ctrl_status = system_controller_update();
+            if (sys_ctrl_status != HAL_STATUS_OK && g_debug_mode) {
+                printf("[OHT-50][DEBUG] system_controller_update failed: %d\n", sys_ctrl_status);
+            }
+        }
+        
+        // Telemetry and Status Broadcasting (every 1000ms)
+        uint64_t current_time = now_ms();
+        static uint64_t last_telemetry_broadcast_ms = 0;
+        if (current_time - last_telemetry_broadcast_ms >= 1000) {
+            if (!g_dry_run) {
+                // Send telemetry data via WebSocket
+                char telemetry_data[256];
+                snprintf(telemetry_data, sizeof(telemetry_data), 
+                        "{\"timestamp\":%lu,\"status\":\"running\",\"modules\":%zu}",
+                        current_time, registry_count_online());
+                comm_manager_send_telemetry((const uint8_t*)telemetry_data, strlen(telemetry_data));
+                
+                // Send status update via WebSocket
+                char status_data[256];
+                snprintf(status_data, sizeof(status_data),
+                        "{\"timestamp\":%lu,\"system\":\"OHT-50\",\"state\":\"operational\"}",
+                        current_time);
+                comm_manager_send_status((const uint8_t*)status_data, strlen(status_data));
+            }
+            last_telemetry_broadcast_ms = current_time;
         }
 
         // Heartbeat LED on SYSTEM LED
@@ -528,8 +622,13 @@ int main(int argc, char **argv) {
     printf("[OHT-50] Shutting down...\n");
     // Graceful shutdown
     if (!g_dry_run) {
-        // Stop API Manager - DISABLED
-        printf("[OHT-50] API Manager shutdown skipped (disabled)\n");
+        // Stop Communication Manager API Server
+        printf("[OHT-50] Stopping Communication Manager API server...\n");
+        (void)comm_manager_stop_api_server();
+        
+        // Save Module Registry to YAML
+        printf("[OHT-50] Saving Module Registry to YAML...\n");
+        (void)registry_save_yaml("/etc/oht50/modules.yaml");
         
         if (power_handler_initialized) {
             // (void)power_module_deinit(&power_handler); // Commented out - using global state

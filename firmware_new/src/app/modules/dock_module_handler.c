@@ -611,7 +611,7 @@ hal_status_t dock_module_set_accuracy_threshold(dock_module_handler_t *handler, 
     handler->config.accuracy_threshold = threshold;
     handler->data.accuracy_threshold = threshold;
     
-    // Write to register (currently disabled - using mock implementation)
+    // Write to register via communication manager
     comm_mgr_modbus_request_t request;  // NOLINT
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_ACCURACY_REG;  // NOLINT
@@ -634,7 +634,7 @@ hal_status_t dock_module_set_timeout(dock_module_handler_t *handler, uint16_t ti
     
     handler->config.timeout = timeout;
     
-    // Write to register (currently disabled - using mock implementation)
+    // Write to register via communication manager
     comm_mgr_modbus_request_t request;  // NOLINT
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_TIMEOUT_REG;  // NOLINT
@@ -657,7 +657,7 @@ hal_status_t dock_module_set_retry_count(dock_module_handler_t *handler, uint8_t
     
     handler->config.retry_count = retry_count;
     
-    // Write to register (currently disabled - using mock implementation)
+    // Write to register via communication manager
     comm_mgr_modbus_request_t request;  // NOLINT
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_RETRY_COUNT_REG;  // NOLINT
@@ -680,7 +680,7 @@ hal_status_t dock_module_set_debounce_time(dock_module_handler_t *handler, uint1
     
     handler->config.debounce_time = debounce_time;
     
-    // Write to register (currently disabled - using mock implementation)
+    // Write to register via communication manager
     comm_mgr_modbus_request_t request;  // NOLINT
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_DEBOUNCE_TIME_REG;  // NOLINT
@@ -703,7 +703,7 @@ hal_status_t dock_module_set_alignment_tolerance(dock_module_handler_t *handler,
     
     handler->config.alignment_tolerance = tolerance;
     
-    // Write to register (currently disabled - using mock implementation)
+    // Write to register via communication manager
     comm_mgr_modbus_request_t request;  // NOLINT
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_ALIGNMENT_TOLERANCE_REG;  // NOLINT

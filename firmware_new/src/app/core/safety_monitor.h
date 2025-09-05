@@ -182,6 +182,19 @@ typedef void (*safety_monitor_event_callback_t)(safety_monitor_state_t state,
                                                safety_monitor_event_t event, 
                                                const char* details);
 
+// Safety fault codes (Phase 2) - using existing safety_types.h
+typedef enum {
+    SAFETY_FAULT_CODE_ESTOP = 1,
+    SAFETY_FAULT_CODE_ZONE_VIOLATION,
+    SAFETY_FAULT_CODE_INTERLOCK,
+    SAFETY_FAULT_CODE_SENSOR,
+    SAFETY_FAULT_CODE_COMMUNICATION,
+    SAFETY_FAULT_CODE_WATCHDOG
+} safety_fault_code_t;
+
+// Emergency stop callback
+typedef void (*safety_emergency_stop_callback_t)(const char* reason);
+
 // Function Prototypes
 
 /**
@@ -325,6 +338,13 @@ hal_status_t safety_monitor_set_sensor_config(uint8_t sensor_id, const safety_se
 hal_status_t safety_monitor_set_callback(safety_monitor_event_callback_t callback);
 
 /**
+ * @brief Set emergency stop callback hook
+ * @param callback Emergency stop callback
+ * @return HAL status
+ */
+hal_status_t safety_monitor_set_emergency_stop_callback(safety_emergency_stop_callback_t callback);
+
+/**
  * @brief Set safety monitor configuration
  * @param config Safety monitor configuration
  * @return HAL status
@@ -391,6 +411,20 @@ hal_status_t safety_monitor_trigger_emergency_stop(const char* reason);
  * @return HAL status
  */
 hal_status_t safety_monitor_is_estop_active(bool* estop_active);
+
+/**
+ * @brief Get last safety fault code
+ * @param fault Pointer to store last fault code
+ * @return HAL status
+ */
+hal_status_t safety_monitor_get_last_fault(safety_fault_code_t *fault);
+
+/**
+ * @brief Get last measured E-Stop latency in ms (approx.)
+ * @param latency_ms Pointer to store latency in milliseconds
+ * @return HAL status
+ */
+hal_status_t safety_monitor_get_last_estop_latency(uint32_t *latency_ms);
 
 /**
  * @brief Trigger emergency stop with LiDAR data

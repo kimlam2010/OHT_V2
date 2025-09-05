@@ -63,6 +63,8 @@ typedef struct {
     motion_profile_t profile;   // Motion profile
     bool enable_limits;         // Enable position/velocity limits
     bool enable_safety;         // Enable safety monitoring
+    float position_min_mm;      // Minimum allowed position (mm)
+    float position_max_mm;      // Maximum allowed position (mm)
 } control_config_t;
 
 // Control loop status

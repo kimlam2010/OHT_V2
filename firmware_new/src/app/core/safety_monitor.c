@@ -26,6 +26,7 @@ static struct {
     safety_monitor_status_t status;
     safety_monitor_stats_t stats;
     safety_monitor_event_callback_t event_callback;
+    safety_emergency_stop_callback_t estop_callback;
     
     // Safety zones
     safety_zone_config_t zones[MAX_SAFETY_ZONES];
@@ -55,6 +56,8 @@ static struct {
     uint32_t error_count;
     uint64_t last_error_time;
     char last_error_message[256];
+    safety_fault_code_t last_fault;
+    uint32_t last_estop_latency_ms;
 } safety_monitor_instance = {0};
 
 // Constants
@@ -126,7 +129,12 @@ hal_status_t safety_monitor_init(const safety_monitor_config_t *config)
     }
     
     // Initialize HAL components
-    estop_config_t estop_config = {0};
+    estop_config_t estop_config = {
+        .pin = 0,                           // Default E-Stop pin
+        .response_timeout_ms = 100,         // 100ms response timeout
+        .debounce_time_ms = 20,            // 20ms debounce (>= 10ms required)
+        .auto_reset_enabled = false        // Manual reset required
+    };
     status = hal_estop_init(&estop_config);
     if (status != HAL_STATUS_OK) {
         safety_monitor_instance.last_error_time = safety_monitor_get_timestamp_ms();
@@ -177,6 +185,8 @@ hal_status_t safety_monitor_init(const safety_monitor_config_t *config)
     
     // Set initialized flag
     safety_monitor_instance.initialized = true;
+    safety_monitor_instance.last_fault = SAFETY_FAULT_CODE_ESTOP; // Default to E-Stop fault
+    safety_monitor_instance.last_estop_latency_ms = 0;
     
     // Set initial LED pattern for safe state
     safety_monitor_set_safe_led_pattern();
@@ -326,9 +336,19 @@ hal_status_t safety_monitor_update_with_lidar(const lidar_scan_data_t *scan_data
         safety_monitor_instance.last_estop_check = current_time;
     }
     
-    // Check safety zones with LiDAR data
+    // Check LiDAR health before using scan data
+    hal_status_t lidar_health_status = hal_lidar_health_check();
+    if (lidar_health_status != HAL_STATUS_OK) {
+        printf("[SAFETY] LiDAR health check failed during update: %d\n", lidar_health_status);
+        safety_monitor_instance.error_count++;
+        safety_monitor_instance.last_error_time = current_time;
+        // Continue with fallback safety checks
+    }
+    
+    // Check safety zones with LiDAR data (only if LiDAR is healthy)
     if (safety_monitor_instance.config.enable_zone_monitoring &&
-        current_time - safety_monitor_instance.last_zone_check >= safety_monitor_instance.config.zone_check_period_ms) {
+        current_time - safety_monitor_instance.last_zone_check >= safety_monitor_instance.config.zone_check_period_ms &&
+        lidar_health_status == HAL_STATUS_OK) {
         status = safety_monitor_check_basic_zones(scan_data);
         if (status != HAL_STATUS_OK) {
             safety_monitor_instance.error_count++;
@@ -824,10 +844,17 @@ static hal_status_t safety_monitor_check_sensors(void)
                 sensor_fault = false; // Placeholder - would read sensor value
                 break;
                 
-            case SAFETY_SENSOR_LIDAR:
+            case SAFETY_SENSOR_LIDAR: {
                 // LiDAR sensor health check
-                sensor_fault = false; // Placeholder - would check LiDAR health
+                hal_status_t lidar_health_status = hal_lidar_health_check();
+                if (lidar_health_status != HAL_STATUS_OK) {
+                    sensor_fault = true;
+                    printf("[SAFETY] LiDAR health check failed: %d\n", lidar_health_status);
+                } else {
+                    sensor_fault = false;
+                }
                 break;
+            }
                 
             case SAFETY_SENSOR_CAMERA:
                 // Camera sensor health check
@@ -881,7 +908,8 @@ static hal_status_t safety_monitor_transition_state(safety_monitor_state_t new_s
     switch (old_state) {
         case SAFETY_MONITOR_STATE_INIT:
             if (new_state != SAFETY_MONITOR_STATE_SAFE && 
-                new_state != SAFETY_MONITOR_STATE_FAULT) {
+                new_state != SAFETY_MONITOR_STATE_FAULT &&
+                new_state != SAFETY_MONITOR_STATE_ESTOP) {
                 return HAL_STATUS_INVALID_STATE;
             }
             break;
@@ -954,6 +982,11 @@ static hal_status_t safety_monitor_transition_state(safety_monitor_state_t new_s
 static hal_status_t safety_monitor_handle_estop_event(void)
 {
     printf("[SAFETY] E-Stop event triggered\n");
+    // Measure approximate latency from last check to now
+    uint64_t now_ms = safety_monitor_get_timestamp_ms();
+    uint32_t latency_ms = (uint32_t)(now_ms - safety_monitor_instance.last_estop_check);
+    safety_monitor_instance.last_estop_latency_ms = latency_ms;
+    safety_monitor_instance.last_fault = SAFETY_FAULT_CODE_ESTOP;
     
     // Set LED pattern for E-Stop state
     hal_led_system_error(); // Red LED blinking
@@ -1009,6 +1042,7 @@ static hal_status_t safety_monitor_handle_zone_violation(void)
                 "Emergency zone violated - distance=%dmm < %dmm", 
                 zones->min_distance_mm, zones->emergency_zone_mm);
         
+        safety_monitor_instance.last_fault = SAFETY_FAULT_CODE_ZONE_VIOLATION;
         safety_monitor_trigger_emergency_stop(emergency_reason);
         
         // Update LED status
@@ -1554,6 +1588,15 @@ hal_status_t safety_monitor_set_callback(safety_monitor_event_callback_t callbac
     return HAL_STATUS_OK;
 }
 
+hal_status_t safety_monitor_set_emergency_stop_callback(safety_emergency_stop_callback_t callback)
+{
+    if (!safety_monitor_instance.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    safety_monitor_instance.estop_callback = callback;
+    return HAL_STATUS_OK;
+}
+
 hal_status_t safety_monitor_set_config(const safety_monitor_config_t *config)
 {
     if (!safety_monitor_instance.initialized) {
@@ -1683,5 +1726,23 @@ hal_status_t safety_monitor_is_estop_active(bool* estop_active)
     *estop_active = (safety_monitor_instance.estop_hardware_active || 
                     safety_monitor_instance.estop_software_active);
     
+    return HAL_STATUS_OK;
+}
+
+hal_status_t safety_monitor_get_last_fault(safety_fault_code_t *fault)
+{
+    if (!safety_monitor_instance.initialized || !fault) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    *fault = safety_monitor_instance.last_fault;
+    return HAL_STATUS_OK;
+}
+
+hal_status_t safety_monitor_get_last_estop_latency(uint32_t *latency_ms)
+{
+    if (!safety_monitor_instance.initialized || !latency_ms) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    *latency_ms = safety_monitor_instance.last_estop_latency_ms;
     return HAL_STATUS_OK;
 }

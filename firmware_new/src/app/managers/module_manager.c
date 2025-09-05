@@ -58,6 +58,8 @@ static const module_config_t default_config = {
 // Forward declarations
 static hal_status_t perform_module_discovery(void);
 static hal_status_t perform_health_check(uint8_t module_id);
+static hal_status_t perform_health_check_all(void);
+static hal_status_t poll_registered_modules_and_push_telemetry(void);
 static void handle_module_event(module_event_t event, uint8_t module_id, const void *data);
 static uint8_t calculate_health_percentage(const module_status_info_t *status);
 static module_health_t get_health_level(uint8_t percentage);
@@ -154,6 +156,20 @@ hal_status_t module_manager_discover_modules(void) {
     
     printf("[MODULE] Starting module discovery...\n");
     return perform_module_discovery();
+}
+
+hal_status_t module_manager_update(void) {
+    if (!g_module_manager.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    // Health check pass (respect default interval)
+    uint64_t now = hal_get_timestamp_us();
+    if (now - g_module_manager.last_health_check_time >= (uint64_t)g_module_manager.config.health_check_interval_ms * 1000ULL) {
+        perform_health_check_all();
+        g_module_manager.last_health_check_time = now;
+    }
+    // Poll data and push telemetry (non-blocking per module)
+    return poll_registered_modules_and_push_telemetry();
 }
 
 hal_status_t module_manager_register_module(const module_info_t *info) {
@@ -336,7 +352,7 @@ hal_status_t module_manager_health_check_all(void) {
     
     for (int i = 0; i < MAX_MODULES; i++) {
         if (g_module_manager.modules[i].registered) {
-            perform_health_check(g_module_manager.modules[i].info.module_id);
+            (void)perform_health_check(g_module_manager.modules[i].info.module_id);
         }
     }
     
@@ -461,16 +477,52 @@ static hal_status_t perform_module_discovery(void) {
     hal_status_t overall_status = HAL_STATUS_OK;
     int discovered_count = 0;
     
-    // Scan Modbus addresses 0x01-0x08 (reduced range for faster scanning)
-    for (uint8_t address = 0x01; address <= 0x08; address++) {
+    // Scan Modbus addresses 0x01-0x20 per spec
+    uint64_t start_scan = hal_get_timestamp_us();
+    uint32_t addresses_scanned = 0;
+    uint32_t per_addr_ms[0x20] = {0};
+    for (uint8_t address = 0x01; address <= 0x20; address++) {
+        uint64_t t0 = hal_get_timestamp_us();
         hal_status_t status = discover_module_at_address(address);
         if (status == HAL_STATUS_OK) {
             discovered_count++;
+            g_module_manager.statistics.discovery_success++;
+        } else {
+            g_module_manager.statistics.discovery_fail++;
         }
+        addresses_scanned++;
+        uint64_t t1 = hal_get_timestamp_us();
+        per_addr_ms[address - 1] = (uint32_t)((t1 - t0) / 1000ULL);
     }
     
     // Check for offline modules
     check_offline_modules();
+    uint64_t end_scan = hal_get_timestamp_us();
+    uint32_t total_ms = (uint32_t)((end_scan - start_scan) / 1000ULL);
+    printf("[MODULE] Discovery scan complete: discovered=%d, scanned=%u, total_ms=%u\n", discovered_count, addresses_scanned, total_ms);
+    g_module_manager.statistics.discovery_total_ms = total_ms;
+    g_module_manager.statistics.discovery_count++;
+    // Compute p95/p99 from per-address durations (non-zero entries)
+    // Simple selection approach: copy to temp and sort
+    uint32_t tmp[0x20];
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < 0x20; i++) {
+        if (per_addr_ms[i] > 0) tmp[n++] = per_addr_ms[i];
+    }
+    for (uint32_t i = 0; i + 1 < n; i++) {
+        for (uint32_t j = i + 1; j < n; j++) {
+            if (tmp[j] < tmp[i]) { uint32_t v = tmp[i]; tmp[i] = tmp[j]; tmp[j] = v; }
+        }
+    }
+    if (n > 0) {
+        uint32_t idx95 = (n * 95) / 100; if (idx95 >= n) idx95 = n - 1;
+        uint32_t idx99 = (n * 99) / 100; if (idx99 >= n) idx99 = n - 1;
+        g_module_manager.statistics.discovery_p95_ms = tmp[idx95];
+        g_module_manager.statistics.discovery_p99_ms = tmp[idx99];
+    } else {
+        g_module_manager.statistics.discovery_p95_ms = 0;
+        g_module_manager.statistics.discovery_p99_ms = 0;
+    }
     
     return overall_status;
 }
@@ -480,6 +532,9 @@ static hal_status_t perform_health_check(uint8_t module_id) {
     if (index < 0) {
         return HAL_STATUS_NOT_FOUND;
     }
+    
+    // Track previous health for change detection
+    uint8_t prev_health = g_module_manager.modules[index].status.health_percentage;
     
     // Real health check: measure response time and check module status
     uint64_t start_time = hal_get_timestamp_us();
@@ -494,24 +549,12 @@ static hal_status_t perform_health_check(uint8_t module_id) {
     
     if (status == HAL_STATUS_OK) {
         // Module is responsive, calculate health percentage
-        uint8_t health_percentage = 100;
-        
-        // Calculate health percentage based on response time
-        if (response_time > 1000) {
-            health_percentage = 50; // Slow response
-        } else if (response_time > 500) {
-            health_percentage = 75; // Moderate response
-        }
-        
-        // Reduce health based on error count (if available)
-        if (g_module_manager.modules[index].status.error_count > 10) {
-            health_percentage = 25; // High error rate
-        } else if (g_module_manager.modules[index].status.error_count > 5) {
-            health_percentage = 50; // Moderate error rate
-        }
-        
-        // Ensure health is within valid range
-        if (health_percentage > 100) health_percentage = 100;
+        // Spec formula: 100 − (response_time_ms / 1000) − (error_count * 10)
+        uint32_t error_count = g_module_manager.modules[index].status.error_count;
+        int32_t computed = 100 - (int32_t)(response_time / 1000U) - (int32_t)(error_count * 10U);
+        if (computed < 0) computed = 0;
+        if (computed > 100) computed = 100;
+        uint8_t health_percentage = (uint8_t)computed;
         
         // Update module status
         g_module_manager.modules[index].status.health_percentage = health_percentage;
@@ -519,7 +562,16 @@ static hal_status_t perform_health_check(uint8_t module_id) {
         g_module_manager.modules[index].status.response_time_ms = response_time;
         g_module_manager.modules[index].status.status = MODULE_STATUS_ONLINE;
         g_module_manager.modules[index].last_health_check = hal_get_timestamp_us();
+        g_module_manager.modules[index].status.last_communication = g_module_manager.modules[index].last_health_check;
         
+        // Emit health change event if health changed
+        if (prev_health != health_percentage) {
+            if (g_module_manager.event_callback) {
+                g_module_manager.event_callback(MODULE_EVENT_HEALTH_CHANGE, module_id, &health_percentage);
+            }
+        }
+        
+        g_module_manager.statistics.health_checks++;
         printf("[MODULE] Health check for module %u: response_time=%ums, health=%u%%\n", 
                module_id, response_time, health_percentage);
     } else {
@@ -529,11 +581,29 @@ static hal_status_t perform_health_check(uint8_t module_id) {
         g_module_manager.modules[index].status.response_time_ms = response_time;
         g_module_manager.modules[index].status.status = MODULE_STATUS_ERROR;
         g_module_manager.modules[index].last_health_check = hal_get_timestamp_us();
+        g_module_manager.modules[index].status.error_count++;
+        g_module_manager.statistics.health_timeouts++;
+        
+        // Emit health change event (health went to 0)
+        if (prev_health > 0) {
+            if (g_module_manager.event_callback) {
+                g_module_manager.event_callback(MODULE_EVENT_HEALTH_CHANGE, module_id, &g_module_manager.modules[index].status.health_percentage);
+            }
+        }
         
         printf("[MODULE] Health check failed for module %u: status=%d\n", module_id, status);
     }
     
     return status;
+}
+
+static hal_status_t perform_health_check_all(void) {
+    for (int i = 0; i < MAX_MODULES; i++) {
+        if (g_module_manager.modules[i].registered) {
+            (void)perform_health_check(g_module_manager.modules[i].info.module_id);
+        }
+    }
+    return HAL_STATUS_OK;
 }
 
 __attribute__((unused))
@@ -595,8 +665,9 @@ static int find_module_index(uint8_t module_id) {
 
 // Auto-Discovery Implementation Functions
 
+
 static hal_status_t discover_module_at_address(uint8_t address) {
-	if (address < 0x01 || address > 0x08) {
+	if (address < 0x01 || address > 0x20) {
 		return HAL_STATUS_INVALID_PARAMETER;
 	}
 	uint16_t device_id, module_type;
@@ -794,4 +865,25 @@ static uint32_t get_default_capabilities(module_type_t type) {
     }
     
     return capabilities;
+}
+
+// Polling and Telemetry Hook (basic)
+static hal_status_t poll_registered_modules_and_push_telemetry(void) {
+    // Per-module minimal polling without blocking
+    for (int i = 0; i < MAX_MODULES; i++) {
+        if (!g_module_manager.modules[i].registered) continue;
+        uint8_t addr = g_module_manager.modules[i].info.address;
+        
+        // Read status registers based on module type
+        uint16_t buf[4] = {0};
+        hal_status_t status = comm_manager_modbus_read_holding_registers(addr, 0x0000, 2, buf);
+        
+        if (status == HAL_STATUS_OK) {
+            // Emit telemetry event for successful data read
+            if (g_module_manager.event_callback) {
+                g_module_manager.event_callback(MODULE_EVENT_UPDATED, addr, buf);
+            }
+        }
+    }
+    return HAL_STATUS_OK;
 }
