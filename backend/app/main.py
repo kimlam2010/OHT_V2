@@ -18,7 +18,7 @@ from app.core.monitoring_service import monitoring_service
 from app.core.websocket_service import websocket_service
 
 # Import API routers
-from app.api.v1 import auth, robot, telemetry, safety, config, monitoring
+from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control
 from app.api import websocket
 
 # Configure logging
@@ -45,12 +45,12 @@ async def lifespan(app: FastAPI):
             await create_test_admin_user()
             logger.info("✅ Test admin user created")
         
-        # Start monitoring service (with timeout)
+        # Start monitoring service as background task
         try:
-            await asyncio.wait_for(monitoring_service.start_monitoring(interval_seconds=30), timeout=10.0)
+            monitoring_task = asyncio.create_task(monitoring_service.start_monitoring(interval_seconds=30))
+            # Give it a moment to start
+            await asyncio.sleep(0.1)
             logger.info("✅ Monitoring service started")
-        except asyncio.TimeoutError:
-            logger.warning("⚠️ Monitoring service startup timeout, continuing without it")
         except Exception as e:
             logger.warning(f"⚠️ Monitoring service failed to start: {e}, continuing without it")
         
@@ -176,6 +176,10 @@ app = FastAPI(
             "description": "System health and performance monitoring"
         },
         {
+            "name": "Speed Control",
+            "description": "Real-time speed control with safety integration"
+        },
+        {
             "name": "WebSocket",
             "description": "Real-time communication endpoints"
         }
@@ -191,6 +195,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Add security headers middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Add security headers to all responses"""
+    response = await call_next(request)
+    
+    # Security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    
+    return response
 
 
 # Global exception handler
@@ -278,6 +298,7 @@ app.include_router(telemetry.router, prefix="/api/v1")
 app.include_router(safety.router, prefix="/api/v1")
 app.include_router(config.router, prefix="/api/v1")
 app.include_router(monitoring.router, prefix="/api/v1")
+app.include_router(speed_control.router, prefix="/api/v1/speed-control", tags=["Speed Control"])
 
 # Include WebSocket router
 app.include_router(websocket.router)
