@@ -35,26 +35,38 @@ RBAC_PERMISSIONS = {
     "admin": {
         "robot": ["read", "control", "emergency", "configure"],
         "telemetry": ["read", "write", "delete"],
-        "safety": ["read", "configure", "emergency"],
+        "safety": ["read", "configure", "emergency", "acknowledge"],
         "config": ["read", "write", "delete"],
         "users": ["read", "write", "delete"],
-        "audit": ["read", "write"]
+        "audit": ["read", "write"],
+        "system": ["read", "write", "delete", "admin"]
+    },
+    "administrator": {
+        "robot": ["read", "control", "emergency", "configure"],
+        "telemetry": ["read", "write", "delete"],
+        "safety": ["read", "configure", "emergency", "acknowledge"],
+        "config": ["read", "write", "delete"],
+        "users": ["read", "write", "delete"],
+        "audit": ["read", "write"],
+        "system": ["read", "write", "delete", "admin"]
     },
     "operator": {
         "robot": ["read", "control"],
         "telemetry": ["read"],
         "safety": ["read", "emergency"],
         "config": ["read"],
-        "users": [],
-        "audit": ["read"]
+        "users": ["read"],
+        "audit": ["read"],
+        "system": ["read"]
     },
     "viewer": {
         "robot": ["read"],
         "telemetry": ["read"],
         "safety": ["read"],
         "config": ["read"],
-        "users": [],
-        "audit": []
+        "users": ["read"],
+        "audit": [],
+        "system": ["read"]
     }
 }
 
@@ -115,7 +127,7 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
     except jwt.ExpiredSignatureError:
         logger.warning("Token expired")
         return None
-    except jwt.JWTError:
+    except jwt.InvalidTokenError:
         logger.warning("Invalid token")
         return None
 
@@ -256,9 +268,12 @@ def require_permission(resource: str, permission: str):
         current_user: User = Depends(get_current_user),
         request: Request = None
     ) -> User:
-        # Skip RBAC check for testing
+        # Skip RBAC check for testing (unless explicitly disabled for security tests)
         import os
-        if os.getenv("TESTING", "false").lower() == "true":
+        testing_mode = os.getenv("TESTING", "false").lower() == "true"
+        disable_bypass = os.getenv("DISABLE_RBAC_BYPASS", "false").lower() == "true"
+        
+        if testing_mode and not disable_bypass:
             logger.info(f"Testing mode: Skipping RBAC check for {resource}:{permission}")
             return current_user
         
