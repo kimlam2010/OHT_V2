@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     max_workers: int = 1
+    environment: str = "development"  # development | staging | production
     
     # Database
     database_url: str = "sqlite+aiosqlite:///./oht50.db"
@@ -60,6 +61,7 @@ class Settings(BaseSettings):
     firmware_url: str = "http://localhost:8081"
     firmware_websocket_url: str = "ws://localhost:8081/ws"
     firmware_timeout: int = 10
+    use_firmware_mock: bool = False  # Only allowed in non-production
     
     # Performance
     max_connections: int = 100

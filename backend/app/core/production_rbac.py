@@ -44,7 +44,7 @@ class ProductionRBAC:
             "admin": {
                 "robot": ["read", "write", "delete", "control"],
                 "telemetry": ["read", "write", "delete"],
-                "safety": ["read", "write", "delete", "override"],
+                "safety": ["read", "write", "delete", "override", "acknowledge"],
                 "configuration": ["read", "write", "delete"],
                 "users": ["read", "write", "delete", "manage"],
                 "system": ["read", "write", "delete", "admin"]

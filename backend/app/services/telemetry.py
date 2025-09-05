@@ -16,9 +16,14 @@ class TelemetryService:
     """Telemetry service"""
     
     def __init__(self, use_mock: bool = True):
-        if use_mock:
+        from app.config import settings
+        import os
+        allow_mock = os.getenv("USE_FIRMWARE_MOCK", "false").lower() == "true" or settings.use_firmware_mock or use_mock
+        is_production = settings.environment.lower() == "production"
+        if allow_mock and not is_production:
             from app.core.integration import MockFirmwareService
             self.firmware_service = MockFirmwareService()
+            logger.warning("🧪 MOCK ENABLED: TelemetryService using MockFirmwareService (non-production)")
         else:
             self.firmware_service = FirmwareIntegrationService()
         self.telemetry_history = []

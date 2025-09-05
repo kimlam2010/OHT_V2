@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, Dict, Any
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict, ValidationInfo
+from typing import Optional
 from datetime import datetime
 from enum import Enum
 
@@ -24,13 +24,15 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
     confirm_password: str = Field(..., description="Password confirmation")
     
-    @validator('confirm_password')
-    def passwords_match(cls, v: str, values: Dict[str, Any]) -> str:
-        if 'password' in values and v != values['password']:
+    @field_validator('confirm_password')
+    @classmethod
+    def passwords_match(cls, v: str, info: ValidationInfo) -> str:
+        if 'password' in info.data and v != info.data['password']:
             raise ValueError('Passwords do not match')
         return v
     
-    @validator('password')
+    @field_validator('password')
+    @classmethod
     def password_strength(cls, v: str) -> str:
         if not any(c.isupper() for c in v):
             raise ValueError('Password must contain at least one uppercase letter')
@@ -54,8 +56,7 @@ class UserResponse(UserBase):
     updated_at: datetime
     last_login: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserLogin(BaseModel):
     username: str = Field(..., description="Username or email")
@@ -66,9 +67,10 @@ class UserPasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8, description="New password")
     confirm_new_password: str = Field(..., description="Confirm new password")
     
-    @validator('confirm_new_password')
-    def passwords_match(cls, v: str, values: Dict[str, Any]) -> str:
-        if 'new_password' in values and v != values['new_password']:
+    @field_validator('confirm_new_password')
+    @classmethod
+    def passwords_match(cls, v: str, info: ValidationInfo) -> str:
+        if 'new_password' in info.data and v != info.data['new_password']:
             raise ValueError('New passwords do not match')
         return v
 
@@ -82,5 +84,4 @@ class UserProfile(BaseModel):
     created_at: datetime
     last_login: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
