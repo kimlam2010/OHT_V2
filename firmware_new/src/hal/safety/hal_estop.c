@@ -618,7 +618,7 @@ static void* estop_monitor_thread_func(void *arg) {
     return NULL;
 }
 
-static void estop_handle_trigger(void) {
+static void __attribute__((unused)) estop_handle_trigger(void) {
     printf("E-Stop TRIGGERED!\n");
     
     estop_status.state = ESTOP_STATE_TRIGGERED;
@@ -631,7 +631,7 @@ static void estop_handle_trigger(void) {
     }
 }
 
-static void estop_handle_fault(estop_fault_t fault) {
+static void __attribute__((unused)) estop_handle_fault(estop_fault_t fault) {
     printf("E-Stop fault detected: %d\n", fault);
     
     estop_status.fault = fault;

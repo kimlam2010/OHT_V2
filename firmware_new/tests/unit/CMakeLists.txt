@@ -347,5 +347,58 @@ add_test(NAME test_communication_manager COMMAND test_communication_manager)
 # add_test(NAME test_power_module_validation COMMAND test_power_module_validation) - REMOVED
 add_test(NAME test_telemetry_manager COMMAND test_telemetry_manager)
 
+# Phase 2: Add core tests for safety latency, control timing, and telemetry JSON fields
+add_executable(test_safety_monitor_latency
+    app/test_safety_monitor_latency.c
+)
+
+target_include_directories(test_safety_monitor_latency PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+)
+
+target_link_libraries(test_safety_monitor_latency
+    hal_common
+    app_core
+    hal_safety
+    unity
+)
+
+add_executable(test_control_loop_timing
+    app/test_control_loop_timing.c
+)
+
+target_include_directories(test_control_loop_timing PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+)
+
+target_link_libraries(test_control_loop_timing
+    hal_common
+    app_core
+    unity
+)
+
+add_executable(test_telemetry_json_fields
+    app/test_telemetry_json_fields.c
+)
+
+target_include_directories(test_telemetry_json_fields PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+)
+
+target_link_libraries(test_telemetry_json_fields
+    hal_common
+    app_managers
+    unity
+)
+
+add_test(NAME test_safety_monitor_latency COMMAND test_safety_monitor_latency)
+add_test(NAME test_control_loop_timing COMMAND test_control_loop_timing)
+add_test(NAME test_telemetry_json_fields COMMAND test_telemetry_json_fields)
+
 # Enable testing
 enable_testing()

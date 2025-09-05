@@ -435,6 +435,11 @@ hal_status_t hal_log_message(hal_log_level_t level, const char *format, ...) {
 // ENHANCED: Structured logging with context
 hal_status_t hal_log_message_with_context(hal_log_level_t level, const char *component, 
                                          const char *function, uint32_t line, const char *format, ...) {
+    // Suppress unused parameter warnings
+    (void)component;
+    (void)function;
+    (void)line;
+    
     if (!g_log_initialized || level < g_log_level || format == NULL) {
         return HAL_STATUS_OK;
     }
