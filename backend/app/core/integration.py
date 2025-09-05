@@ -272,6 +272,10 @@ class MockFirmwareService:
             
         return True  # Always return success for testing
         
+    async def send_command(self, command: Dict[str, Any]) -> bool:
+        """Mock send command - ALWAYS SUCCESS for testing (alias for send_robot_command)"""
+        return await self.send_robot_command(command)
+        
     async def get_telemetry_data(self) -> Dict[str, Any]:
         """Mock telemetry data"""
         return {
@@ -299,3 +303,21 @@ class MockFirmwareService:
         logger.warning("🧪 MOCK: Simulating emergency stop")
         self.mock_data["status"] = "emergency_stop"
         return True
+
+    async def get_module_status(self, module_id: str) -> Dict[str, Any]:
+        """Mock module status to unblock tests"""
+        logger.warning("🧪 MOCK: Returning module status for %s", module_id)
+        return {
+            "module_id": module_id,
+            "status": "online",
+            "last_seen": datetime.now(timezone.utc).isoformat(),
+            "errors": []
+        }
+
+    async def discover_modules(self) -> Any:
+        """Mock module discovery to unblock tests"""
+        logger.warning("🧪 MOCK: Discovering modules")
+        return [
+            {"module_id": "mod-001", "type": "drive", "status": "online"},
+            {"module_id": "mod-002", "type": "io", "status": "online"}
+        ]

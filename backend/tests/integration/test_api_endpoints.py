@@ -26,7 +26,7 @@ def test_app():
             id=1,
             username="admin",
             email="admin@test.com",
-            role="administrator",
+            role="admin",
             is_active=True
         )
     

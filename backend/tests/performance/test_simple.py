@@ -8,7 +8,8 @@ import pytest
 from httpx import AsyncClient
 
 from app.main import app
-from app.core.security import create_access_token
+from app.core.security import get_current_user
+from app.models.user import User
 
 
 @pytest.fixture
@@ -27,10 +28,6 @@ async def async_client():
     os.environ["TESTING"] = "true"
     print("🔧 Set TESTING environment variable to true")
     
-    # Import dependencies
-    from app.core.security import get_current_user
-    from app.models.user import User
-    
     # Create override function
     async def override_get_current_user():
         """Override authentication for testing"""
@@ -39,24 +36,17 @@ async def async_client():
             id=1,
             username="admin",
             email="admin@test.com",
-            role="administrator",
+            role="admin",
             is_active=True
         )
     
     # Set dependency override directly on app
-    from app.main import app
     app.dependency_overrides[get_current_user] = override_get_current_user
     
     print(f"🔧 Dependency override set: {get_current_user}")
     print(f"🔧 App dependency_overrides count: {len(app.dependency_overrides)}")
     
     return AsyncClient(app=app, base_url="http://test")
-
-@pytest.fixture
-def auth_headers(admin_user):
-    """Create auth headers for testing"""
-    token = create_access_token(data={"sub": str(admin_user["id"])})
-    return {"Authorization": f"Bearer {token}"}
 
 
 class TestSimplePerformance:
@@ -95,11 +85,12 @@ class TestSimplePerformance:
         print(f"Test completed with status: {response.status_code}")
     
     @pytest.mark.asyncio
-    async def test_simple_concurrent_requests(self, async_client, auth_headers):
-        """Test simple concurrent requests"""
+    async def test_simple_concurrent_requests(self, async_client):
+        """Test simple concurrent requests without auth headers"""
         async def make_request():
             try:
-                response = await async_client.get("/api/v1/robot/status", headers=auth_headers)
+                # Use dependency override instead of auth headers
+                response = await async_client.get("/api/v1/robot/status")
                 return response.status_code
             except Exception as e:
                 print(f"Request failed: {e}")
@@ -114,7 +105,7 @@ class TestSimplePerformance:
         end_time = time.time()
         total_time = (end_time - start_time) * 1000
         
-        # At least 3 should succeed
+        # At least 3 should succeed (using dependency override)
         success_count = sum(1 for r in results if r == 200)
         assert success_count >= 3
         

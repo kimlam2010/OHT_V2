@@ -23,34 +23,28 @@ class RobotControlService:
         self._cache_ttl = 5  # 5 seconds cache
         self._last_update = 0
         
-        # Use MockFirmwareService for testing, real FirmwareIntegrationService for production
+        # Use MockFirmwareService only when explicitly allowed and not in production
         import os
-        if os.getenv("TESTING", "false").lower() == "true":
+        from app.config import settings
+        allow_mock = os.getenv("USE_FIRMWARE_MOCK", "false").lower() == "true" or settings.use_firmware_mock
+        is_production = settings.environment.lower() == "production"
+        if allow_mock and not is_production:
             from app.core.integration import MockFirmwareService
             self._firmware_service = MockFirmwareService()
-            logger.info("Using MockFirmwareService for testing")
+            logger.warning("🧪 MOCK ENABLED: Using MockFirmwareService (non-production only)")
         else:
             self._firmware_service = FirmwareIntegrationService()
-            logger.info("Using real FirmwareIntegrationService for production")
+            logger.info("Using Real FirmwareIntegrationService")
         
-        # Force mock firmware for testing if needed
-        self._force_mock = os.getenv("TESTING", "false").lower() == "true"
+        # No dynamic flipping in runtime; mock selection is at init time only
+        self._force_mock = allow_mock and not is_production
         
-        # Update force_mock if environment changes
-        def update_force_mock():
-            self._force_mock = os.getenv("TESTING", "false").lower() == "true"
-            if self._force_mock:
-                from app.core.integration import MockFirmwareService
-                self._firmware_service = MockFirmwareService()
-                logger.info("Switched to MockFirmwareService for testing")
-        
-        # Check environment variable on each method call
-        self._update_force_mock = update_force_mock
+        # Remove old method reference
+        self._update_force_mock = lambda: None
         
     async def get_robot_status(self) -> Dict[str, Any]:
         """Get robot status from database and Firmware"""
-        # Update force_mock based on current environment
-        self._update_force_mock()
+        # No need to update force_mock - it's set at init time
         
         current_time = time.time()
         
@@ -264,8 +258,7 @@ class RobotControlService:
     
     async def emergency_stop(self) -> Dict[str, Any]:
         """Emergency stop robot"""
-        # Update force_mock based on current environment
-        self._update_force_mock()
+        # No need to update force_mock - it's set at init time
         
         try:
             # Send emergency stop command to Firmware

@@ -84,6 +84,14 @@ async def emergency_stop(
         )
 
 
+@router.post("/emergency")
+async def emergency_stop_alias(
+    current_user: User = Depends(require_permission("safety", "acknowledge"))
+):
+    """Execute emergency stop (alias for /emergency-stop)"""
+    return await emergency_stop(current_user)
+
+
 @router.get("/alerts", response_model=List[SafetyAlert])
 async def get_safety_alerts(
     limit: int = Query(default=50, ge=1, le=100),

@@ -28,7 +28,7 @@ def test_app():
             id=1,
             username="admin",
             email="admin@test.com",
-            role="administrator",
+            role="admin",
             is_active=True
         )
     
@@ -238,7 +238,7 @@ class TestLoadTesting:
             )
         except asyncio.TimeoutError:
             print("Test timed out - too many concurrent requests")
-            pytest.skip("Test timed out - system overloaded")
+            pytest.xfail("xfail: timed out - system overloaded")
         
         end_time = time.time()
         total_time = (end_time - start_time) * 1000
@@ -305,7 +305,7 @@ class TestLoadTesting:
             )
         except asyncio.TimeoutError:
             print("Mixed endpoints test timed out")
-            pytest.skip("Test timed out - system overloaded")
+            pytest.xfail("xfail: timed out - system overloaded")
         
         end_time = time.time()
         total_time = (end_time - start_time) * 1000
@@ -351,8 +351,8 @@ class TestMemoryUsage:
                     timeout=10.0  # 10 second timeout
                 )
             except asyncio.TimeoutError:
-                print("Memory test timed out - skipping")
-                pytest.skip("Memory test timed out")
+                print("Memory test timed out - xfail")
+                pytest.xfail("xfail: memory test timed out")
             
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
@@ -367,9 +367,9 @@ class TestMemoryUsage:
             print(f"Memory usage - Initial: {initial_memory:.1f}MB, Final: {final_memory:.1f}MB, Increase: {memory_increase:.1f}MB")
             
         except ImportError:
-            # Skip memory test if psutil not available
-            pytest.skip("psutil not available for memory testing")
+            # xfail if psutil not available
+            pytest.xfail("xfail: psutil not available for memory testing")
         except Exception as e:
-            # Skip memory test if it fails
+            # xfail if it fails unexpectedly
             print(f"Memory test failed: {e}")
-            pytest.skip(f"Memory test failed: {e}")
+            pytest.xfail(f"xfail: memory test failed: {e}")

@@ -14,8 +14,21 @@ router = APIRouter(prefix="/robot", tags=["robot"])
 
 
 class RobotCommand(BaseModel):
-    type: str
+    type: str = None
+    command_type: str = None
     parameters: Dict[str, Any] = {}
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Support both formats: type or command_type
+        if not self.type and self.command_type:
+            self.type = self.command_type
+        elif not self.command_type and self.type:
+            self.command_type = self.type
+        
+        # Ensure at least one is set
+        if not self.type:
+            raise ValueError("Either 'type' or 'command_type' must be provided")
 
 
 class RobotStatusResponse(BaseModel):
@@ -78,6 +91,15 @@ async def control_robot(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to execute command: {str(e)}"
         )
+
+
+@router.post("/command")
+async def send_robot_command(
+    command: RobotCommand,
+    current_user: User = Depends(require_permission("robot", "control"))
+):
+    """Send command to robot (alias for /control)"""
+    return await control_robot(command, current_user)
 
 
 @router.post("/emergency-stop")

@@ -83,11 +83,23 @@ class WebSocketService:
         try:
             self.is_running = False
             
-            # Cancel background tasks
+            # Cancel background tasks and await their completion
             if self.broadcast_task:
                 self.broadcast_task.cancel()
+                try:
+                    await self.broadcast_task
+                except asyncio.CancelledError:
+                    logger.info("🛑 Broadcast worker cancelled (awaited)")
+                finally:
+                    self.broadcast_task = None
             if self.health_check_task:
                 self.health_check_task.cancel()
+                try:
+                    await self.health_check_task
+                except asyncio.CancelledError:
+                    logger.info("🛑 Health check worker cancelled (awaited)")
+                finally:
+                    self.health_check_task = None
             
             # Close all connections
             await self._close_all_connections()
