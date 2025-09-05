@@ -39,9 +39,9 @@ http.interceptors.response.use(
 
     if (isAxiosError(error) && error.response && error.response.data) {
       const { status } = error.response
-      const { message } = error.response.data
+      const { detail } = error.response.data
 
-      return Promise.reject(new HTTPError(message || 'Unexpected error', status))
+      return Promise.reject(new HTTPError(detail || 'Unexpected error', status))
     }
 
     return Promise.reject(error)
