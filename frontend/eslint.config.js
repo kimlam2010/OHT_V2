@@ -21,6 +21,7 @@ export default antfu({
     "components.json",
     ".cta.json",
     ".github",
+    "src/components/ui/",
   ],
   rules: {
     "react-refresh/only-export-components": "off",
