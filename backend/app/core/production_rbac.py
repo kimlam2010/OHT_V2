@@ -49,6 +49,18 @@ class ProductionRBAC:
                 "users": ["read", "write", "delete", "manage"],
                 "system": ["read", "write", "delete", "admin"]
             },
+            "administrator": {
+                "robot": ["read", "write", "delete", "control"],
+                "telemetry": ["read", "write", "delete"],
+                "safety": ["read", "write", "delete", "override", "acknowledge"],
+                "configuration": ["read", "write", "delete"],
+                "users": ["read", "write", "delete", "manage"],
+                "system": ["read", "write", "delete", "admin"],
+                "map": ["read", "write", "delete", "control"],
+                "sensors": ["read", "write", "delete", "control"],
+                "localization": ["read", "write", "delete", "control"],
+                "monitoring": ["read", "write", "delete", "admin"]
+            },
             "operator": {
                 "robot": ["read", "control"],
                 "telemetry": ["read"],

@@ -10,7 +10,7 @@ from app.core.security import require_permission
 from app.models.user import User
 from app.services.safety import safety_service
 
-router = APIRouter(prefix="/safety", tags=["safety"])
+router = APIRouter(prefix="/api/v1/safety", tags=["safety"])
 
 
 class SafetyStatus(BaseModel):

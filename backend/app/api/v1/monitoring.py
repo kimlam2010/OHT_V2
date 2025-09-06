@@ -16,7 +16,7 @@ from app.core.security import get_current_user
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/monitoring", tags=["monitoring"])
+router = APIRouter(prefix="/api/v1/monitoring", tags=["monitoring"])
 
 
 @router.get("/health")
@@ -39,7 +39,7 @@ async def get_system_health(
         )
 
 
-@router.get("/metrics/current")
+@router.get("/metrics")
 async def get_current_metrics(
     current_user: User = Depends(require_permission("system", "read"))
 ) -> Dict[str, Any]:

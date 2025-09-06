@@ -37,36 +37,56 @@ RBAC_PERMISSIONS = {
         "telemetry": ["read", "write", "delete"],
         "safety": ["read", "configure", "emergency", "acknowledge"],
         "config": ["read", "write", "delete"],
+        "configuration": ["read", "write", "delete"],
         "users": ["read", "write", "delete"],
         "audit": ["read", "write"],
-        "system": ["read", "write", "delete", "admin"]
+        "system": ["read", "write", "delete", "admin"],
+        "map": ["read", "write", "delete", "control"],
+        "sensors": ["read", "write", "delete", "control"],
+        "localization": ["read", "write", "delete", "control"],
+        "monitoring": ["read", "write", "delete", "admin"]
     },
     "administrator": {
         "robot": ["read", "control", "emergency", "configure"],
         "telemetry": ["read", "write", "delete"],
         "safety": ["read", "configure", "emergency", "acknowledge"],
         "config": ["read", "write", "delete"],
+        "configuration": ["read", "write", "delete"],
         "users": ["read", "write", "delete"],
         "audit": ["read", "write"],
-        "system": ["read", "write", "delete", "admin"]
+        "system": ["read", "write", "delete", "admin"],
+        "map": ["read", "write", "delete", "control"],
+        "sensors": ["read", "write", "delete", "control"],
+        "localization": ["read", "write", "delete", "control"],
+        "monitoring": ["read", "write", "delete", "admin"]
     },
     "operator": {
         "robot": ["read", "control"],
         "telemetry": ["read"],
         "safety": ["read", "emergency"],
         "config": ["read"],
+        "configuration": ["read"],
         "users": ["read"],
         "audit": ["read"],
-        "system": ["read"]
+        "system": ["read"],
+        "map": ["read"],
+        "sensors": ["read"],
+        "localization": ["read"],
+        "monitoring": ["read"]
     },
     "viewer": {
         "robot": ["read"],
         "telemetry": ["read"],
         "safety": ["read"],
         "config": ["read"],
+        "configuration": ["read"],
         "users": ["read"],
         "audit": [],
-        "system": ["read"]
+        "system": ["read"],
+        "map": ["read"],
+        "sensors": ["read"],
+        "localization": ["read"],
+        "monitoring": ["read"]
     }
 }
 

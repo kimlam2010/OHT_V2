@@ -16,7 +16,7 @@ from app.schemas.user import UserResponse as User
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/speed-control", tags=["speed-control"])
 
 
 class SpeedCommandRequest(BaseModel):
@@ -125,6 +125,42 @@ async def emergency_stop(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Emergency stop failed"
+        )
+
+
+@router.get("/current")
+async def get_current_speed(
+    current_user: User = Depends(require_permission("robot", "read"))
+):
+    """Get current speed settings"""
+    try:
+        current_speed = speed_controller.get_current_speed()
+        return {
+            "success": True,
+            "current_speed": current_speed
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get current speed: {str(e)}"
+        )
+
+
+@router.get("/limits")
+async def get_speed_limits(
+    current_user: User = Depends(require_permission("robot", "read"))
+):
+    """Get speed limits"""
+    try:
+        limits = speed_controller.get_speed_limits()
+        return {
+            "success": True,
+            "limits": limits
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get speed limits: {str(e)}"
         )
 
 

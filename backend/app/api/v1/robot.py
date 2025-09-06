@@ -10,7 +10,7 @@ from app.core.security import require_permission
 from app.models.user import User
 from app.services.robot_control import robot_control_service
 
-router = APIRouter(prefix="/robot", tags=["robot"])
+router = APIRouter(prefix="/api/v1/robot", tags=["robot"])
 
 
 class RobotCommand(BaseModel):
@@ -201,6 +201,42 @@ async def stop_robot(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Stop command failed: {str(e)}"
+        )
+
+
+@router.get("/position")
+async def get_robot_position(
+    current_user: User = Depends(require_permission("robot", "read"))
+):
+    """Get current robot position"""
+    try:
+        position = await robot_control_service.get_current_position()
+        return {
+            "success": True,
+            "position": position
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get robot position: {str(e)}"
+        )
+
+
+@router.get("/configuration")
+async def get_robot_configuration(
+    current_user: User = Depends(require_permission("robot", "read"))
+):
+    """Get robot configuration"""
+    try:
+        config = await robot_control_service.get_configuration()
+        return {
+            "success": True,
+            "configuration": config
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get robot configuration: {str(e)}"
         )
 
 

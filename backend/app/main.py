@@ -18,7 +18,7 @@ from app.core.monitoring_service import monitoring_service
 from app.core.websocket_service import websocket_service
 
 # Import API routers
-from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control
+from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, sensors, localization, health
 from app.api import websocket
 from app.config import Settings
 
@@ -119,6 +119,18 @@ app = FastAPI(
     ### 📈 **Monitoring API** (6 endpoints)
     - System health, performance metrics, logs, alerts
     
+    ### 🗺️ **Map & Localization API** (12 endpoints)
+    - Map management, robot positioning, hybrid localization
+    
+    ### 📡 **Sensor Data API** (8 endpoints)
+    - Sensor data processing, configuration, calibration
+    
+        ### 🎯 **Localization API** (8 endpoints)
+        - Position tracking, configuration, statistics
+
+        ### 🏥 **Health Check API** (5 endpoints)
+        - System health monitoring, readiness, liveness checks
+    
     ### 🔌 **WebSocket API** (Real-time)
     - Live telemetry updates, real-time notifications
     
@@ -194,6 +206,22 @@ app = FastAPI(
         {
             "name": "Speed Control",
             "description": "⚡ Advanced speed control with safety integration (6 endpoints)"
+        },
+        {
+            "name": "map",
+            "description": "🗺️ Map management, robot positioning, and hybrid localization (12 endpoints)"
+        },
+        {
+            "name": "sensors",
+            "description": "📡 Sensor data processing, configuration, and calibration (8 endpoints)"
+        },
+        {
+            "name": "localization",
+            "description": "🎯 Position tracking, configuration, and statistics (8 endpoints)"
+        },
+        {
+            "name": "health",
+            "description": "🏥 System health monitoring, readiness, and liveness checks (5 endpoints)"
         },
         {
             "name": "WebSocket",
@@ -309,13 +337,19 @@ async def root():
 
 
 # Include API routers
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(robot.router, prefix="/api/v1")
-app.include_router(telemetry.router, prefix="/api/v1")
-app.include_router(safety.router, prefix="/api/v1")
-app.include_router(config.router, prefix="/api/v1")
-app.include_router(monitoring.router, prefix="/api/v1")
-app.include_router(speed_control.router, prefix="/api/v1/speed-control", tags=["Speed Control"])
+app.include_router(auth.router)
+app.include_router(robot.router)
+app.include_router(telemetry.router)
+app.include_router(safety.router)
+app.include_router(config.router)
+app.include_router(monitoring.router)
+app.include_router(speed_control.router)
+
+# Include Map & Localization API routers
+app.include_router(map.router)
+app.include_router(sensors.router)
+app.include_router(localization.router)
+app.include_router(health.router)
 
 # Include WebSocket router
 app.include_router(websocket.router)
