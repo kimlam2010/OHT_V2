@@ -1,5 +1,6 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import axios, { isAxiosError } from 'axios'
+import { ACCESS_TOKEN } from '@/constants/string'
 import { NProgressCustom } from '@/plugins/nprogress'
 import { HTTPError } from '@/types/error'
 
@@ -13,6 +14,10 @@ const http = axios.create({
 
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    const accessToken = localStorage.getItem(ACCESS_TOKEN)
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`
+    }
     if (config.headers['x-api'] === 'software') {
       config.baseURL = `${import.meta.env.VITE_BACKEND_URL}/api/v1`
     }

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Lock, LogIn, ShieldCheck, User } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { ACCESS_TOKEN } from '@/constants/string'
 import { useLogin } from '@/hooks/auth'
 import { HTTPError } from '@/types/error'
 
@@ -32,7 +33,7 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const { mutate: login } = useLogin()
-
+  const navigate = useNavigate()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,8 +44,10 @@ export function LoginForm() {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     login(values, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         toast.success('Login successful')
+        localStorage.setItem(ACCESS_TOKEN, response.access_token)
+        navigate({ to: '/dashboard' })
       },
       onError: (error) => {
         if (error instanceof HTTPError) {
