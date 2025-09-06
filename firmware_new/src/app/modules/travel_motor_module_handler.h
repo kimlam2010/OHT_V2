@@ -33,34 +33,64 @@ typedef struct motor_module_handler motor_module_handler_t;
 #define MOTOR_MODULE_STOP_ACCURACY_MM   2      // ±2mm accuracy requirement
 #define MOTOR_MODULE_RESPONSE_TIME_MS   100    // < 100ms response time
 
-// Motor Module Register Map (Address 0x1000-0x30FF)
-#define MOTOR_POSITION_TARGET_REG       0x1000
-#define MOTOR_VELOCITY_TARGET_REG       0x1001
-#define MOTOR_ACCELERATION_LIMIT_REG    0x1002
-#define MOTOR_JERK_LIMIT_REG            0x1003
-#define MOTOR_POSITION_LIMIT_MIN_REG    0x1004
-#define MOTOR_POSITION_LIMIT_MAX_REG    0x1005
-#define MOTOR_VELOCITY_LIMIT_MAX_REG    0x1006
-#define MOTOR_ACCELERATION_LIMIT_MAX_REG 0x1007
+// Motor Module Register Map (Based on Real Hardware - Driver_2_Motor)
+// System Registers (0x00F0-0x00FF)
+#define MOTOR_DEVICE_ID_REG             0x00F0
+#define MOTOR_FIRMWARE_VERSION_REG      0x00F1
+#define MOTOR_HARDWARE_VERSION_REG      0x00F2
+#define MOTOR_STATUS_REG                0x00F3
+#define MOTOR_ERROR_CODE_REG            0x00F4
+#define MOTOR_MODULE_TYPE_REG           0x00F5
+#define MOTOR_SERIAL_NUMBER_REG         0x00F6
+#define MOTOR_BUILD_NUMBER_REG          0x00F7
 
-#define MOTOR_ENABLE_REG                0x2000
-#define MOTOR_MOVE_COMMAND_REG          0x2001
-#define MOTOR_STOP_COMMAND_REG          0x2002
-#define MOTOR_HOME_COMMAND_REG          0x2003
-#define MOTOR_RESET_FAULTS_REG          0x2004
-#define MOTOR_EMERGENCY_STOP_REG        0x2005
-#define MOTOR_SOFT_STOP_REG             0x2006
-#define MOTOR_HARD_STOP_REG             0x2007
+// Motor Control Registers (0x0000-0x000F)
+#define MOTOR_ENABLE_REG                0x0000
+#define MOTOR_MODE_REG                  0x0001
+#define MOTOR_SPEED_TARGET_REG          0x0002
+#define MOTOR_SPEED_ACTUAL_REG          0x0003
+#define MOTOR_POSITION_TARGET_REG       0x0004
+#define MOTOR_POSITION_ACTUAL_REG       0x0005
+#define MOTOR_DIRECTION_REG             0x0006
+#define MOTOR_ACCELERATION_REG          0x0007
+#define MOTOR_DECELERATION_REG          0x0008
+#define MOTOR_JERK_REG                  0x0009
+#define MOTOR_TORQUE_LIMIT_REG          0x000A
+#define MOTOR_TEMPERATURE_REG           0x000B
+#define MOTOR_VOLTAGE_REG               0x000C
+#define MOTOR_CURRENT_REG               0x000D
+#define MOTOR_FAULT_STATUS_REG          0x000E
+#define MOTOR_OPERATION_STATUS_REG      0x000F
 
-#define MOTOR_FAULT_STATUS_REG          0x3000
-#define MOTOR_CURRENT_POSITION_REG      0x3001
-#define MOTOR_CURRENT_VELOCITY_REG      0x3002
-#define MOTOR_REG_MOTOR1_SPEED          0x3002  // Motor 1 speed register
-#define MOTOR_CURRENT_ACCELERATION_REG  0x3003
-#define MOTOR_TARGET_REACHED_REG        0x3004
-#define MOTOR_MOTION_COMPLETE_REG       0x3005
-#define MOTOR_FAULT_CODE_REG            0x3006
-#define MOTOR_FAULT_DESCRIPTION_REG     0x3007
+// Motor Status Registers (0x0010-0x001F)
+#define MOTOR_RUNNING_STATUS_REG        0x0010
+#define MOTOR_READY_STATUS_REG          0x0011
+#define MOTOR_FAULT_STATUS_EXT_REG      0x0012
+#define MOTOR_WARNING_STATUS_REG        0x0013
+#define MOTOR_EMERGENCY_STOP_REG        0x0014
+#define MOTOR_HOME_STATUS_REG           0x0015
+#define MOTOR_LIMIT_SWITCH_REG          0x0016
+#define MOTOR_ENCODER_STATUS_REG        0x0017
+#define MOTOR_COMMUNICATION_STATUS_REG  0x0018
+#define MOTOR_POWER_STATUS_REG          0x0019
+#define MOTOR_TEMPERATURE_STATUS_REG    0x001A
+#define MOTOR_VOLTAGE_STATUS_REG        0x001B
+#define MOTOR_CURRENT_STATUS_REG        0x001C
+#define MOTOR_SPEED_STATUS_REG          0x001D
+#define MOTOR_POSITION_STATUS_REG       0x001E
+#define MOTOR_OPERATION_MODE_REG        0x001F
+
+// Additional registers for compatibility
+#define MOTOR_VELOCITY_TARGET_REG       MOTOR_SPEED_TARGET_REG
+#define MOTOR_ACCELERATION_LIMIT_REG    MOTOR_ACCELERATION_REG
+#define MOTOR_MOVE_COMMAND_REG          0x0020
+#define MOTOR_STOP_COMMAND_REG          0x0021
+#define MOTOR_HOME_COMMAND_REG          0x0022
+#define MOTOR_RESET_FAULTS_REG          0x0023
+#define MOTOR_HARD_STOP_REG             0x0024
+#define MOTOR_TARGET_REACHED_REG        0x0025
+#define MOTOR_MOTION_COMPLETE_REG       0x0026
+#define MOTOR_FAULT_CODE_REG            0x0027
 
 // Motor Module Fault Codes
 typedef enum {
@@ -113,30 +143,64 @@ typedef enum {
     MOTOR_EVENT_HOME_COMPLETED
 } motor_event_t;
 
-// Motor Module Data Structure
+// Motor Module Data Structure (Based on Real Hardware)
 typedef struct {
-    // Target values
+    // System Information
+    uint16_t device_id;
+    uint16_t firmware_version;
+    uint16_t hardware_version;
+    uint16_t module_type;
+    uint16_t serial_number;
+    uint16_t build_number;
+    
+    // Motor Control Values
+    uint16_t enable_status;
+    uint16_t operation_mode;
+    uint16_t speed_target;
+    uint16_t speed_actual;
     uint16_t position_target;
-    uint16_t velocity_target;
-    uint16_t acceleration_limit;
-    uint16_t jerk_limit;
+    uint16_t position_actual;
+    uint16_t direction;
+    uint16_t acceleration;
+    uint16_t deceleration;
+    uint16_t jerk;
+    uint16_t torque_limit;
     
-    // Limits
-    uint16_t position_limit_min;
-    uint16_t position_limit_max;
-    uint16_t velocity_limit_max;
-    uint16_t acceleration_limit_max;
+    // Motor Status Values
+    uint16_t temperature;
+    uint16_t voltage;
+    uint16_t current;
+    uint16_t fault_status;
+    uint16_t operation_status;
     
-    // Current values
-    uint16_t current_position;
-    uint16_t current_velocity;
-    uint16_t current_acceleration;
+    // Status Flags
+    uint16_t running_status;
+    uint16_t ready_status;
+    uint16_t warning_status;
+    uint16_t emergency_stop;
+    uint16_t home_status;
+    uint16_t limit_switch;
+    uint16_t encoder_status;
+    uint16_t communication_status;
+    uint16_t power_status;
+    uint16_t temperature_status;
+    uint16_t voltage_status;
+    uint16_t current_status;
+    uint16_t speed_status;
+    uint16_t position_status;
     
-    // Status
-    uint8_t enable_status;
-    uint8_t fault_status;
-    uint8_t target_reached;
-    uint8_t motion_complete;
+    // Compatibility fields
+    uint16_t velocity_target;        // Alias for speed_target
+    uint16_t acceleration_limit;     // Alias for acceleration
+    uint16_t current_position;       // Alias for position_actual
+    uint16_t current_velocity;       // Alias for speed_actual
+    uint16_t current_acceleration;   // Calculated field
+    uint16_t target_reached;         // Status flag
+    uint16_t motion_complete;        // Status flag
+    uint16_t position_limit_min;     // Limit values
+    uint16_t position_limit_max;     // Limit values
+    uint16_t velocity_limit_max;     // Limit values
+    uint16_t acceleration_limit_max; // Limit values
     
     // Fault information
     motor_fault_code_t fault_code;

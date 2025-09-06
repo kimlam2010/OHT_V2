@@ -20,7 +20,7 @@
 #define MODULE_ADDR_SAFETY                 0x03U
 #define MODULE_ADDR_TRAVEL_MOTOR           0x04U
 #define MODULE_ADDR_DOCK                   0x05U
-#define MODULE_ADDR_MAX                    0x06U
+#define MODULE_ADDR_MAX                    0x08U
 
 // Type validation for module addresses
 _Static_assert(MODULE_ADDR_POWER <= 0xFF, "Module address out of range");

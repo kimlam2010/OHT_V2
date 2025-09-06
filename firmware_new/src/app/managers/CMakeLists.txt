@@ -3,6 +3,7 @@ add_library(app_managers
     safety_manager.c
     communication_manager.c
     module_manager.c
+    module_polling_manager.c
     telemetry_manager.c
 )
 

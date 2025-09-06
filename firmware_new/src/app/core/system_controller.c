@@ -89,33 +89,44 @@ static bool system_controller_event_queue_pop(system_controller_queued_event_t* 
 
 hal_status_t system_controller_init(const system_controller_config_t *config)
 {
+    printf("[SYSTEM_CTRL] Starting initialization...\n");
+    
     // Check if already initialized
     if (system_controller_instance.initialized) {
+        printf("[SYSTEM_CTRL] Already initialized\n");
         return HAL_STATUS_ALREADY_INITIALIZED;
     }
     
     // Initialize instance
+    printf("[SYSTEM_CTRL] Clearing instance memory...\n");
     memset(&system_controller_instance, 0, sizeof(system_controller_instance));
     
     // Set configuration
     if (config != NULL) {
+        printf("[SYSTEM_CTRL] Using provided config\n");
         system_controller_instance.config = *config;
     } else {
+        printf("[SYSTEM_CTRL] Using default config\n");
         system_controller_instance.config = default_config;
     }
     
     // Initialize status
+    printf("[SYSTEM_CTRL] Initializing status...\n");
     system_controller_instance.status.current_state = SYSTEM_CONTROLLER_STATE_INIT;
     system_controller_instance.status.previous_state = SYSTEM_CONTROLLER_STATE_INIT;
     system_controller_instance.status.last_event = SYSTEM_CONTROLLER_EVENT_NONE;
     system_controller_instance.status.current_error = SYSTEM_CONTROLLER_ERROR_NONE;
-    system_controller_instance.status.state_entry_time = system_controller_get_timestamp_ms();
-    system_controller_instance.status.last_update_time = system_controller_get_timestamp_ms();
+    
+    printf("[SYSTEM_CTRL] Getting timestamp...\n");
+    uint64_t timestamp = system_controller_get_timestamp_ms();
+    system_controller_instance.status.state_entry_time = timestamp;
+    system_controller_instance.status.last_update_time = timestamp;
     
     // Initialize timing
-    system_controller_instance.last_update_time = system_controller_get_timestamp_ms();
-    system_controller_instance.last_performance_check = system_controller_get_timestamp_ms();
-    system_controller_instance.last_error_reset = system_controller_get_timestamp_ms();
+    printf("[SYSTEM_CTRL] Initializing timing...\n");
+    system_controller_instance.last_update_time = timestamp;
+    system_controller_instance.last_performance_check = timestamp;
+    system_controller_instance.last_error_reset = timestamp;
     
     // Initialize performance metrics
     system_controller_instance.performance.cpu_usage_percent = 0;
@@ -135,11 +146,14 @@ hal_status_t system_controller_init(const system_controller_config_t *config)
     memset(system_controller_instance.error_info.error_context, 0, sizeof(system_controller_instance.error_info.error_context));
     
     // Set initialized flag
+    printf("[SYSTEM_CTRL] Setting initialized flag...\n");
     system_controller_instance.initialized = true;
     
     // Log initialization
+    printf("[SYSTEM_CTRL] Logging initialization event...\n");
     system_controller_log_event_internal(SYSTEM_CONTROLLER_EVENT_NONE, "System controller initialized");
     
+    printf("[SYSTEM_CTRL] Initialization completed successfully!\n");
     return HAL_STATUS_OK;
 }
 
@@ -448,20 +462,23 @@ const char* system_controller_get_version(void)
 static uint64_t system_controller_get_timestamp_ms(void)
 {
     // Use HAL timestamp in microseconds and convert to milliseconds
-    return (uint64_t)(hal_get_timestamp_us() / 1000ULL);
+    uint64_t timestamp_us = hal_get_timestamp_us();
+    if (timestamp_us == 0) {
+        printf("[SYSTEM_CTRL] WARNING: HAL timestamp returned 0\n");
+        return 1; // Return 1ms as fallback
+    }
+    return (uint64_t)(timestamp_us / 1000ULL);
 }
 
 static void system_controller_log_event_internal(system_controller_event_t event, const char* message)
 {
-    if (!system_controller_instance.config.enable_error_logging) {
-        return;
+    // Always log initialization events for debugging
+    if (event == SYSTEM_CONTROLLER_EVENT_NONE || system_controller_instance.config.enable_error_logging) {
+        printf("[SYSTEM_CONTROLLER] Event: %d, Message: %s\n", 
+               (int)event, message ? message : "N/A");
     }
     
-    // Implement proper logging
-    printf("[SYSTEM_CONTROLLER] Event: %d, Message: %s\n", 
-           (int)event, message ? message : "N/A");
-    
-    // Call callback if available
+    // Call callback if available (but don't fail if callback is NULL)
     if (system_controller_instance.event_callback != NULL) {
         system_controller_instance.event_callback(SYSTEM_CONTROLLER_STATE_INIT, event, message);
     }

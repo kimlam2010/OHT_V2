@@ -59,3 +59,4 @@ echo ""
 echo "=== TEST HOÀN THÀNH ==="
 echo "Tất cả GPIO pins đã được kiểm tra an toàn"
 echo "Không có conflict được phát hiện"
+
