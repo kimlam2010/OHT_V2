@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Depends, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.core.security import require_permission
 from app.services.speed_control import speed_controller, SpeedMode, SpeedLimits
@@ -25,7 +25,8 @@ class SpeedCommandRequest(BaseModel):
     mode: str = Field(default="manual", description="Speed control mode")
     safety_override: bool = Field(default=False, description="Override safety limits")
     
-    @validator('mode')
+    @field_validator('mode')
+    @classmethod
     def validate_mode(cls, v: str) -> str:
         valid_modes = [mode.value for mode in SpeedMode]
         if v not in valid_modes:

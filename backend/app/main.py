@@ -93,43 +93,58 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="OHT-50 Backend API",
     description="""
-    # OHT-50 Autonomous Mobile Robot System - Backend API
+    # 🚀 OHT-50 Backend API v2.0 - Production Ready
     
-    ## Overview
-    This is the backend API for the OHT-50 Autonomous Mobile Robot System, providing:
+    ## 📋 **API Overview**
+    **40+ Endpoints** across 7 main categories providing comprehensive robot control and monitoring:
     
-    - **Robot Control**: Movement, status monitoring, and emergency controls
-    - **Telemetry**: Real-time sensor data and system monitoring
-    - **Safety Management**: Safety zones, alerts, and emergency procedures
-    - **Configuration**: System settings and parameter management
-    - **Authentication**: User management and access control
-    - **WebSocket**: Real-time communication for live updates
+    ### 🔐 **Authentication API** (5 endpoints)
+    - User login/logout, JWT token management, user profile
     
-    ## Key Features
-    - Real-time robot control and monitoring
-    - Comprehensive safety management system
-    - High-performance telemetry processing
-    - Secure authentication and authorization
-    - WebSocket-based real-time updates
-    - Comprehensive error handling and recovery
+    ### 🤖 **Robot Control API** (6 endpoints)  
+    - Robot status, movement control, position tracking, emergency stop
     
-    ## Performance Targets
-    - API Response Time: < 50ms
-    - WebSocket Latency: < 20ms
-    - System Uptime: > 99.9%
-    - Error Rate: < 0.1%
+    ### 📊 **Telemetry API** (6 endpoints)
+    - Real-time sensor data, LiDAR scans, data collection management
     
-    ## Authentication
-    Most endpoints require authentication. Use the `/api/v1/auth/login` endpoint to obtain a JWT token,
-    then include it in the Authorization header: `Bearer <token>`
+    ### 🚨 **Safety API** (5 endpoints)
+    - Safety status, emergency controls, alert management, safety zones
     
-    ## Error Handling
-    All endpoints return consistent error responses with appropriate HTTP status codes.
-    Detailed error information is provided in development mode.
+    ### ⚡ **Speed Control API** (6 endpoints)
+    - Speed management, acceleration limits, performance monitoring
     
-    ## Rate Limiting
-    API endpoints are rate-limited to ensure system stability.
-    Contact administrators for rate limit adjustments.
+    ### ⚙️ **Configuration API** (4 endpoints)
+    - System settings, robot parameters, configuration management
+    
+    ### 📈 **Monitoring API** (6 endpoints)
+    - System health, performance metrics, logs, alerts
+    
+    ### 🔌 **WebSocket API** (Real-time)
+    - Live telemetry updates, real-time notifications
+    
+    ## 🎯 **Performance Targets**
+    - **API Response**: < 50ms
+    - **Emergency Stop**: < 10ms  
+    - **WebSocket Latency**: < 20ms
+    - **Database Queries**: < 10ms
+    - **System Uptime**: > 99.9%
+    
+    ## 🔒 **Security Features**
+    - JWT Authentication with RBAC
+    - Rate Limiting & Input Validation
+    - Security Headers & Audit Logging
+    - CORS Protection
+    
+    ## 🔧 **Authentication**
+    Most endpoints require JWT token in header:
+    ```
+    Authorization: Bearer <your_jwt_token>
+    ```
+    
+    ## 📚 **Documentation**
+    - Complete API reference in `/docs`
+    - Interactive testing in Swagger UI
+    - Production-ready with comprehensive error handling
     """,
     version="2.0.0",
     contact={
@@ -154,35 +169,35 @@ app = FastAPI(
     tags=[
         {
             "name": "Authentication",
-            "description": "User authentication and authorization endpoints"
+            "description": "🔐 User authentication, JWT tokens, and authorization (5 endpoints)"
         },
         {
-            "name": "Robot Control",
-            "description": "Robot movement, status, and control endpoints"
+            "name": "Robot Control", 
+            "description": "🤖 Robot movement, status monitoring, and control operations (6 endpoints)"
         },
         {
             "name": "Telemetry",
-            "description": "Real-time sensor data and monitoring endpoints"
+            "description": "📊 Real-time sensor data, LiDAR scans, and data collection (6 endpoints)"
         },
         {
             "name": "Safety",
-            "description": "Safety management and emergency control endpoints"
+            "description": "🚨 Safety management, emergency controls, and alert systems (5 endpoints)"
         },
         {
             "name": "Configuration",
-            "description": "System configuration and parameter management"
+            "description": "⚙️ System configuration and parameter management (4 endpoints)"
         },
         {
             "name": "Monitoring",
-            "description": "System health and performance monitoring"
+            "description": "📈 System health, performance metrics, and monitoring (6 endpoints)"
         },
         {
             "name": "Speed Control",
-            "description": "Real-time speed control with safety integration"
+            "description": "⚡ Advanced speed control with safety integration (6 endpoints)"
         },
         {
             "name": "WebSocket",
-            "description": "Real-time communication endpoints"
+            "description": "🔌 Real-time communication and live updates"
         }
     ],
     lifespan=lifespan
