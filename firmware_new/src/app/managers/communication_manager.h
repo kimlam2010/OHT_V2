@@ -59,6 +59,18 @@ typedef enum {
     MODBUS_EXCEPTION_GATEWAY_TARGET_DEVICE_FAILED = 0x0B
 } modbus_exception_code_t;
 
+// WebSocket/HTTP API Configuration
+typedef struct {
+    uint16_t websocket_port;               // WebSocket server port
+    uint16_t http_port;                    // HTTP server port
+    uint32_t max_connections;              // Maximum connections
+    uint32_t heartbeat_interval_ms;        // Heartbeat interval
+    uint32_t connection_timeout_ms;        // Connection timeout
+    bool enable_ssl;                       // Enable SSL/TLS
+    char ssl_cert_path[256];               // SSL certificate path
+    char ssl_key_path[256];                // SSL private key path
+} comm_mgr_api_config_t;
+
 // Communication Manager Configuration
 typedef struct {
     uint32_t baud_rate;                    // RS485 baud rate
@@ -72,6 +84,7 @@ typedef struct {
     bool enable_crc_check;                 // Enable CRC checking
     bool enable_echo_suppression;          // Enable echo suppression
     uint32_t buffer_size;                  // Communication buffer size
+    comm_mgr_api_config_t api_config;      // WebSocket/HTTP API configuration
 } comm_mgr_config_t;
 
 // Communication Manager Statistics
@@ -329,6 +342,53 @@ hal_status_t comm_manager_reset(void);
  * @return HAL status
  */
 hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr);
+
+// WebSocket/HTTP API Functions
+/**
+ * @brief Initialize WebSocket/HTTP API server
+ * @param config API configuration
+ * @return HAL status
+ */
+hal_status_t comm_manager_init_api_server(const comm_mgr_api_config_t *config);
+
+/**
+ * @brief Start WebSocket/HTTP API server
+ * @return HAL status
+ */
+hal_status_t comm_manager_start_api_server(void);
+
+/**
+ * @brief Stop WebSocket/HTTP API server
+ * @return HAL status
+ */
+hal_status_t comm_manager_stop_api_server(void);
+
+/**
+ * @brief Send telemetry data via WebSocket
+ * @param data Telemetry data buffer
+ * @param length Data length
+ * @return HAL status
+ */
+hal_status_t comm_manager_send_telemetry(const uint8_t *data, size_t length);
+
+/**
+ * @brief Send status update via WebSocket
+ * @param status Status data buffer
+ * @param length Data length
+ * @return HAL status
+ */
+hal_status_t comm_manager_send_status(const uint8_t *status, size_t length);
+
+/**
+ * @brief Handle HTTP API request
+ * @param request HTTP request buffer
+ * @param request_length Request length
+ * @param response HTTP response buffer
+ * @param response_length Response length (in/out)
+ * @return HAL status
+ */
+hal_status_t comm_manager_handle_http_request(const uint8_t *request, size_t request_length,
+                                             uint8_t *response, size_t *response_length);
 
 
 #ifdef __cplusplus

@@ -14,6 +14,8 @@
 #include "hal_common.h"
 #include "system_state_machine.h"
 #include "module_manager.h"
+#include "safety_monitor.h"
+#include "control_loop.h"
 
 // Telemetry Manager instance
 static struct {
@@ -53,6 +55,7 @@ static const telemetry_config_t default_config = {
 static void initialize_telemetry_data(telemetry_data_t *data);
 static void update_timestamp(telemetry_data_t *data);
 static void collect_system_data(telemetry_data_t *data);
+static void collect_control_data(telemetry_data_t *data);
 static void collect_location_data(telemetry_data_t *data);
 static void collect_navigation_data(telemetry_data_t *data);
 static void collect_dock_data(telemetry_data_t *data);
@@ -157,6 +160,9 @@ hal_status_t telemetry_manager_update(void) {
     if (g_telemetry_manager.config.enable_system) {
         collect_system_data(&g_telemetry_manager.current_data);
     }
+
+    // Always collect control status for control.status publishing
+    collect_control_data(&g_telemetry_manager.current_data);
     
     if (g_telemetry_manager.config.enable_location) {
         collect_location_data(&g_telemetry_manager.current_data);
@@ -466,6 +472,18 @@ static void collect_system_data(telemetry_data_t *data) {
     data->center_connected = false;
 }
 
+static void collect_control_data(telemetry_data_t *data) {
+    control_status_t cs;
+    if (control_loop_get_status(&cs) == HAL_STATUS_OK) {
+        data->status.pos_mm = cs.current_position;
+        data->status.vel_mms = cs.current_velocity;
+        // Acceleration not tracked in control status; leave as previous or zero
+        // Targets
+        data->status.target.pos_mm = cs.target_position;
+        data->status.target.vel_mms = cs.target_velocity;
+    }
+}
+
 static void collect_location_data(telemetry_data_t *data) {
     // TODO: Get real location data from location system/HAL
     // For now, use zero values to indicate no real data available
@@ -523,15 +541,22 @@ static void collect_dock_data(telemetry_data_t *data) {
 }
 
 static void collect_safety_data(telemetry_data_t *data) {
-    // TODO: Get real safety data from safety manager when available
-    // For now, use default safe state
-    data->status.safety.estop = false;
-    data->status.safety.zone_blocked = false;
-    data->status.safety.interlock_active = false;
-    data->status.safety.location_safe = true;
-    data->status.safety.obstacle_detected = false;
-    data->status.safety.safety_zone_clear = true;
-    data->status.safety.emergency_stop = false;
+    // Populate from Safety Monitor
+    bool estop_active = false;
+    (void)safety_monitor_is_estop_active(&estop_active);
+    data->status.safety.estop = estop_active;
+    data->status.safety.emergency_stop = estop_active;
+
+    safety_monitor_status_t ss;
+    if (safety_monitor_get_status(&ss) == HAL_STATUS_OK) {
+        data->status.safety.zone_blocked = ss.zone_violation;
+        data->status.safety.interlock_active = ss.interlock_open;
+        // Derive location safety as inverse of zone violation for now
+        data->status.safety.location_safe = !ss.zone_violation;
+        // Obstacle detected if any zone violation or LiDAR min distance within safe range
+        data->status.safety.obstacle_detected = ss.zone_violation || ss.safety_zones.emergency_violated || ss.safety_zones.warning_violated;
+        data->status.safety.safety_zone_clear = !ss.zone_violation;
+    }
 }
 
 static void broadcast_event(telemetry_event_t event, const telemetry_data_t *data) {

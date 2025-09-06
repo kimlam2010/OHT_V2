@@ -311,7 +311,7 @@ hal_status_t hal_network_self_test(void);
  */
 hal_status_t hal_network_validate_hardware(void);
 
-// Failover Functions
+// Failover Functions - Simplified for OHT-50 Master Module
 
 /**
  * @brief Enable network failover
