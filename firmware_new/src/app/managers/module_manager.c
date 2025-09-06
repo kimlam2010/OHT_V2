@@ -477,11 +477,11 @@ static hal_status_t perform_module_discovery(void) {
     hal_status_t overall_status = HAL_STATUS_OK;
     int discovered_count = 0;
     
-    // Scan Modbus addresses 0x01-0x20 per spec
+    // Scan Modbus addresses 0x01-0x08 per spec
     uint64_t start_scan = hal_get_timestamp_us();
     uint32_t addresses_scanned = 0;
-    uint32_t per_addr_ms[0x20] = {0};
-    for (uint8_t address = 0x01; address <= 0x20; address++) {
+    uint32_t per_addr_ms[0x08] = {0};
+    for (uint8_t address = 0x01; address <= 0x08; address++) {
         uint64_t t0 = hal_get_timestamp_us();
         hal_status_t status = discover_module_at_address(address);
         if (status == HAL_STATUS_OK) {
@@ -504,9 +504,9 @@ static hal_status_t perform_module_discovery(void) {
     g_module_manager.statistics.discovery_count++;
     // Compute p95/p99 from per-address durations (non-zero entries)
     // Simple selection approach: copy to temp and sort
-    uint32_t tmp[0x20];
+    uint32_t tmp[0x08];
     uint32_t n = 0;
-    for (uint32_t i = 0; i < 0x20; i++) {
+    for (uint32_t i = 0; i < 0x08; i++) {
         if (per_addr_ms[i] > 0) tmp[n++] = per_addr_ms[i];
     }
     for (uint32_t i = 0; i + 1 < n; i++) {
@@ -667,7 +667,7 @@ static int find_module_index(uint8_t module_id) {
 
 
 static hal_status_t discover_module_at_address(uint8_t address) {
-	if (address < 0x01 || address > 0x20) {
+	if (address < 0x01 || address > 0x08) {
 		return HAL_STATUS_INVALID_PARAMETER;
 	}
 	uint16_t device_id, module_type;
@@ -790,7 +790,7 @@ static hal_status_t read_module_capabilities(uint8_t address, module_type_t type
 	if (capabilities == NULL) {
 		return HAL_STATUS_INVALID_PARAMETER;
 	}
-	if (address < 0x01 || address > 0x20) {
+	if (address < 0x01 || address > 0x08) {
 		return HAL_STATUS_INVALID_PARAMETER;
 	}
     *capabilities = 0; // Default to no capabilities

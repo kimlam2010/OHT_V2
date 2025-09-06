@@ -27,7 +27,7 @@
 #define MODULE_ADDR_SAFETY                 0x03U  // Safety Module (BẮT BUỘC)
 #define MODULE_ADDR_TRAVEL_MOTOR           0x04U  // Travel Motor Module (BẮT BUỘC)
 #define MODULE_ADDR_DOCK                   0x05U  // Dock & Location Module (BẮT BUỘC)
-#define MODULE_ADDR_MAX                    0x06U
+#define MODULE_ADDR_MAX                    0x08U
 
 // CTO Requirements - 4 Mandatory Slave Modules (excluding Master Control)
 #define MANDATORY_MODULES_COUNT            4U     // Number of mandatory slave modules required

@@ -1,10 +1,20 @@
 # Plan Tiến độ API Integration Implementation - OHT-50 Master Module
 
-**Phiên bản:** 1.0.0  
+**Phiên bản:** 2.0.0  
 **Ngày cập nhật:** 2025-01-28  
 **Team:** FW  
-**Mức độ ưu tiên:** CAO  
-**Trạng thái:** PLANNING
+**Mức độ ưu tiên:** CRITICAL  
+**Trạng thái:** INTEGRATED WITH PROJECT SLC PLANNING
+
+## 🔗 **INTEGRATION WITH PROJECT SLC PLANNING**
+
+**Related Document:** `/docs/03-ARCHITECTURE/architecture/SLC_PLANNING_OHT-50.md`
+
+### **Project SLC Integration:**
+- **Project Phase 3:** Implementation (In Progress - Module Data API)
+- **Firmware Sprint 1-3:** Aligned với Project Sprint 1-3
+- **Timeline:** 6 weeks firmware implementation
+- **Scope:** Module Data API implementation
 
 ---
 
@@ -24,11 +34,13 @@ Implement lại hoàn toàn hệ thống API cho OHT-50 Master Module theo đún
 ---
 
 ## 🎯 **Phase 1: Foundation & Core API Manager (Week 1-2)**
+**ALIGNED WITH PROJECT SPRINT 1: Firmware HTTP Server**
 
 ### **Task 1.1: API Manager Core Structure**
 **Thời gian:** 3 ngày  
 **Responsible:** FW Team  
-**Dependencies:** None
+**Dependencies:** None  
+**Project Sprint:** Sprint 1 - Firmware HTTP Server
 
 **Deliverables:**
 - `src/app/api/api_manager.h` - Core API Manager interface
@@ -82,11 +94,13 @@ Implement lại hoàn toàn hệ thống API cho OHT-50 Master Module theo đún
 ---
 
 ## 🎯 **Phase 2: Core System Integration (Week 3-4)**
+**ALIGNED WITH PROJECT SPRINT 2: WebSocket & Real-time**
 
 ### **Task 2.1: System Controller Integration**
 **Thời gian:** 3 ngày  
 **Responsible:** FW Team  
-**Dependencies:** Phase 1 complete
+**Dependencies:** Phase 1 complete  
+**Project Sprint:** Sprint 2 - WebSocket & Real-time
 
 **Deliverables:**
 - Integration với `system_controller.h`
@@ -137,11 +151,13 @@ Implement lại hoàn toàn hệ thống API cho OHT-50 Master Module theo đún
 ---
 
 ## 🎯 **Phase 3: Module-Specific Endpoints (Week 5-6)**
+**ALIGNED WITH PROJECT SPRINT 3: Security & Performance**
 
 ### **Task 3.1: Power Module Endpoints**
 **Thời gian:** 4 ngày  
 **Responsible:** FW Team  
-**Dependencies:** Phase 2 complete
+**Dependencies:** Phase 2 complete  
+**Project Sprint:** Sprint 3 - Security & Performance
 
 **Deliverables:**
 - Integration với `power_module_handler.h`
@@ -387,21 +403,34 @@ Implement lại hoàn toàn hệ thống API cho OHT-50 Master Module theo đún
 
 ---
 
-## 📅 **Timeline Summary**
+## 📅 **Timeline Summary - INTEGRATED WITH PROJECT SLC**
 
-| Phase | Duration | Start Week | End Week | Status |
-|-------|----------|------------|----------|--------|
-| Phase 1 | 2 weeks | Week 1 | Week 2 | 🔄 PLANNING |
-| Phase 2 | 2 weeks | Week 3 | Week 4 | ⏳ PENDING |
-| Phase 3 | 2 weeks | Week 5 | Week 6 | ⏳ PENDING |
-| Phase 4 | 2 weeks | Week 7 | Week 8 | ⏳ PENDING |
-| Phase 5 | 2 weeks | Week 9 | Week 10 | ⏳ PENDING |
+| Phase | Duration | Start Week | End Week | Project Sprint | Status |
+|-------|----------|------------|----------|----------------|--------|
+| Phase 1 | 2 weeks | Week 1 | Week 2 | Sprint 1 - Firmware HTTP Server | 🔄 PLANNING |
+| Phase 2 | 2 weeks | Week 3 | Week 4 | Sprint 2 - WebSocket & Real-time | ⏳ PENDING |
+| Phase 3 | 2 weeks | Week 5 | Week 6 | Sprint 3 - Security & Performance | ⏳ PENDING |
+| Phase 4 | 2 weeks | Week 7 | Week 8 | Sprint 4 - Backend Integration | ⏳ PENDING |
+| Phase 5 | 2 weeks | Week 9 | Week 10 | Sprint 5 - Frontend Integration | ⏳ PENDING |
 
 **Total Duration:** 10 weeks  
-**Target Completion:** End of Week 10
+**Target Completion:** End of Week 10  
+**Project Integration:** Aligned với Project SLC Planning Sprint 1-5
 
 ---
 
 **🚨 Lưu ý:** Plan này phải được thực hiện tuần tự, không được bỏ qua phase nào. Mỗi phase phải hoàn thành 100% trước khi chuyển sang phase tiếp theo.
 
-**⏸️ PAUSE NOTICE:** API Web Interface development đã được pause vì chưa cần gấp. Focus vào core API implementation trước. Web interface sẽ được resume sau khi core API hoàn thành.
+**🔗 PROJECT INTEGRATION:** Firmware implementation đã được integrate với Project SLC Planning. Timeline và scope đã được align để ensure coordinated development across all teams.
+
+**📋 MODULE DATA API FOCUS:** Implementation focus vào Module Data API theo CTO requirements và Project SLC Planning Sprint 1-3.
+
+---
+
+**Changelog v2.0.0:**
+- ✅ Integrated với Project SLC Planning
+- ✅ Aligned timeline với Project Sprint 1-5
+- ✅ Added Project Sprint mapping cho each phase
+- ✅ Updated status và priority
+- ✅ Added Module Data API focus
+- ✅ Enhanced integration documentation

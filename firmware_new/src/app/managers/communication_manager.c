@@ -288,10 +288,8 @@ hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr) {
                 module_type_t t = probe_module_type(addr);
                 registry_mark_online(addr, t, "");
                 
-                // Call module discovery for full registration and auto-detect
-                printf("[SCAN] Calling module discovery for address 0x%02X\n", addr);
-                hal_status_t discovery_status = module_manager_discover_modules();
-                printf("[SCAN] Module discovery result: %d\n", discovery_status);
+                // Mark module as discovered (no need to call full discovery here)
+                printf("[SCAN] Module 0x%02X discovered and marked online\n", addr);
                 
                 found = true;
                 miss_count[addr - start_addr] = 0; // Reset miss count

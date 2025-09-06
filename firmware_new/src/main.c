@@ -21,6 +21,7 @@
 #include "safety_monitor.h"
 #include "communication_manager.h"
 #include "module_manager.h"
+#include "module_polling_manager.h"
 #include "power_module_handler.h"
 #include "travel_motor_module_handler.h"
 #include "constants.h"
@@ -181,6 +182,15 @@ int main(int argc, char **argv) {
             printf("[MAIN] WARNING: module_manager_init failed (status=%d), continuing...\n", module_status);
         } else {
             printf("[MAIN] Module manager initialized successfully\n");
+        }
+
+        // Initialize Module Polling Manager
+        printf("[MAIN] Initializing module polling manager...\n");
+        hal_status_t polling_status = module_polling_manager_init();
+        if (polling_status != HAL_STATUS_OK) {
+            printf("[MAIN] WARNING: module_polling_manager_init failed (status=%d), continuing...\n", polling_status);
+        } else {
+            printf("[MAIN] Module polling manager initialized successfully\n");
         }
 
         // LiDAR subsystem initialization
@@ -440,11 +450,14 @@ int main(int argc, char **argv) {
             (void)safety_manager_update();
         }
 
-        // System Controller update (every 100ms)
+        // System Controller update (every 100ms) - only if initialized
         if (!g_dry_run) {
             hal_status_t sys_ctrl_status = system_controller_update();
             if (sys_ctrl_status != HAL_STATUS_OK && g_debug_mode) {
-                printf("[OHT-50][DEBUG] system_controller_update failed: %d\n", sys_ctrl_status);
+                // Only log if it's not a "not initialized" error to reduce spam
+                if (sys_ctrl_status != HAL_STATUS_NOT_INITIALIZED) {
+                    printf("[OHT-50][DEBUG] system_controller_update failed: %d\n", sys_ctrl_status);
+                }
             }
         }
         
@@ -527,54 +540,27 @@ int main(int argc, char **argv) {
                     printf("[OHT-50][DEBUG] Initial module discovery failed: %d\n", discovery_status);
                 } else {
                     printf("[OHT-50] Initial module discovery completed\n");
+                    
+                    // Add discovered modules to polling manager
+                    printf("[OHT-50] Adding discovered modules to polling manager...\n");
+                    module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
+                    module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
+                    module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
+                    module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
+                    module_polling_manager_add_module(0x06, MODULE_TYPE_UNKNOWN);      // Unknown Module
+                    module_polling_manager_add_module(0x07, MODULE_TYPE_UNKNOWN);      // Unknown Module
+                    printf("[OHT-50] All discovered modules added to polling manager\n");
                 }
                 initial_discovery_done = true; // Only do discovery once
+                last_discovery_poll_ms = t; // Update timestamp to prevent re-execution
             }
         }
 
-        // Power Module polling (every 100ms) - with fallback for offline modules
+        // Dynamic Module Polling (replaces individual module polling)
         if (!g_dry_run) {
-            if ((t - last_power_poll_ms) >= 100) {
-                if (power_handler_initialized) {
-                    hal_status_t power_status = power_module_handler_poll_data();
-                    if (power_status != HAL_STATUS_OK && g_debug_mode) {
-                        printf("[OHT-50][DEBUG] power_module_handler_poll_data failed: %d\n", power_status);
-                    }
-                } else {
-                    // Fallback polling for power module even when not initialized
-                    if (g_debug_mode) {
-                        printf("[OHT-50][DEBUG] Power module fallback polling (module offline)\n");
-                    }
-                    // Try to read power module directly via RS485
-                    uint16_t power_data[4];
-                    if (comm_manager_modbus_read_holding_registers(MODULE_ADDR_POWER, 0x00F0, 1, power_data) == HAL_STATUS_OK) {
-                        printf("[POWER] Fallback poll: Device ID=0x%04X\n", power_data[0]);
-                    }
-                }
-                last_power_poll_ms = t;
-            }
-        }
-
-        // Motor Module polling (every 50ms) - with fallback for offline modules
-        if (!g_dry_run) {
-            if ((t - last_motor_poll_ms) >= 50) {
-                if (motor_handler_initialized) {
-                    hal_status_t motor_status = motor_module_handler_poll_data(&motor_handler);
-                    if (motor_status != HAL_STATUS_OK && g_debug_mode) {
-                        printf("[OHT-50][DEBUG] motor_module_handler_poll_data failed: %d\n", motor_status);
-                    }
-                } else {
-                    // Fallback polling for motor module even when not initialized
-                    if (g_debug_mode) {
-                        printf("[OHT-50][DEBUG] Motor module fallback polling (module offline)\n");
-                    }
-                    // Try to read motor module directly via RS485
-                    uint16_t motor_data[4];
-                    if (comm_manager_modbus_read_holding_registers(MODULE_ADDR_TRAVEL_MOTOR, 0x0000, 1, motor_data) == HAL_STATUS_OK) {
-                        printf("[MOTOR] Fallback poll: Position=%d\n", (int16_t)motor_data[0]);
-                    }
-                }
-                last_motor_poll_ms = t;
+            hal_status_t polling_status = module_polling_manager_update();
+            if (polling_status != HAL_STATUS_OK && g_debug_mode) {
+                printf("[OHT-50][DEBUG] module_polling_manager_update failed: %d\n", polling_status);
             }
         }
 

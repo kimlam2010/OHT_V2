@@ -67,28 +67,62 @@ hal_status_t motor_module_init(motor_module_handler_t *handler, const motor_modu
         handler->response_timeout_ms = default_config.response_timeout_ms;
     }
     
-    // Initialize motor data
-    handler->data.position_target = 0;
-    handler->data.velocity_target = (config != NULL) ? config->default_velocity : default_config.default_velocity;
-    handler->data.acceleration_limit = (config != NULL) ? config->default_acceleration : default_config.default_acceleration;
-    handler->data.jerk_limit = (config != NULL) ? config->default_jerk : default_config.default_jerk;
+    // Initialize system information
+    handler->data.device_id = 0;
+    handler->data.firmware_version = 0;
+    handler->data.hardware_version = 0;
+    handler->data.module_type = 0;
+    handler->data.serial_number = 0;
+    handler->data.build_number = 0;
     
-    // Set position limits
+    // Initialize motor control values
+    handler->data.enable_status = 0;
+    handler->data.operation_mode = 0;
+    handler->data.speed_target = (config != NULL) ? config->default_velocity : default_config.default_velocity;
+    handler->data.speed_actual = 0;
+    handler->data.position_target = 0;
+    handler->data.position_actual = 0;
+    handler->data.direction = 0;
+    handler->data.acceleration = (config != NULL) ? config->default_acceleration : default_config.default_acceleration;
+    handler->data.deceleration = 0;
+    handler->data.jerk = (config != NULL) ? config->default_jerk : default_config.default_jerk;
+    handler->data.torque_limit = 0;
+    
+    // Initialize motor status values
+    handler->data.temperature = 0;
+    handler->data.voltage = 0;
+    handler->data.current = 0;
+    handler->data.fault_status = 0;
+    handler->data.operation_status = 0;
+    
+    // Initialize status flags
+    handler->data.running_status = 0;
+    handler->data.ready_status = 0;
+    handler->data.warning_status = 0;
+    handler->data.emergency_stop = 0;
+    handler->data.home_status = 0;
+    handler->data.limit_switch = 0;
+    handler->data.encoder_status = 0;
+    handler->data.communication_status = 0;
+    handler->data.power_status = 0;
+    handler->data.temperature_status = 0;
+    handler->data.voltage_status = 0;
+    handler->data.current_status = 0;
+    handler->data.speed_status = 0;
+    handler->data.position_status = 0;
+    
+    // Initialize compatibility fields
+    handler->data.velocity_target = handler->data.speed_target;
+    handler->data.acceleration_limit = handler->data.acceleration;
+    handler->data.current_position = handler->data.position_actual;
+    handler->data.current_velocity = handler->data.speed_actual;
+    handler->data.current_acceleration = 0;
+    handler->data.target_reached = 0;
+    handler->data.motion_complete = 1;
     handler->data.position_limit_min = 0;
     handler->data.position_limit_max = MOTOR_MODULE_MAX_POSITION;
     handler->data.velocity_limit_max = MOTOR_MODULE_MAX_VELOCITY;
     handler->data.acceleration_limit_max = MOTOR_MODULE_MAX_ACCELERATION;
-    
-    // Initialize current values
-    handler->data.current_position = 0;
-    handler->data.current_velocity = 0;
-    handler->data.current_acceleration = 0;
-    
-    // Initialize status
-    handler->data.enable_status = 0;
-    handler->data.fault_status = 0;
-    handler->data.target_reached = 0;
-    handler->data.motion_complete = 1;
     
     // Initialize fault information
     handler->data.fault_code = MOTOR_FAULT_NONE;
@@ -1075,8 +1109,8 @@ static hal_status_t motor_module_poll_data(motor_module_handler_t *handler)
     
     uint64_t current_time = hal_get_timestamp_us();
     
-    // Check if enough time has passed since last poll (50ms interval)
-    if ((current_time - handler->data.last_update_time) < 50000) {
+    // Check if enough time has passed since last poll (100ms interval)
+    if ((current_time - handler->data.last_update_time) < 100000) {
         return HAL_STATUS_OK;
     }
     
@@ -1084,67 +1118,90 @@ static hal_status_t motor_module_poll_data(motor_module_handler_t *handler)
     
     hal_status_t status = HAL_STATUS_OK;
     
-    // Poll position data
-    uint16_t position;
-    status = motor_module_read_register(handler, MOTOR_CURRENT_POSITION_REG, &position);
+    // Poll system registers (0x00F0-0x00F7)
+    uint16_t system_data[8];
+    status = motor_module_read_registers(handler, MOTOR_DEVICE_ID_REG, 8, system_data);
     if (status == HAL_STATUS_OK) {
-        handler->data.current_position = (int32_t)position;
+        handler->data.device_id = system_data[0];
+        handler->data.firmware_version = system_data[1];
+        handler->data.hardware_version = system_data[2];
+        handler->data.module_type = system_data[5];
+        handler->data.serial_number = system_data[6];
+        handler->data.build_number = system_data[7];
+        printf("[MOTOR-POLL] System: DeviceID=0x%04X, FW=0x%04X, HW=0x%04X, Type=0x%04X\n",
+               handler->data.device_id, handler->data.firmware_version, 
+               handler->data.hardware_version, handler->data.module_type);
     } else {
-        printf("[MOTOR-POLL] Position read failed: %d\n", status);
+        printf("[MOTOR-POLL] System registers read failed: %d\n", status);
     }
     
-    // Poll velocity data
-    uint16_t velocity;
-    status = motor_module_read_register(handler, MOTOR_CURRENT_VELOCITY_REG, &velocity);
+    // Poll motor control registers (0x0000-0x000F)
+    uint16_t control_data[16];
+    status = motor_module_read_registers(handler, MOTOR_ENABLE_REG, 16, control_data);
     if (status == HAL_STATUS_OK) {
-        handler->data.current_velocity = (int32_t)velocity;
+        handler->data.enable_status = control_data[0];
+        handler->data.operation_mode = control_data[1];
+        handler->data.speed_target = control_data[2];
+        handler->data.speed_actual = control_data[3];
+        handler->data.position_target = control_data[4];
+        handler->data.position_actual = control_data[5];
+        handler->data.direction = control_data[6];
+        handler->data.acceleration = control_data[7];
+        handler->data.deceleration = control_data[8];
+        handler->data.jerk = control_data[9];
+        handler->data.torque_limit = control_data[10];
+        handler->data.temperature = control_data[11];
+        handler->data.voltage = control_data[12];
+        handler->data.current = control_data[13];
+        handler->data.fault_status = control_data[14];
+        handler->data.operation_status = control_data[15];
+        
+        // Update compatibility fields
+        handler->data.velocity_target = handler->data.speed_target;
+        handler->data.acceleration_limit = handler->data.acceleration;
+        handler->data.current_position = handler->data.position_actual;
+        handler->data.current_velocity = handler->data.speed_actual;
+        
+        printf("[MOTOR-POLL] Control: Enable=%d, Mode=%d, Speed=%d/%d, Pos=%d/%d, Temp=%d°C, V=%d.%dV, I=%d.%dA\n",
+               handler->data.enable_status, handler->data.operation_mode,
+               handler->data.speed_target, handler->data.speed_actual,
+               handler->data.position_target, handler->data.position_actual,
+               handler->data.temperature, handler->data.voltage/10, handler->data.voltage%10,
+               handler->data.current/10, handler->data.current%10);
     } else {
-        printf("[MOTOR-POLL] Velocity read failed: %d\n", status);
+        printf("[MOTOR-POLL] Control registers read failed: %d\n", status);
     }
     
-    // Poll acceleration data
-    uint16_t acceleration;
-    status = motor_module_read_register(handler, MOTOR_CURRENT_ACCELERATION_REG, &acceleration);
+    // Poll motor status registers (0x0010-0x001F)
+    uint16_t status_data[16];
+    status = motor_module_read_registers(handler, MOTOR_RUNNING_STATUS_REG, 16, status_data);
     if (status == HAL_STATUS_OK) {
-        handler->data.current_acceleration = (int32_t)acceleration;
+        handler->data.running_status = status_data[0];
+        handler->data.ready_status = status_data[1];
+        handler->data.warning_status = status_data[3];
+        handler->data.emergency_stop = status_data[4];
+        handler->data.home_status = status_data[5];
+        handler->data.limit_switch = status_data[6];
+        handler->data.encoder_status = status_data[7];
+        handler->data.communication_status = status_data[8];
+        handler->data.power_status = status_data[9];
+        handler->data.temperature_status = status_data[10];
+        handler->data.voltage_status = status_data[11];
+        handler->data.current_status = status_data[12];
+        handler->data.speed_status = status_data[13];
+        handler->data.position_status = status_data[14];
+        handler->data.operation_mode = status_data[15];
+        
+        // Update compatibility fields
+        handler->data.target_reached = handler->data.position_status;
+        handler->data.motion_complete = handler->data.running_status;
+        
+        printf("[MOTOR-POLL] Status: Running=%d, Ready=%d, Fault=%d, E-Stop=%d, Home=%d, Limit=%d\n",
+               handler->data.running_status, handler->data.ready_status,
+               handler->data.fault_status, handler->data.emergency_stop,
+               handler->data.home_status, handler->data.limit_switch);
     } else {
-        printf("[MOTOR-POLL] Acceleration read failed: %d\n", status);
-    }
-    
-    // Poll status data (using fault status as enable status for now)
-    uint16_t enable_status;
-    status = motor_module_read_register(handler, MOTOR_FAULT_STATUS_REG, &enable_status);
-    if (status == HAL_STATUS_OK) {
-        handler->data.enable_status = enable_status;
-    } else {
-        printf("[MOTOR-POLL] Enable status read failed: %d\n", status);
-    }
-    
-    // Poll fault status
-    uint16_t fault_status;
-    status = motor_module_read_register(handler, MOTOR_FAULT_STATUS_REG, &fault_status);
-    if (status == HAL_STATUS_OK) {
-        handler->data.fault_status = fault_status;
-    } else {
-        printf("[MOTOR-POLL] Fault status read failed: %d\n", status);
-    }
-    
-    // Poll target reached status
-    uint16_t target_reached;
-    status = motor_module_read_register(handler, MOTOR_TARGET_REACHED_REG, &target_reached);
-    if (status == HAL_STATUS_OK) {
-        handler->data.target_reached = target_reached;
-    } else {
-        printf("[MOTOR-POLL] Target reached read failed: %d\n", status);
-    }
-    
-    // Poll motion complete status
-    uint16_t motion_complete;
-    status = motor_module_read_register(handler, MOTOR_MOTION_COMPLETE_REG, &motion_complete);
-    if (status == HAL_STATUS_OK) {
-        handler->data.motion_complete = motion_complete;
-    } else {
-        printf("[MOTOR-POLL] Motion complete read failed: %d\n", status);
+        printf("[MOTOR-POLL] Status registers read failed: %d\n", status);
     }
     
     // Update timestamp
@@ -1156,11 +1213,7 @@ static hal_status_t motor_module_poll_data(motor_module_handler_t *handler)
     // Validate limits
     validate_motor_limits(handler);
     
-    printf("[MOTOR-POLL] Data poll completed. Pos: %d, Vel: %d, Status: 0x%04X, Fault: 0x%04X\n",
-           handler->data.current_position,
-           handler->data.current_velocity,
-           handler->data.enable_status,
-           handler->data.fault_status);
+    printf("[MOTOR-POLL] Data poll completed successfully\n");
     
     return HAL_STATUS_OK;
 }
