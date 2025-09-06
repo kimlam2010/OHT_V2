@@ -4,7 +4,7 @@ Database configuration and connection management
 
 from typing import AsyncGenerator, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import declarative_base
 from contextlib import asynccontextmanager
 
@@ -14,12 +14,7 @@ from app.config import settings
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
-    poolclass=QueuePool,
-    pool_size=10,  # Reduced from 20 for better performance
-    max_overflow=20,  # Reduced from 100 for better memory management
-    pool_pre_ping=True,
-    pool_recycle=3600,  # Recycle connections every hour
-    pool_timeout=30,  # Timeout for getting connection from pool
+    poolclass=NullPool,  # Use NullPool for async SQLite
 )
 
 # Create async session factory

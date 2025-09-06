@@ -42,6 +42,52 @@ class RobotControlService:
         # Remove old method reference
         self._update_force_mock = lambda: None
         
+    async def get_current_position(self) -> Dict[str, Any]:
+        """Get current robot position"""
+        try:
+            # Get position from firmware
+            position_data = await self._firmware_service.get_robot_position()
+            return {
+                "x": position_data.get("x", 0.0),
+                "y": position_data.get("y", 0.0),
+                "z": position_data.get("z", 0.0),
+                "orientation": position_data.get("orientation", 0.0),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        except Exception as e:
+            logger.error(f"Failed to get robot position: {e}")
+            return {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "orientation": 0.0,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "error": str(e)
+            }
+
+    async def get_configuration(self) -> Dict[str, Any]:
+        """Get robot configuration"""
+        try:
+            # Get configuration from firmware
+            config_data = await self._firmware_service.get_robot_configuration()
+            return {
+                "max_speed": config_data.get("max_speed", 2.0),
+                "max_acceleration": config_data.get("max_acceleration", 1.0),
+                "safety_limits": config_data.get("safety_limits", {}),
+                "operating_mode": config_data.get("operating_mode", "normal"),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        except Exception as e:
+            logger.error(f"Failed to get robot configuration: {e}")
+            return {
+                "max_speed": 2.0,
+                "max_acceleration": 1.0,
+                "safety_limits": {},
+                "operating_mode": "normal",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "error": str(e)
+            }
+
     async def get_robot_status(self) -> Dict[str, Any]:
         """Get robot status from database and Firmware"""
         # No need to update force_mock - it's set at init time

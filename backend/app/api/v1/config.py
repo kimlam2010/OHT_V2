@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from app.core.security import require_permission
 from app.models.user import User
 
-router = APIRouter(prefix="/config", tags=["configuration"])
+router = APIRouter(prefix="/api/v1/config", tags=["configuration"])
 
 
 class SystemConfig(BaseModel):
@@ -23,6 +23,20 @@ class SystemConfig(BaseModel):
 class ConfigUpdate(BaseModel):
     key: str
     value: Any
+
+
+@router.get("/current", response_model=SystemConfig)
+async def get_current_config(
+    current_user: User = Depends(require_permission("config", "read"))
+):
+    """Get current system configuration"""
+    try:
+        return SystemConfig()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get current config: {str(e)}"
+        )
 
 
 @router.get("/system", response_model=SystemConfig)

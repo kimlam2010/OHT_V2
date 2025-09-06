@@ -13,11 +13,12 @@ from app.schemas.user import UserResponse as User
 from app.services.telemetry import telemetry_service
 from app.services.telemetry_data_collector import telemetry_data_collector, DataSource
 from app.services.lidar_data_processor import lidar_data_processor
-from app.services.sensor_data_processor import sensor_data_processor, SensorType
+from app.services.sensor_data_processor import sensor_processor
+from app.services.firmware_integration_service import SensorType
 
 router = APIRouter(
-    prefix="/telemetry", 
-    tags=["Telemetry System"],
+    prefix="/api/v1/telemetry", 
+    tags=["telemetry"],
     responses={
         404: {"description": "Not found"},
         500: {"description": "Internal server error"},

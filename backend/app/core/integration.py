@@ -28,6 +28,52 @@ class FirmwareIntegrationService:
         
         logger.info(f"Firmware Integration Service initialized for: {self.firmware_url}")
     
+    async def get_robot_position(self) -> Dict[str, Any]:
+        """Get robot position from Firmware via HTTP API"""
+        try:
+            response = await self.http_client.get("/api/v1/robot/position")
+            
+            if response.status_code == 200:
+                data = response.json()
+                logger.debug(f"Firmware position response: {data}")
+                return data
+            else:
+                logger.error(f"Firmware position request failed: HTTP {response.status_code}")
+                raise FirmwareCommunicationException(f"Failed to get robot position: {response.status_code}")
+                
+        except httpx.TimeoutException:
+            logger.error("Firmware communication timeout")
+            raise FirmwareCommunicationException("Firmware communication timeout")
+        except httpx.ConnectError:
+            logger.error("Firmware connection failed")
+            raise FirmwareCommunicationException("Firmware connection failed")
+        except Exception as e:
+            logger.error(f"Firmware position request failed: {e}")
+            raise FirmwareCommunicationException(f"Robot position request failed: {e}")
+
+    async def get_robot_configuration(self) -> Dict[str, Any]:
+        """Get robot configuration from Firmware via HTTP API"""
+        try:
+            response = await self.http_client.get("/api/v1/robot/configuration")
+            
+            if response.status_code == 200:
+                data = response.json()
+                logger.debug(f"Firmware configuration response: {data}")
+                return data
+            else:
+                logger.error(f"Firmware configuration request failed: HTTP {response.status_code}")
+                raise FirmwareCommunicationException(f"Failed to get robot configuration: {response.status_code}")
+                
+        except httpx.TimeoutException:
+            logger.error("Firmware communication timeout")
+            raise FirmwareCommunicationException("Firmware communication timeout")
+        except httpx.ConnectError:
+            logger.error("Firmware connection failed")
+            raise FirmwareCommunicationException("Firmware connection failed")
+        except Exception as e:
+            logger.error(f"Firmware configuration request failed: {e}")
+            raise FirmwareCommunicationException(f"Robot configuration request failed: {e}")
+
     async def get_robot_status(self) -> Dict[str, Any]:
         """Get robot status from Firmware via HTTP API"""
         try:

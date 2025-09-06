@@ -51,6 +51,7 @@ class SpeedController:
         self.limits = limits or SpeedLimits()
         self.current_speed = 0.0
         self.target_speed = 0.0
+        self.current_acceleration = 0.0
         self.current_mode = SpeedMode.MANUAL
         self.last_update = datetime.now(timezone.utc)
         self.safety_active = False
@@ -335,6 +336,27 @@ class SpeedController:
             "max_response_time_ms": max(self.response_times),
             "response_time_target_ms": 5.0,
             "target_met": all(rt < 5.0 for rt in self.response_times)
+        }
+
+    def get_current_speed(self) -> Dict[str, Any]:
+        """Get current speed settings"""
+        return {
+            "current_speed": self.current_speed,
+            "target_speed": self.target_speed,
+            "mode": self.current_mode.value,
+            "acceleration": self.current_acceleration,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+    def get_speed_limits(self) -> Dict[str, Any]:
+        """Get speed limits configuration"""
+        return {
+            "max_speed": self.limits.max_speed,
+            "max_acceleration": self.limits.max_acceleration,
+            "max_deceleration": self.limits.max_deceleration,
+            "safety_speed": self.limits.safety_speed,
+            "emergency_speed": self.limits.emergency_speed,
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 
