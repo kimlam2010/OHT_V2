@@ -32,7 +32,7 @@ target_link_libraries(oht50_main
     hal_gpio
     hal_communication
     hal_safety
-    hal_storage
+    # hal_storage - REMOVED (config persistence simplified)
     hal_peripherals
     app_core
     app_managers

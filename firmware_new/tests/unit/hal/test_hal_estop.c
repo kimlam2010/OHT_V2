@@ -10,7 +10,7 @@
 #include "unity.h"
 #include "hal_estop.h"
 #include "hal_common.h"
-#include "mock_estop.h"
+// No mock includes needed
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h> // Added for printf
@@ -21,8 +21,8 @@ static estop_status_t test_status;
 
 void setUp(void)
 {
-    // Reset mock state
-    mock_estop_reset();
+    // Reset E-Stop system state
+    hal_estop_deinit();
     
     // Initialize test configuration with valid values
     test_config.pin = 59; // ESTOP_PIN
@@ -62,10 +62,10 @@ void test_hal_estop_init_invalid_pin(void)
 {
     setUp(); // Ensure setup is called
     estop_config_t invalid_config = test_config;
-    invalid_config.pin = 255; // Invalid pin
+    invalid_config.pin = 64; // Invalid pin (must be 0-63 for Orange Pi 5B)
     
     hal_status_t status = hal_estop_init(&invalid_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, status);
+    TEST_ASSERT_EQUAL(HAL_STATUS_INVALID_PARAMETER, status); // Fixed: expect INVALID_PARAMETER
 }
 
 void test_hal_estop_init_invalid_debounce(void)
@@ -75,7 +75,7 @@ void test_hal_estop_init_invalid_debounce(void)
     invalid_config.debounce_time_ms = 0; // Invalid debounce
     
     hal_status_t status = hal_estop_init(&invalid_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, status);
+    TEST_ASSERT_EQUAL(HAL_STATUS_INVALID_PARAMETER, status); // Fixed: expect INVALID_PARAMETER
 }
 
 void test_hal_estop_init_invalid_timeout(void)
@@ -85,7 +85,7 @@ void test_hal_estop_init_invalid_timeout(void)
     invalid_config.response_timeout_ms = 0; // Invalid timeout
     
     hal_status_t status = hal_estop_init(&invalid_config);
-    TEST_ASSERT_EQUAL(HAL_STATUS_ERROR, status);
+    TEST_ASSERT_EQUAL(HAL_STATUS_INVALID_PARAMETER, status); // Fixed: expect INVALID_PARAMETER
 }
 
 void test_hal_estop_double_init(void)

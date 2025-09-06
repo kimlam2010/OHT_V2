@@ -446,18 +446,19 @@ hal_status_t hal_rs485_health_check(void)
     return HAL_STATUS_OK;
 }
 
-// Modbus functions (stubs for now)
-hal_status_t hal_modbus_init(const modbus_config_t *config __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_modbus_deinit(void) { return HAL_STATUS_OK; }
-hal_status_t hal_modbus_read_holding_registers(uint8_t slave_id __attribute__((unused)), uint16_t start_addr __attribute__((unused)), uint16_t quantity __attribute__((unused)), uint16_t *registers __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_modbus_write_single_register(uint8_t slave_id __attribute__((unused)), uint16_t address __attribute__((unused)), uint16_t value __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_modbus_write_multiple_registers(uint8_t slave_id __attribute__((unused)), uint16_t start_addr __attribute__((unused)), uint16_t quantity __attribute__((unused)), const uint16_t *registers __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_modbus_read_coils(uint8_t slave_id __attribute__((unused)), uint16_t start_addr __attribute__((unused)), uint16_t quantity __attribute__((unused)), bool *coils __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_modbus_write_single_coil(uint8_t slave_id __attribute__((unused)), uint16_t address __attribute__((unused)), bool value __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_modbus_send_frame(const modbus_frame_t *frame __attribute__((unused))) { return HAL_STATUS_OK; }
-hal_status_t hal_modbus_receive_frame(modbus_frame_t *frame __attribute__((unused))) { return HAL_STATUS_OK; }
+// Modbus functions - Removed for OHT-50 Master Module
+// Modbus will be implemented separately in modbus layer
+hal_status_t hal_modbus_init(const modbus_config_t *config __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
+hal_status_t hal_modbus_deinit(void) { return HAL_STATUS_NOT_SUPPORTED; }
+hal_status_t hal_modbus_read_holding_registers(uint8_t slave_id __attribute__((unused)), uint16_t start_addr __attribute__((unused)), uint16_t quantity __attribute__((unused)), uint16_t *registers __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
+hal_status_t hal_modbus_write_single_register(uint8_t slave_id __attribute__((unused)), uint16_t address __attribute__((unused)), uint16_t value __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
+hal_status_t hal_modbus_write_multiple_registers(uint8_t slave_id __attribute__((unused)), uint16_t start_addr __attribute__((unused)), uint16_t quantity __attribute__((unused)), const uint16_t *registers __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
+hal_status_t hal_modbus_read_coils(uint8_t slave_id __attribute__((unused)), uint16_t start_addr __attribute__((unused)), uint16_t quantity __attribute__((unused)), bool *coils __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
+hal_status_t hal_modbus_write_single_coil(uint8_t slave_id __attribute__((unused)), uint16_t address __attribute__((unused)), bool value __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
+hal_status_t hal_modbus_send_frame(const modbus_frame_t *frame __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
+hal_status_t hal_modbus_receive_frame(modbus_frame_t *frame __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
 
-// Utility functions
+// Utility functions - Simplified for OHT-50 Master Module
 hal_status_t rs485_validate_config(const rs485_config_t *config)
 {
     if (!config) {
@@ -475,29 +476,10 @@ hal_status_t rs485_validate_config(const rs485_config_t *config)
     return HAL_STATUS_OK;
 }
 
-hal_status_t modbus_validate_config(const modbus_config_t *config __attribute__((unused))) { return HAL_STATUS_OK; }
-
-uint16_t modbus_calculate_crc(const uint8_t *data, size_t length) {
-    uint16_t crc = 0xFFFF;
-    
-    for (size_t i = 0; i < length; i++) {
-        crc ^= (uint16_t)data[i];
-        for (int j = 0; j < 8; j++) {
-            if (crc & 0x0001) {
-                crc = (crc >> 1) ^ 0xA001;
-            } else {
-                crc = crc >> 1;
-            }
-        }
-    }
-    
-    return crc;
-}
-
-bool modbus_verify_crc(const uint8_t *data, size_t length, uint16_t crc) {
-    uint16_t calculated_crc = modbus_calculate_crc(data, length);
-    return (calculated_crc == crc);
-}
+// Modbus functions - Removed for OHT-50 Master Module
+hal_status_t modbus_validate_config(const modbus_config_t *config __attribute__((unused))) { return HAL_STATUS_NOT_SUPPORTED; }
+uint16_t modbus_calculate_crc(const uint8_t *data, size_t length) { (void)data; (void)length; return 0; }
+bool modbus_verify_crc(const uint8_t *data, size_t length, uint16_t crc) { (void)data; (void)length; (void)crc; return false; }
 // No separate DE/RE pin control needed for UART1 RS485
 
 // Internal functions

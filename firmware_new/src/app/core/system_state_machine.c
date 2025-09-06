@@ -8,6 +8,7 @@
  */
 
 #include "system_state_machine.h"
+#include "safety_monitor.h"
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -684,16 +685,10 @@ static hal_status_t update_leds_for_state(system_state_t state) {
 }
 
 static hal_status_t check_safety_status(void) {
-    bool estop_triggered = false;
-    hal_status_t status = hal_estop_is_triggered(&estop_triggered);
-    
-    if (status == HAL_STATUS_OK) {
-        g_state_machine.safety_ok = !estop_triggered;
-    } else {
-        g_state_machine.safety_ok = false;
-    }
-    
-    return status;
+    bool safe = false;
+    hal_status_t status = safety_monitor_is_safe(&safe);
+    g_state_machine.safety_ok = (status == HAL_STATUS_OK) ? safe : false;
+    return HAL_STATUS_OK;
 }
 
 static hal_status_t check_communication_status(void) {

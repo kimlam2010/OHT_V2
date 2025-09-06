@@ -250,18 +250,57 @@ hal_status_t hal_gpio_set_edge(uint32_t pin, gpio_edge_t edge) {
 }
 
 hal_status_t hal_gpio_set_bias(uint32_t pin, gpio_bias_t bias) {
-    // Note: Bias setting may not be supported on all GPIO chips
-    // This is a stub for now as it requires specific GPIO chip support
-    (void)pin;
-    (void)bias;
+    // Real bias setting implementation for RK3588 GPIO
+    if (!gpio_state.initialized || !gpio_is_pin_valid(pin)) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    char path[64];
+    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%d/bias", pin);
+    
+    FILE *fp = fopen(path, "w");
+    if (!fp) {
+        return HAL_STATUS_NOT_SUPPORTED;
+    }
+    
+    const char *bias_str = "disable";
+    switch (bias) {
+        case GPIO_BIAS_PULL_UP: bias_str = "pullup"; break;
+        case GPIO_BIAS_PULL_DOWN: bias_str = "pulldown"; break;
+        default: bias_str = "disable"; break;
+    }
+    
+    fprintf(fp, "%s", bias_str);
+    fclose(fp);
+    
     return HAL_STATUS_OK;
 }
 
 hal_status_t hal_gpio_set_drive(uint32_t pin, gpio_drive_t drive) {
-    // Note: Drive strength setting may not be supported on all GPIO chips
-    // This is a stub for now as it requires specific GPIO chip support
-    (void)pin;
-    (void)drive;
+    // Real drive strength setting implementation for RK3588 GPIO
+    if (!gpio_state.initialized || !gpio_is_pin_valid(pin)) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    char path[64];
+    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%d/drive", pin);
+    
+    FILE *fp = fopen(path, "w");
+    if (!fp) {
+        return HAL_STATUS_NOT_SUPPORTED;
+    }
+    
+    const char *drive_str = "2";
+    switch (drive) {
+        case GPIO_DRIVE_4MA: drive_str = "4"; break;
+        case GPIO_DRIVE_8MA: drive_str = "8"; break;
+        case GPIO_DRIVE_12MA: drive_str = "12"; break;
+        default: drive_str = "2"; break;
+    }
+    
+    fprintf(fp, "%s", drive_str);
+    fclose(fp);
+    
     return HAL_STATUS_OK;
 }
 
@@ -270,31 +309,47 @@ hal_status_t hal_gpio_wait_for_event(uint32_t pin, gpio_event_t *event, uint32_t
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    // This is a simplified implementation
-    // Real implementation would use select() or epoll() for efficient event waiting
+    // Real implementation using select() for efficient event waiting
+    char path[64];
+    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%d/value", pin);
     
-    uint64_t start_time = gpio_get_timestamp_us();
-    uint64_t timeout_us = (uint64_t)timeout_ms * 1000;
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        return HAL_STATUS_ERROR;
+    }
     
-    while ((gpio_get_timestamp_us() - start_time) < timeout_us) {
-        bool current_value;
-        hal_status_t status = hal_gpio_get_value(pin, &current_value);
-        if (status == HAL_STATUS_OK) {
+    fd_set read_fds;
+    struct timeval timeout;
+    
+    FD_ZERO(&read_fds);
+    FD_SET(fd, &read_fds);
+    
+    timeout.tv_sec = timeout_ms / 1000;
+    timeout.tv_usec = (timeout_ms % 1000) * 1000;
+    
+    int select_result = select(fd + 1, &read_fds, NULL, NULL, &timeout);
+    
+    if (select_result > 0) {
+        // Event occurred, read the value
+        lseek(fd, 0, SEEK_SET);
+        char value_char;
+        if (read(fd, &value_char, 1) == 1) {
             event->pin_number = pin;
-            event->value = current_value;
+            event->value = (value_char == '1');
             event->timestamp_us = gpio_get_timestamp_us();
-            event->edge = GPIO_EDGE_NONE; // Simplified
+            event->edge = GPIO_EDGE_NONE; // Could be enhanced to detect edge type
             
             // Update statistics
             pthread_mutex_lock(&gpio_state.mutex);
             gpio_state.statistics.events++;
             pthread_mutex_unlock(&gpio_state.mutex);
             
+            close(fd);
             return HAL_STATUS_OK;
         }
-        usleep(1000); // 1ms delay
     }
     
+    close(fd);
     return HAL_STATUS_TIMEOUT;
 }
 

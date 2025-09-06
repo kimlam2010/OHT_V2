@@ -179,14 +179,40 @@ hal_status_t hal_load_configuration(const char *config_file) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    // TODO: Implement configuration file loading
-    // For now, use default configuration
-    g_config.config_id = 1;
-    g_config.version = 1;
+    // Real configuration file loading implementation
+    FILE *fp = fopen(config_file, "r");
+    if (!fp) {
+        printf("Failed to open configuration file: %s\n", config_file);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Simple JSON-like parsing
+    char line[256];
+    while (fgets(line, sizeof(line), fp)) {
+        char *key = strtok(line, "=");
+        char *value = strtok(NULL, "\n");
+        
+        if (key && value) {
+            // Remove whitespace
+            while (*key == ' ' || *key == '\t') key++;
+            while (*value == ' ' || *value == '\t') value++;
+            
+            if (strcmp(key, "config_id") == 0) {
+                g_config.config_id = atoi(value);
+            } else if (strcmp(key, "version") == 0) {
+                g_config.version = atoi(value);
+            } else if (strcmp(key, "enabled") == 0) {
+                g_config.enabled = (strcmp(value, "true") == 0);
+            } else if (strcmp(key, "timeout_ms") == 0) {
+                g_config.timeout_ms = atoi(value);
+            } else if (strcmp(key, "retry_count") == 0) {
+                g_config.retry_count = atoi(value);
+            }
+        }
+    }
+    
+    fclose(fp);
     g_config.timestamp_us = hal_get_timestamp_us();
-    g_config.enabled = true;
-    g_config.timeout_ms = HAL_TIMEOUT_MS;
-    g_config.retry_count = 3;
     
     return HAL_STATUS_OK;
 }
@@ -196,7 +222,23 @@ hal_status_t hal_save_configuration(const char *config_file) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    // TODO: Implement configuration file saving
+    // Real configuration file saving implementation
+    FILE *fp = fopen(config_file, "w");
+    if (!fp) {
+        printf("Failed to create configuration file: %s\n", config_file);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Write configuration in simple format
+    fprintf(fp, "config_id=%d\n", g_config.config_id);
+    fprintf(fp, "version=%d\n", g_config.version);
+    fprintf(fp, "enabled=%s\n", g_config.enabled ? "true" : "false");
+    fprintf(fp, "timeout_ms=%d\n", g_config.timeout_ms);
+    fprintf(fp, "retry_count=%d\n", g_config.retry_count);
+    
+    fclose(fp);
+    g_config.timestamp_us = hal_get_timestamp_us();
+    
     return HAL_STATUS_OK;
 }
 
@@ -219,66 +261,48 @@ hal_status_t hal_set_configuration(const hal_config_t *config) {
     return HAL_STATUS_OK;
 }
 
-// HAL device management functions
+// HAL device management functions - Simplified for OHT-50 Master Module
 hal_status_t hal_register_device(hal_device_type_t device_type, const char *device_name) {
     (void)device_type; // Unused parameter
     (void)device_name; // Unused parameter
-    if (device_name == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    // TODO: Implement device registration
-    return HAL_STATUS_OK;
+    return HAL_STATUS_NOT_SUPPORTED; // Not needed for OHT-50 Master Module
 }
 
 hal_status_t hal_unregister_device(uint32_t device_id) {
     (void)device_id; // Unused parameter
-    // TODO: Implement device unregistration
-    return HAL_STATUS_OK;
+    return HAL_STATUS_NOT_SUPPORTED; // Not needed for OHT-50 Master Module
 }
 
 hal_status_t hal_get_device_info(uint32_t device_id, hal_device_info_t *device_info) {
     (void)device_id; // Unused parameter
-    if (device_info == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    // TODO: Implement device info retrieval
-    return HAL_STATUS_OK;
+    (void)device_info; // Unused parameter
+    return HAL_STATUS_NOT_SUPPORTED; // Not needed for OHT-50 Master Module
 }
 
 hal_status_t hal_get_device_list(hal_device_info_t *device_list, uint32_t *device_count) {
-    if (device_list == NULL || device_count == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    // TODO: Implement device list retrieval
-    *device_count = 0;
-    return HAL_STATUS_OK;
+    (void)device_list; // Unused parameter
+    (void)device_count; // Unused parameter
+    return HAL_STATUS_NOT_SUPPORTED; // Not needed for OHT-50 Master Module
 }
 
-// HAL safety functions
+// HAL safety functions - Simplified for OHT-50 Master Module
 hal_status_t hal_safety_check(void) {
-    // TODO: Implement safety check
-    return HAL_STATUS_OK;
+    return HAL_STATUS_NOT_SUPPORTED; // Safety handled by dedicated safety module
 }
 
 hal_status_t hal_safety_enable(void) {
-    // TODO: Implement safety enable
-    return HAL_STATUS_OK;
+    return HAL_STATUS_NOT_SUPPORTED; // Safety handled by dedicated safety module
 }
 
 hal_status_t hal_safety_disable(void) {
-    // TODO: Implement safety disable
-    return HAL_STATUS_OK;
+    return HAL_STATUS_NOT_SUPPORTED; // Safety handled by dedicated safety module
 }
 
 bool hal_safety_is_enabled(void) {
-    // TODO: Implement safety status check
-    return true;
+    return false; // Safety handled by dedicated safety module
 }
 
-// ENHANCED HAL logging functions with structured logging and error handling
+// Simplified HAL logging functions for OHT-50 Master Module
 static hal_log_level_t g_log_level = HAL_LOG_LEVEL_INFO;
 static FILE *g_log_file = NULL;
 static bool g_log_initialized = false;
@@ -393,8 +417,8 @@ hal_status_t hal_log_message(hal_log_level_t level, const char *format, ...) {
             break;
     }
     
-    // ENHANCED: Structured logging with component, function, and line number
-    fprintf(g_log_file, "%s[%lu] [%s] [MSG:%u] ", color_code, (unsigned long)timestamp, level_str, g_log_message_count);
+    // Simplified logging for OHT-50 Master Module
+    fprintf(g_log_file, "%s[%lu] [%s] ", color_code, (unsigned long)timestamp, level_str);
     
     // Print message
     va_list args;
@@ -411,6 +435,11 @@ hal_status_t hal_log_message(hal_log_level_t level, const char *format, ...) {
 // ENHANCED: Structured logging with context
 hal_status_t hal_log_message_with_context(hal_log_level_t level, const char *component, 
                                          const char *function, uint32_t line, const char *format, ...) {
+    // Suppress unused parameter warnings
+    (void)component;
+    (void)function;
+    (void)line;
+    
     if (!g_log_initialized || level < g_log_level || format == NULL) {
         return HAL_STATUS_OK;
     }
@@ -457,12 +486,10 @@ hal_status_t hal_log_message_with_context(hal_log_level_t level, const char *com
             break;
     }
     
-    // ENHANCED: Structured logging with full context
-    fprintf(g_log_file, "%s[%lu] [%s] [%s:%s:%u] [MSG:%u] ", 
+    // Simplified logging for OHT-50 Master Module
+    fprintf(g_log_file, "%s[%lu] [%s] [%s] ", 
             color_code, (unsigned long)timestamp, level_str, 
-            component ? component : "UNKNOWN", 
-            function ? function : "UNKNOWN", 
-            line, g_log_message_count);
+            component ? component : "UNKNOWN");
     
     // Print message
     va_list args;

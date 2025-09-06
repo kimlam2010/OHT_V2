@@ -17,5 +17,27 @@ target_link_libraries(test_managers_integration
     telemetry_manager
 )
 
+# Simple Integration tests
+add_executable(test_simple_integration
+    test_simple_integration.c
+)
+
+target_include_directories(test_simple_integration PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/gpio
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/peripherals
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+)
+
+target_link_libraries(test_simple_integration
+    hal_common
+    hal_gpio
+    hal_peripherals
+    hal_safety
+    unity
+)
+
 # Add to test suite
 add_test(NAME ManagersIntegrationTest COMMAND test_managers_integration)
+add_test(NAME SimpleIntegrationTest COMMAND test_simple_integration)

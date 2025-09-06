@@ -31,7 +31,7 @@ target_link_libraries(app_modules
     hal_peripherals
     hal_gpio
     hal_safety
-    hal_storage
+    # hal_storage - REMOVED (config persistence simplified)
     app_core
     app_managers
 )

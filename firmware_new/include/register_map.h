@@ -22,6 +22,13 @@
 #define MODULE_ADDR_DOCK                   0x05U
 #define MODULE_ADDR_MAX                    0x06U
 
+// Type validation for module addresses
+_Static_assert(MODULE_ADDR_POWER <= 0xFF, "Module address out of range");
+_Static_assert(MODULE_ADDR_SAFETY <= 0xFF, "Module address out of range");
+_Static_assert(MODULE_ADDR_TRAVEL_MOTOR <= 0xFF, "Module address out of range");
+_Static_assert(MODULE_ADDR_DOCK <= 0xFF, "Module address out of range");
+_Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
+
 // ============================================================================
 // POWER MODULE REGISTERS (0x0000-0x00FF)
 // ============================================================================
@@ -362,22 +369,22 @@ static inline bool is_valid_module_address(uint8_t address) {
 
 // Validate register address for Power Module
 static inline bool is_valid_power_register(uint16_t reg) {
-    return (reg >= 0x0000 && reg <= 0x00FF);
+    return (reg <= 0x00FF);
 }
 
 // Validate register address for Safety Module
 static inline bool is_valid_safety_register(uint16_t reg) {
-    return (reg >= 0x0000 && reg <= 0x00FF);
+    return (reg <= 0x00FF);
 }
 
 // Validate register address for Travel Motor Module
 static inline bool is_valid_travel_motor_register(uint16_t reg) {
-    return (reg >= 0x0000 && reg <= 0x0106);
+    return (reg <= 0x0106);
 }
 
 // Validate register address for Dock Module
 static inline bool is_valid_dock_register(uint16_t reg) {
-    return (reg >= 0x0000 && reg <= 0x00FF);
+    return (reg <= 0x00FF);
 }
 
 // Get module type from address
