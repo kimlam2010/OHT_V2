@@ -172,8 +172,8 @@ class SafetySpeedControl:
                     # Log emergency event
                     await self.safety_service.log_safety_event(
                         event_type="emergency_stop",
-                        description="Emergency stop triggered due to safety violation",
-                        severity="critical"
+                        severity="critical",
+                        message="Emergency stop triggered due to safety violation"
                     )
                     
                     # Notify safety system

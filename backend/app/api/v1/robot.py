@@ -2,7 +2,7 @@
 Robot control API endpoints for OHT-50 Backend
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
@@ -14,8 +14,8 @@ router = APIRouter(prefix="/robot", tags=["robot"])
 
 
 class RobotCommand(BaseModel):
-    type: str = None
-    command_type: str = None
+    type: Optional[str] = None
+    command_type: Optional[str] = None
     parameters: Dict[str, Any] = {}
     
     def __init__(self, **data):

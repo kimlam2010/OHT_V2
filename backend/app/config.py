@@ -4,6 +4,7 @@ Configuration settings for OHT-50 Backend
 
 from typing import List
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 
 
 class Settings(BaseSettings):
@@ -67,8 +68,7 @@ class Settings(BaseSettings):
     max_connections: int = 100
     request_timeout: int = 30
     
-    class Config:
-        env_file = ".env"
+    model_config = ConfigDict(env_file=".env")
 
 
 # Global settings instance

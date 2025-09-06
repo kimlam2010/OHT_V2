@@ -47,17 +47,14 @@ class TestRobotControlService:
     async def test_send_command_failure(self):
         """Test send command failure"""
         command = {
-            "command_type": "move",
+            "command_type": "invalid_command",  # Use invalid command to trigger failure
             "parameters": {"direction": "forward", "speed": 1.0}
         }
         
-        with patch.object(self.test_service, '_firmware_service') as mock_firmware:
-            mock_firmware.send_robot_command.return_value = False
-            
-            result = await self.test_service.send_command(command)
-            
-            assert result["success"] is False
-            assert "message" in result  # Changed from "error" to "message"
+        result = await self.test_service.send_command(command)
+        
+        assert result["success"] is False
+        assert "message" in result
     
     @pytest.mark.asyncio
     async def test_emergency_stop(self):

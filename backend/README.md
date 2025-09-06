@@ -102,12 +102,13 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ## 🔧 **API ENDPOINTS CHI TIẾT**
 
 ### **🔐 Authentication API**
-| Method | Endpoint | Mô tả | Yêu cầu |
-|--------|----------|-------|---------|
-| `POST` | `/api/v1/auth/login` | Đăng nhập | username, password |
-| `GET` | `/api/v1/auth/me` | Thông tin user hiện tại | Bearer token |
-| `POST` | `/api/v1/auth/logout` | Đăng xuất | Bearer token |
-| `POST` | `/api/v1/auth/refresh` | Làm mới token | Bearer token |
+| Method | Endpoint | Mô tả | Yêu cầu | Response |
+|--------|----------|-------|---------|----------|
+| `POST` | `/api/v1/auth/login` | Đăng nhập user | username, password | access_token, user info |
+| `GET` | `/api/v1/auth/me` | Thông tin user hiện tại | Bearer token | user details |
+| `POST` | `/api/v1/auth/logout` | Đăng xuất | Bearer token | success message |
+| `POST` | `/api/v1/auth/register` | Đăng ký user mới | username, email, password, role | user_id |
+| `GET` | `/api/v1/auth/users` | Danh sách users (admin) | Bearer token + admin role | users list |
 
 **Ví dụ đăng nhập:**
 ```bash
@@ -117,11 +118,14 @@ curl -X POST "http://127.0.0.1:8000/api/v1/auth/login" \
 ```
 
 ### **🤖 Robot Control API**
-| Method | Endpoint | Mô tả | Yêu cầu |
-|--------|----------|-------|---------|
-| `GET` | `/api/v1/robot/status` | Trạng thái robot | Bearer token |
-| `POST` | `/api/v1/robot/control` | Điều khiển robot | Bearer token + command |
-| `POST` | `/api/v1/robot/emergency-stop` | Dừng khẩn cấp | Bearer token |
+| Method | Endpoint | Mô tả | Yêu cầu | Response |
+|--------|----------|-------|---------|----------|
+| `GET` | `/api/v1/robot/status` | Trạng thái robot | Bearer token | robot status, position, battery |
+| `POST` | `/api/v1/robot/control` | Điều khiển robot | Bearer token + command | control result |
+| `POST` | `/api/v1/robot/command` | Gửi lệnh robot | Bearer token + command | command result |
+| `POST` | `/api/v1/robot/emergency-stop` | Dừng khẩn cấp | Bearer token | emergency stop result |
+| `GET` | `/api/v1/robot/position` | Vị trí robot | Bearer token | position data |
+| `GET` | `/api/v1/robot/battery` | Mức pin robot | Bearer token | battery level |
 
 **Ví dụ lấy trạng thái robot:**
 ```bash
@@ -130,29 +134,51 @@ curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
 ```
 
 ### **📊 Telemetry API**
-| Method | Endpoint | Mô tả | Yêu cầu |
-|--------|----------|-------|---------|
-| `GET` | `/api/v1/telemetry/current` | Dữ liệu hiện tại | Bearer token |
-| `GET` | `/api/v1/telemetry/history` | Lịch sử dữ liệu | Bearer token |
-| `GET` | `/api/v1/telemetry/modules` | Danh sách modules | Bearer token |
+| Method | Endpoint | Mô tả | Yêu cầu | Response |
+|--------|----------|-------|---------|----------|
+| `GET` | `/api/v1/telemetry/current` | Dữ liệu telemetry hiện tại | Bearer token | real-time data |
+| `GET` | `/api/v1/telemetry/summary` | Tóm tắt telemetry | Bearer token | summary statistics |
+| `GET` | `/api/v1/telemetry/lidar/scan` | Dữ liệu LiDAR scan | Bearer token | LiDAR point cloud |
+| `GET` | `/api/v1/telemetry/sensors/status` | Trạng thái sensors | Bearer token | sensor readings |
+| `POST` | `/api/v1/telemetry/collection/start` | Bắt đầu thu thập | Bearer token | collection status |
+| `POST` | `/api/v1/telemetry/collection/stop` | Dừng thu thập | Bearer token | collection status |
 
 ### **🛡️ Safety API**
-| Method | Endpoint | Mô tả | Yêu cầu |
-|--------|----------|-------|---------|
-| `GET` | `/api/v1/safety/status` | Trạng thái an toàn | Bearer token |
-| `POST` | `/api/v1/safety/emergency` | Hành động khẩn cấp | Bearer token |
+| Method | Endpoint | Mô tả | Yêu cầu | Response |
+|--------|----------|-------|---------|----------|
+| `GET` | `/api/v1/safety/status` | Trạng thái an toàn | Bearer token | safety status |
+| `POST` | `/api/v1/safety/emergency-stop` | Dừng khẩn cấp | Bearer token | emergency result |
+| `POST` | `/api/v1/safety/emergency` | Hành động khẩn cấp | Bearer token | emergency result |
+| `GET` | `/api/v1/safety/alerts` | Danh sách cảnh báo | Bearer token | alerts list |
+| `POST` | `/api/v1/safety/alerts/{alert_id}/acknowledge` | Xác nhận cảnh báo | Bearer token | acknowledgment |
+
+### **⚡ Speed Control API**
+| Method | Endpoint | Mô tả | Yêu cầu | Response |
+|--------|----------|-------|---------|----------|
+| `POST` | `/api/v1/speed-control/set-speed` | Đặt tốc độ | Bearer token + speed | speed result |
+| `GET` | `/api/v1/speed-control/status` | Trạng thái tốc độ | Bearer token | speed status |
+| `GET` | `/api/v1/speed-control/performance` | Hiệu suất tốc độ | Bearer token | performance metrics |
+| `POST` | `/api/v1/speed-control/configure-limits` | Cấu hình giới hạn | Bearer token + limits | configuration result |
+| `POST` | `/api/v1/speed-control/emergency-stop` | Dừng khẩn cấp tốc độ | Bearer token | emergency stop |
+| `POST` | `/api/v1/speed-control/safety-status` | Trạng thái an toàn tốc độ | Bearer token | safety status |
 
 ### **⚙️ Configuration API**
-| Method | Endpoint | Mô tả | Yêu cầu |
-|--------|----------|-------|---------|
-| `GET` | `/api/v1/config/system` | Cấu hình hệ thống | Bearer token |
-| `PUT` | `/api/v1/config/system` | Cập nhật cấu hình | Bearer token |
+| Method | Endpoint | Mô tả | Yêu cầu | Response |
+|--------|----------|-------|---------|----------|
+| `GET` | `/api/v1/config/system` | Cấu hình hệ thống | Bearer token | system config |
+| `PUT` | `/api/v1/config/system` | Cập nhật cấu hình hệ thống | Bearer token + config | update result |
+| `GET` | `/api/v1/config/robot` | Cấu hình robot | Bearer token | robot config |
+| `PUT` | `/api/v1/config/robot` | Cập nhật cấu hình robot | Bearer token + config | update result |
 
 ### **📈 Monitoring API**
-| Method | Endpoint | Mô tả | Yêu cầu |
-|--------|----------|-------|---------|
-| `GET` | `/health` | Sức khỏe hệ thống | Không cần auth |
-| `GET` | `/api/v1/monitoring/health` | Chi tiết monitoring | Bearer token |
+| Method | Endpoint | Mô tả | Yêu cầu | Response |
+|--------|----------|-------|---------|----------|
+| `GET` | `/health` | Sức khỏe hệ thống | Không cần auth | health status |
+| `GET` | `/api/v1/monitoring/health` | Chi tiết monitoring | Bearer token | detailed health |
+| `GET` | `/api/v1/monitoring/metrics/current` | Metrics hiện tại | Bearer token | current metrics |
+| `GET` | `/api/v1/monitoring/metrics/history` | Lịch sử metrics | Bearer token | historical metrics |
+| `GET` | `/api/v1/monitoring/alerts` | Danh sách alerts | Bearer token | alerts list |
+| `GET` | `/api/v1/monitoring/logs` | System logs | Bearer token | log entries |
 
 ---
 
@@ -391,13 +417,15 @@ git push origin feature/new-feature
 ## 📈 **ROADMAP**
 
 ### **Completed Features**
-- ✅ Core API endpoints (32 endpoints)
-- ✅ Authentication & Authorization
-- ✅ Robot Control & Telemetry
-- ✅ Safety System
+- ✅ Core API endpoints (40+ endpoints)
+- ✅ Authentication & Authorization (5 endpoints)
+- ✅ Robot Control & Telemetry (12 endpoints)
+- ✅ Safety System (5 endpoints)
+- ✅ Speed Control System (6 endpoints)
+- ✅ Configuration Management (4 endpoints)
+- ✅ Monitoring & Health Checks (6 endpoints)
 - ✅ WebSocket Real-time Communication
 - ✅ Database & Models
-- ✅ Monitoring & Health Checks
 - ✅ Docker Support
 
 ### **Upcoming Features**
@@ -437,10 +465,12 @@ tail -f logs/app.log
 ### **Current Status**
 - 🏆 **A GRADE (85-90 điểm)** achieved
 - ✅ **Production Ready** - All core features working
-- ✅ **API Complete** - 32 endpoints implemented
+- ✅ **API Complete** - 40+ endpoints implemented
 - ✅ **Security** - JWT + RBAC implemented
 - ✅ **Real-time** - WebSocket communication ready
 - ✅ **Monitoring** - Health checks và metrics
+- ✅ **Speed Control** - Advanced speed management
+- ✅ **Configuration** - System configuration management
 
 ### **Performance Metrics**
 - **API Response Time:** < 50ms ✅

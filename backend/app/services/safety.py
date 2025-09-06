@@ -56,6 +56,14 @@ class SafetyService:
             logger.error(f"Failed to get safety status: {e}")
             return {"status": "error", "error": str(e)}
     
+    async def trigger_emergency_stop(self) -> Dict[str, Any]:
+        """Trigger emergency stop (alias for emergency_stop)"""
+        return await self.emergency_stop()
+    
+    async def log_safety_event(self, event_type: str, severity: str, message: str) -> None:
+        """Log safety event"""
+        await self._create_safety_alert(event_type, severity, message)
+    
     async def emergency_stop(self) -> Dict[str, Any]:
         """Execute emergency stop"""
         try:
