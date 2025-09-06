@@ -32,14 +32,15 @@ target_link_libraries(oht50_main
     hal_gpio
     hal_communication
     hal_safety
-    # hal_storage - REMOVED (config persistence simplified)
     hal_peripherals
     app_core
     app_managers
     app_modules
-    # app_api - Disabled, no source files
-    # http_server - Disabled, no source files
+    app_api
     utils
+    pthread
+    ssl
+    crypto
 )
 
 # Include directories
