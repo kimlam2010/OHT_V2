@@ -191,6 +191,10 @@ class WebSocketService:
                 await self._handle_subscription(websocket, message_data)
             elif message_type == "unsubscribe":
                 await self._handle_unsubscription(websocket, message_data)
+            elif message_type == "start_mapping":
+                await self._handle_map_command(websocket, message_type, message_data)
+            elif message_type == "stop_mapping":
+                await self._handle_map_command(websocket, message_type, message_data)
             else:
                 logger.debug(f"📨 Message received: {message_type}")
                 
@@ -365,6 +369,60 @@ class WebSocketService:
                     
         except Exception as e:
             logger.error(f"❌ Unsubscription handling failed: {e}")
+
+    async def _handle_map_command(self, websocket: WebSocket, command_type: str, data: Dict[str, Any]):
+        """Handle map-related commands from WebSocket clients"""
+        try:
+            from app.services.map_service import MapService
+            map_service = MapService()
+            
+            if command_type == "start_mapping":
+                # Start mapping session
+                result = await map_service.start_mapping(
+                    map_name=data.get("map_name", "WebSocket Map"),
+                    resolution=data.get("resolution", 50.0),
+                    width=data.get("width", 1000),
+                    height=data.get("height", 1000)
+                )
+                
+                # Send response
+                response_message = WebSocketMessage(
+                    type="mapping_started",
+                    data=result,
+                    timestamp=datetime.now()
+                )
+                await self._send_message(websocket, response_message)
+                
+                # Broadcast to all map subscribers
+                await self.broadcast_to_subscribers(response_message, "map")
+                
+            elif command_type == "stop_mapping":
+                # Stop mapping session
+                result = await map_service.stop_mapping()
+                
+                # Send response
+                response_message = WebSocketMessage(
+                    type="mapping_stopped",
+                    data=result,
+                    timestamp=datetime.now()
+                )
+                await self._send_message(websocket, response_message)
+                
+                # Broadcast to all map subscribers
+                await self.broadcast_to_subscribers(response_message, "map")
+            
+            logger.info(f"✅ Map command handled: {command_type}")
+            
+        except Exception as e:
+            logger.error(f"❌ Map command handling failed: {e}")
+            
+            # Send error response
+            error_message = WebSocketMessage(
+                type="map_error",
+                data={"error": str(e), "command": command_type},
+                timestamp=datetime.now()
+            )
+            await self._send_message(websocket, error_message)
 
     async def _broadcast_worker(self):
         """Background worker for message broadcasting"""

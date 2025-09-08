@@ -44,7 +44,7 @@ jobs:
 
     - name: Setup test database
       run: |
-        python setup_database.py
+        python scripts/setup/setup_database.py
 
     - name: Run tests with coverage (fail on warnings)
       run: |
@@ -94,6 +94,47 @@ jobs:
           bandit-report.json
           safety-report.json
 
+  script-validation:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Setup test database
+      run: |
+        python scripts/setup/setup_database.py
+
+    - name: Validate setup scripts
+      run: |
+        python scripts/setup/check_db.py
+        python scripts/setup/check_admin.py
+        python scripts/setup/check_users.py
+
+    - name: Run script tests
+      run: |
+        python scripts/test/test_admin_privileges.py
+        python scripts/test/test_jwt.py
+        python scripts/test/test_simple_auth.py
+
+    - name: Script validation summary
+      run: |
+        echo "=== SCRIPT VALIDATION COMPLETED ==="
+        echo "✅ Setup scripts: VALIDATED"
+        echo "✅ Test scripts: VALIDATED"
+        echo "✅ Database setup: SUCCESS"
+        echo "✅ System health: VERIFIED"
+
   performance-test:
     runs-on: ubuntu-latest
     needs: test
@@ -114,11 +155,17 @@ jobs:
 
     - name: Setup test database
       run: |
-        python setup_database.py
+        python scripts/setup/setup_database.py
 
     - name: Run performance tests (TESTING=true)
       run: |
         TESTING=true python -m pytest tests/performance/ -v -W error --disable-warnings
+        
+    - name: Run script tests
+      run: |
+        python scripts/test/test_admin_privileges.py
+        python scripts/test/test_jwt.py
+        python scripts/test/test_simple_auth.py
 
     - name: Performance validation
       run: |
@@ -127,7 +174,7 @@ jobs:
 
   quality-gate:
     runs-on: ubuntu-latest
-    needs: [test, security-scan, performance-test]
+    needs: [test, security-scan, performance-test, script-validation]
 
     steps:
     - name: Quality Gate Check
@@ -136,6 +183,7 @@ jobs:
         echo "✅ Tests: PASSED"
         echo "✅ Security: SCANNED"
         echo "✅ Performance: VALIDATED"
+        echo "✅ Scripts: VALIDATED"
         echo "✅ Coverage: REPORTED"
         echo ""
         echo "🎯 GRADE TARGET: A+ (95+ points)"
@@ -206,4 +254,5 @@ jobs:
         echo "🎉 Backend CI/CD pipeline completed successfully!"
         echo "🏆 A GRADE achieved - Ready for A+ GRADE!"
         echo "📊 Test coverage: 41% (target: 70%+)"
+        echo "🛠️ Scripts validated and organized"
         echo "🚀 Production deployment preparation ready!"

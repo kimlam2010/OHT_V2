@@ -78,7 +78,7 @@ cp env.example .env
 
 #### **Bước 4: Khởi tạo Database**
 ```bash
-python setup_database.py
+python scripts/setup/setup_database.py
 ```
 
 #### **Bước 5: Chạy Backend Server**
@@ -230,7 +230,10 @@ ws.onmessage = function(event) {
 
 ### **Chạy Tests**
 ```bash
-# Chạy tất cả tests
+# Chạy tất cả tests (PowerShell)
+powershell scripts/deployment/run_tests.ps1
+
+# Chạy tất cả tests (Python)
 python -m pytest
 
 # Chạy với coverage report
@@ -316,7 +319,7 @@ curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
 #### **5. Database connection issues**
 ```bash
 # Giải pháp: Khởi tạo lại database
-python setup_database.py
+python scripts/setup/setup_database.py
 ```
 
 ### **Kiểm tra Server Status**
@@ -384,15 +387,125 @@ git push origin feature/new-feature
 
 ### **Available Documentation**
 - **API Docs:** http://127.0.0.1:8000/docs (Swagger UI)
-- **API Test Results:** `API_TEST_RESULTS.md`
-- **Architecture Guide:** `docs/03-ARCHITECTURE/`
-- **Implementation Guide:** `docs/05-IMPLEMENTATION/`
+- **Backend Documentation:** `docs/` (tài liệu backend được tổ chức theo tiêu chuẩn quốc tế)
+- **Documentation Index:** `docs/INDEX.md` (tổng quan tất cả tài liệu)
+- **Architecture Guide:** `../docs/03-ARCHITECTURE/`
+- **Implementation Guide:** `../docs/05-IMPLEMENTATION/`
 
 ### **API Documentation Features**
 - **Interactive Testing:** Test API trực tiếp từ browser
 - **Request/Response Examples:** Mẫu dữ liệu chi tiết
 - **Authentication:** Built-in token testing
 - **Schema Validation:** Automatic validation
+
+### **📋 TIÊU CHUẨN TẠO TÀI LIỆU BACKEND**
+
+#### **🎯 QUY TẮC TẠO FILE MD**
+
+**❌ KHÔNG BAO GIỜ tạo file MD trong thư mục `backend/`**
+**✅ LUÔN LUÔN tạo file MD trong thư mục `backend/docs/`**
+
+#### **📁 CẤU TRÚC THƯ MỤC TÀI LIỆU (THEO TIÊU CHUẨN QUỐC TẾ)**
+```
+backend/
+├── README.md                    # File chính của backend (DUY NHẤT)
+├── docs/                        # TẤT CẢ tài liệu backend (ISO/IEC 26515)
+│   ├── INDEX.md                 # Tổng quan tài liệu
+│   ├── 01-API-DOCUMENTATION/    # Tài liệu API
+│   │   ├── INDEX.md
+│   │   ├── API_DOCUMENTATION.md
+│   │   ├── api.md
+│   │   └── API_TEST_RESULTS.md
+│   ├── 02-DEVELOPMENT-PLANS/    # Kế hoạch phát triển
+│   │   ├── INDEX.md
+│   │   ├── BACKEND_DEVELOPMENT_PLAN.md
+│   │   ├── BACKEND_STRUCTURE_GUIDE.md
+│   │   └── DEVELOPMENT_PROGRESS.md
+│   ├── 03-TEAM-COMMANDS/        # Lệnh cho team
+│   │   ├── INDEX.md
+│   │   └── BACKEND_TEAM_*.md
+│   ├── 04-TESTING-REPORTS/      # Báo cáo kiểm thử
+│   │   ├── INDEX.md
+│   │   └── TEST_*.md
+│   ├── 05-PHASE-REPORTS/        # Báo cáo các phase
+│   │   ├── INDEX.md
+│   │   └── PHASE_*.md
+│   ├── 06-STAKEHOLDER-COMMUNICATION/ # Giao tiếp stakeholder
+│   │   ├── INDEX.md
+│   │   └── STAKEHOLDER_*.md
+│   ├── 07-USER-DOCUMENTATION/   # Tài liệu người dùng
+│   │   ├── INDEX.md
+│   │   └── USER_*.md
+│   ├── 08-IMPLEMENTATION-GUIDES/ # Hướng dẫn triển khai
+│   │   ├── INDEX.md
+│   │   └── IMPLEMENTATION_*.md
+│   └── 09-ARCHIVE/              # Lưu trữ
+│       ├── INDEX.md
+│       └── ARCHIVED_*.md
+└── app/                         # Source code
+```
+
+#### **📝 TEMPLATE TẠO TÀI LIỆU MỚI**
+```markdown
+# 📋 [TÊN TÀI LIỆU]
+
+**Phiên bản:** 1.0  
+**Ngày cập nhật:** YYYY-MM-DD  
+**Tác giả:** [Tên tác giả]  
+**Trạng thái:** [Draft/Review/Approved]
+
+---
+
+## 🎯 **MỤC TIÊU**
+[Mô tả mục tiêu của tài liệu]
+
+## 📋 **NỘI DUNG CHÍNH**
+[Nội dung chi tiết]
+
+## 📊 **KẾT QUẢ**
+[Kết quả hoặc kết luận]
+
+## 🔄 **CHANGELOG**
+- **v1.0 (YYYY-MM-DD):** Tạo tài liệu ban đầu
+
+---
+
+**📅 Last Updated:** YYYY-MM-DD  
+**📁 Location:** `backend/docs/`
+```
+
+#### **🚨 QUY TẮC BẮT BUỘC**
+
+1. **Vị trí file:** TẤT CẢ file MD phải trong `backend/docs/`
+2. **Tên file:** Sử dụng `UPPERCASE_WITH_UNDERSCORES.md`
+3. **Header:** Phải có phiên bản, ngày cập nhật, tác giả
+4. **Changelog:** Bắt buộc có phần changelog cuối file
+5. **Emoji:** Sử dụng emoji để dễ đọc và phân biệt
+6. **Cấu trúc:** Theo template chuẩn ở trên
+
+#### **📋 CHECKLIST TẠO TÀI LIỆU**
+```
+□ File được tạo trong `backend/docs/`
+□ Tên file theo chuẩn UPPERCASE_WITH_UNDERSCORES.md
+□ Có header với phiên bản, ngày, tác giả
+□ Có phần changelog cuối file
+□ Sử dụng emoji cho dễ đọc
+□ Nội dung rõ ràng, dễ hiểu
+□ Không tạo file MD trong thư mục backend/ (trừ README.md)
+```
+
+#### **🔄 QUY TRÌNH CẬP NHẬT TÀI LIỆU**
+1. **Mở file** trong `backend/docs/`
+2. **Cập nhật nội dung** theo yêu cầu
+3. **Tăng phiên bản** (v1.0 → v1.1)
+4. **Cập nhật ngày** trong header
+5. **Thêm entry** vào changelog
+6. **Lưu file** và commit
+
+#### **📞 HỖ TRỢ**
+- **Vấn đề tài liệu:** Liên hệ Backend Team Lead
+- **Template:** Sử dụng template chuẩn ở trên
+- **Review:** Tất cả tài liệu phải được review trước khi approve
 
 ---
 
@@ -452,7 +565,16 @@ curl http://127.0.0.1:8000/health
 # Browser: http://127.0.0.1:8000/docs
 
 # Run tests
-python -m pytest
+powershell scripts/deployment/run_tests.ps1
+
+# Setup database
+python scripts/setup/setup_database.py
+
+# Check database
+python scripts/setup/check_db.py
+
+# Debug issues
+python scripts/debug/debug_500_errors.py
 
 # Check logs
 tail -f logs/app.log
@@ -482,11 +604,24 @@ tail -f logs/app.log
 
 **🎉 OHT-50 Backend System đã sẵn sàng cho production deployment!**
 
-**📅 Last Updated:** 2025-09-05  
+**📅 Last Updated:** 2025-01-28  
 **🚀 Status:** Production Ready  
 **📊 Grade:** A GRADE (85-90 points)
 
 **🔗 Quick Links:**
 - **API Docs:** http://127.0.0.1:8000/docs
 - **Health Check:** http://127.0.0.1:8000/health
-- **Test Results:** `API_TEST_RESULTS.md`
+- **Backend Documentation:** `docs/`
+- **Documentation Index:** `docs/INDEX.md`
+- **Scripts Index:** `scripts/INDEX.md`
+- **Test Results:** `docs/04-TESTING-REPORTS/API_TEST_RESULTS.md`
+
+**📋 Backend Cleanup Completed:**
+- ✅ **25 file MD** đã được tổ chức theo tiêu chuẩn quốc tế ISO/IEC 26515
+- ✅ **23 scripts** đã được tổ chức vào 4 thư mục chuyên biệt
+- ✅ **9 thư mục docs** với INDEX.md cho mỗi thư mục
+- ✅ **4 thư mục scripts** với INDEX.md cho mỗi thư mục
+- ✅ **Cấu trúc phân loại** rõ ràng theo chức năng
+- ✅ **README.md** được cập nhật với paths mới
+- ✅ **Quick access** với INDEX.md tổng quan
+- ✅ **Development workflow** được cải thiện
