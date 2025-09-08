@@ -39,40 +39,79 @@ Phase 6: Maintenance & Evolution (Planned)
 - **Documentation:** Complete implementation documentation
 
 #### **🔄 IN PROGRESS:**
-- **Firmware HTTP Server:** Implementation required
+- **Firmware API Integration:** Critical issue - API Manager not integrated into main.c
 - **Backend API Services:** Implementation required
 - **Frontend Components:** Implementation required
 - **Integration Testing:** Planning phase
 
-#### **❌ NOT STARTED:**
-- **Module Data API Implementation:** Critical gap
+#### **❌ CRITICAL ISSUES IDENTIFIED:**
+- **API Manager Integration:** API Manager implemented but NOT integrated into main.c
+- **Communication Manager API:** Only placeholder/simulation, no real HTTP/WebSocket servers
+- **BE-FW Communication:** BLOCKED - FW cannot communicate with BE
 - **Real-time WebSocket:** Not implemented
 - **Security Implementation:** Not implemented
 - **Performance Optimization:** Not implemented
 
 ---
 
+## 🚨 **CRITICAL ISSUES - IMMEDIATE ACTION REQUIRED**
+
+### **Issue #1: FW-BE Communication BLOCKED**
+- **Problem:** FW cannot communicate with BE
+- **Root Cause:** API Manager not integrated into main.c
+- **Impact:** BE development blocked, end-to-end testing impossible
+- **Priority:** CRITICAL
+- **Timeline:** 3 days to fix
+
+### **Issue #2: API Server Only Simulation**
+- **Problem:** Communication Manager API functions are placeholders
+- **Root Cause:** No actual HTTP/WebSocket server implementation
+- **Impact:** No real API endpoints available
+- **Priority:** CRITICAL
+- **Timeline:** 3 days to fix
+
+### **Issue #3: Missing API Manager Integration**
+- **Problem:** API Manager implemented but not used in main.c
+- **Root Cause:** main.c still uses Communication Manager API placeholders
+- **Impact:** Real API functionality not available
+- **Priority:** CRITICAL
+- **Timeline:** 1 day to fix
+
+---
+
 ## 🚀 **IMPLEMENTATION ROADMAP**
 
-### **Sprint 1: Firmware HTTP Server (Week 1-2)**
+### **Sprint 1: CRITICAL FIX - FW-BE Communication (IMMEDIATE)**
 
 #### **Objectives:**
-- Implement HTTP API server trong firmware
+- **URGENT:** Fix FW-BE communication blocking issue
+- **URGENT:** Integrate API Manager vào main.c
+- **URGENT:** Replace Communication Manager API placeholders
+- **URGENT:** Enable real HTTP/WebSocket servers
 - Create module data endpoints
 - Integrate với existing module handlers
 
 #### **Tasks:**
-```
-🔧 FW Team Tasks:
-□ Create /app/api/http_server.c
-□ Create /app/api/module_api.c  
-□ Create /app/api/data_serializer.c
-□ Update main.c để start API server
-□ Update CMakeLists.txt để enable API library
-□ Integrate với travel_motor_module_handler.c
-□ Integrate với power_module_handler.c
-□ Integrate với safety_module_handler.c
-```
+- **Task 1.1:** Integrate API Manager vào main.c (1 day) - CRITICAL
+- **Task 1.2:** Remove Communication Manager API placeholders (1 day) - CRITICAL  
+- **Task 1.3:** Update main loop với API Manager processing (1 day) - CRITICAL
+- **Task 1.4:** Test FW-BE communication (1 day) - CRITICAL
+- **Task 1.5:** Validate API endpoints (1 day) - CRITICAL
+
+#### **Success Criteria:**
+- [ ] FW starts without errors
+- [ ] Port 8080 actually listening (not simulated)
+- [ ] Port 8081 actually listening (not simulated)  
+- [ ] API endpoints respond to HTTP requests
+- [ ] WebSocket connections work
+- [ ] BE can communicate with FW
+- [ ] End-to-end communication validated
+
+#### **Timeline:**
+- **Start:** IMMEDIATE
+- **Duration:** 5 days
+- **Priority:** CRITICAL
+- **Blocking:** BE development, end-to-end testing
 
 #### **Deliverables:**
 - HTTP API server running
