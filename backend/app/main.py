@@ -18,7 +18,7 @@ from app.core.monitoring_service import monitoring_service
 from app.core.websocket_service import websocket_service
 
 # Import API routers
-from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, sensors, localization, health
+from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, sensors, localization, health, dashboard
 from app.api import websocket
 from app.config import Settings
 
@@ -184,6 +184,10 @@ app = FastAPI(
             "description": "🔐 User authentication, JWT tokens, and authorization (5 endpoints)"
         },
         {
+            "name": "dashboard",
+            "description": "📊 Dashboard overview, alerts, logs, and performance metrics (6 endpoints)"
+        },
+        {
             "name": "Robot Control", 
             "description": "🤖 Robot movement, status monitoring, and control operations (6 endpoints)"
         },
@@ -344,6 +348,7 @@ app.include_router(safety.router)
 app.include_router(config.router)
 app.include_router(monitoring.router)
 app.include_router(speed_control.router)
+app.include_router(dashboard.router)
 
 # Include Map & Localization API routers
 app.include_router(map.router)

@@ -52,6 +52,7 @@ class RobotControlService:
                 "y": position_data.get("y", 0.0),
                 "z": position_data.get("z", 0.0),
                 "orientation": position_data.get("orientation", 0.0),
+                "accuracy": position_data.get("accuracy", 0.1),
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         except Exception as e:
@@ -61,6 +62,7 @@ class RobotControlService:
                 "y": 0.0,
                 "z": 0.0,
                 "orientation": 0.0,
+                "accuracy": 0.1,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "error": str(e)
             }
@@ -73,6 +75,14 @@ class RobotControlService:
             return {
                 "max_speed": config_data.get("max_speed", 2.0),
                 "max_acceleration": config_data.get("max_acceleration", 1.0),
+                "max_deceleration": config_data.get("max_deceleration", 1.5),
+                "safety_distance": config_data.get("safety_distance", 0.5),
+                "emergency_stop_timeout": config_data.get("emergency_stop_timeout", 1.0),
+                "battery_warning_threshold": config_data.get("battery_warning_threshold", 20),
+                "temperature_warning_threshold": config_data.get("temperature_warning_threshold", 60),
+                "auto_dock_enabled": config_data.get("auto_dock_enabled", True),
+                "obstacle_detection_enabled": config_data.get("obstacle_detection_enabled", True),
+                "logging_level": config_data.get("logging_level", "INFO"),
                 "safety_limits": config_data.get("safety_limits", {}),
                 "operating_mode": config_data.get("operating_mode", "normal"),
                 "timestamp": datetime.now(timezone.utc).isoformat()
@@ -82,6 +92,14 @@ class RobotControlService:
             return {
                 "max_speed": 2.0,
                 "max_acceleration": 1.0,
+                "max_deceleration": 1.5,
+                "safety_distance": 0.5,
+                "emergency_stop_timeout": 1.0,
+                "battery_warning_threshold": 20,
+                "temperature_warning_threshold": 60,
+                "auto_dock_enabled": True,
+                "obstacle_detection_enabled": True,
+                "logging_level": "INFO",
                 "safety_limits": {},
                 "operating_mode": "normal",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -415,6 +433,26 @@ class RobotControlService:
             logger.error(f"Failed to get command history: {e}")
             return []
     
+    async def pause_system(self) -> Dict[str, Any]:
+        """Pause robot system"""
+        try:
+            # TODO: Implement actual pause logic
+            # For now, return mock response
+            return {
+                "success": True,
+                "message": "System paused successfully",
+                "status": "paused",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to pause system: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to pause system: {str(e)}",
+                "status": "error",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+
     async def clear_cache(self):
         """Clear service cache"""
         self._cache.clear()

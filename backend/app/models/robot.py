@@ -14,7 +14,7 @@ class Robot(Base):
     id = Column(Integer, primary_key=True, index=True)
     robot_id = Column(String(50), unique=True, index=True, nullable=False, default="OHT-50-001")
     status = Column(String(20), nullable=False, default="idle")  # idle, moving, paused, error, estop
-    mode = Column(String(20), nullable=False, default="auto")  # auto, manual, semi
+    mode = Column(String(20), nullable=False, default="manual")  # manual, auto, semi_auto, maintenance
     position_x = Column(Float, nullable=True)   # type: ignore
     position_y = Column(Float, nullable=True)   # type: ignore
     position_z = Column(Float, nullable=True)   # type: ignore

@@ -267,6 +267,47 @@ async def websocket_monitoring_endpoint(websocket: WebSocket):
         await websocket_service.disconnect(websocket)
 
 
+@router.websocket("/ws/map")
+async def websocket_map_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for map service real-time updates"""
+    try:
+        # Connect to WebSocket service
+        await websocket_service.connect(websocket, {"type": "map"})
+        
+        # Send initial map status
+        try:
+            from app.services.map_service import MapService
+            map_service = MapService()
+            status_info = map_service.get_mapping_status()
+            
+            message = WebSocketMessage(
+                type="map_status",
+                data=status_info,
+                timestamp=datetime.now()
+            )
+            await websocket_service.send_to_client(websocket, message)
+        except Exception as e:
+            logger.error(f"❌ Failed to send initial map status: {e}")
+        
+        # Handle WebSocket communication
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                await websocket_service.handle_message(websocket, data)
+                
+        except WebSocketDisconnect:
+            logger.info("🔌 Map WebSocket client disconnected")
+        except Exception as e:
+            logger.error(f"❌ Map WebSocket communication error: {e}")
+            
+    except Exception as e:
+        logger.error(f"❌ Map WebSocket endpoint error: {e}")
+    finally:
+        # Clean up connection
+        await websocket_service.disconnect(websocket)
+
+
 @router.websocket("/ws/alerts")
 async def websocket_alerts_endpoint(websocket: WebSocket):
     """WebSocket endpoint for alert notifications"""
