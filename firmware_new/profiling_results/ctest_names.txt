@@ -1,0 +1,9 @@
+test_basic_integration
+test_debug_hal
+test_simple_shutdown
+test_api_endpoints_single
+test_end_to_end
+test_basic_performance
+test_hal_common
+test_hal_gpio
+test_hal_lidar

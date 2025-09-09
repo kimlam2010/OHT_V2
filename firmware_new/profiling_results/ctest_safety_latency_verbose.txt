@@ -1,0 +1,50 @@
+UpdateCTestConfiguration  from :/home/orangepi/Desktop/OHT_V2/firmware_new/build/DartConfiguration.tcl
+UpdateCTestConfiguration  from :/home/orangepi/Desktop/OHT_V2/firmware_new/build/DartConfiguration.tcl
+Test project /home/orangepi/Desktop/OHT_V2/firmware_new/build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 17
+    Start 17: test_safety_monitor_latency
+
+17: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_safety_monitor_latency
+17: Test timeout computed to be: 10000000
+17: 
+17: Unity Test Framework
+17: ====================
+17: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/app/test_safety_monitor_latency.c
+17: 
+17: Running: test_estop_latency_under_50ms_on_eventInitializing E-Stop safety system...
+17: E-Stop safety system initialized successfully
+17: Initializing LED system...
+17: Failed to export GPIO pin 54
+17: [SAFETY] LED HAL init failed (-1) - running in headless mode, continuing without LEDs
+17: Initializing dual relay system...
+17: Failed to export relay 1 GPIO pin 131
+17: [SAFETY] Relay HAL init failed (-1) - running in headless mode, continuing without relays
+17: [SAFETY] Using default configuration
+17: [SAFETY][16190278] UNKNOWN: Safety monitor initialized
+17: [SAFETY][16190278] UNKNOWN: unit-test
+17: [SAFETY] E-Stop event triggered
+17:  ✅ PASSED
+17: 
+17: ====================
+17: Test Results Summary
+17: ====================
+17: Tests Run: 1
+17: Failures: 0
+17: Ignored: 0
+17: Success Rate: 100.0%
+17: 
+17: ✅ All tests passed!
+1/1 Test #17: test_safety_monitor_latency ......   Passed    0.00 sec
+
+The following tests passed:
+	test_safety_monitor_latency
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec

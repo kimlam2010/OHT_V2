@@ -1,0 +1,43 @@
+===== test_basic_integration =====
+Test project /home/orangepi/Desktop/OHT_V2/firmware_new/build
+    Start 1: test_basic_integration
+1/1 Test #1: test_basic_integration ...........   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+===== test_debug_hal =====
+Test project /home/orangepi/Desktop/OHT_V2/firmware_new/build
+    Start 2: test_debug_hal
+1/1 Test #2: test_debug_hal ...................   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+===== test_simple_shutdown =====
+Test project /home/orangepi/Desktop/OHT_V2/firmware_new/build
+    Start 3: test_simple_shutdown
+1/1 Test #3: test_simple_shutdown .............   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+===== test_api_endpoints_single =====
+Test project /home/orangepi/Desktop/OHT_V2/firmware_new/build
+    Start 4: test_api_endpoints_single
+1/1 Test #4: test_api_endpoints_single ........   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+===== test_end_to_end =====
+Test project /home/orangepi/Desktop/OHT_V2/firmware_new/build
+    Start 5: test_end_to_end
+1/1 Test #5: test_end_to_end ..................   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+===== test_basic_performance =====
+Test project /home/orangepi/Desktop/OHT_V2/firmware_new/build
+    Start 6: test_basic_performance

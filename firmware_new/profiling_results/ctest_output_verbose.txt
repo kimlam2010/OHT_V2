@@ -1,0 +1,960 @@
+UpdateCTestConfiguration  from :/home/orangepi/Desktop/OHT_V2/firmware_new/build/DartConfiguration.tcl
+UpdateCTestConfiguration  from :/home/orangepi/Desktop/OHT_V2/firmware_new/build/DartConfiguration.tcl
+Test project /home/orangepi/Desktop/OHT_V2/firmware_new/build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+      Start  1: test_basic_integration
+
+1: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/test_basic_integration
+1: Test timeout computed to be: 10000000
+1: 
+1: Unity Test Framework
+1: ====================
+1: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/integration/test_basic_integration.c
+1: 
+1: Running: test_hal_and_api_integration_works_correctlyhal_gpio_init() => 0
+1: api_manager_init() => 0
+1: API Manager initialized successfully
+1:  ✅ PASSED
+1: Running: test_system_performance_integrationhal_gpio_init() => -7
+1: api_manager_init() => 0
+1: Performance integration basic check completed
+1:  ✅ PASSED
+1: Running: test_error_handling_integrationhal_gpio_init() => -7
+1: api_manager_init() => 0
+1: Error handling module not available; skipping detailed checks
+1: api_manager_deinit() => 0
+1:  ✅ PASSED
+1: Running: test_system_shutdown_integrationhal_gpio_init() => -7
+1: api_manager_init() => 0
+1: Proceeding to shutdown without status checks
+1: api_manager_deinit() => 0
+1: Shutdown test completed
+1:  ✅ PASSED
+1: Running: test_memory_and_resource_managementhal_gpio_init() => -7
+1: api_manager_init() => 0
+1: Memory usage test completed
+1:  ✅ PASSED
+1: Running: test_concurrent_operationsConcurrent operations test completed
+1:  ✅ PASSED
+1: 
+1: ====================
+1: Test Results Summary
+1: ====================
+1: Tests Run: 6
+1: Failures: 0
+1: Ignored: 0
+1: Success Rate: 100.0%
+1: 
+1: ✅ All tests passed!
+ 1/19 Test  #1: test_basic_integration ...........   Passed    0.00 sec
+test 2
+      Start  2: test_debug_hal
+
+2: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/test_debug_hal
+2: Test timeout computed to be: 10000000
+2: 
+2: Unity Test Framework
+2: ====================
+2: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/integration/test_debug_hal.c
+2: 
+2: Running: test_hal_logging_worksHAL log message result: 0
+2:  ✅ PASSED
+2: Running: test_hal_error_logging_worksHAL log error result: 0
+2:  ✅ PASSED
+2: Running: test_hal_device_status_worksHAL device status: 1
+2:  ✅ PASSED
+2: 
+2: ====================
+2: Test Results Summary
+2: ====================
+2: Tests Run: 3
+2: Failures: 0
+2: Ignored: 0
+2: Success Rate: 100.0%
+2: 
+2: ✅ All tests passed!
+ 2/19 Test  #2: test_debug_hal ...................   Passed    0.00 sec
+test 3
+      Start  3: test_simple_shutdown
+
+3: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/test_simple_shutdown
+3: Test timeout computed to be: 10000000
+3: 
+3: Unity Test Framework
+3: ====================
+3: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/integration/test_simple_shutdown.c
+3: 
+3: Running: test_simple_shutdown_workflow=== Starting Simple Shutdown Test ===
+3: Step 1: Initializing API Manager...
+3: API Manager init result: 0
+3: Step 2: Starting API Manager services...
+3: API Manager start result: 0
+3: Step 3: API Manager started successfully...
+3: Step 4: API Manager functionality verified...
+3: Step 5: Testing quick operations...
+3: Quick operations test skipped
+3: Quick operations completed successfully
+3: Step 6: Testing graceful shutdown...
+3: Attempting shutdown (may take a moment)...
+3: API Manager deinit result: 0
+3: Shutdown completed successfully
+3: Step 7: Shutdown completed...
+3: Shutdown test completed
+3: === Simple Shutdown Test COMPLETED ===
+3:  ✅ PASSED
+3: 
+3: ====================
+3: Test Results Summary
+3: ====================
+3: Tests Run: 1
+3: Failures: 0
+3: Ignored: 0
+3: Success Rate: 100.0%
+3: 
+3: ✅ All tests passed!
+ 3/19 Test  #3: test_simple_shutdown .............   Passed    0.00 sec
+test 4
+      Start  4: test_api_endpoints_single
+
+4: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/test_api_endpoints_single
+4: Test timeout computed to be: 10000000
+4: 
+4: Unity Test Framework
+4: ====================
+4: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/integration/test_api_endpoints_single.c
+4: 
+4: Running: test_complete_api_endpoints_workflow=== Starting Complete API Endpoints Test ===
+4: Step 1: Initializing API Manager...
+4: API Manager init result: 0
+4: Step 2: Starting API Manager services...
+4: API Manager start result: 0
+4: register_endpoint => 0
+4: Step 5: Testing API endpoint registration...
+4: Step 6: Testing system endpoints...
+4: Step 7: Testing motor endpoints...
+4: Step 8: Testing dock endpoints...
+4: Step 9: Testing safety endpoints...
+4: Step 10: Testing telemetry endpoints...
+4: Step 11: Testing configuration endpoints...
+4: Step 12: Testing authentication endpoints...
+4: Step 13: Testing error handling endpoints...
+4: Step 14: Testing graceful shutdown...
+4: API Manager deinit result: 0
+4: === Complete API Endpoints Test PASSED ===
+4:  ✅ PASSED
+4: 
+4: ====================
+4: Test Results Summary
+4: ====================
+4: Tests Run: 1
+4: Failures: 0
+4: Ignored: 0
+4: Success Rate: 100.0%
+4: 
+4: ✅ All tests passed!
+ 4/19 Test  #4: test_api_endpoints_single ........   Passed    0.00 sec
+test 5
+      Start  5: test_end_to_end
+
+5: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/test_end_to_end
+5: Test timeout computed to be: 10000000
+5: 
+5: Unity Test Framework
+5: ====================
+5: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/integration/test_end_to_end.c
+5: 
+5: Running: test_complete_end_to_end_workflow=== Starting End-to-End Lite Test ===
+5: api_manager_init => 0
+5: api_manager_start => 0
+5: register_endpoint => 0
+5: api_manager_deinit => 0
+5: === End-to-End Lite Test COMPLETED ===
+5:  ✅ PASSED
+5: 
+5: ====================
+5: Test Results Summary
+5: ====================
+5: Tests Run: 1
+5: Failures: 0
+5: Ignored: 0
+5: Success Rate: 100.0%
+5: 
+5: ✅ All tests passed!
+ 5/19 Test  #5: test_end_to_end ..................   Passed    0.00 sec
+test 6
+      Start  6: test_basic_performance
+
+6: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/test_basic_performance
+6: Test timeout computed to be: 10000000
+6: 🚀 OHT-50 BASIC PERFORMANCE TEST SUITE
+6: =====================================
+6: 
+6: Unity Test Framework
+6: ====================
+6: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/performance/test_basic_performance.c
+6: 
+6: Running: test_basic_performance
+6: === BASIC PERFORMANCE TEST ===
+6: Starting basic performance test for 15 seconds...
+6: Thread 0: Starting concurrent operations...
+6: Thread 2: Starting concurrent operations...
+6: Thread 1: Starting concurrent operations...
+6: Thread 3: Starting concurrent operations...
+6: Thread 3: Completed 100 operations
+6: Thread 2: Completed 100 operations
+6: Thread 0: Completed 100 operations
+6: Thread 1: Completed 100 operations
+6: 
+6: === BASIC PERFORMANCE RESULTS ===
+6: Test Duration: 15.03 seconds
+6: Total Operations: 400
+6: Successful Operations: 400
+6: Failed Operations: 0
+6: Success Rate: 100.00%
+6: Avg Response Time: 23 us
+6: Min Response Time: 18446744073709551615 us
+6: Max Response Time: 0 us
+6: Operations per Second: 26.61
+6: ✅ Basic performance test PASSED
+6:  ✅ PASSED
+6: Running: test_memory_usage
+6: === MEMORY USAGE MONITORING ===
+6: Initial Memory Usage - VmSize: 35616 KB, VmRSS: 920 KB
+6: Performing memory-intensive operations...
+6: Final Memory Usage - VmSize: 35616 KB, VmRSS: 920 KB
+6: Memory Growth - VmSize: 0 KB, VmRSS: 0 KB
+6: ✅ Memory usage monitoring PASSED
+6:  ✅ PASSED
+6: Running: test_cpu_usage
+6: === CPU USAGE MONITORING ===
+6: Starting CPU-intensive operations...
+6: CPU Time: 0.042 seconds
+6: Wall Time: 0.043 seconds
+6: CPU Usage: 98.64%
+6: Result: 0.203255
+6: ✅ CPU usage monitoring PASSED
+6:  ✅ PASSED
+6: 
+6: ====================
+6: Test Results Summary
+6: ====================
+6: Tests Run: 3
+6: Failures: 0
+6: Ignored: 0
+6: Success Rate: 100.0%
+6: 
+6: ✅ All tests passed!
+ 6/19 Test  #6: test_basic_performance ...........   Passed   15.08 sec
+test 7
+      Start  7: test_soak_15s
+
+7: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/test_soak "--seconds" "15"
+7: Test timeout computed to be: 10000000
+7: 🚀 Starting Soak Test: duration=15 s
+7: Module Manager initialized successfully
+7: [MODULE] Communication manager status check: result=-3, status=-1293930368
+7: [MODULE] Module discovery blocked: communication manager not ready
+7: [SOAK] t=1s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=2s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=3s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=4s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=5s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=6s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=7s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=8s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=9s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=10s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=11s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=12s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=13s timeouts=0 crc=0 flap=0 rss=544 kB
+7: [SOAK] t=14s timeouts=0 crc=0 flap=0 rss=544 kB
+7: ✅ Soak test completed. Report: ../profiling_results/soak_report.md
+ 7/19 Test  #7: test_soak_15s ....................   Passed   15.04 sec
+test 8
+      Start  8: test_hal_common
+
+8: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_hal_common
+8: Test timeout computed to be: 10000000
+8: 
+8: Unity Test Framework
+8: ====================
+8: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/test_hal_common.c
+8: 
+8: Running: test_hal_get_timestamp_us_returns_valid_timestamp ✅ PASSED
+8: Running: test_hal_get_timestamp_ms_returns_valid_timestamp ✅ PASSED
+8: Running: test_hal_sleep_ms_does_not_return_error ✅ PASSED
+8: Running: test_hal_get_device_info_returns_valid_info ✅ PASSED
+8: Running: test_hal_get_system_uptime_returns_valid_uptime ✅ PASSED
+8: Running: test_hal_get_free_memory_returns_valid_memory ✅ PASSED
+8: Running: test_hal_get_cpu_usage_returns_valid_usage ✅ PASSED
+8: Running: test_hal_get_temperature_returns_valid_temperature ✅ PASSED
+8: Running: test_hal_error_set_and_get_works_correctly ✅ PASSED
+8: Running: test_hal_error_clear_works_correctly ✅ PASSED
+8: Running: test_hal_get_build_info_returns_valid_info ✅ PASSED
+8: Running: test_hal_timestamp_performance ✅ PASSED
+8: Running: test_hal_sleep_accuracy ✅ PASSED
+8: 
+8: ====================
+8: Test Results Summary
+8: ====================
+8: Tests Run: 13
+8: Failures: 0
+8: Ignored: 0
+8: Success Rate: 100.0%
+8: 
+8: ✅ All tests passed!
+ 8/19 Test  #8: test_hal_common ..................   Passed    0.02 sec
+test 9
+      Start  9: test_hal_gpio
+
+9: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_hal_gpio
+9: Test timeout computed to be: 10000000
+9: 
+9: Unity Test Framework
+9: ====================
+9: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hal_gpio.c
+9: 
+9: WARNING: GPIO tests DISABLED due to system reboot issue
+9: GPIO pin 54 conflicts with system-critical hardware
+9: All GPIO tests will be SKIPPED until hardware conflicts resolved
+9: Running: test_hal_gpio_init_returns_success ✅ PASSED
+9: Running: test_hal_gpio_init_already_initialized_returns_already_initialized ✅ PASSED
+9: 
+9: ====================
+9: Test Results Summary
+9: ====================
+9: Tests Run: 2
+9: Failures: 0
+9: Ignored: 0
+9: Success Rate: 100.0%
+9: 
+9: ✅ All tests passed!
+ 9/19 Test  #9: test_hal_gpio ....................   Passed    0.00 sec
+test 10
+      Start 10: test_hal_lidar
+
+10: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_hal_lidar
+10: Test timeout computed to be: 10000000
+10: 
+10: Unity Test Framework
+10: ====================
+10: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hal_lidar.c
+10: 
+10: Running: test_hal_lidar_init_successDEBUG: test_hal_lidar_init_success() called
+10: DEBUG: test_config.device_path = ''
+10: DEBUG: test_config.baud_rate = 0
+10: DEBUG: test_config.scan_rate_hz = 0
+10: DEBUG: Manually setting test_config
+10: DEBUG: test_config set manually - device_path = '/dev/ttyUSB0'
+10:  ✅ PASSED
+10: Running: test_hal_lidar_init_null_config ✅ PASSED
+10: Running: test_hal_lidar_init_invalid_device_path ✅ PASSED
+10: Running: test_hal_lidar_init_invalid_baud_rate ✅ PASSED
+10: Running: test_hal_lidar_init_invalid_scan_rate ✅ PASSED
+10: Running: test_hal_lidar_init_invalid_safety_thresholds ✅ PASSED
+10: Running: test_hal_lidar_double_init ✅ PASSED
+10: Running: test_hal_lidar_deinit_success ✅ PASSED
+10: Running: test_hal_lidar_deinit_not_initialized ✅ PASSED
+10: Running: test_hal_lidar_start_scanning_not_initialized ✅ PASSED
+10: Running: test_hal_lidar_stop_scanning_not_initialized ✅ PASSED
+10: Running: test_hal_lidar_get_scan_data_not_initialized ✅ PASSED
+10: Running: test_hal_lidar_get_scan_data_null_pointer ✅ PASSED
+10: Running: test_hal_lidar_check_safety_not_initialized ✅ PASSED
+10: Running: test_hal_lidar_check_safety_null_pointer ✅ PASSED
+10: Running: test_hal_lidar_get_device_info_not_initialized ✅ PASSED
+10: Running: test_hal_lidar_get_device_info_null_pointer ✅ PASSED
+10: Running: test_hal_lidar_reset_not_initialized ✅ PASSED
+10: Running: test_hal_lidar_health_check_not_initialized ✅ PASSED
+10: Running: test_lidar_calculate_min_distance ✅ PASSED
+10: Running: test_lidar_calculate_min_distance_null_pointer ✅ PASSED
+10: Running: test_lidar_calculate_min_distance_incomplete_scan ✅ PASSED
+10: Running: test_lidar_calculate_max_distance ✅ PASSED
+10: Running: test_lidar_calculate_max_distance_null_pointer ✅ PASSED
+10: Running: test_lidar_calculate_max_distance_incomplete_scan ✅ PASSED
+10: Running: test_lidar_is_obstacle_detected_true ✅ PASSED
+10: Running: test_lidar_is_obstacle_detected_false ✅ PASSED
+10: Running: test_lidar_is_obstacle_detected_null_pointer ✅ PASSED
+10: Running: test_lidar_validate_config_success ✅ PASSED
+10: Running: test_lidar_validate_config_null_pointerDEBUG: config is NULL
+10:  ✅ PASSED
+10: Running: test_lidar_validate_config_empty_device_path ✅ PASSED
+10: Running: test_lidar_validate_config_wrong_baud_rate ✅ PASSED
+10: Running: test_lidar_validate_config_low_scan_rate ✅ PASSED
+10: Running: test_lidar_validate_config_high_scan_rate ✅ PASSED
+10: Running: test_lidar_validate_config_invalid_safety_thresholds ✅ PASSED
+10: Running: test_lidar_constants ✅ PASSED
+10: Running: test_lidar_data_structures ✅ PASSED
+10: 
+10: ====================
+10: Test Results Summary
+10: ====================
+10: Tests Run: 37
+10: Failures: 0
+10: Ignored: 0
+10: Success Rate: 100.0%
+10: 
+10: ✅ All tests passed!
+10/19 Test #10: test_hal_lidar ...................   Passed    0.15 sec
+test 11
+      Start 11: test_hal_rs485
+
+11: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_hal_rs485
+11: Test timeout computed to be: 10000000
+11: 
+11: Unity Test Framework
+11: ====================
+11: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hal_rs485.c
+11: 
+11: Running: test_setup_is_called ✅ PASSED
+11: Running: test_rs485_constants ✅ PASSED
+11: Running: test_modbus_function_codes ✅ PASSED
+11: Running: test_rs485_status_enum ✅ PASSED
+11: Running: test_rs485_data_structures ✅ PASSED
+11: Running: test_modbus_data_structures ✅ PASSED
+11: Running: test_modbus_frame_structure ✅ PASSED
+11: Running: test_rs485_statistics_structure ✅ PASSED
+11: Running: test_rs485_config_initialization ✅ PASSED
+11: Running: test_modbus_config_initialization ✅ PASSED
+11: Running: test_rs485_config_validation ✅ PASSED
+11: Running: test_modbus_config_validation ✅ PASSED
+11: Running: test_rs485_buffer_size_validation ✅ PASSED
+11: Running: test_modbus_address_validation ✅ PASSED
+11: Running: test_modbus_quantity_validation ✅ PASSED
+11: 
+11: ====================
+11: Test Results Summary
+11: ====================
+11: Tests Run: 15
+11: Failures: 0
+11: Ignored: 0
+11: Success Rate: 100.0%
+11: 
+11: ✅ All tests passed!
+11/19 Test #11: test_hal_rs485 ...................   Passed    0.01 sec
+test 12
+      Start 12: test_hal_network
+
+12: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_hal_network
+12: Test timeout computed to be: 10000000
+12: 
+12: Unity Test Framework
+12: ====================
+12: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hal_network.c
+12: 
+12: Running: test_network_constants ✅ PASSED
+12: Running: test_network_protocol_enum ✅ PASSED
+12: Running: test_network_data_structures ✅ PASSED
+12: Running: test_network_config_initialization ❌ FAILED
+12:    File: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hal_network.c:88
+12:    Message: Condition is false: condition is false
+12: Running: test_network_config_validation ❌ FAILED
+12:    File: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hal_network.c:104
+12:    Message: Condition is false: condition is false
+12: Running: test_network_ip_address_validation ✅ PASSED
+12: Running: test_network_port_validation ❌ FAILED
+12:    File: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hal_network.c:134
+12:    Message: Condition is true: condition is true
+12: Running: test_network_interface_name_validation ✅ PASSED
+12: Running: test_network_timeout_validation ✅ PASSED
+12: Running: test_network_retry_count_validation ✅ PASSED
+12: Running: test_network_ip_address_conversion ✅ PASSED
+12: Running: test_network_subnet_validation ✅ PASSED
+12: 
+12: ====================
+12: Test Results Summary
+12: ====================
+12: Tests Run: 12
+12: Failures: 0
+12: Ignored: 0
+12: Success Rate: 100.0%
+12: 
+12: ✅ All tests passed!
+12/19 Test #12: test_hal_network .................   Passed    0.00 sec
+test 13
+      Start 13: test_hal_estop
+
+13: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_hal_estop
+13: Test timeout computed to be: 10000000
+13: 
+13: Unity Test Framework
+13: ====================
+13: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hal_estop.c
+13: 
+13: Running: test_hal_estop_init_successInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_init_null_configDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: CRITICAL SAFETY ERROR: NULL config provided
+13:  ✅ PASSED
+13: Running: test_hal_estop_init_invalid_pinInitializing E-Stop safety system...
+13: CRITICAL SAFETY ERROR: Invalid E-Stop pin 64 (must be 0-63)
+13:  ✅ PASSED
+13: Running: test_hal_estop_init_invalid_debounceInitializing E-Stop safety system...
+13: CRITICAL SAFETY ERROR: Invalid debounce time 0ms (minimum 10ms required)
+13:  ✅ PASSED
+13: Running: test_hal_estop_init_invalid_timeoutInitializing E-Stop safety system...
+13: CRITICAL SAFETY ERROR: Invalid timeout 0ms (minimum 100ms required)
+13:  ✅ PASSED
+13: Running: test_hal_estop_double_initInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13: Initializing E-Stop safety system...
+13:  ✅ PASSED
+13: Running: test_hal_estop_deinit_successDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13: Deinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_hal_estop_deinit_not_initialized ✅ PASSED
+13: Running: test_hal_estop_get_config_successInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_config_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_config_not_initializedDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_status_successInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_status_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_status_not_initializedDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_hal_estop_is_triggered_falseInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_is_triggered_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_is_triggered_not_initializedDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_pin_status_successInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_pin_status_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_test_pin_successDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_test_pin_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_set_callback_successDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_set_callback_not_initializedDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_hal_estop_validate_safety_successInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13: Validating E-Stop safety system...
+13: E-Stop safety validation passed: response time 0 ms
+13:  ✅ PASSED
+13: Running: test_hal_estop_validate_safety_not_initializedDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_hal_estop_check_safety_compliance_successInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13: Validating E-Stop safety system...
+13: E-Stop safety validation passed: response time 0 ms
+13:  ✅ PASSED
+13: Running: test_hal_estop_check_safety_compliance_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_self_test_successDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13: Running E-Stop self-test...
+13: Validating E-Stop safety system...
+13: E-Stop safety validation passed: response time 0 ms
+13: E-Stop self-test passed
+13:  ✅ PASSED
+13: Running: test_hal_estop_self_test_not_initializedDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_diagnostics_successInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_diagnostics_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_validate_hardware_successDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13: Validating E-Stop hardware...
+13: E-Stop hardware validation passed
+13:  ✅ PASSED
+13: Running: test_hal_estop_validate_hardware_not_initializedDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_trigger_count_successInitializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_trigger_count_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_fault_count_successDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_get_fault_count_null_pointerDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_reset_statistics_successDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13: Initializing E-Stop safety system...
+13: E-Stop safety system initialized successfully
+13:  ✅ PASSED
+13: Running: test_hal_estop_reset_statistics_not_initializedDeinitializing E-Stop safety system...
+13: E-Stop safety system deinitialized
+13:  ✅ PASSED
+13: Running: test_estop_constants ✅ PASSED
+13: Running: test_estop_data_structures ✅ PASSED
+13: 
+13: ====================
+13: Test Results Summary
+13: ====================
+13: Tests Run: 41
+13: Failures: 0
+13: Ignored: 0
+13: Success Rate: 100.0%
+13: 
+13: ✅ All tests passed!
+13/19 Test #13: test_hal_estop ...................   Passed    0.02 sec
+test 14
+      Start 14: test_hardware_validation
+
+14: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_hardware_validation
+14: Test timeout computed to be: 10000000
+14: === OHT-50 Master Module Hardware Validation Tests ===
+14: Date: Sep  9 2025
+14: Time: 17:13:44
+14: 
+14: Unity Test Framework
+14: ====================
+14: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hardware_validation.c
+14: 
+14: Running: test_gpio_hardware_validation
+14: === GPIO Hardware Validation Test ===
+14: ❌ GPIO pin 54 directory not found
+14: ❌ Cannot access GPIO export
+14:  ❌ FAILED
+14:    File: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/hal/test_hardware_validation.c:82
+14:    Message: Condition is false: condition is false
+14: Running: test_rs485_hardware_validation
+14: === RS485 Hardware Validation Test ===
+14: ✅ RS485 device /dev/ttyOHT485 exists
+14: ✅ UART1 device /dev/ttyS1 exists
+14:  ✅ PASSED
+14: Running: test_network_hardware_validation
+14: === Network Hardware Validation Test ===
+14: ✅ Network interface eth0 exists
+14:  ✅ PASSED
+14: Running: test_led_hardware_validation
+14: === LED Hardware Validation Test ===
+14:  ✅ PASSED
+14: Running: test_estop_hardware_validation
+14: === E-Stop Hardware Validation Test ===
+14:  ✅ PASSED
+14: Running: test_relay_hardware_validation
+14: === Relay Hardware Validation Test ===
+14:  ✅ PASSED
+14: Running: test_system_resources_validation
+14: === System Resources Validation Test ===
+14: ✅ System memory: 8125332 KB
+14: ✅ CPU cores: 8
+14:  ✅ PASSED
+14: 
+14: === Test Summary ===
+14: Total tests: 0
+14: Passed: 5
+14: Failed: 2
+14: Success rate: inf%
+14: ❌ Some hardware validation tests FAILED!
+14: 
+14: ====================
+14: Test Results Summary
+14: ====================
+14: Tests Run: 7
+14: Failures: 0
+14: Ignored: 0
+14: Success Rate: 100.0%
+14: 
+14: ✅ All tests passed!
+14/19 Test #14: test_hardware_validation .........   Passed    0.00 sec
+test 15
+      Start 15: test_communication_manager
+
+15: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_communication_manager
+15: Test timeout computed to be: 10000000
+15: 
+15: Unity Test Framework
+15: ====================
+15: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/app/test_communication_manager.c
+15: 
+15: Running: test_communication_status_constants ✅ PASSED
+15: Running: test_communication_error_constants ✅ PASSED
+15: Running: test_modbus_exception_constants ✅ PASSED
+15: Running: test_communication_event_constants ✅ PASSED
+15: Running: test_communication_manager_data_structures ✅ PASSED
+15: Running: test_communication_manager_config_initialization ✅ PASSED
+15: Running: test_communication_manager_status_initialization ✅ PASSED
+15: Running: test_communication_manager_stats_initialization ✅ PASSED
+15: Running: test_communication_manager_config_validation ✅ PASSED
+15: Running: test_communication_manager_request_validation ✅ PASSED
+15: Running: test_communication_manager_response_validation ✅ PASSED
+15: Running: test_communication_manager_status_names ✅ PASSED
+15: Running: test_communication_manager_error_names ✅ PASSED
+15: Running: test_communication_manager_function_code_names ✅ PASSED
+15: Running: test_communication_manager_exception_code_names ✅ PASSED
+15: 
+15: ====================
+15: Test Results Summary
+15: ====================
+15: Tests Run: 15
+15: Failures: 0
+15: Ignored: 0
+15: Success Rate: 100.0%
+15: 
+15: ✅ All tests passed!
+15/19 Test #15: test_communication_manager .......   Passed    0.00 sec
+test 16
+      Start 16: test_telemetry_manager
+
+16: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_telemetry_manager
+16: Test timeout computed to be: 10000000
+16: 
+16: Unity Test Framework
+16: ====================
+16: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/app/test_telemetry_manager.c
+16: 
+16: Running: test_telemetry_status_constants ✅ PASSED
+16: Running: test_telemetry_event_constants ✅ PASSED
+16: Running: test_location_status_constants ✅ PASSED
+16: Running: test_navigation_status_constants ✅ PASSED
+16: Running: test_dock_status_constants ✅ PASSED
+16: Running: test_encoder_health_constants ✅ PASSED
+16: Running: test_telemetry_data_structures ✅ PASSED
+16: Running: test_telemetry_manager_initialization[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Already initialized, returning
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_custom_config[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using provided config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_update_location[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_update_navigation[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_update_dock[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_update_safety[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_update_status[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_event_callback[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_safety_alert_event[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_json_serialization[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_statistics[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: Running: test_telemetry_manager_error_handling[TELEMETRY] telemetry_manager_init called
+16: [TELEMETRY] Using default config
+16: [TELEMETRY] Initialization complete
+16: [TELEMETRY] telemetry_manager_deinit called
+16: [TELEMETRY] Deinitialization complete
+16:  ✅ PASSED
+16: 
+16: ====================
+16: Test Results Summary
+16: ====================
+16: Tests Run: 19
+16: Failures: 0
+16: Ignored: 0
+16: Success Rate: 100.0%
+16: 
+16: ✅ All tests passed!
+16/19 Test #16: test_telemetry_manager ...........   Passed    0.00 sec
+test 17
+      Start 17: test_safety_monitor_latency
+
+17: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_safety_monitor_latency
+17: Test timeout computed to be: 10000000
+17: 
+17: Unity Test Framework
+17: ====================
+17: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/app/test_safety_monitor_latency.c
+17: 
+17: Running: test_estop_latency_under_50ms_on_eventInitializing E-Stop safety system...
+17: E-Stop safety system initialized successfully
+17: Initializing LED system...
+17: Failed to export GPIO pin 54
+17:  ❌ FAILED
+17:    File: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/app/test_safety_monitor_latency.c:47
+17:    Message: Values not equal: expected 0, got -2
+17: 
+17: ====================
+17: Test Results Summary
+17: ====================
+17: Tests Run: 1
+17: Failures: 3
+17: Ignored: 0
+17: Success Rate: -200.0%
+17: 
+17: ❌ Some tests failed!
+17/19 Test #17: test_safety_monitor_latency ......***Failed    0.00 sec
+test 18
+      Start 18: test_control_loop_timing
+
+18: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_control_loop_timing
+18: Test timeout computed to be: 10000000
+18: 
+18: Unity Test Framework
+18: ====================
+18: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/app/test_control_loop_timing.c
+18: 
+18: Running: test_control_loop_update_under_100msTest config: control_frequency=100.000000, sample_time=0.010000
+18: Config validation passed
+18: Control loop initialized successfully
+18: Control loop init status: 0
+18: Control loop enabled
+18: Control loop enable status: 0
+18: Control mode set to: VELOCITY
+18: Control loop mode status: 0
+18: Control loop target status: 0
+18: [CONTROL] Output: 49.640 -> Actuator: 0.100
+18: Control loop update status: 0
+18:  ✅ PASSED
+18: Running: test_control_loop_respects_position_limitsConfig validation passed
+18: Control loop enabled
+18: Control mode set to: POSITION
+18:  ✅ PASSED
+18: 
+18: ====================
+18: Test Results Summary
+18: ====================
+18: Tests Run: 2
+18: Failures: 0
+18: Ignored: 0
+18: Success Rate: 100.0%
+18: 
+18: ✅ All tests passed!
+18/19 Test #18: test_control_loop_timing .........   Passed    0.00 sec
+test 19
+      Start 19: test_telemetry_json_fields
+
+19: Test command: /home/orangepi/Desktop/OHT_V2/firmware_new/build/tests/unit/test_telemetry_json_fields
+19: Test timeout computed to be: 10000000
+19: 
+19: Unity Test Framework
+19: ====================
+19: Running tests from: /home/orangepi/Desktop/OHT_V2/firmware_new/tests/unit/app/test_telemetry_json_fields.c
+19: 
+19: Running: test_telemetry_json_contains_core_fields[TELEMETRY] telemetry_manager_init called
+19: [TELEMETRY] Using default config
+19: [TELEMETRY] Initialization complete
+19:  ✅ PASSED
+19: 
+19: ====================
+19: Test Results Summary
+19: ====================
+19: Tests Run: 1
+19: Failures: 0
+19: Ignored: 0
+19: Success Rate: 100.0%
+19: 
+19: ✅ All tests passed!
+19/19 Test #19: test_telemetry_json_fields .......   Passed    0.00 sec
+
+95% tests passed, 1 tests failed out of 19
+
+Total Test time (real) =  30.37 sec
+
+The following tests FAILED:
+	 17 - test_safety_monitor_latency (Failed)
