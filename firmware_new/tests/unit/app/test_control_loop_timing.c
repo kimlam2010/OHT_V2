@@ -17,14 +17,7 @@ void setUp(void)
     cfg.control_frequency = 100.0f;
     cfg.sample_time = 0.01f;
     
-    // Position PID
-    cfg.position_pid.kp = 1.0f;
-    cfg.position_pid.ki = 0.0f;
-    cfg.position_pid.kd = 0.0f;
-    cfg.position_pid.output_min = -100.0f;
-    cfg.position_pid.output_max = 100.0f;
-    cfg.position_pid.integral_min = -10.0f;
-    cfg.position_pid.integral_max = 10.0f;
+    // Position PID removed in velocity-only mode
     
     // Velocity PID (copy from position)
     cfg.velocity_pid.kp = 1.0f;
@@ -65,14 +58,7 @@ void test_control_loop_update_under_100ms(void)
     test_cfg.control_frequency = 100.0f;
     test_cfg.sample_time = 0.01f;
     
-    // Position PID
-    test_cfg.position_pid.kp = 1.0f;
-    test_cfg.position_pid.ki = 0.0f;
-    test_cfg.position_pid.kd = 0.0f;
-    test_cfg.position_pid.output_min = -100.0f;
-    test_cfg.position_pid.output_max = 100.0f;
-    test_cfg.position_pid.integral_min = -10.0f;
-    test_cfg.position_pid.integral_max = 10.0f;
+    // Position PID removed
     
     // Velocity PID
     test_cfg.velocity_pid.kp = 1.0f;
@@ -140,14 +126,7 @@ void test_control_loop_respects_position_limits(void)
     test_cfg.control_frequency = 100.0f;
     test_cfg.sample_time = 0.01f;
     
-    // Position PID
-    test_cfg.position_pid.kp = 1.0f;
-    test_cfg.position_pid.ki = 0.0f;
-    test_cfg.position_pid.kd = 0.0f;
-    test_cfg.position_pid.output_min = -100.0f;
-    test_cfg.position_pid.output_max = 100.0f;
-    test_cfg.position_pid.integral_min = -10.0f;
-    test_cfg.position_pid.integral_max = 10.0f;
+    // Position PID removed
     
     // Velocity PID
     test_cfg.velocity_pid.kp = 1.0f;
@@ -173,8 +152,8 @@ void test_control_loop_respects_position_limits(void)
     
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, control_loop_init(&test_cfg));
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, control_loop_enable());
-    TEST_ASSERT_EQUAL(HAL_STATUS_OK, control_loop_set_mode(CONTROL_MODE_POSITION));
-    (void)control_loop_set_target_position(20000.0f); // beyond max
+    TEST_ASSERT_EQUAL(HAL_STATUS_OK, control_loop_set_mode(CONTROL_MODE_VELOCITY));
+    (void)control_loop_set_target_velocity(2000.0f);
 
     (void)control_loop_update();
 

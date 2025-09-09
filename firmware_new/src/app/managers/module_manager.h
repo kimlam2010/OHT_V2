@@ -127,6 +127,12 @@ typedef struct {
     uint32_t response_timeout_ms;  // Response timeout
     uint32_t retry_count;          // Retry count
     uint32_t config_flags;         // Configuration flags
+    uint32_t offline_threshold_ms; // Mark offline after this threshold
+    uint8_t health_jitter_percent; // Jitter +/- percent for scheduling
+    // Circuit-breaker/backoff parameters
+    uint8_t cb_fail_threshold;     // Failures before breaker opens (e.g., 3)
+    uint32_t cb_base_cooldown_ms;  // Base cooldown (e.g., 1000 ms)
+    uint32_t cb_max_cooldown_ms;   // Max cooldown cap (e.g., 30000 ms)
 } module_config_t;
 
 // Module Statistics Structure
@@ -180,6 +186,12 @@ hal_status_t module_manager_set_callback(module_event_callback_t callback);
 // Statistics
 hal_status_t module_manager_get_statistics(module_stats_t *stats);
 hal_status_t module_manager_reset_statistics(void);
+
+// Configuration accessors
+hal_status_t module_manager_get_config(module_config_t *out_config);
+hal_status_t module_manager_set_config(const module_config_t *in_config);
+int module_manager_load_config_from_yaml(const char *path);
+void module_manager_get_scan_range(uint8_t *start_addr, uint8_t *end_addr);
 
 // Utility Functions
 const char* module_manager_get_type_name(module_type_t type);

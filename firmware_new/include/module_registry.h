@@ -96,6 +96,12 @@ void registry_set_event_callback(module_event_callback_t cb);
 int registry_load_yaml(const char *path);
 int registry_save_yaml(const char *path);
 
+// Versioned registry schema (simple)
+#define REGISTRY_SCHEMA_VERSION 1
+int registry_get_schema_version(void);
+void registry_set_schema_version(int v);
+int registry_migrate_if_needed(int from_version, int to_version);
+
 // Scan state (for LED policy)
 void registry_set_scanning(bool scanning);
 bool registry_is_scanning(void);

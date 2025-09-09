@@ -475,11 +475,14 @@ static void collect_system_data(telemetry_data_t *data) {
 static void collect_control_data(telemetry_data_t *data) {
     control_status_t cs;
     if (control_loop_get_status(&cs) == HAL_STATUS_OK) {
-        data->status.pos_mm = cs.current_position;
+        // Velocity-only architecture: position from estimator_1d, velocity from control loop
+        #include "../core/estimator_1d.h"
+        est1d_state_t est = {0};
+        (void)estimator_1d_get_state(&est);
+        data->status.pos_mm = est.x_est_mm;
         data->status.vel_mms = cs.current_velocity;
-        // Acceleration not tracked in control status; leave as previous or zero
-        // Targets
-        data->status.target.pos_mm = cs.target_position;
+        // Targets (position target removed)
+        data->status.target.pos_mm = est.x_est_mm;
         data->status.target.vel_mms = cs.target_velocity;
     }
 }
