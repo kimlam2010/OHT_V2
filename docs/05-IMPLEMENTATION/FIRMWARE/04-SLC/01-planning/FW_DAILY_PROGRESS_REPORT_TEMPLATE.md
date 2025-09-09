@@ -1,0 +1,43 @@
+# MẪU BÁO CÁO TIẾN ĐỘ HẰNG NGÀY – FW TEAM
+
+Phiên bản: 1.0  
+Ngày cập nhật: 2025-09-09
+
+---
+
+## 1) Thông tin chung
+- Ngày: YYYY‑MM‑DD (Thứ …)
+- Sprint: Sx – Gate: A/B/C/D/E/F
+- Hạng mục chính: … (vd: Estimator 1D, VELOCITY + amax/jmax, Docking, API)
+- Owner: Dev1/Dev2/Dev3/Dev4, QA, Lead
+
+## 2) Cập nhật 10:00 (AM Update)
+- Tiến độ: …
+- Vấn đề/blockers: …
+- Hành động tức thời: …
+
+## 3) Cập nhật 17:00 (PM Update)
+- Tiến độ: …
+- Vấn đề/blockers: …
+- Hành động hôm sau: …
+
+## 4) KPI & Kết quả đo (nếu có)
+- E‑Stop p95 (ms): …  | WARNING reaction (chu kỳ): …
+- Soak: thời lượng, trạng thái, ghi chú: …
+- Discovery p95/p99 (nếu bật RS485): … | Timeout %: … | CRC %: …
+
+## 5) Artifacts đính kèm (đường dẫn)
+- Logs: …
+- Reports: …
+- CTest: …
+
+## 6) Checklist ngắn (tick những mục hoàn tất)
+- [ ] Gate hiện tại hoàn tất tiêu chí
+- [ ] Không dùng mock runtime
+- [ ] Safety đạt KPI
+- [ ] Telemetry/Diagnostics đầy đủ
+
+## 7) Ghi chú khác
+- …
+
+
