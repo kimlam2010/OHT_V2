@@ -154,11 +154,11 @@ html {
 }
 
 /* Large Desktop */
-@media (min-width: 1280px) {
+/* @media (min-width: 1280px) {
   html {
     font-size: 18px;
   }
-}
+} */
 
 #nprogress .bar {
   background: var(--primary) !important;
