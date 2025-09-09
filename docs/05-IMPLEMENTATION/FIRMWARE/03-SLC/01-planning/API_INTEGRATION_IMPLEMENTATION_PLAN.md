@@ -33,26 +33,42 @@ Implement lại hoàn toàn hệ thống API cho OHT-50 Master Module theo đún
 
 ---
 
-## 🎯 **Phase 1: Foundation & Core API Manager (Week 1-2)**
-**ALIGNED WITH PROJECT SPRINT 1: Firmware HTTP Server**
+## 🚨 **CRITICAL ISSUE IDENTIFIED - IMMEDIATE ACTION REQUIRED**
 
-### **Task 1.1: API Manager Core Structure**
-**Thời gian:** 3 ngày  
+### **Issue: API Manager NOT Integrated vào main.c**
+- **Problem:** API Manager implemented but not used in main.c
+- **Root Cause:** main.c still uses Communication Manager API placeholders
+- **Impact:** FW cannot communicate with BE, blocking development
+- **Priority:** CRITICAL
+- **Timeline:** 3 days to fix
+
+---
+
+## 🎯 **Phase 1: CRITICAL FIX - API Manager Integration (IMMEDIATE)**
+**ALIGNED WITH PROJECT SPRINT 1: CRITICAL FIX - FW-BE Communication**
+
+### **Task 1.1: Integrate API Manager vào main.c**
+**Thời gian:** 1 ngày  
 **Responsible:** FW Team  
 **Dependencies:** None  
-**Project Sprint:** Sprint 1 - Firmware HTTP Server
+**Project Sprint:** Sprint 1 - CRITICAL FIX
+**Priority:** CRITICAL
 
 **Deliverables:**
-- `src/app/api/api_manager.h` - Core API Manager interface
-- `src/app/api/api_manager.c` - Core API Manager implementation
-- Basic data structures và enums
-- Configuration management
-- Status tracking
+- **CRITICAL:** Replace Communication Manager API calls trong main.c
+- **CRITICAL:** Add API Manager init/start vào main.c
+- **CRITICAL:** Update main loop với API Manager processing
+- **CRITICAL:** Remove API placeholder functions
+- **CRITICAL:** Enable real HTTP/WebSocket servers
 
 **Acceptance Criteria:**
-- [ ] API Manager có thể init/deinit
-- [ ] Configuration management hoạt động
-- [ ] Status tracking hoạt động
+- [ ] **CRITICAL:** FW starts without errors
+- [ ] **CRITICAL:** Port 8080 actually listening (not simulated)
+- [ ] **CRITICAL:** Port 8081 actually listening (not simulated)
+- [ ] **CRITICAL:** API endpoints respond to HTTP requests
+- [ ] **CRITICAL:** WebSocket connections work
+- [ ] **CRITICAL:** BE can communicate with FW
+- [ ] **CRITICAL:** End-to-end communication validated
 - [ ] Basic error handling
 
 ### **Task 1.2: HTTP Server Foundation**
