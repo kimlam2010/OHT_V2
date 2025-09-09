@@ -18,10 +18,7 @@
 // Control modes
 typedef enum {
     CONTROL_MODE_IDLE = 0,      // No control
-    CONTROL_MODE_POSITION,      // Position control
     CONTROL_MODE_VELOCITY,      // Velocity control
-    CONTROL_MODE_TORQUE,        // Torque control
-    CONTROL_MODE_HOMING,        // Homing mode
     CONTROL_MODE_EMERGENCY      // Emergency stop
 } control_mode_t;
 
@@ -58,7 +55,6 @@ typedef struct {
 typedef struct {
     float control_frequency;    // Control loop frequency (Hz)
     float sample_time;          // Sample time (s)
-    pid_params_t position_pid;  // Position PID parameters
     pid_params_t velocity_pid;  // Velocity PID parameters
     motion_profile_t profile;   // Motion profile
     bool enable_limits;         // Enable position/velocity limits
@@ -71,12 +67,9 @@ typedef struct {
 typedef struct {
     control_state_t state;      // Current control state
     control_mode_t mode;        // Current control mode
-    float target_position;      // Target position (mm)
-    float current_position;     // Current position (mm)
     float target_velocity;      // Target velocity (mm/s)
     float current_velocity;     // Current velocity (mm/s)
     float control_output;       // Control output
-    float position_error;       // Position error (mm)
     float velocity_error;       // Velocity error (mm/s)
     uint32_t cycle_count;       // Control cycle count
     uint64_t last_update_time;  // Last update time (us)

@@ -12,6 +12,16 @@ echo "Date: $(date)"
 echo "Build Directory: $(pwd)"
 echo ""
 
+# Change to build directory if not already there
+if [ ! -d "build" ]; then
+    echo "❌ ERROR: build directory not found. Please run from firmware_new root directory."
+    exit 1
+fi
+
+cd build
+echo "Changed to build directory: $(pwd)"
+echo ""
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

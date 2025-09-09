@@ -1,94 +1,102 @@
 # Firmware Documentation Index - OHT-50
 
-**Phiên bản:** 2.0  
+**Phiên bản:** 3.0  
 **Ngày cập nhật:** 2025-01-28  
-**Mục tiêu:** Master index cho firmware documentation - CLEANED UP
+**Mục tiêu:** Master index cho firmware documentation - CLEANED UP & OPTIMIZED
 
 ---
 
-## 📋 **Quick Navigation**
+## 📋 **Tài liệu chính (Sau khi dọn dẹp & sắp xếp lại)**
 
-### **Core Documentation:**
-- [QMS Documentation](01-QMS/) - Quality Management System
-- [HAL Documentation](02-HAL/) - Hardware Abstraction Layer
-- [Requirements Documentation](02-REQUIREMENTS/) - Firmware Requirements
-- [Risk Assessment](02-RISK/) - Risk Analysis & Mitigation
-- [SLC Documentation](03-SLC/) - System Life Cycle
-- [Safety Documentation](04-SAFETY/) - Safety Systems
-- [Quality Documentation](05-QUALITY/) - Quality Assurance
-- [Issues Documentation](ISSUES/) - Bug Tracking & Issues
+### **🎯 Quản lý chất lượng:**
+- [01-QMS](01-QMS/) - Quality Management System cho firmware
 
-### **Implementation Documentation:**
-- [API Documentation](07-API/) - API Specifications & Implementation
-- [Module Documentation](08-MODULES/) - Module Specifications
-- [Testing Documentation](09-TESTING/) - Testing Procedures
-- [Reference Materials](10-REFERENCES/) - Technical References
+### **🔧 Hardware Abstraction Layer:**
+- [02-HAL](02-HAL/) - Hardware Abstraction Layer documentation
+
+### **📝 Yêu cầu firmware:**
+- [03-REQUIREMENTS](03-REQUIREMENTS/) - Firmware requirements và specifications
+
+### **🔄 Vòng đời hệ thống:**
+- [04-SLC](04-SLC/) - System Life Cycle planning và implementation
+
+### **🛡️ Hệ thống an toàn:**
+- [05-SAFETY](05-SAFETY/) - Safety systems và configuration
+
+### **✅ Đảm bảo chất lượng:**
+- [06-QUALITY](06-QUALITY/) - Quality assurance và testing
 
 ---
 
-## 🎯 **Current Status**
+## 🎯 **Current Status (Sau khi dọn dẹp)**
 
 ### **✅ COMPLETED:**
-- Documentation structure cleaned up
-- Duplicate files removed
-- Consolidated location established
-- Symlink created for backward compatibility
+- ✅ Xóa tất cả thư mục không liên quan đến firmware
+- ✅ Xóa các file công việc đã hoàn thành
+- ✅ Xóa các file có tên cú pháp sai
+- ✅ Cấu trúc documentation được tối ưu hóa
+- ✅ Chỉ giữ lại các tài liệu cần thiết cho firmware
 
 ### **📊 STATISTICS:**
-- **Total Files:** 46 markdown files
-- **Structure:** 10 main directories
-- **Status:** Clean and organized
+- **Total Directories:** 6 main directories (giảm từ 10)
+- **Focus:** Chỉ firmware-related documentation
+- **Status:** Clean, organized, và optimized
 
 ---
 
 ## 🔗 **Integration**
 
 ### **Project Integration:**
-- **Main Location:** `/docs/05-IMPLEMENTATION/FIRMWARE/`
-- **Firmware Access:** `/firmware_new/docs/` (symlink)
-- **Project SLC:** Integrated with `/docs/03-ARCHITECTURE/architecture/SLC_PLANNING_OHT-50.md`
+- **Main Location:** `/firmware_new/docs/` (cleaned up)
+- **Project SLC:** Integrated with main project architecture
+- **ISO Standards:** ISO12207 compliance maintained
 
 ### **Team Access:**
-- **FW Team:** Use `/firmware_new/docs/` (symlink)
-- **Other Teams:** Use `/docs/05-IMPLEMENTATION/FIRMWARE/`
-- **PM/CTO:** Use main project docs structure
+- **FW Team:** Use `/firmware_new/docs/` (optimized structure)
+- **Other Teams:** Access through main project docs
+- **PM/CTO:** Use consolidated documentation structure
 
 ---
 
-## 📚 **Key Documents**
+## 📚 **Key Documents (Sau khi dọn dẹp)**
 
 ### **Planning & Implementation:**
-- [API Integration Implementation Plan](03-SLC/01-planning/API_INTEGRATION_IMPLEMENTATION_PLAN.md)
-- [Firmware Development Plan Phase 3](03-SLC/01-planning/FW_DEVELOPMENT_PLAN_PHASE3.md)
-- [Module Manager Implementation Plan](03-SLC/01-planning/MODULE_MANAGER_IMPLEMENTATION_PLAN.md)
+- [API Integration Implementation Plan](04-SLC/API_INTEGRATION_IMPLEMENTATION_PLAN.md)
+- [Firmware Implementation Plan](04-SLC/OHT50_FIRMWARE_IMPLEMENTATION_PLAN.md)
 
 ### **Requirements & Specifications:**
-- [RS485 HAL Specification](02-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_RS485_HAL_SPECIFICATION.md)
-- [Module Discovery Specification](02-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_MODULE_DISCOVERY_SPECIFICATION.md)
-- [Module Management Specification](02-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_MODULE_MANAGEMENT_SPECIFICATION.md)
+- [RS485 HAL Specification](03-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_RS485_HAL_SPECIFICATION.md)
+- [Module Discovery Specification](03-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_MODULE_DISCOVERY_SPECIFICATION.md)
+- [Module Management Specification](03-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_MODULE_MANAGEMENT_SPECIFICATION.md)
+- [API Integration Specification](03-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/REQ_API_INTEGRATION_SPECIFICATION.md)
 
 ### **Quality & Safety:**
 - [Quality Policy](01-QMS/01-policies/quality_policy.md)
-- [Safety Configuration Guide](04-SAFETY/03-safety-configuration/SAFETY_CONFIGURATION_GUIDE.md)
-- [QA/QC Firmware Report](05-QUALITY/01-qa-reports/QA_QC_FIRMWARE_REPORT.md)
+- [Safety Configuration Guide](05-SAFETY/03-safety-configuration/SAFETY_CONFIGURATION_GUIDE.md)
+- [QA/QC Firmware Report](06-QUALITY/01-qa-reports/QA_QC_FIRMWARE_REPORT.md)
+
+### **ISO Standards:**
+- [ISO12207 Inventory](ISO12207_INVENTORY.md)
+- [ISO12207 Mapping](ISO12207_MAPPING.md)
 
 ---
 
 ## 🚀 **Next Steps**
 
-1. **FW Team:** Continue implementation using clean documentation structure
-2. **PM:** Monitor progress using consolidated documentation
-3. **CTO:** Review architecture decisions using integrated SLC planning
-4. **All Teams:** Use single source of truth for firmware documentation
+1. **FW Team:** Continue implementation using optimized documentation structure
+2. **PM:** Monitor progress using clean và focused documentation
+3. **CTO:** Review architecture decisions using streamlined documentation
+4. **All Teams:** Use clean và organized firmware documentation
 
 ---
 
-**Changelog v2.0:**
-- ✅ Removed duplicate documentation structure
-- ✅ Consolidated all firmware docs to single location
-- ✅ Created clean symlink for backward compatibility
-- ✅ Updated master index with current status
-- ✅ Integrated with project SLC planning
-- ✅ Established single source of truth
+**Changelog v3.0:**
+- ✅ Xóa tất cả thư mục không liên quan đến firmware
+- ✅ Xóa các file công việc đã hoàn thành
+- ✅ Xóa các file có tên cú pháp sai
+- ✅ Tối ưu hóa cấu trúc documentation
+- ✅ Chỉ giữ lại các tài liệu cần thiết cho firmware
+- ✅ Sắp xếp lại thư mục theo thứ tự logic (01-06)
+- ✅ Cập nhật README với cấu trúc mới
 
-**🚨 Lưu ý:** Documentation structure đã được cleaned up. Tất cả teams sử dụng single source of truth tại `/docs/05-IMPLEMENTATION/FIRMWARE/`.
+**🚨 Lưu ý:** Documentation structure đã được dọn dẹp và tối ưu hóa. Chỉ giữ lại các tài liệu liên quan đến firmware development.

@@ -9,6 +9,7 @@ static module_info_t g_modules[MODULE_REGISTRY_MAX_MODULES];
 static size_t g_count = 0;
 static module_event_callback_t g_event_cb = NULL;
 static bool g_scanning = false;
+static int g_schema_version = REGISTRY_SCHEMA_VERSION;
 
 // Registry-specific callback type (for backward compatibility)
 typedef void (*registry_event_callback_t)(module_event_t event, uint8_t address, const module_info_t *info);
@@ -216,17 +217,25 @@ int registry_load_yaml(const char *path) {
     // Simulate YAML parsing - read file and extract module configurations
     char line[256];
     int modules_loaded = 0;
+    int file_schema_version = REGISTRY_SCHEMA_VERSION;
     
     while (fgets(line, sizeof(line), file) != NULL) {
         // Simulate parsing YAML lines
         if (strstr(line, "module_id:") != NULL) {
             modules_loaded++;
         }
+        unsigned v;
+        if (sscanf(line, "schema_version: %u", &v) == 1) {
+            file_schema_version = (int)v;
+        }
     }
     
     fclose(file);
-    
-    printf("[REGISTRY] YAML loaded: %d modules configured\n", modules_loaded);
+    if (file_schema_version != g_schema_version) {
+        printf("[REGISTRY] Schema mismatch: file=%d current=%d -> migrating...\n", file_schema_version, g_schema_version);
+        (void)registry_migrate_if_needed(file_schema_version, g_schema_version);
+    }
+    printf("[REGISTRY] YAML loaded: %d modules configured (schema=%d)\n", modules_loaded, g_schema_version);
     return modules_loaded;
 }
 
@@ -249,6 +258,7 @@ int registry_save_yaml(const char *path) {
     // Simulate YAML generation - write module configurations
     fprintf(file, "# OHT-50 Module Registry Configuration\n");
     fprintf(file, "# Generated on: %s\n", __DATE__ " " __TIME__);
+    fprintf(file, "schema_version: %d\n", g_schema_version);
     fprintf(file, "\n");
     
     // Write module configurations
@@ -280,4 +290,13 @@ void registry_set_scanning(bool scanning) {
 
 bool registry_is_scanning(void) {
     return g_scanning;
+}
+
+int registry_get_schema_version(void){ return g_schema_version; }
+void registry_set_schema_version(int v){ g_schema_version = v; }
+int registry_migrate_if_needed(int from_version, int to_version){
+    if (from_version == to_version) return 0;
+    // Placeholder: in future, transform structure/content as needed
+    printf("[REGISTRY] Migrated registry schema from %d to %d (noop)\n", from_version, to_version);
+    return 0;
 }

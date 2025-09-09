@@ -6,6 +6,7 @@ add_library(app_core STATIC
     system_state_machine.c
     control_loop.c
     safety_monitor.c
+    estimator_1d.c
     system_controller.c
 )
 

@@ -24,6 +24,8 @@
 #include "module_polling_manager.h"
 #include "power_module_handler.h"
 #include "travel_motor_module_handler.h"
+#include "api_manager.h"
+#include "api_endpoints.h"
 #include "constants.h"
 
 static volatile sig_atomic_t g_should_run = 1;
@@ -107,12 +109,16 @@ int main(int argc, char **argv) {
         // E-Stop subsystem
         estop_config_t estop_cfg = {
             .pin = ESTOP_PIN,
-            .response_timeout_ms = 50,
+            .response_timeout_ms = 100,
             .debounce_time_ms = ESTOP_DEBOUNCE_TIME_MS,
             .auto_reset_enabled = false
         };
         if (hal_estop_init(&estop_cfg) != HAL_STATUS_OK) {
             fprintf(stderr, "[OHT-50] hal_estop_init failed\n");
+        } else {
+            // Register callback and run self-test
+            (void)hal_estop_set_callback(NULL);
+            (void)hal_estop_self_test();
         }
 
         // RS485 subsystem (best-effort init)
@@ -182,6 +188,12 @@ int main(int argc, char **argv) {
             printf("[MAIN] WARNING: module_manager_init failed (status=%d), continuing...\n", module_status);
         } else {
             printf("[MAIN] Module manager initialized successfully\n");
+            // Load YAML config for module manager if available
+            (void)module_manager_load_config_from_yaml("/etc/oht50/modules.yaml");
+            module_config_t cfg; if (module_manager_get_config(&cfg)==HAL_STATUS_OK){
+                printf("[MAIN] Module cfg: health=%ums offline=%ums retry=%u resp_to=%u jitter=%u\n",
+                    cfg.health_check_interval_ms, cfg.offline_threshold_ms, cfg.retry_count, cfg.response_timeout_ms, cfg.health_jitter_percent);
+            }
         }
 
         // Initialize Module Polling Manager
@@ -229,7 +241,7 @@ int main(int argc, char **argv) {
     // 2) Initialize Safety Manager
     safety_config_t safety_cfg = {
         .estop_pin = ESTOP_PIN,
-        .response_time_ms = 50,
+        .response_time_ms = 100,
         .debounce_time_ms = 10,
         .safety_check_interval_ms = SAFETY_CHECK_INTERVAL_MS,
         .fault_clear_timeout_ms = 5000,
@@ -285,32 +297,32 @@ int main(int argc, char **argv) {
         printf("[OHT-50] DRY-RUN: Skipping system_state_machine_init\n");
     }
 
-    // 4) Initialize Communication Manager API Server
+    // 4) Initialize API Manager (Minimal HTTP Server)
     if (!g_dry_run) {
-        comm_mgr_api_config_t api_config = {
-            .websocket_port = 8080,
-            .http_port = 8081,
-            .max_connections = 10,
-            .heartbeat_interval_ms = 5000,
-            .connection_timeout_ms = 30000,
-            .enable_ssl = false,
-            .ssl_cert_path = "",
-            .ssl_key_path = ""
+        api_mgr_config_t api_config = {
+            .http_port = 8080
         };
         
-        if (comm_manager_init_api_server(&api_config) != HAL_STATUS_OK) {
-            fprintf(stderr, "[OHT-50] comm_manager_init_api_server failed (continuing)\n");
+        int api_result = api_manager_init(&api_config);
+        if (api_result != 0) {
+            fprintf(stderr, "[OHT-50] ❌ API Manager init failed: %d (continuing)\n", api_result);
         } else {
-            printf("[OHT-50] Communication Manager API server initialized\n");
+            printf("[OHT-50] ✅ API Manager initialized\n");
             
-            if (comm_manager_start_api_server() != HAL_STATUS_OK) {
-                fprintf(stderr, "[OHT-50] comm_manager_start_api_server failed (continuing)\n");
+            api_result = api_manager_start();
+            if (api_result != 0) {
+                fprintf(stderr, "[OHT-50] ❌ API Manager start failed: %d (continuing)\n", api_result);
             } else {
-                printf("[OHT-50] Communication Manager API server started\n");
+                printf("[OHT-50] ✅ API Manager started on port 8080 (HTTP)\n");
+                
+                // Register Minimal API v1 endpoints
+                extern int api_register_minimal_endpoints(void);
+                (void)api_register_minimal_endpoints();
+                printf("[OHT-50] ✅ Minimal API v1 endpoints registered\n");
             }
         }
     } else {
-        printf("[OHT-50] DRY-RUN: Skipping Communication Manager API server initialization\n");
+        printf("[OHT-50] DRY-RUN: Skipping API Manager initialization\n");
     }
 
     // 5) Initialize Module Registry and load YAML configuration
@@ -341,6 +353,10 @@ int main(int argc, char **argv) {
     uint64_t last_comm_poll_ms = now_ms();
     uint64_t last_discovery_poll_ms = now_ms();
     uint64_t last_motor_poll_ms = now_ms();
+    (void)last_power_poll_ms;
+    (void)last_comm_poll_ms;
+    (void)last_discovery_poll_ms;
+    (void)last_motor_poll_ms;
     uint64_t last_module_manager_poll_ms = now_ms();
     bool heartbeat_on = false;
 
@@ -351,6 +367,7 @@ int main(int argc, char **argv) {
     // Motor module handler instance
     motor_module_handler_t motor_handler;
     bool motor_handler_initialized = false;
+    (void)motor_handler_initialized;
 
     // Target: reach IDLE in <= 120s
     uint64_t startup_deadline_ms = now_ms() + STARTUP_DEADLINE_MS;
@@ -449,6 +466,8 @@ int main(int argc, char **argv) {
         if (!g_dry_run) {
             (void)safety_manager_update();
         }
+        
+        // API Manager is event-driven, no processing loop needed
 
         // System Controller update (every 100ms) - only if initialized
         if (!g_dry_run) {
@@ -609,8 +628,10 @@ int main(int argc, char **argv) {
     // Graceful shutdown
     if (!g_dry_run) {
         // Stop Communication Manager API Server
-        printf("[OHT-50] Stopping Communication Manager API server...\n");
-        (void)comm_manager_stop_api_server();
+        printf("[OHT-50] Stopping API Manager...\n");
+        // Minimal API does not allocate endpoint resources; no-op
+        (void)api_manager_stop();
+        (void)api_manager_deinit();
         
         // Save Module Registry to YAML
         printf("[OHT-50] Saving Module Registry to YAML...\n");

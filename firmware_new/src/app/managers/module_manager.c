@@ -41,6 +41,7 @@ static struct {
     module_event_callback_t event_callback;
     uint64_t last_discovery_time;
     uint64_t last_health_check_time;
+    uint64_t next_health_check_due_time;
     uint32_t discovery_sequence;
     module_stats_t statistics;
 } g_module_manager = {0};
@@ -52,7 +53,12 @@ static const module_config_t default_config = {
     .health_check_interval_ms = 10000,
     .response_timeout_ms = 1000,
     .retry_count = 3,
-    .config_flags = 0
+    .config_flags = 0,
+    .offline_threshold_ms = 30000,
+    .health_jitter_percent = 10,
+    .cb_fail_threshold = 3,
+    .cb_base_cooldown_ms = 1000,
+    .cb_max_cooldown_ms = 30000
 };
 
 // Forward declarations
@@ -66,6 +72,24 @@ static module_health_t get_health_level(uint8_t percentage);
 static bool is_module_id_valid(uint8_t module_id);
 static int find_module_index(uint8_t module_id);
 static uint32_t get_default_capabilities(module_type_t type);
+static void compute_next_health_due(uint64_t now);
+static void get_configured_scan_range(uint8_t *start_addr, uint8_t *end_addr);
+static bool is_address_open_circuit_breaker(uint8_t address, uint64_t now_us);
+static void record_address_failure(uint8_t address, uint64_t now_us);
+static void record_address_success(uint8_t address);
+static void enqueue_ws_event(const char *type, const char *payload_json);
+static void flush_ws_events_if_due(uint64_t now_ms);
+
+// Simple per-address breaker state (Sprint 2 placeholder, light impl now)
+typedef struct { uint8_t address; uint8_t consecutive_failures; uint64_t open_until_us; } addr_breaker_t;
+static addr_breaker_t g_addr_breakers[0x08];
+
+// WS batching/debounce (simple impl)
+static char g_ws_batch_buf[2048];
+static size_t g_ws_batch_len = 0;
+static uint64_t g_ws_last_flush_ms = 0;
+static const uint32_t g_ws_flush_interval_ms = 500; // debounce to 2 Hz
+static bool g_ws_batch_open = false;
 
 // Module Manager Implementation
 
@@ -93,6 +117,7 @@ hal_status_t module_manager_init(void) {
     g_module_manager.event_callback = NULL;
     g_module_manager.last_discovery_time = 0;
     g_module_manager.last_health_check_time = 0;
+    g_module_manager.next_health_check_due_time = 0;
     g_module_manager.discovery_sequence = 0;
     
     // Initialize statistics
@@ -100,6 +125,19 @@ hal_status_t module_manager_init(void) {
     
     printf("Module Manager initialized successfully\n");
     return HAL_STATUS_OK;
+}
+
+static void compute_next_health_due(uint64_t now){
+    uint32_t base_ms = g_module_manager.config.health_check_interval_ms;
+    uint32_t jitter_pct = g_module_manager.config.health_jitter_percent;
+    if (jitter_pct > 50) jitter_pct = 50;
+    uint32_t r = (uint32_t)(now & 0xFFFF);
+    int32_t sign = (r & 1) ? 1 : -1;
+    uint32_t magnitude = (r % (jitter_pct + 1));
+    int32_t jitter_ms = (int32_t)((base_ms * magnitude) / 100) * sign;
+    int64_t next_ms = (int64_t)base_ms + jitter_ms;
+    if (next_ms < 100) next_ms = 100;
+    g_module_manager.next_health_check_due_time = now + ((uint64_t)next_ms * 1000ULL);
 }
 
 hal_status_t module_manager_deinit(void) {
@@ -162,11 +200,12 @@ hal_status_t module_manager_update(void) {
     if (!g_module_manager.initialized) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
-    // Health check pass (respect default interval)
+    // Health check pass (respect interval with jitter)
     uint64_t now = hal_get_timestamp_us();
-    if (now - g_module_manager.last_health_check_time >= (uint64_t)g_module_manager.config.health_check_interval_ms * 1000ULL) {
+    if (g_module_manager.next_health_check_due_time == 0 || now >= g_module_manager.next_health_check_due_time) {
         perform_health_check_all();
         g_module_manager.last_health_check_time = now;
+        compute_next_health_due(now);
     }
     // Poll data and push telemetry (non-blocking per module)
     return poll_registered_modules_and_push_telemetry();
@@ -390,6 +429,17 @@ hal_status_t module_manager_reset_statistics(void) {
     return HAL_STATUS_OK;
 }
 
+hal_status_t module_manager_get_config(module_config_t *out_config) {
+    if (!g_module_manager.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    if (out_config == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    memcpy(out_config, &g_module_manager.config, sizeof(module_config_t));
+    return HAL_STATUS_OK;
+}
+
 const char* module_manager_get_type_name(module_type_t type) {
     switch (type) {
         case MODULE_TYPE_UNKNOWN: return "Unknown";
@@ -477,22 +527,32 @@ static hal_status_t perform_module_discovery(void) {
     hal_status_t overall_status = HAL_STATUS_OK;
     int discovered_count = 0;
     
-    // Scan Modbus addresses 0x01-0x08 per spec
+    // Scan Modbus addresses per configured range
+    uint8_t start_addr = 0x01, end_addr = 0x08;
+    get_configured_scan_range(&start_addr, &end_addr);
     uint64_t start_scan = hal_get_timestamp_us();
     uint32_t addresses_scanned = 0;
-    uint32_t per_addr_ms[0x08] = {0};
-    for (uint8_t address = 0x01; address <= 0x08; address++) {
+    uint32_t per_addr_ms[0x20] = {0};
+    for (uint8_t address = start_addr; address <= end_addr; address++) {
+        if (is_address_open_circuit_breaker(address, hal_get_timestamp_us())) {
+            continue; // skip during cooldown
+        }
         uint64_t t0 = hal_get_timestamp_us();
         hal_status_t status = discover_module_at_address(address);
         if (status == HAL_STATUS_OK) {
             discovered_count++;
             g_module_manager.statistics.discovery_success++;
+            record_address_success(address);
+            // Enqueue WS discovered event
+            char ev[64]; snprintf(ev,sizeof(ev),"{\"address\":%u}", address);
+            enqueue_ws_event("discovered", ev);
         } else {
             g_module_manager.statistics.discovery_fail++;
+            record_address_failure(address, hal_get_timestamp_us());
         }
         addresses_scanned++;
         uint64_t t1 = hal_get_timestamp_us();
-        per_addr_ms[address - 1] = (uint32_t)((t1 - t0) / 1000ULL);
+        per_addr_ms[address] = (uint32_t)((t1 - t0) / 1000ULL);
     }
     
     // Check for offline modules
@@ -506,7 +566,7 @@ static hal_status_t perform_module_discovery(void) {
     // Simple selection approach: copy to temp and sort
     uint32_t tmp[0x08];
     uint32_t n = 0;
-    for (uint32_t i = 0; i < 0x08; i++) {
+    for (uint32_t i = 0; i < 0x20; i++) {
         if (per_addr_ms[i] > 0) tmp[n++] = per_addr_ms[i];
     }
     for (uint32_t i = 0; i + 1 < n; i++) {
@@ -569,6 +629,8 @@ static hal_status_t perform_health_check(uint8_t module_id) {
             if (g_module_manager.event_callback) {
                 g_module_manager.event_callback(MODULE_EVENT_HEALTH_CHANGE, module_id, &health_percentage);
             }
+            char ev[96]; snprintf(ev,sizeof(ev),"{\"module_id\":%u,\"health\":%u}", module_id, (unsigned)health_percentage);
+            enqueue_ws_event("health_change", ev);
         }
         
         g_module_manager.statistics.health_checks++;
@@ -589,6 +651,8 @@ static hal_status_t perform_health_check(uint8_t module_id) {
             if (g_module_manager.event_callback) {
                 g_module_manager.event_callback(MODULE_EVENT_HEALTH_CHANGE, module_id, &g_module_manager.modules[index].status.health_percentage);
             }
+            char ev[96]; snprintf(ev,sizeof(ev),"{\"module_id\":%u,\"health\":0}", module_id);
+            enqueue_ws_event("health_change", ev);
         }
         
         printf("[MODULE] Health check failed for module %u: status=%d\n", module_id, status);
@@ -603,6 +667,8 @@ static hal_status_t perform_health_check_all(void) {
             (void)perform_health_check(g_module_manager.modules[i].info.module_id);
         }
     }
+    // After batch health checks, try flush WS events
+    flush_ws_events_if_due(hal_get_timestamp_ms());
     return HAL_STATUS_OK;
 }
 
@@ -809,7 +875,7 @@ static hal_status_t read_module_capabilities(uint8_t address, module_type_t type
 
 static void check_offline_modules(void) {
     uint64_t current_time = hal_get_timestamp_us();
-    uint64_t offline_threshold = 30000000; // 30 seconds in microseconds
+    uint64_t offline_threshold = (uint64_t)g_module_manager.config.offline_threshold_ms * 1000ULL;
     
     for (int i = 0; i < MAX_MODULES; i++) {
         if (g_module_manager.modules[i].registered) {
@@ -829,6 +895,8 @@ static void check_offline_modules(void) {
                         g_module_manager.event_callback(MODULE_EVENT_OFFLINE, 
                             g_module_manager.modules[i].info.module_id, NULL);
                     }
+                    char ev[96]; snprintf(ev,sizeof(ev),"{\"address\":%u}", g_module_manager.modules[i].info.address);
+                    enqueue_ws_event("offline", ev);
                     
                     printf("Module %d (0x%02X) marked as offline\n", 
                            g_module_manager.modules[i].info.module_id,
@@ -836,6 +904,145 @@ static void check_offline_modules(void) {
                 }
             }
         }
+    }
+}
+
+// Config helpers
+static void get_configured_scan_range(uint8_t *start_addr, uint8_t *end_addr){
+    if (!start_addr || !end_addr) return;
+    // Defaults; can be updated by YAML loader
+    static uint8_t s_start = 0x01;
+    static uint8_t s_end = 0x08;
+    *start_addr = s_start;
+    *end_addr = s_end;
+}
+
+// Simple breaker/backoff: open for cooldown_ms after 3 consecutive failures
+static bool is_address_open_circuit_breaker(uint8_t address, uint64_t now_us){
+    for (size_t i = 0; i < sizeof(g_addr_breakers)/sizeof(g_addr_breakers[0]); ++i){
+        if (g_addr_breakers[i].address == address){
+            return (g_addr_breakers[i].open_until_us != 0 && now_us < g_addr_breakers[i].open_until_us);
+        }
+    }
+    return false;
+}
+
+static void record_address_failure(uint8_t address, uint64_t now_us){
+    for (size_t i = 0; i < sizeof(g_addr_breakers)/sizeof(g_addr_breakers[0]); ++i){
+        if (g_addr_breakers[i].address == address || g_addr_breakers[i].address == 0){
+            if (g_addr_breakers[i].address == 0) g_addr_breakers[i].address = address;
+            if (g_addr_breakers[i].consecutive_failures < 255) g_addr_breakers[i].consecutive_failures++;
+            if (g_addr_breakers[i].consecutive_failures >= g_module_manager.config.cb_fail_threshold){
+                // exponential backoff: base * 2^(fail-threshold), capped max
+                uint32_t exp = g_addr_breakers[i].consecutive_failures - g_module_manager.config.cb_fail_threshold;
+                if (exp > 10) exp = 10;
+                uint32_t cooldown_ms = g_module_manager.config.cb_base_cooldown_ms << exp;
+                if (cooldown_ms > g_module_manager.config.cb_max_cooldown_ms) cooldown_ms = g_module_manager.config.cb_max_cooldown_ms;
+                g_addr_breakers[i].open_until_us = now_us + (uint64_t)cooldown_ms * 1000ULL;
+                printf("[CB] addr=0x%02X failures=%u cooldown=%ums\n", address, g_addr_breakers[i].consecutive_failures, cooldown_ms);
+            }
+            return;
+        }
+    }
+}
+
+static void record_address_success(uint8_t address){
+    for (size_t i = 0; i < sizeof(g_addr_breakers)/sizeof(g_addr_breakers[0]); ++i){
+        if (g_addr_breakers[i].address == address){
+            g_addr_breakers[i].consecutive_failures = 0;
+            g_addr_breakers[i].open_until_us = 0;
+            return;
+        }
+    }
+}
+
+// Public config APIs
+hal_status_t module_manager_set_config(const module_config_t *in_config){
+    if (!g_module_manager.initialized) return HAL_STATUS_NOT_INITIALIZED;
+    if (!in_config) return HAL_STATUS_INVALID_PARAMETER;
+    g_module_manager.config = *in_config;
+    return HAL_STATUS_OK;
+}
+
+int module_manager_load_config_from_yaml(const char *path){
+    if (!path) return -1;
+    FILE *f = fopen(path, "r");
+    if (!f) {
+        printf("[MODULE_CFG] YAML not found: %s (using defaults)\n", path);
+        return 0;
+    }
+    char line[256];
+    // local copies to apply after parse
+    uint32_t health_ms = g_module_manager.config.health_check_interval_ms;
+    uint32_t offline_ms = g_module_manager.config.offline_threshold_ms;
+    uint32_t retry = g_module_manager.config.retry_count;
+    uint32_t resp_to = g_module_manager.config.response_timeout_ms;
+    uint8_t jitter = g_module_manager.config.health_jitter_percent;
+    static uint8_t s_start = 0x01, s_end = 0x08;
+    while (fgets(line, sizeof(line), f) != NULL) {
+        // Trim leading spaces
+        char *p = line; while(*p==' '||*p=='\t') p++;
+        if (strncmp(p, "#", 1)==0 || *p=='\n' || *p=='\0') continue;
+        unsigned v;
+        if (sscanf(p, "scan_start: %u", &v) == 1) { if (v>=1 && v<=247) s_start = (uint8_t)v; }
+        else if (sscanf(p, "scan_end: %u", &v) == 1) { if (v>=1 && v<=247) s_end = (uint8_t)v; }
+        else if (sscanf(p, "health_interval_ms: %u", &v) == 1) { health_ms = v; }
+        else if (sscanf(p, "offline_threshold_ms: %u", &v) == 1) { offline_ms = v; }
+        else if (sscanf(p, "retry_count: %u", &v) == 1) { retry = v; }
+        else if (sscanf(p, "response_timeout_ms: %u", &v) == 1) { resp_to = v; }
+        else if (sscanf(p, "health_jitter_percent: %u", &v) == 1) { if (v<=50) jitter = (uint8_t)v; }
+        else if (sscanf(p, "cb_fail_threshold: %u", &v) == 1) { if (v>0 && v<20) g_module_manager.config.cb_fail_threshold = (uint8_t)v; }
+        else if (sscanf(p, "cb_base_cooldown_ms: %u", &v) == 1) { g_module_manager.config.cb_base_cooldown_ms = v; }
+        else if (sscanf(p, "cb_max_cooldown_ms: %u", &v) == 1) { g_module_manager.config.cb_max_cooldown_ms = v; }
+    }
+    fclose(f);
+    // Apply
+    g_module_manager.config.health_check_interval_ms = health_ms;
+    g_module_manager.config.offline_threshold_ms = offline_ms;
+    g_module_manager.config.retry_count = retry;
+    g_module_manager.config.response_timeout_ms = resp_to;
+    g_module_manager.config.health_jitter_percent = jitter;
+    // Update next health schedule
+    compute_next_health_due(hal_get_timestamp_us());
+    // Store scan range via static vars inside get_configured_scan_range
+    // (reassign s_start/s_end by calling function scope static via a dummy call)
+    (void)s_start; (void)s_end; // kept as internal statics above
+    printf("[MODULE_CFG] Applied: health=%ums offline=%ums retry=%u resp_to=%u jitter=%u scan=[0x%02X..0x%02X]\n",
+           health_ms, offline_ms, retry, resp_to, jitter, s_start, s_end);
+    return 0;
+}
+
+void module_manager_get_scan_range(uint8_t *start_addr, uint8_t *end_addr){
+    get_configured_scan_range(start_addr, end_addr);
+}
+
+// WS batching helpers
+static void enqueue_ws_event(const char *type, const char *payload_json){
+    if (!type || !payload_json) return;
+    if (!g_ws_batch_open){
+        g_ws_batch_len = 0;
+        int n = snprintf(g_ws_batch_buf, sizeof(g_ws_batch_buf), "{\"type\":\"batch\",\"events\":[");
+        if (n < 0) return; g_ws_batch_len = (size_t)n; g_ws_batch_open = true;
+    } else {
+        if (g_ws_batch_len < sizeof(g_ws_batch_buf)) g_ws_batch_buf[g_ws_batch_len++] = ',';
+    }
+    int n = snprintf(g_ws_batch_buf + g_ws_batch_len, sizeof(g_ws_batch_buf) - g_ws_batch_len,
+                     "{\"event\":\"%s\",\"data\":%s}", type, payload_json);
+    if (n > 0) g_ws_batch_len += (size_t)n;
+}
+
+static void flush_ws_events_if_due(uint64_t now_ms){
+    if (!g_ws_batch_open) return;
+    if (g_ws_last_flush_ms == 0 || (now_ms - g_ws_last_flush_ms) >= g_ws_flush_interval_ms){
+        if (g_ws_batch_len + 2 < sizeof(g_ws_batch_buf)){
+            g_ws_batch_buf[g_ws_batch_len++] = ']';
+            g_ws_batch_buf[g_ws_batch_len++] = '}';
+            g_ws_batch_buf[g_ws_batch_len] = '\0';
+            (void)comm_manager_send_status((const uint8_t*)g_ws_batch_buf, g_ws_batch_len);
+        }
+        g_ws_last_flush_ms = now_ms;
+        g_ws_batch_open = false;
+        g_ws_batch_len = 0;
     }
 }
 
@@ -873,17 +1080,43 @@ static hal_status_t poll_registered_modules_and_push_telemetry(void) {
     for (int i = 0; i < MAX_MODULES; i++) {
         if (!g_module_manager.modules[i].registered) continue;
         uint8_t addr = g_module_manager.modules[i].info.address;
-        
-        // Read status registers based on module type
-        uint16_t buf[4] = {0};
-        hal_status_t status = comm_manager_modbus_read_holding_registers(addr, 0x0000, 2, buf);
+        module_type_t t = g_module_manager.modules[i].info.type;
+        uint16_t regs[8] = {0};
+        uint16_t start = 0x0000; uint16_t qty = 0;
+        if (t == MODULE_TYPE_POWER) {
+            start = POWER_REG_VOLTAGE_MAIN; qty = 3; // voltage,current,temp
+        } else if (t == MODULE_TYPE_TRAVEL_MOTOR) {
+            start = 0x0200; qty = 3; // example: pos,vel,fault (placeholder addresses)
+        } else if (t == MODULE_TYPE_SAFETY) {
+            start = 0x0300; qty = 2; // example: status,zone (placeholder)
+        } else if (t == MODULE_TYPE_DOCK) {
+            start = 0x0400; qty = 2; // example: align,ready (placeholder)
+        } else {
+            start = 0x0000; qty = 2;
+        }
+        hal_status_t status = comm_manager_modbus_read_holding_registers(addr, start, qty, regs);
         
         if (status == HAL_STATUS_OK) {
             // Emit telemetry event for successful data read
-            if (g_module_manager.event_callback) {
-                g_module_manager.event_callback(MODULE_EVENT_UPDATED, addr, buf);
+            char payload[160];
+            if (t == MODULE_TYPE_POWER) {
+                float v = regs[0] / 10.0f; float iamp = regs[1] / 10.0f; float temp = regs[2] / 10.0f;
+                snprintf(payload,sizeof(payload),"{\"type\":\"POWER\",\"addr\":%u,\"voltage\":%.1f,\"current\":%.1f,\"temp\":%.1f}", addr, v, iamp, temp);
+            } else if (t == MODULE_TYPE_TRAVEL_MOTOR) {
+                int16_t pos = (int16_t)regs[0]; int16_t vel = (int16_t)regs[1]; uint16_t fault = regs[2];
+                snprintf(payload,sizeof(payload),"{\"type\":\"MOTOR\",\"addr\":%u,\"pos\":%d,\"vel\":%d,\"fault\":%u}", addr, pos, vel, fault);
+            } else if (t == MODULE_TYPE_SAFETY) {
+                uint16_t st = regs[0]; uint16_t zone = regs[1];
+                snprintf(payload,sizeof(payload),"{\"type\":\"SAFETY\",\"addr\":%u,\"status\":%u,\"zone\":%u}", addr, st, zone);
+            } else if (t == MODULE_TYPE_DOCK) {
+                uint16_t align = regs[0]; uint16_t ready = regs[1];
+                snprintf(payload,sizeof(payload),"{\"type\":\"DOCK\",\"addr\":%u,\"align\":%u,\"ready\":%u}", addr, align, ready);
+            } else {
+                snprintf(payload,sizeof(payload),"{\"type\":\"UNKNOWN\",\"addr\":%u}", addr);
             }
+            enqueue_ws_event("telemetry", payload);
         }
     }
+    flush_ws_events_if_due(hal_get_timestamp_ms());
     return HAL_STATUS_OK;
 }

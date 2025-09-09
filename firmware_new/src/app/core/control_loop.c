@@ -35,23 +35,10 @@ typedef struct {
         float integral;
         float derivative;
         pid_params_t params;
-    } position_pid;
-    
-    struct {
-        float setpoint;
-        float input;
-        float output;
-        float error;
-        float prev_error;
-        float integral;
-        float derivative;
-        pid_params_t params;
     } velocity_pid;
     
     // Motion control
-    float target_position;
     float target_velocity;
-    float current_position;
     float current_velocity;
     float control_output;
     float commanded_velocity;
@@ -97,7 +84,6 @@ hal_status_t control_loop_init(const control_config_t *config) {
     memcpy(&g_control_loop.config, config, sizeof(control_config_t));
     
     // Initialize PID controllers
-    memcpy(&g_control_loop.position_pid.params, &config->position_pid, sizeof(pid_params_t));
     memcpy(&g_control_loop.velocity_pid.params, &config->velocity_pid, sizeof(pid_params_t));
     
     // Initialize status
@@ -160,48 +146,21 @@ hal_status_t control_loop_update(void) {
     g_control_loop.status.cycle_count++;
     g_control_loop.stats.total_cycles++;
     
-    // Get current position and velocity (from sensors/encoders)
-    // TODO: Integrate with actual position/velocity sensors via module handlers
-    // For now, use improved simulation with realistic tracking behavior
-    static float position_tracking_factor = 0.95f;
-    static float velocity_tracking_factor = 0.9f;
-    
-    // Simulate realistic sensor feedback with some noise
-    float position_noise = ((float)(rand() % 100) - 50.0f) / 1000.0f; // ±0.05mm noise
-    float velocity_noise = ((float)(rand() % 100) - 50.0f) / 100.0f;  // ±0.5mm/s noise
-    
-    g_control_loop.current_position = g_control_loop.target_position * position_tracking_factor + position_noise;
-    g_control_loop.current_velocity = g_control_loop.target_velocity * velocity_tracking_factor + velocity_noise;
-    
-    // Gradually improve tracking over time (simulate control convergence)
-    if (position_tracking_factor < 0.99f) {
-        position_tracking_factor += 0.001f;
-    }
-    if (velocity_tracking_factor < 0.95f) {
-        velocity_tracking_factor += 0.001f;
-    }
+    // Get current velocity from real sensors (stub: set equal to last value until motor integration wired)
+    // NOTE: Simulation removed per EXEC PLAN Gate A. Integration with motor module will update this.
+    g_control_loop.current_velocity = g_control_loop.current_velocity;
     
     // Update status
-    g_control_loop.status.current_position = g_control_loop.current_position;
     g_control_loop.status.current_velocity = g_control_loop.current_velocity;
-    g_control_loop.status.target_position = g_control_loop.target_position;
     g_control_loop.status.target_velocity = g_control_loop.target_velocity;
     
     // Calculate errors
-    g_control_loop.status.position_error = g_control_loop.target_position - g_control_loop.current_position;
     g_control_loop.status.velocity_error = g_control_loop.target_velocity - g_control_loop.current_velocity;
     
     // Update PID controllers based on mode
-    float position_output = 0.0f;
     float velocity_output = 0.0f;
     
     switch (g_control_loop.status.mode) {
-        case CONTROL_MODE_POSITION:
-            // Position control: use position PID
-            update_pid_controller(true, g_control_loop.target_position, g_control_loop.current_position, &position_output);
-            g_control_loop.control_output = position_output;
-            break;
-            
         case CONTROL_MODE_VELOCITY:
             // Velocity control: use velocity PID
             // Apply acceleration limiting prior to PID to respect profile
@@ -212,17 +171,6 @@ hal_status_t control_loop_update(void) {
                 dt);
             update_pid_controller(false, g_control_loop.commanded_velocity, g_control_loop.current_velocity, &velocity_output);
             g_control_loop.control_output = velocity_output;
-            break;
-            
-        case CONTROL_MODE_TORQUE:
-            // Torque control: direct output
-            g_control_loop.control_output = g_control_loop.target_velocity; // Use velocity as torque proxy
-            break;
-            
-        case CONTROL_MODE_HOMING:
-            // Homing mode: slow position control
-            update_pid_controller(true, g_control_loop.target_position, g_control_loop.current_position, &position_output);
-            g_control_loop.control_output = position_output * 0.1f; // 10% speed for homing
             break;
             
         case CONTROL_MODE_EMERGENCY:
@@ -237,10 +185,11 @@ hal_status_t control_loop_update(void) {
             break;
     }
     
-    // Apply limits
-    g_control_loop.control_output = clamp_value(g_control_loop.control_output, 
-                                               g_control_loop.config.position_pid.output_min,
-                                               g_control_loop.config.position_pid.output_max);
+    // Apply limits (use velocity PID bounds)
+    g_control_loop.control_output = clamp_value(
+        g_control_loop.control_output,
+        g_control_loop.velocity_pid.params.output_min,
+        g_control_loop.velocity_pid.params.output_max);
     
     // Update status
     g_control_loop.status.control_output = g_control_loop.control_output;
@@ -282,8 +231,6 @@ hal_status_t control_loop_set_mode(control_mode_t mode) {
     g_control_loop.status.state = CONTROL_STATE_ENABLED;
     
     // Reset PID controllers when changing modes
-    g_control_loop.position_pid.integral = 0.0f;
-    g_control_loop.position_pid.prev_error = 0.0f;
     g_control_loop.velocity_pid.integral = 0.0f;
     g_control_loop.velocity_pid.prev_error = 0.0f;
     
@@ -337,36 +284,9 @@ hal_status_t control_loop_is_enabled(bool *enabled) {
     return HAL_STATUS_OK;
 }
 
-hal_status_t control_loop_set_target_position(float position) {
-    if (!g_control_loop.initialized) {
-        return HAL_STATUS_NOT_INITIALIZED;
-    }
-    
-    // Check position limits if enabled
-    if (g_control_loop.config.enable_limits) {
-        if (position < g_control_loop.config.profile.position_tolerance) {
-            position = g_control_loop.config.profile.position_tolerance;
-        }
-        if (position > 10000.0f) { // Max position limit
-            position = 10000.0f;
-        }
-    }
-    
-    g_control_loop.target_position = position;
-    g_control_loop.position_pid.setpoint = position;
-    g_control_loop.status.target_position = position;
-    
-    return HAL_STATUS_OK;
-}
+hal_status_t control_loop_set_target_position(float position) { (void)position; return HAL_STATUS_INVALID_STATE; }
 
-hal_status_t control_loop_get_target_position(float *position) {
-    if (!g_control_loop.initialized || position == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    *position = g_control_loop.target_position;
-    return HAL_STATUS_OK;
-}
+hal_status_t control_loop_get_target_position(float *position) { (void)position; return HAL_STATUS_INVALID_STATE; }
 
 hal_status_t control_loop_set_target_velocity(float velocity) {
     if (!g_control_loop.initialized) {
@@ -393,14 +313,7 @@ hal_status_t control_loop_get_target_velocity(float *velocity) {
     return HAL_STATUS_OK;
 }
 
-hal_status_t control_loop_get_current_position(float *position) {
-    if (!g_control_loop.initialized || position == NULL) {
-        return HAL_STATUS_INVALID_PARAMETER;
-    }
-    
-    *position = g_control_loop.current_position;
-    return HAL_STATUS_OK;
-}
+hal_status_t control_loop_get_current_position(float *position) { (void)position; return HAL_STATUS_INVALID_STATE; }
 
 hal_status_t control_loop_get_current_velocity(float *velocity) {
     if (!g_control_loop.initialized || velocity == NULL) {
@@ -416,10 +329,7 @@ hal_status_t control_loop_set_pid_params(bool is_position_pid, const pid_params_
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    if (is_position_pid) {
-        memcpy(&g_control_loop.position_pid.params, params, sizeof(pid_params_t));
-        memcpy(&g_control_loop.config.position_pid, params, sizeof(pid_params_t));
-    } else {
+    if (!is_position_pid) {
         memcpy(&g_control_loop.velocity_pid.params, params, sizeof(pid_params_t));
         memcpy(&g_control_loop.config.velocity_pid, params, sizeof(pid_params_t));
     }
@@ -432,9 +342,7 @@ hal_status_t control_loop_get_pid_params(bool is_position_pid, pid_params_t *par
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    if (is_position_pid) {
-        memcpy(params, &g_control_loop.position_pid.params, sizeof(pid_params_t));
-    } else {
+    if (!is_position_pid) {
         memcpy(params, &g_control_loop.velocity_pid.params, sizeof(pid_params_t));
     }
     
@@ -491,14 +399,10 @@ hal_status_t control_loop_is_target_reached(bool *reached) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    float position_error = fabsf(g_control_loop.status.position_error);
     float velocity_error = fabsf(g_control_loop.status.velocity_error);
     
-    // Only consider reached if we have a non-zero target and errors are within tolerance
-    // Also check that we have actually moved towards the target (not just at zero)
-    *reached = (g_control_loop.target_position != 0.0f) &&
-               (g_control_loop.current_position > 0.0f) &&
-               (position_error <= g_control_loop.config.profile.position_tolerance) &&
+    // Velocity-only criteria: target near zero and velocity error within tolerance
+    *reached = (fabsf(g_control_loop.target_velocity) <= g_control_loop.config.profile.velocity_tolerance) &&
                (velocity_error <= g_control_loop.config.profile.velocity_tolerance);
     
     return HAL_STATUS_OK;
@@ -542,9 +446,6 @@ hal_status_t control_loop_get_diagnostics(char *info, size_t max_len) {
         "State: %s\n"
         "Mode: %s\n"
         "Enabled: %s\n"
-        "Target Position: %.2f mm\n"
-        "Current Position: %.2f mm\n"
-        "Position Error: %.2f mm\n"
         "Target Velocity: %.2f mm/s\n"
         "Current Velocity: %.2f mm/s\n"
         "Velocity Error: %.2f mm/s\n"
@@ -555,9 +456,6 @@ hal_status_t control_loop_get_diagnostics(char *info, size_t max_len) {
         control_loop_get_state_name(g_control_loop.status.state),
         control_loop_get_mode_name(g_control_loop.status.mode),
         g_control_loop.enabled ? "YES" : "NO",
-        g_control_loop.target_position,
-        g_control_loop.current_position,
-        g_control_loop.status.position_error,
         g_control_loop.target_velocity,
         g_control_loop.current_velocity,
         g_control_loop.status.velocity_error,
@@ -574,10 +472,7 @@ hal_status_t control_loop_get_diagnostics(char *info, size_t max_len) {
 const char* control_loop_get_mode_name(control_mode_t mode) {
     switch (mode) {
         case CONTROL_MODE_IDLE: return "IDLE";
-        case CONTROL_MODE_POSITION: return "POSITION";
         case CONTROL_MODE_VELOCITY: return "VELOCITY";
-        case CONTROL_MODE_TORQUE: return "TORQUE";
-        case CONTROL_MODE_HOMING: return "HOMING";
         case CONTROL_MODE_EMERGENCY: return "EMERGENCY";
         default: return "UNKNOWN";
     }
@@ -645,7 +540,7 @@ static hal_status_t update_pid_controller(bool is_position_pid, float setpoint, 
         float integral;
         float derivative;
         pid_params_t params;
-    } *pid = is_position_pid ? &g_control_loop.position_pid : &g_control_loop.velocity_pid;
+    } *pid = /* position PID removed */ &g_control_loop.velocity_pid;
     
     // Calculate error
     pid->setpoint = setpoint;
@@ -678,15 +573,7 @@ static hal_status_t check_limits(void) {
     bool limits_violated = false;
     bool safety_violated = false;
     
-    // Check position limits
-    if (g_control_loop.config.enable_limits) {
-        float minp = g_control_loop.config.position_min_mm;
-        float maxp = g_control_loop.config.position_max_mm > g_control_loop.config.position_min_mm
-                     ? g_control_loop.config.position_max_mm : (g_control_loop.config.position_min_mm + 1.0f);
-        if (g_control_loop.current_position < minp || g_control_loop.current_position > maxp) {
-            limits_violated = true;
-        }
-    }
+    // Position limits removed in velocity-only mode
     
     // Check velocity limits
     if (g_control_loop.config.enable_limits) {
@@ -713,20 +600,14 @@ static hal_status_t check_limits(void) {
 }
 
 static hal_status_t update_statistics(void) {
-    // Update maximum errors
-    float abs_position_error = fabsf(g_control_loop.status.position_error);
+    // Update maximum errors (position error removed)
     float abs_velocity_error = fabsf(g_control_loop.status.velocity_error);
-    
-    if (abs_position_error > g_control_loop.stats.max_position_error) {
-        g_control_loop.stats.max_position_error = abs_position_error;
-    }
     
     if (abs_velocity_error > g_control_loop.stats.max_velocity_error) {
         g_control_loop.stats.max_velocity_error = abs_velocity_error;
     }
     
     // Update average errors (simple moving average)
-    g_control_loop.stats.avg_position_error = (g_control_loop.stats.avg_position_error * 0.9f) + (abs_position_error * 0.1f);
     g_control_loop.stats.avg_velocity_error = (g_control_loop.stats.avg_velocity_error * 0.9f) + (abs_velocity_error * 0.1f);
     
     // Update runtime
