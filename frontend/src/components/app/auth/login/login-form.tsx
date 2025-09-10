@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Lock, LogIn, ShieldCheck, User } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -122,12 +121,6 @@ export function LoginForm() {
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex items-center justify-center">
-        <span className="text-sm text-gray-500 flex items-center gap-2">
-          Don't have an account?
-          <Link className="text-primary font-bold" to="/register">Register</Link>
-        </span>
-      </CardFooter>
     </Card>
   )
 }
