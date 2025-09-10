@@ -44,9 +44,7 @@ class TestPerformanceRequirements:
     def test_api_response_time_requirements(self, client, mock_user, auth_headers):
         """Test API response time requirements (< 100ms)"""
         
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
-             patch('app.api.v1.sensors.get_current_user', return_value=mock_user), \
-             patch('app.api.v1.localization.get_current_user', return_value=mock_user):
+        with patch('app.core.security.get_current_user', return_value=mock_user):
             
             # Test endpoints with performance requirements
             test_cases = [
@@ -120,7 +118,7 @@ class TestPerformanceRequirements:
     def test_concurrent_request_performance(self, client, mock_user, auth_headers):
         """Test performance under concurrent requests"""
         
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service') as mock_map_service:
             
             # Setup mock responses
@@ -180,9 +178,7 @@ class TestPerformanceRequirements:
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
         
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
-             patch('app.api.v1.sensors.get_current_user', return_value=mock_user), \
-             patch('app.api.v1.localization.get_current_user', return_value=mock_user):
+        with patch('app.core.security.get_current_user', return_value=mock_user):
             
             # Perform memory-intensive operations
             for i in range(100):
@@ -210,9 +206,8 @@ class TestPerformanceRequirements:
     def test_database_query_performance(self, client, mock_user, auth_headers):
         """Test database query performance (< 10ms)"""
         
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service') as mock_map_service, \
-             patch('app.api.v1.sensors.get_current_user', return_value=mock_user), \
              patch('app.api.v1.sensors.get_db') as mock_db:
             
             # Setup mock database
@@ -314,8 +309,7 @@ class TestPerformanceRequirements:
     def test_stress_test(self, client, mock_user, auth_headers):
         """Test system under stress"""
         
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
-             patch('app.api.v1.sensors.get_current_user', return_value=mock_user):
+        with patch('app.core.security.get_current_user', return_value=mock_user):
             
             # Stress test with high load
             num_requests = 1000
@@ -355,8 +349,7 @@ class TestPerformanceRequirements:
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
         
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
-             patch('app.api.v1.sensors.get_current_user', return_value=mock_user):
+        with patch('app.core.security.get_current_user', return_value=mock_user):
             
             # Perform operations that might cause memory leaks
             for cycle in range(10):

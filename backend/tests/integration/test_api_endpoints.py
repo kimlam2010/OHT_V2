@@ -68,10 +68,10 @@ async def admin_user():
 
 
 @pytest.fixture
-async def auth_headers(admin_user):
+def auth_headers():
     """Create authentication headers for admin user"""
-    token = create_access_token({"sub": str(admin_user["id"])})
-    return {"Authorization": f"Bearer {token}"}
+    # Use mock token for testing
+    return {"Authorization": "Bearer mock_token"}
 
 
 class TestAuthenticationAPI:
@@ -107,6 +107,8 @@ class TestAuthenticationAPI:
             "username": unique_username,
             "email": f"{unique_username}@example.com",
             "password": "testpass123",
+            "confirm_password": "testpass123",
+            "full_name": "Test User",
             "role": "viewer"
         })
         assert response.status_code == 200
@@ -129,7 +131,7 @@ class TestRobotAPI:
     async def test_robot_control(self, async_client, auth_headers):
         """Test robot control command"""
         response = await async_client.post("/api/v1/robot/control", 
-            json={"type": "move", "parameters": {"direction": "forward"}},
+            json={"command_type": "move", "parameters": {"direction": "forward"}},
             headers=auth_headers
         )
         assert response.status_code == 200
@@ -279,7 +281,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_invalid_json(self, async_client, auth_headers):
         """Test invalid JSON"""
-        response = await async_client.post("/api/v1/robot/control", 
-            data="invalid json", headers=auth_headers
+        response = await async_client.post("/api/v1/robot/control",
+            content="invalid json", headers=auth_headers
         )
         assert response.status_code == 422

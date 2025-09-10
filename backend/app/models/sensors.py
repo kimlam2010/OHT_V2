@@ -5,6 +5,7 @@ Sensor data models for OHT-50 Backend
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, JSON
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.models.telemetry import SensorData as _TelemetrySensorData  # Backward-compat alias for tests
 
 
 class SensorConfiguration(Base):
@@ -69,3 +70,7 @@ class SensorCalibration(Base):
     performed_by = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=True)
+
+# Backward compatibility: some tests import SensorData from app.models.sensors
+# Provide alias to real model defined in app.models.telemetry
+SensorData = _TelemetrySensorData

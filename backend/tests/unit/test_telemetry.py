@@ -199,10 +199,10 @@ class TestSensorDataProcessor:
         assert processor.sensor_status[SensorType.RFID] == SensorStatus.ACTIVE
         
         # Test data history initialization
-        assert len(processor.data_history[SensorType.RFID]) == 0
+        assert len(processor.data_history[SensorType.RFID.value]) == 0
         
         # Test processing times initialization
-        assert len(processor.processing_times[SensorType.RFID]) == 0
+        assert len(processor.processing_times[SensorType.RFID.value]) == 0
         
         # Verify processor configuration
         assert processor.rfid_signal_threshold == 30.0
@@ -222,7 +222,7 @@ class TestSensorDataProcessor:
         assert processor.accelerometer_calibration["z"] == 9.81  # gravity compensation
         
         # Test data history initialization
-        assert len(processor.data_history[SensorType.ACCELEROMETER]) == 0
+        assert len(processor.data_history[SensorType.ACCELEROMETER.value]) == 0
 
 
 if __name__ == "__main__":

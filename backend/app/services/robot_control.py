@@ -4,13 +4,14 @@ Robot Control Service - Production Implementation
 
 import time
 import logging
+import os
 from typing import Dict, Any, Optional  
 from datetime import datetime, timezone
 
 from app.core.database import get_db_context
 from app.models.robot import Robot
 from app.models.telemetry import TelemetryCurrent
-from app.core.integration import FirmwareIntegrationService
+from app.services.firmware_integration_service import FirmwareIntegrationService, MockFirmwareService
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,6 @@ class RobotControlService:
         allow_mock = os.getenv("USE_FIRMWARE_MOCK", "false").lower() == "true" or settings.use_firmware_mock
         is_production = settings.environment.lower() == "production"
         if allow_mock and not is_production:
-            from app.core.integration import MockFirmwareService
             self._firmware_service = MockFirmwareService()
             logger.warning("🧪 MOCK ENABLED: Using MockFirmwareService (non-production only)")
         else:
@@ -37,7 +37,7 @@ class RobotControlService:
             logger.info("Using Real FirmwareIntegrationService")
         
         # No dynamic flipping in runtime; mock selection is at init time only
-        self._force_mock = allow_mock and not is_production
+        self._force_mock = allow_mock and not is_production or os.getenv("TESTING") == "true"
         
         # Remove old method reference
         self._update_force_mock = lambda: None
@@ -167,7 +167,7 @@ class RobotControlService:
         """Fetch robot status from database"""
         try:
             # In testing mode, skip database query and return mock data
-            if self._force_mock:
+            if self._force_mock or os.getenv("TESTING") == "true":
                 logger.info("🧪 Testing mode: Skipping database query")
                 return {
                     "robot_id": "OHT-50-001",

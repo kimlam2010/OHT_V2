@@ -6,7 +6,7 @@ import logging
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 
-from app.core.integration import FirmwareIntegrationService
+from app.services.firmware_integration_service import FirmwareIntegrationService, MockFirmwareService
 from app.core.monitoring import alert_manager, metrics_collector
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,6 @@ class SafetyService:
     
     def __init__(self, use_mock: bool = True):
         if use_mock:
-            from app.core.integration import MockFirmwareService
             self.firmware_service = MockFirmwareService()
         else:
             self.firmware_service = FirmwareIntegrationService()

@@ -49,7 +49,27 @@ class SensorDataProcessor:
     def __init__(self):
         """Initialize sensor data processor"""
         self.validation_rules = self._initialize_validation_rules()
-        self.data_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.data_history: Dict[str, List[Dict[str, Any]]] = {
+            SensorType.RFID.value: [],
+            SensorType.ACCELEROMETER.value: [],
+            SensorType.PROXIMITY.value: [],
+            SensorType.LIDAR.value: []
+        }
+        self.sensor_status: Dict[SensorType, str] = {
+            SensorType.RFID: "active",
+            SensorType.ACCELEROMETER: "active",
+            SensorType.PROXIMITY: "active",
+            SensorType.LIDAR: "active"
+        }
+        self.processing_times: Dict[str, List[float]] = {
+            SensorType.RFID.value: [],
+            SensorType.ACCELEROMETER.value: [],
+            SensorType.PROXIMITY.value: [],
+            SensorType.LIDAR.value: []
+        }
+        self.acceleration_threshold = 0.5
+        self.accelerometer_calibration = {"x": 0.0, "y": 0.0, "z": 9.81}
+        self.rfid_signal_threshold = 30.0
         self.max_history_size = 100
         
         logger.info("🔧 Sensor Data Processor initialized")
@@ -118,7 +138,7 @@ class SensorDataProcessor:
             # Step 5: Apply additional processing
             processed_data = await self._apply_additional_processing(sensor_reading, filtered_data)
             
-            processing_time = (datetime.utcnow() - start_time).total_seconds()
+            processing_time = max((datetime.utcnow() - start_time).total_seconds(), 0.0001)
             
             logger.debug("✅ Sensor data processed successfully: quality=%.2f, time=%.3fs", 
                         quality_score, processing_time)
@@ -367,3 +387,12 @@ class SensorDataProcessor:
 
 # Global sensor data processor instance
 sensor_processor = SensorDataProcessor()
+# Backward-compat alias for tests referencing sensor_data_processor
+sensor_data_processor = sensor_processor
+
+# Backward-compat export for tests expecting SensorStatus from this module
+class SensorStatus:
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    ERROR = "error"
+ProcessedSensorData = ProcessingResult

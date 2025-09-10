@@ -38,7 +38,7 @@ class TestMapAPI:
     
     def test_start_mapping_success(self, client, mock_user, auth_headers):
         """Test successful mapping start"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.start_mapping') as mock_start:
             
             # Setup mock
@@ -71,7 +71,7 @@ class TestMapAPI:
     
     def test_start_mapping_validation_error(self, client, mock_user, auth_headers):
         """Test mapping start with validation error"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user):
+        with patch('app.core.security.get_current_user', return_value=mock_user):
             # Test request with invalid data
             response = client.post(
                 "/api/v1/map/start-mapping",
@@ -89,7 +89,7 @@ class TestMapAPI:
     
     def test_stop_mapping_success(self, client, mock_user, auth_headers):
         """Test successful mapping stop"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.stop_mapping') as mock_stop:
             
             # Setup mock
@@ -116,7 +116,7 @@ class TestMapAPI:
     
     def test_get_mapping_status(self, client, mock_user, auth_headers):
         """Test get mapping status"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.get_mapping_status') as mock_status:
             
             # Setup mock
@@ -145,7 +145,7 @@ class TestMapAPI:
     
     def test_get_current_map_success(self, client, mock_user, auth_headers):
         """Test get current map when map exists"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.current_map') as mock_map:
             
             # Setup mock map
@@ -174,7 +174,7 @@ class TestMapAPI:
     
     def test_get_current_map_not_found(self, client, mock_user, auth_headers):
         """Test get current map when no map exists"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.current_map', None):
             
             # Test request
@@ -190,7 +190,7 @@ class TestMapAPI:
     
     def test_load_map_success(self, client, mock_user, auth_headers):
         """Test successful map loading"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.load_map') as mock_load:
             
             # Setup mock
@@ -222,7 +222,7 @@ class TestMapAPI:
     
     def test_load_map_not_found(self, client, mock_user, auth_headers):
         """Test map loading when map not found"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.load_map') as mock_load:
             
             # Setup mock to raise exception
@@ -241,7 +241,7 @@ class TestMapAPI:
     
     def test_get_robot_position_success(self, client, mock_user, auth_headers):
         """Test successful robot position retrieval"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.get_robot_position') as mock_position:
             
             # Setup mock
@@ -273,7 +273,7 @@ class TestMapAPI:
     
     def test_get_robot_position_failed(self, client, mock_user, auth_headers):
         """Test robot position retrieval when failed"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.get_robot_position') as mock_position:
             
             # Setup mock
@@ -296,7 +296,7 @@ class TestMapAPI:
     
     def test_get_occupancy_grid_success(self, client, mock_user, auth_headers):
         """Test successful occupancy grid retrieval"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.current_map') as mock_map:
             
             # Setup mock map
@@ -321,7 +321,7 @@ class TestMapAPI:
     
     def test_get_occupancy_grid_no_map(self, client, mock_user, auth_headers):
         """Test occupancy grid retrieval when no map exists"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.current_map', None):
             
             # Test request
@@ -337,7 +337,7 @@ class TestMapAPI:
     
     def test_get_robot_trajectory_success(self, client, mock_user, auth_headers):
         """Test successful robot trajectory retrieval"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.current_map') as mock_map:
             
             # Setup mock map
@@ -362,7 +362,7 @@ class TestMapAPI:
     
     def test_get_map_list_success(self, client, mock_user, auth_headers):
         """Test successful map list retrieval"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.get_map_list') as mock_list:
             
             # Setup mock
@@ -406,7 +406,7 @@ class TestMapAPI:
     
     def test_delete_map_success(self, client, mock_user, auth_headers):
         """Test successful map deletion"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.delete_map') as mock_delete:
             
             # Setup mock
@@ -429,7 +429,7 @@ class TestMapAPI:
     
     def test_delete_map_not_found(self, client, mock_user, auth_headers):
         """Test map deletion when map not found"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service.delete_map') as mock_delete:
             
             # Setup mock to raise exception
@@ -448,7 +448,7 @@ class TestMapAPI:
     
     def test_update_map_success(self, client, mock_user, auth_headers):
         """Test successful map update"""
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user):
+        with patch('app.core.security.get_current_user', return_value=mock_user):
             # Test request
             response = client.put(
                 "/api/v1/map/test_map_001",

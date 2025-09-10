@@ -75,12 +75,12 @@ class TestUserCreate:
             "username": "testuser",
             "email": "test@example.com",
             "full_name": "Test User",
-            "password": "TestPass123",
-            "confirm_password": "TestPass123"
+            "password": "TestPass12345",
+            "confirm_password": "TestPass12345"
         }
         user = UserCreate(**user_data)
         assert user.username == "testuser"
-        assert user.password == "TestPass123"
+        assert user.password == "TestPass12345"
     
     def test_user_create_passwords_match(self):
         """Test password confirmation validation"""
@@ -88,8 +88,8 @@ class TestUserCreate:
             "username": "testuser",
             "email": "test@example.com",
             "full_name": "Test User",
-            "password": "TestPass123",
-            "confirm_password": "DifferentPass123"
+            "password": "TestPass12345",
+            "confirm_password": "DifferentPass12345"
         }
         with pytest.raises(ValidationError) as exc_info:
             UserCreate(**user_data)
@@ -101,8 +101,8 @@ class TestUserCreate:
             "username": "testuser",
             "email": "test@example.com",
             "full_name": "Test User",
-            "password": "testpass123",
-            "confirm_password": "testpass123"
+            "password": "testpass12345",
+            "confirm_password": "testpass12345"
         }
         with pytest.raises(ValidationError) as exc_info:
             UserCreate(**user_data)
@@ -114,8 +114,8 @@ class TestUserCreate:
             "username": "testuser",
             "email": "test@example.com",
             "full_name": "Test User",
-            "password": "TESTPASS123",
-            "confirm_password": "TESTPASS123"
+            "password": "TESTPASS12345",
+            "confirm_password": "TESTPASS12345"
         }
         with pytest.raises(ValidationError) as exc_info:
             UserCreate(**user_data)
@@ -127,8 +127,8 @@ class TestUserCreate:
             "username": "testuser",
             "email": "test@example.com",
             "full_name": "Test User",
-            "password": "TestPassABC",
-            "confirm_password": "TestPassABC"
+            "password": "TestPassABCDEF",
+            "confirm_password": "TestPassABCDEF"
         }
         with pytest.raises(ValidationError) as exc_info:
             UserCreate(**user_data)
@@ -189,11 +189,11 @@ class TestUserLogin:
         """Test valid UserLogin creation"""
         login_data = {
             "username": "testuser",
-            "password": "TestPass123"
+            "password": "TestPass12345"
         }
         login = UserLogin(**login_data)
         assert login.username == "testuser"
-        assert login.password == "TestPass123"
+        assert login.password == "TestPass12345"
 
 
 class TestUserPasswordChange:
@@ -202,20 +202,20 @@ class TestUserPasswordChange:
     def test_user_password_change_valid(self):
         """Test valid UserPasswordChange creation"""
         change_data = {
-            "current_password": "OldPass123",
-            "new_password": "NewPass123",
-            "confirm_new_password": "NewPass123"
+            "current_password": "OldPass12345",
+            "new_password": "NewPass12345",
+            "confirm_new_password": "NewPass12345"
         }
         change = UserPasswordChange(**change_data)
-        assert change.current_password == "OldPass123"
-        assert change.new_password == "NewPass123"
+        assert change.current_password == "OldPass12345"
+        assert change.new_password == "NewPass12345"
     
     def test_user_password_change_mismatch(self):
         """Test password confirmation mismatch"""
         change_data = {
-            "current_password": "OldPass123",
-            "new_password": "NewPass123",
-            "confirm_new_password": "DifferentPass123"
+            "current_password": "OldPass12345",
+            "new_password": "NewPass12345",
+            "confirm_new_password": "DifferentPass12345"
         }
         with pytest.raises(ValidationError) as exc_info:
             UserPasswordChange(**change_data)

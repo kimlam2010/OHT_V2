@@ -139,6 +139,14 @@ class RobotCommand(BaseModel):
     priority: int = Field(default=1, ge=1, le=10, description="Command priority (1-10)")
     timeout: Optional[float] = Field(None, ge=0.0, description="Command timeout in seconds")
     
+    @field_validator('command_type')
+    @classmethod
+    def validate_command_type(cls, v: str) -> str:
+        valid_commands = ["move", "stop", "pause", "resume", "reset", "home", "dock", "undock"]
+        if v not in valid_commands:
+            raise ValueError(f'Command type must be one of: {", ".join(valid_commands)}')
+        return v
+    
     @field_validator('priority')
     @classmethod
     def validate_priority(cls, v: int) -> int:

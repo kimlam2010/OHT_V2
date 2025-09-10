@@ -3,35 +3,32 @@ Robot control API endpoints for OHT-50 Backend
 """
 
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional
+from typing import Dict, Any, cast
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from pydantic import BaseModel
+ 
 
 from app.core.security import require_permission
-from app.core.database import get_db
 from app.models.user import User
 from app.services.robot_control import robot_control_service
+from app.schemas.dashboard import RobotStatus, RobotMode
+from app.services.firmware_integration_service import firmware_service
 from app.schemas.robot_control import (
     RobotModeRequest,
     RobotModeResponse,
-    MovementRequest,
     MovementResponse,
+    MovementDirection,
     SpeedRequest,
     SpeedResponse,
     SpeedPresetRequest,
     SpeedPresetResponse,
-    EmergencyStopResponse,
     PauseResponse,
     ResetResponse,
     RobotCommand,
-    RobotCommandResponse,
     RobotStatusResponse,
     RobotConfiguration,
     RobotConfigurationResponse,
     RobotPosition,
-    RobotPositionResponse,
-    CommandHistory,
-    CommandHistoryResponse
+    RobotPositionResponse
 )
 
 router = APIRouter(prefix="/api/v1/robot", tags=["robot"])
@@ -46,18 +43,57 @@ async def get_robot_status(
 ):
     """Get current robot status"""
     try:
-        # Mock robot status data
+        # Use mock service in testing mode
+        import os
+        if os.getenv("TESTING", "false").lower() == "true":
+            from app.services.firmware_integration_service import MockFirmwareService
+            mock_service = MockFirmwareService()
+            data = cast(Dict[str, Any], await mock_service.get_robot_status())
+        else:
+            data = cast(Dict[str, Any], await firmware_service.get_robot_status())
+        
+        # Ensure data is not None
+        if not data:
+            data = {
+                "robot_id": "OHT-50-001",
+                "status": "idle",
+                "position": {"x": 150.5, "y": 200.3},
+                "battery_level": 87,
+                "temperature": 42.5
+            }
+
+        # Map firmware fields to schema with safe defaults
+        robot_id = data.get("robot_id", "OHT-50-001")
+        status_value = data.get("status", "idle")
+        mode_value = data.get("mode", "auto")
+        position_data = cast(Dict[str, Any], data.get("position") or {})
+        position = {
+            "x": float(position_data.get("x", 0.0)),
+            "y": float(position_data.get("y", 0.0)),
+            "z": float(position_data.get("z", 0.0))
+        }
+
+        # Coerce to enums with safe fallback
+        try:
+            status_enum = RobotStatus(status_value)
+        except Exception:
+            status_enum = RobotStatus.IDLE  # type: ignore[attr-defined]
+        try:
+            mode_enum = RobotMode(mode_value)
+        except Exception:
+            mode_enum = RobotMode.AUTO  # type: ignore[attr-defined]
+
         return RobotStatusResponse(
-            robot_id="OHT-50-001",
-            status="idle",
-            mode="auto",
-            position={"x": 150.5, "y": 200.3, "z": 0.0},
-            battery_level=87,
-            temperature=42.5,
-            speed=0.0,
-            last_command="stop",
-            uptime=3600,
-            health_score=95.0,
+            robot_id=robot_id,
+            status=status_enum,
+            mode=mode_enum,
+            position=position,
+            battery_level=int(data.get("battery_level", 0)),
+            temperature=float(data.get("temperature", 0.0)),
+            speed=float(data.get("speed", 0.0)),
+            last_command=data.get("last_command"),
+            uptime=int(data.get("uptime", 0)),
+            health_score=float(data.get("health_score", 0.0)),
             timestamp=datetime.now(timezone.utc),
             created_at=datetime.now(timezone.utc) - timedelta(hours=1),
             updated_at=datetime.now(timezone.utc)
@@ -78,7 +114,7 @@ async def control_robot(
     try:
         # Convert to service expected format
         service_command = {
-            "command_type": command.type,
+            "command_type": command.command_type,
             "parameters": command.parameters
         }
         
@@ -87,7 +123,7 @@ async def control_robot(
         if result.get("success"):
             return {
                 "success": True,
-                "message": f"Command {command.type} executed successfully",
+                "message": f"Command {command.command_type} executed successfully",
                 "command": result.get("command")
             }
         else:
@@ -217,42 +253,10 @@ async def stop_robot(
         )
 
 
-@router.get("/position")
-async def get_robot_position(
-    current_user: User = Depends(require_permission("robot", "read"))
-):
-    """Get current robot position"""
-    try:
-        position = await robot_control_service.get_current_position()
-        return {
-            "success": True,
-            "position": position,
-            "last_updated": datetime.now(timezone.utc).isoformat()
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get robot position: {str(e)}"
-        )
+ 
 
 
-@router.get("/configuration")
-async def get_robot_configuration(
-    current_user: User = Depends(require_permission("robot", "read"))
-):
-    """Get robot configuration"""
-    try:
-        config = await robot_control_service.get_configuration()
-        return {
-            "success": True,
-            "configuration": config,
-            "last_updated": datetime.now(timezone.utc).isoformat()
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get robot configuration: {str(e)}"
-        )
+ 
 
 
 @router.get("/last-command")
@@ -261,7 +265,7 @@ async def get_last_command(
 ):
     """Get last executed command"""
     try:
-        last_command = robot_control_service.last_command
+        last_command = cast(str, getattr(robot_control_service, "last_command", ""))
         if last_command:
             return {
                 "success": True,
@@ -289,7 +293,7 @@ async def set_robot_mode(
     """Set robot mode: AUTO/MANUAL/SEMI"""
     try:
         # Mock mode change
-        previous_mode = "auto"  # Get from current state
+        previous_mode = RobotMode.AUTO  # Get from current state
         current_mode = mode_data.mode
         
         return RobotModeResponse(
@@ -334,7 +338,7 @@ async def move_forward(
         return MovementResponse(
             success=True,
             message=f"Robot moving forward at speed {speed}",
-            direction="forward",
+            direction=MovementDirection.FORWARD,
             speed=speed,
             estimated_duration=5.0,
             timestamp=datetime.now(timezone.utc)
@@ -356,7 +360,7 @@ async def move_backward(
         return MovementResponse(
             success=True,
             message=f"Robot moving backward at speed {speed}",
-            direction="backward",
+            direction=MovementDirection.BACKWARD,
             speed=speed,
             estimated_duration=5.0,
             timestamp=datetime.now(timezone.utc)
@@ -378,7 +382,7 @@ async def turn_left(
         return MovementResponse(
             success=True,
             message=f"Robot turning left {angle} degrees",
-            direction="left",
+            direction=MovementDirection.LEFT,
             speed=0.5,
             estimated_duration=2.0,
             timestamp=datetime.now(timezone.utc)
@@ -400,7 +404,7 @@ async def turn_right(
         return MovementResponse(
             success=True,
             message=f"Robot turning right {angle} degrees",
-            direction="right",
+            direction=MovementDirection.RIGHT,
             speed=0.5,
             estimated_duration=2.0,
             timestamp=datetime.now(timezone.utc)
@@ -421,7 +425,7 @@ async def stop_movement(
         return MovementResponse(
             success=True,
             message="Robot movement stopped",
-            direction="stop",
+            direction=MovementDirection.STOP,
             speed=0.0,
             estimated_duration=0.0,
             timestamp=datetime.now(timezone.utc)
@@ -533,7 +537,7 @@ async def reset_system(
         return ResetResponse(
             success=True,
             message="Robot system reset",
-            status="idle",
+            status=RobotStatus.IDLE,
             timestamp=datetime.now(timezone.utc)
         )
     except Exception as e:

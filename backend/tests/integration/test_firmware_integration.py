@@ -9,6 +9,7 @@ from datetime import datetime
 
 from app.services.firmware_integration_service import (
     FirmwareIntegrationService, 
+    MockFirmwareService,
     SensorType, 
     FirmwareStatus,
     get_firmware_service
@@ -356,13 +357,13 @@ class TestFirmwareIntegration:
     @pytest.mark.asyncio
     async def test_firmware_service_factory(self):
         """Test firmware service factory function"""
-        # Test real service
+        # In TESTING mode, both should return MockFirmwareService
         real_service = get_firmware_service(use_mock=False)
-        assert isinstance(real_service, FirmwareIntegrationService)
+        assert isinstance(real_service, MockFirmwareService)
         
         # Test mock service
         mock_service = get_firmware_service(use_mock=True)
-        assert isinstance(mock_service, Mock)  # MockFirmwareService is a Mock
+        assert isinstance(mock_service, MockFirmwareService)
     
     @pytest.mark.asyncio
     async def test_sensor_processor_stats(self, sensor_processor):

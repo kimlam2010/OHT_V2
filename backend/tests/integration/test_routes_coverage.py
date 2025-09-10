@@ -31,7 +31,8 @@ def async_client_admin():
 @pytest.mark.asyncio
 async def test_robot_status_success(async_client_admin):
     client = async_client_admin
-    r = await client.get("/api/v1/robot/status")
+    headers = {"Authorization": "Bearer mock_token"}
+    r = await client.get("/api/v1/robot/status", headers=headers)
     assert r.status_code == 200
     data = r.json()
     assert "success" in data or "status" in data
@@ -40,6 +41,7 @@ async def test_robot_status_success(async_client_admin):
 @pytest.mark.asyncio
 async def test_robot_command_error_path(async_client_admin, monkeypatch):
     client = async_client_admin
+    headers = {"Authorization": "Bearer mock_token"}
 
     async def fail_send(*args, **kwargs):
         return False
@@ -48,7 +50,7 @@ async def test_robot_command_error_path(async_client_admin, monkeypatch):
     from app.core import integration
     monkeypatch.setattr(integration.MockFirmwareService, "send_robot_command", fail_send, raising=True)
 
-    r = await client.post("/api/v1/robot/command", json={"command_type": "move", "parameters": {"dir": "f"}})
+    r = await client.post("/api/v1/robot/command", json={"command_type": "move", "parameters": {"dir": "f"}}, headers=headers)
     print(f"Response status: {r.status_code}")
     print(f"Response body: {r.text}")
     # API should handle failure gracefully
@@ -60,7 +62,8 @@ async def test_robot_command_error_path(async_client_admin, monkeypatch):
 @pytest.mark.asyncio
 async def test_telemetry_current_success(async_client_admin):
     client = async_client_admin
-    r = await client.get("/api/v1/telemetry/current")
+    headers = {"Authorization": "Bearer mock_token"}
+    r = await client.get("/api/v1/telemetry/current", headers=headers)
     assert r.status_code == 200
     data = r.json()
     assert "timestamp" in data or "motor_speed" in data
@@ -69,7 +72,8 @@ async def test_telemetry_current_success(async_client_admin):
 @pytest.mark.asyncio
 async def test_telemetry_history_success(async_client_admin):
     client = async_client_admin
-    r = await client.get("/api/v1/telemetry/history?limit=5")
+    headers = {"Authorization": "Bearer mock_token"}
+    r = await client.get("/api/v1/telemetry/history?limit=5", headers=headers)
     assert r.status_code == 200
     assert isinstance(r.json(), list)
 
@@ -77,9 +81,10 @@ async def test_telemetry_history_success(async_client_admin):
 @pytest.mark.asyncio
 async def test_telemetry_summary_success(async_client_admin):
     client = async_client_admin
+    headers = {"Authorization": "Bearer mock_token"}
     # Prime some telemetry
-    await client.get("/api/v1/telemetry/current")
-    r = await client.get("/api/v1/telemetry/summary")
+    await client.get("/api/v1/telemetry/current", headers=headers)
+    r = await client.get("/api/v1/telemetry/summary", headers=headers)
     assert r.status_code == 200
     data = r.json()
     assert "total_records" in data or "message" in data
@@ -90,14 +95,16 @@ async def test_telemetry_summary_success(async_client_admin):
 @pytest.mark.asyncio
 async def test_safety_status_success(async_client_admin):
     client = async_client_admin
-    r = await client.get("/api/v1/safety/status")
+    headers = {"Authorization": "Bearer mock_token"}
+    r = await client.get("/api/v1/safety/status", headers=headers)
     assert r.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_safety_emergency_success(async_client_admin):
     client = async_client_admin
-    r = await client.post("/api/v1/safety/emergency")
+    headers = {"Authorization": "Bearer mock_token"}
+    r = await client.post("/api/v1/safety/emergency", headers=headers)
     assert r.status_code == 200
 
 

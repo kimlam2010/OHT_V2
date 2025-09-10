@@ -104,8 +104,8 @@ app = FastAPI(
     ### 🤖 **Robot Control API** (6 endpoints)  
     - Robot status, movement control, position tracking, emergency stop
     
-    ### 📊 **Telemetry API** (6 endpoints)
-    - Real-time sensor data, LiDAR scans, data collection management
+    ### 📊 **Telemetry API** (sensors)
+    - Real-time sensor data: accelerometer, electronic compass, 4 DI proximity, NFC/RFID 13.56MHz
     
     ### 🚨 **Safety API** (5 endpoints)
     - Safety status, emergency controls, alert management, safety zones
@@ -119,8 +119,8 @@ app = FastAPI(
     ### 📈 **Monitoring API** (6 endpoints)
     - System health, performance metrics, logs, alerts
     
-    ### 🗺️ **Map & Localization API** (12 endpoints)
-    - Map management, robot positioning, hybrid localization
+    ### 🗺️ **Map & Localization API**
+    - Map management and basic localization (no LiDAR)
     
     ### 📡 **Sensor Data API** (8 endpoints)
     - Sensor data processing, configuration, calibration
@@ -193,7 +193,7 @@ app = FastAPI(
         },
         {
             "name": "Telemetry",
-            "description": "📊 Real-time sensor data, LiDAR scans, and data collection (6 endpoints)"
+            "description": "📊 Real-time sensor data: accelerometer, compass, DI proximity, NFC/RFID"
         },
         {
             "name": "Safety",
@@ -213,7 +213,7 @@ app = FastAPI(
         },
         {
             "name": "map",
-            "description": "🗺️ Map management, robot positioning, and hybrid localization (12 endpoints)"
+            "description": "🗺️ Map management and basic localization (no LiDAR)"
         },
         {
             "name": "sensors",
@@ -236,10 +236,35 @@ app = FastAPI(
 )
 
 settings = Settings()
+# Simple rate limiting middleware (per-process, per-IP)
+from collections import defaultdict
+import time as _time
+
+_RATE_LIMIT_REQUESTS = settings.rate_limit_requests
+_RATE_LIMIT_WINDOW = settings.rate_limit_window
+_rate_buckets = defaultdict(list)
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    now = _time.time()
+    window_start = now - _RATE_LIMIT_WINDOW
+    bucket = _rate_buckets[client_ip]
+    # prune old entries
+    while bucket and bucket[0] < window_start:
+        bucket.pop(0)
+    if len(bucket) >= _RATE_LIMIT_REQUESTS:
+        return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+    bucket.append(now)
+    return await call_next(request)
 # Add CORS middleware
+_origins = settings.cors_origins
+if settings.environment.lower() == "production":
+    # In production, disallow localhost defaults unless explicitly configured
+    _origins = [o for o in _origins if "localhost" not in o and "127.0.0.1" not in o]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,  # Configure appropriately for production
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -260,6 +285,12 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
     
     return response
+
+# Production sanity checks for secrets
+if settings.environment.lower() == "production":
+    if settings.jwt_secret in ("your-secret-key-here", "test-secret-key"):
+        logger.error("JWT secret is using a default value in production. Refusing to start.")
+        raise RuntimeError("Invalid JWT secret in production")
 
 
 # Global exception handler
@@ -316,13 +347,17 @@ async def fast_health_check():
     }
 
 
-# Test endpoint without authentication
+# Test endpoint without authentication (only in non-production/testing)
 @app.get("/test-auth")
 async def test_auth():
-    """Test endpoint without authentication"""
+    """Test endpoint without authentication (disabled in production)"""
+    env = os.getenv("ENVIRONMENT", "development").lower()
+    testing = os.getenv("TESTING", "false").lower() == "true"
+    if env == "production" and not testing:
+        return JSONResponse(status_code=404, content={"detail": "Not found"})
     return {
         "success": True,
-        "message": "Test endpoint working without authentication",
+        "message": "Test endpoint working (non-production)",
         "timestamp": "2025-01-28T10:30:00Z"
     }
 

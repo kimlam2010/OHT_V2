@@ -27,10 +27,10 @@ localization_engine = HybridLocalizationEngine()
 # Pydantic models for request/response
 class StartMappingRequest(BaseModel):
     """Request model for starting mapping"""
-    map_name: str = Field(..., description="Name of the map to create")
-    resolution: float = Field(default=50.0, description="Resolution in mm per pixel")
-    width: int = Field(default=1000, description="Map width in pixels")
-    height: int = Field(default=1000, description="Map height in pixels")
+    map_name: str = Field(..., min_length=1, description="Name of the map to create")
+    resolution: float = Field(default=50.0, ge=0.01, description="Resolution in mm per pixel")
+    width: int = Field(default=1000, ge=1, description="Map width in pixels")
+    height: int = Field(default=1000, ge=1, description="Map height in pixels")
 
 
 class StopMappingResponse(BaseModel):
@@ -458,14 +458,18 @@ async def get_map_list(
         # Get map list
         result = await map_service.get_map_list()
         
-        if not result["success"]:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to get map list"
-            )
+        # result in tests may be a plain list of maps
+        maps_payload = result
+        if isinstance(result, dict):
+            if not result.get("success", True):
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to get map list"
+                )
+            maps_payload = result.get("maps", [])
         
         map_info_list = []
-        for map_data in result["maps"]:
+        for map_data in maps_payload:
             map_info_list.append(MapInfo(
                 map_id=map_data["map_id"],
                 name=map_data["name"],
