@@ -4,7 +4,8 @@ Configuration settings for OHT-50 Backend
 
 from typing import List
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic import ConfigDict, field_validator
+import os
 
 
 class Settings(BaseSettings):
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     
     # Security
     secret_key: str = "your-secret-key-here"
-    jwt_secret: str = "your-secret-key-here"
+    jwt_secret: str = ""  # Must be set via environment variable
     jwt_algorithm: str = "HS256"
     jwt_expiry_minutes: int = 30
     
@@ -47,8 +48,8 @@ class Settings(BaseSettings):
     jwt_expiry: str = "3600"
     
     # Rate Limiting
-    rate_limit_requests: str = "1000"
-    rate_limit_window: str = "60"
+    rate_limit_requests: int = 1000
+    rate_limit_window: int = 60
     
     # RS485 Settings
     rs485_port: str = "/dev/ttyOHT485"
@@ -69,6 +70,18 @@ class Settings(BaseSettings):
     request_timeout: int = 30
     
     model_config = ConfigDict(env_file=".env")
+    
+    @field_validator('jwt_secret')
+    @classmethod
+    def validate_jwt_secret(cls, v: str) -> str:
+        """Validate JWT secret is set for production"""
+        # Allow empty JWT secret only in testing mode
+        if not v and os.getenv("TESTING", "false").lower() != "true":
+            raise ValueError(
+                "JWT_SECRET must be set via environment variable for production. "
+                "Set JWT_SECRET in your .env file or environment variables."
+            )
+        return v
 
 
 # Global settings instance

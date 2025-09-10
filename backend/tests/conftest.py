@@ -5,6 +5,7 @@ Test configuration for OHT-50 Backend
 import pytest
 import asyncio
 import warnings
+import os
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -17,8 +18,14 @@ from app.models.user import User
 from app.config import settings
 from sqlalchemy import text
 
+# Ensure TESTING=true for all tests
+os.environ["TESTING"] = "true"
+
 
 def pytest_configure(config):
+    # Ensure TESTING=true for all tests
+    os.environ["TESTING"] = "true"
+    
     # Fail on warnings and on skipped tests per QAQC rules
     warnings.simplefilter("error")
     config.addinivalue_line("markers", "performance: mark performance tests")

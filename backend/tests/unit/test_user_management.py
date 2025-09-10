@@ -43,8 +43,8 @@ class TestUserManagementService:
         return UserCreate(
             username="newuser",
             email="new@example.com",
-            password="ValidPass123",
-            confirm_password="ValidPass123",
+            password="ValidPass12345",
+            confirm_password="ValidPass12345",
             full_name="New User",
             role="viewer"
         )
@@ -402,8 +402,8 @@ class TestUserManagementService:
         user_data = UserCreate(
             username="validuser",
             email="valid@example.com",
-            password="ValidPass123",
-            confirm_password="ValidPass123",
+            password="ValidPass12345",
+            confirm_password="ValidPass12345",
             full_name="Valid User",
             role="viewer"
         )
@@ -424,8 +424,8 @@ class TestUserManagementService:
             user_data = UserCreate(
                 username="ab",  # Too short
                 email="valid@example.com",
-                password="ValidPass123",
-                confirm_password="ValidPass123",
+                password="ValidPass12345",
+                confirm_password="ValidPass12345",
                 full_name="Valid User",
                 role="viewer"
             )
@@ -445,8 +445,8 @@ class TestUserManagementService:
             user_data = UserCreate(
                 username="validuser",
                 email="invalid-email",  # No @ symbol
-                password="ValidPass123",
-                confirm_password="ValidPass123",
+                password="ValidPass12345",
+                confirm_password="ValidPass12345",
                 full_name="Valid User",
                 role="viewer"
             )
@@ -487,8 +487,8 @@ class TestUserManagementService:
             user_data = UserCreate(
                 username="validuser",
                 email="valid@example.com",
-                password="ValidPass123",
-                confirm_password="ValidPass123",
+                password="ValidPass12345",
+                confirm_password="ValidPass12345",
                 full_name="Valid User",
                 role="invalid_role"
             )
@@ -530,8 +530,8 @@ class TestUserManagementService:
             invalid_user_data = UserCreate(
                 username="newuser",
                 email="new@example.com",
-                password="ValidPass123",
-                confirm_password="ValidPass123",
+                password="ValidPass12345",
+                confirm_password="ValidPass12345",
                 full_name="New User",
                 role="invalid_role"
             )

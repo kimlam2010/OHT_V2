@@ -59,11 +59,10 @@ class TestCompleteMappingWorkflow:
         """Test complete mapping workflow from start to finish"""
         
         # Setup mocks
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service', mock_services["map_service"]), \
              patch('app.api.v1.map.localization_engine', mock_services["localization_engine"]), \
-             patch('app.api.v1.sensors.get_current_user', return_value=mock_user), \
-             patch('app.api.v1.localization.get_current_user', return_value=mock_user):
+             patch('app.core.security.get_current_user', return_value=mock_user):
             
             # Step 1: Start Mapping
             mock_services["map_service"].start_mapping.return_value = {
@@ -280,7 +279,7 @@ class TestCompleteMappingWorkflow:
     async def test_mapping_workflow_with_errors(self, client, mock_user, auth_headers, mock_services):
         """Test mapping workflow with error scenarios"""
         
-        with patch('app.api.v1.map.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.map.map_service', mock_services["map_service"]):
             
             # Step 1: Start Mapping with Invalid Parameters
@@ -350,7 +349,7 @@ class TestCompleteMappingWorkflow:
     async def test_sensor_data_workflow(self, client, mock_user, auth_headers, mock_services):
         """Test sensor data collection and processing workflow"""
         
-        with patch('app.api.v1.sensors.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.sensors.get_db') as mock_db:
             
             # Setup mock database
@@ -456,7 +455,7 @@ class TestCompleteMappingWorkflow:
     async def test_localization_workflow(self, client, mock_user, auth_headers, mock_services):
         """Test localization and positioning workflow"""
         
-        with patch('app.api.v1.localization.get_current_user', return_value=mock_user), \
+        with patch('app.core.security.get_current_user', return_value=mock_user), \
              patch('app.api.v1.localization.map_service', mock_services["map_service"]), \
              patch('app.api.v1.localization.localization_engine', mock_services["localization_engine"]), \
              patch('app.api.v1.localization.get_db') as mock_db:

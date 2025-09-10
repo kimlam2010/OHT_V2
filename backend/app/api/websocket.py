@@ -23,7 +23,12 @@ router = APIRouter(tags=["websocket"])
 
 @router.get("/ws")
 async def get_websocket_page():
-    """Get WebSocket test page"""
+    """Get WebSocket test page (disabled in production)"""
+    import os
+    env = os.getenv("ENVIRONMENT", "development").lower()
+    testing = os.getenv("TESTING", "false").lower() == "true"
+    if env == "production" and not testing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     html_content = """
     <!DOCTYPE html>
     <html>

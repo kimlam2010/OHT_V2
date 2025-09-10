@@ -21,7 +21,7 @@ class UserBase(BaseModel):
     status: UserStatus = Field(default=UserStatus.ACTIVE, description="User account status")
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
+    password: str = Field(..., min_length=12, description="Password must be at least 12 characters")
     confirm_password: str = Field(..., description="Password confirmation")
     
     @field_validator('confirm_password')
@@ -64,7 +64,7 @@ class UserLogin(BaseModel):
 
 class UserPasswordChange(BaseModel):
     current_password: str = Field(..., description="Current password")
-    new_password: str = Field(..., min_length=8, description="New password")
+    new_password: str = Field(..., min_length=12, description="New password (min 12 chars)")
     confirm_new_password: str = Field(..., description="Confirm new password")
     
     @field_validator('confirm_new_password')
