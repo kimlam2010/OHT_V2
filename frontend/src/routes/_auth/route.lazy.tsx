@@ -1,5 +1,5 @@
 import { createLazyFileRoute, Outlet } from '@tanstack/react-router'
-import PendingComponent from '@/components/shared/pending-component'
+import PendingComponent from '@/components/shared/PendingComponent'
 
 export const Route = createLazyFileRoute('/_auth')({
   component: RouteComponent,

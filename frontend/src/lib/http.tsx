@@ -1,8 +1,10 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import axios, { isAxiosError } from 'axios'
-import { ACCESS_TOKEN } from '@/constants/string'
+import { authApi } from '@/api/auth'
+import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/constants/string'
 import { NProgressCustom } from '@/plugins/nprogress'
-import { HTTPError } from '@/types/error'
+import { useUserStore } from '@/stores'
+import { HTTPError } from '@/types'
 
 const nprogress = NProgressCustom()
 
@@ -34,13 +36,81 @@ http.interceptors.request.use(
   },
 )
 
+let isRefreshing = false
+
+interface QueueItem {
+  resolve: (value?: unknown) => void
+  reject: (error?: unknown) => void
+}
+
+let failedQueue: QueueItem[] = []
+
+function processQueue(error: unknown, token: string | null = null) {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error)
+    }
+    else {
+      prom.resolve(token)
+    }
+  })
+  failedQueue = []
+}
+
 http.interceptors.response.use(
   (response) => {
     nprogress.done()
     return Promise.resolve(response.data)
   },
-  (error) => {
+  async (error) => {
     nprogress.done()
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            return http(originalRequest)
+          })
+          .catch(err => Promise.reject(err))
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN)
+      if (!refreshToken) {
+        useUserStore.getState().clearUser()
+        localStorage.removeItem(ACCESS_TOKEN)
+        localStorage.removeItem(REFRESH_TOKEN)
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
+
+      try {
+        const response = await authApi.refreshToken({ refresh_token: refreshToken })
+        const { access_token } = response
+        localStorage.setItem(ACCESS_TOKEN, access_token)
+        http.defaults.headers.common.Authorization = `Bearer ${access_token}`
+        originalRequest.headers.Authorization = `Bearer ${access_token}`
+        processQueue(null, access_token)
+        return http(originalRequest)
+      }
+      catch (err) {
+        processQueue(err, null)
+        useUserStore.getState().clearUser()
+        localStorage.removeItem(ACCESS_TOKEN)
+        localStorage.removeItem(REFRESH_TOKEN)
+        window.location.href = '/login'
+        return Promise.reject(err)
+      }
+      finally {
+        isRefreshing = false
+      }
+    }
 
     if (isAxiosError(error) && error.response && error.response.data) {
       const { status } = error.response
