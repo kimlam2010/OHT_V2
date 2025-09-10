@@ -27,8 +27,13 @@ static int parse_request_line(const char *buf, api_mgr_http_request_t *req){ cha
 static int api_handle_module_status_by_id_router(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){ return api_handle_module_status_by_id(req,res); }
 
 static int route_request(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){
+ // Compare path ignoring optional query string (anything after '?')
  for(int i=0;i<g_ep_count;i++){
-  if(g_eps[i].method==req->method && strcmp(g_eps[i].path, req->path)==0){
+  if(g_eps[i].method!=req->method) continue;
+  const char *q = strchr(req->path, '?');
+  size_t req_path_len = q ? (size_t)(q - req->path) : strlen(req->path);
+  size_t ep_len = strlen(g_eps[i].path);
+  if(ep_len==req_path_len && strncmp(g_eps[i].path, req->path, req_path_len)==0){
    return g_eps[i].handler(req,res);
   }
  }

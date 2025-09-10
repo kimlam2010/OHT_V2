@@ -208,15 +208,23 @@ hal_status_t module_polling_power_module(uint8_t address)
     // HIGH PRIORITY: Critical Battery Data (1s interval) - 21 registers
     printf("[POLLING-POWER] 0x%02X: Reading HIGH priority data...\n", address);
     
-    // 1. Critical Battery Data (8 registers: 0x0000-0x000A)
-    uint16_t battery_data[8];
-    hal_status_t status = module_polling_smart_read(address, 0x0000, 8, battery_data, "POWER");
+    // 1. Critical Battery Data (11 registers: 0x0000-0x000A)
+    uint16_t battery_data[11];
+    hal_status_t status = module_polling_smart_read(address, 0x0000, 11, battery_data, "POWER");
     total_attempts++;
     if (status == HAL_STATUS_OK) {
         success_count++;
-        printf("[POLLING-POWER] 0x%02X: Battery=%d.%dV, Current=%d.%dA, SOC=%d.%d%%, MaxCell=%dmV, MinCell=%dmV, Temp=%d°C, Conn=%d, Status=0x%04X\n",
+        // Raw dump of registers 0x0000-0x000A to verify data integrity
+        printf("[POLLING-POWER][RAW] 0x%02X: 0000-000A: %04X %04X %04X %04X %04X %04X %04X %04X %04X %04X %04X\n",
+               address,
+               battery_data[0], battery_data[1], battery_data[2], battery_data[3], battery_data[4],
+               battery_data[5], battery_data[6], battery_data[7], battery_data[8], battery_data[9], battery_data[10]);
+
+        // Print with signed current formatted to one decimal place
+        double current_a = ((int16_t)battery_data[1]) / 10.0;
+        printf("[POLLING-POWER] 0x%02X: Battery=%d.%dV, Current=%.1fA, SOC=%d.%d%%, MaxCell=%dmV, MinCell=%dmV, Temp=%d°C, Conn=%d, Status=0x%04X\n",
                address, battery_data[0]/10, battery_data[0]%10,
-               (int16_t)battery_data[1]/10, abs((int16_t)battery_data[1]%10),
+               current_a,
                battery_data[2]/10, battery_data[2]%10,
                battery_data[3], battery_data[4], (int16_t)battery_data[8],
                battery_data[9], battery_data[10]);
@@ -319,9 +327,9 @@ hal_status_t module_polling_power_module(uint8_t address)
     // LOW PRIORITY: System Information (30s interval) - 10 registers
     printf("[POLLING-POWER] 0x%02X: Reading LOW priority data...\n", address);
     
-    // 8. System Registers (8 registers: 0x00F0-0x00F7)
+    // 8. System Registers (8 registers: 0x0100-0x0107)
     uint16_t system_data[8];
-    status = module_polling_smart_read(address, 0x00F0, 8, system_data, "POWER");
+    status = module_polling_smart_read(address, 0x0100, 8, system_data, "POWER");
     total_attempts++;
     if (status == HAL_STATUS_OK) {
         success_count++;
@@ -367,9 +375,9 @@ hal_status_t module_polling_motor_module(uint8_t address)
 {
     printf("[POLLING-MOTOR] Polling Motor Module 0x%02X\n", address);
     
-    // Strategy 1: Try to read system registers first (0x00F0-0x00F7)
+    // Strategy 1: Try to read system registers first (0x0100-0x0107)
     uint16_t system_data[8];
-    hal_status_t status = module_polling_smart_read(address, 0x00F0, 8, system_data, "MOTOR");
+    hal_status_t status = module_polling_smart_read(address, 0x0100, 8, system_data, "MOTOR");
     
     if (status == HAL_STATUS_OK) {
         printf("[POLLING-MOTOR] 0x%02X: DeviceID=0x%04X, FW=0x%04X, HW=0x%04X, Type=0x%04X\n",
@@ -416,9 +424,9 @@ hal_status_t module_polling_sensor_module(uint8_t address)
 {
     printf("[POLLING-SAFETY] Polling Safety Module 0x%02X\n", address);
     
-    // Strategy 1: Try to read system registers first (0x00F0-0x00F7)
+    // Strategy 1: Try to read system registers first (0x0100-0x0107)
     uint16_t system_data[8];
-    hal_status_t status = comm_manager_modbus_read_holding_registers(address, 0x00F0, 8, system_data);
+    hal_status_t status = comm_manager_modbus_read_holding_registers(address, 0x0100, 8, system_data);
     
     if (status == HAL_STATUS_OK) {
         printf("[POLLING-SAFETY] 0x%02X: DeviceID=0x%04X, Type=0x%04X, Status=0x%04X, Version=0x%04X\n",
@@ -452,9 +460,9 @@ hal_status_t module_polling_lidar_module(uint8_t address)
 {
     printf("[POLLING-DOCK] Polling Dock Module 0x%02X\n", address);
     
-    // Strategy 1: Try to read system registers first (0x00F0-0x00F7)
+    // Strategy 1: Try to read system registers first (0x0100-0x0107)
     uint16_t system_data[8];
-    hal_status_t status = comm_manager_modbus_read_holding_registers(address, 0x00F0, 8, system_data);
+    hal_status_t status = comm_manager_modbus_read_holding_registers(address, 0x0100, 8, system_data);
     
     if (status == HAL_STATUS_OK) {
         printf("[POLLING-DOCK] 0x%02X: DeviceID=0x%04X, Type=0x%04X, Status=0x%04X, Version=0x%04X\n",
@@ -490,7 +498,7 @@ hal_status_t module_polling_unknown_module(uint8_t address)
     
     // Read basic module data
     uint16_t basic_data[2];
-    hal_status_t status = comm_manager_modbus_read_holding_registers(address, 0x00F0, 2, basic_data);
+    hal_status_t status = comm_manager_modbus_read_holding_registers(address, 0x0100, 2, basic_data);
     
     if (status == HAL_STATUS_OK) {
         printf("[POLLING-UNKNOWN] 0x%02X: DeviceID=0x%04X, Status=0x%04X\n",

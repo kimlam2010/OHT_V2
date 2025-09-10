@@ -212,9 +212,9 @@ hal_status_t comm_manager_deinit(void) {
 }
 
 static module_type_t probe_module_type(uint8_t addr) {
-    // Try to read Module Type register (0x00F7) to identify module type
+    // Try to read Module Type register (0x0104) to identify module type
     uint16_t module_type = 0;
-    hal_status_t status = comm_manager_modbus_read_holding_registers(addr, 0x00F7, 1, &module_type);
+    hal_status_t status = comm_manager_modbus_read_holding_registers(addr, 0x0104, 1, &module_type);
     
     if (status == HAL_STATUS_OK) {
         printf("[SCAN] 0x%02X Module Type Register: 0x%04X\n", addr, module_type);
@@ -272,15 +272,15 @@ hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr) {
                 hal_sleep_ms(backoff_ms);
             }
             
-            // Try to read Device ID register (0x00F0) first - this is what EMBED team tested
+            // Try to read Device ID register (0x0100) first - this is what EMBED team tested
             uint16_t device_id = 0;
-            hal_status_t st = comm_manager_modbus_read_holding_registers(addr, 0x00F0, 1, &device_id);
+            hal_status_t st = comm_manager_modbus_read_holding_registers(addr, 0x0100, 1, &device_id);
             if (st == HAL_STATUS_OK) {
                 printf("[SCAN] 0x%02X ONLINE (Device ID=0x%04X)\n", addr, device_id);
                 
-                // Try to read Module Type register (0x00F7) as well
+                // Try to read Module Type register (0x0104) as well
                 uint16_t module_type = 0;
-                hal_status_t st2 = comm_manager_modbus_read_holding_registers(addr, 0x00F7, 1, &module_type);
+                hal_status_t st2 = comm_manager_modbus_read_holding_registers(addr, 0x0104, 1, &module_type);
                 if (st2 == HAL_STATUS_OK) {
                     printf("[SCAN] 0x%02X Module Type=0x%04X\n", addr, module_type);
                 }

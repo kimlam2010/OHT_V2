@@ -45,8 +45,8 @@ typedef enum {
 #define POWER_REG_RELAY1_CONTROL      0x0006  // Relay 1 control (0=OFF, 1=ON)
 #define POWER_REG_RELAY2_CONTROL      0x0007  // Relay 2 control (0=OFF, 1=ON)
 #define POWER_REG_ALARM_STATUS        0x0008  // Alarm status (bitmap)
-#define POWER_REG_DEVICE_ID           0x00F0  // Device ID
-#define POWER_REG_MODULE_TYPE         0x00F7  // Module type (0x0002 = Power)
+#define POWER_REG_DEVICE_ID           0x0100  // Device ID
+#define POWER_REG_MODULE_TYPE         0x0104  // Module type (0x0002 = Power)
 
 typedef struct {
     uint8_t address;                 // Modbus/RS485 address (e.g., 0x02)
