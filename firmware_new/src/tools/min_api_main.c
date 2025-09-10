@@ -20,6 +20,24 @@ static void *lidar_ws_broadcaster(void *arg){ (void)arg;
                 int a = ((ang % 360) + 360) % 360;
                 if (dist > bins[a]) bins[a] = dist;
             }
+
+            // Interpolate gaps to ensure 360 filled values
+            for (int a = 0; a < 360; a++) {
+                if (bins[a] == 0) {
+                    int left = -1, right = -1;
+                    for (int i = 1; i < 180; i++) { int idx = (a - i + 360) % 360; if (bins[idx] > 0) { left = idx; break; } }
+                    for (int i = 1; i < 180; i++) { int idx = (a + i) % 360; if (bins[idx] > 0) { right = idx; break; } }
+                    if (left != -1 && right != -1) {
+                        int dl = (a - left + 360) % 360;
+                        int dr = (right - a + 360) % 360;
+                        int dt = dl + dr; if (dt>0) bins[a] = (bins[left] * dr + bins[right] * dl) / dt;
+                    } else if (left != -1) {
+                        bins[a] = bins[left];
+                    } else if (right != -1) {
+                        bins[a] = bins[right];
+                    }
+                }
+            }
             // Build compact JSON
             char *json = NULL; size_t cap = 1024 + 360*12; json = (char*)malloc(cap);
             if (json){

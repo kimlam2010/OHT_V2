@@ -704,7 +704,7 @@ const char* ws_server_get_version_string(void) {
 
 // Private function implementations
 static hal_status_t ws_server_validate_config(const ws_server_config_t *config) {
-    if (config->port == 0 || config->port > 65535) {
+    if (config->port == 0) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
@@ -840,9 +840,11 @@ void* ws_server_client_thread(void *arg) {
     }
     
     // Mark handshake as complete
-    ws_client_t *client;
+    ws_client_t *client = NULL;
     if (ws_server_find_client(client_socket, &client) == HAL_STATUS_OK) {
         client->handshake_complete = true;
+        // Send a ready message immediately after handshake
+        ws_server_send_text(client_socket, "{\"type\":\"ready\"}");
     }
     
     // Main message loop
@@ -857,6 +859,10 @@ void* ws_server_client_thread(void *arg) {
         }
         
         // Handle frame based on type
+        // Ensure we have a valid client pointer (may change after array shifts)
+        if (client == NULL) {
+            ws_server_find_client(client_socket, &client);
+        }
         switch (frame.opcode) {
             case WS_FRAME_TEXT:
             case WS_FRAME_BINARY:
@@ -902,12 +908,15 @@ cleanup:
     return NULL;
 }
 
-// Placeholder functions for future implementation
+// Placeholder implementations (minimal)
 hal_status_t ws_server_handle_handshake(int socket_fd, const char *request, size_t request_length) {
     (void)request_length;
-    // Extract Sec-WebSocket-Key
+    // Extract Sec-WebSocket-Key (case-insensitive)
     char key[128]={0};
-    const char *kpos = strcasestr(request, "Sec-WebSocket-Key:");
+    const char *kpos = NULL; {
+        const char *p = request; const char *needle = "sec-websocket-key:"; size_t nlen=strlen(needle);
+        while(*p){ if(strncasecmp(p, needle, nlen)==0){ kpos=p; break; } p++; }
+    }
     if(!kpos){
         ws_server_send_http_response(socket_fd, "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
         return HAL_STATUS_INVALID_PARAMETER;
@@ -959,7 +968,8 @@ hal_status_t ws_server_receive_frame(int socket_fd, ws_frame_t *frame) {
 
 hal_status_t ws_server_create_frame(ws_frame_type_t opcode, const uint8_t *payload, size_t payload_length, 
                                    bool masked, ws_frame_t *frame) {
-    if(!frame) return HAL_STATUS_INVALID_PARAMETER; (void)masked; // server-to-client must be unmasked
+    if(!frame) return HAL_STATUS_INVALID_PARAMETER;
+    (void)masked; // server-to-client must be unmasked
     frame->fin=true; frame->rsv1=frame->rsv2=frame->rsv3=false; frame->opcode=opcode; frame->masked=false; frame->payload_length=payload_length; frame->payload_size=payload_length; frame->payload=NULL; frame->masking_key=0;
     if(payload_length>0){ frame->payload=(uint8_t*)malloc(payload_length); if(!frame->payload) return HAL_STATUS_NO_MEMORY; memcpy(frame->payload,payload,payload_length); }
     return HAL_STATUS_OK;
@@ -987,4 +997,9 @@ hal_status_t ws_server_write_data(int socket_fd, const uint8_t *data, size_t dat
     if(socket_fd<0||!data||data_length==0) return HAL_STATUS_INVALID_PARAMETER;
     size_t off=0; while(off<data_length){ ssize_t n=send(socket_fd, data+off, data_length-off, 0); if(n<0){ if(errno==EINTR) continue; return HAL_STATUS_IO_ERROR;} if(n==0) break; off+=n; }
     return HAL_STATUS_OK;
+}
+static hal_status_t ws_server_send_http_response(int socket_fd, const char *response) {
+    if (socket_fd < 0 || !response) return HAL_STATUS_INVALID_PARAMETER;
+    size_t len = strlen(response);
+    return ws_server_write_data(socket_fd, (const uint8_t*)response, len);
 }
