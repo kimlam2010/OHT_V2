@@ -1,3 +1,4 @@
+import type { User } from '@/types'
 import http from '@/lib/http'
 
 const _ROLES = ['operator', 'viewer', 'admin']
@@ -6,20 +7,6 @@ type Role = typeof _ROLES[number]
 interface LoginRequest {
   username: string
   password: string
-}
-
-interface User {
-  id: number
-  username: string
-  email: string
-  full_name: string
-  role: string
-  status: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
-  last_login: string | null
-  permissions: object
 }
 
 interface LoginResponse {
@@ -46,6 +33,16 @@ interface RegisterResponse {
   user: User
 }
 
+interface RefreshTokenRequest {
+  refresh_token: string
+}
+
+interface RefreshTokenResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+}
+
 export const authApi = {
   login: (data: LoginRequest): Promise<LoginResponse> => {
     return http.post('/auth/login', data, {
@@ -56,6 +53,13 @@ export const authApi = {
   },
   register: (data: RegisterRequest): Promise<RegisterResponse> => {
     return http.post('/auth/register', data, {
+      headers: {
+        'x-api': 'software',
+      },
+    })
+  },
+  refreshToken: (data: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
+    return http.post('/auth/refresh', data, {
       headers: {
         'x-api': 'software',
       },

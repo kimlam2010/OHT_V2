@@ -21,9 +21,10 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { ACCESS_TOKEN } from '@/constants/string'
+import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/constants/string'
 import { useLogin } from '@/hooks/auth'
-import { HTTPError } from '@/types/error'
+import { useUserStore } from '@/stores/user.store'
+import { HTTPError } from '@/types/error.type'
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'Username is required' }),
@@ -33,6 +34,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const { mutate: login } = useLogin()
   const navigate = useNavigate()
+  const setUser = useUserStore(state => state.setUser)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,6 +48,8 @@ export function LoginForm() {
       onSuccess: (response) => {
         toast.success('Login successful')
         localStorage.setItem(ACCESS_TOKEN, response.access_token)
+        localStorage.setItem(REFRESH_TOKEN, response.refresh_token)
+        setUser(response.user)
         navigate({ to: '/dashboard' })
       },
       onError: (error) => {
