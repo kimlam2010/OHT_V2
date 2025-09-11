@@ -1118,7 +1118,7 @@ static hal_status_t motor_module_poll_data(motor_module_handler_t *handler)
     
     hal_status_t status = HAL_STATUS_OK;
     
-    // Poll system registers (0x00F0-0x00F7)
+    // Poll system registers (0x0100-0x0107)
     uint16_t system_data[8];
     status = motor_module_read_registers(handler, MOTOR_DEVICE_ID_REG, 8, system_data);
     if (status == HAL_STATUS_OK) {
