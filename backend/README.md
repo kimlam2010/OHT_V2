@@ -152,6 +152,25 @@ curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
 | `GET` | `/api/v1/safety/alerts` | Danh sách cảnh báo | Bearer token | alerts list |
 | `POST` | `/api/v1/safety/alerts/{alert_id}/acknowledge` | Xác nhận cảnh báo | Bearer token | acknowledgment |
 
+### **📋 Dashboard Safety API (mới)**
+| Method | Endpoint | Mô tả | Yêu cầu | Response |
+|--------|----------|-------|---------|----------|
+| `GET` | `/api/v1/dashboard/safety` | Dữ liệu Safety cho Dashboard | Bearer token + `safety:read` | `DashboardSafety` |
+
+Schema `DashboardSafety`:
+```json
+{
+  "safety_state": "SAFE | WARNING | EMERGENCY | UNAVAILABLE",
+  "emergency_status": "Normal | E‑STOP | Unknown (FW offline)",
+  "obstacles_present": true,
+  "active_alerts_count": 2
+}
+```
+
+Lưu ý:
+- Không có "safety zone", không có `timestamp`, không có `temperature`.
+- Trả về `UNAVAILABLE` khi Firmware lỗi/timeout; không trả 500.
+
 ### **⚡ Speed Control API**
 | Method | Endpoint | Mô tả | Yêu cầu | Response |
 |--------|----------|-------|---------|----------|

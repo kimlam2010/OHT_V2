@@ -8,6 +8,20 @@ from datetime import datetime
 from enum import Enum
 
 
+class SafetyState(str, Enum):
+    SAFE = "SAFE"
+    WARNING = "WARNING"
+    EMERGENCY = "EMERGENCY"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class DashboardSafety(BaseModel):
+    safety_state: SafetyState = Field(..., description="Overall safety state")
+    emergency_status: str = Field(..., description='"Normal" | "E‑STOP" | "Unknown (FW offline)"')
+    obstacles_present: Optional[bool] = Field(None, description="True/False/None for Yes/No/Unknown")
+    active_alerts_count: Optional[int] = Field(None, description="Number of recent active safety alerts")
+
+
 class AlertSeverity(str, Enum):
     CRITICAL = "critical"
     HIGH = "high"

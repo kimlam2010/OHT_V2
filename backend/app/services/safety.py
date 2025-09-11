@@ -6,6 +6,7 @@ import logging
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 
+import os
 from app.services.firmware_integration_service import FirmwareIntegrationService, MockFirmwareService
 from app.core.monitoring import alert_manager, metrics_collector
 
@@ -16,7 +17,11 @@ class SafetyService:
     """Safety service"""
     
     def __init__(self, use_mock: bool = True):
-        if use_mock:
+        # Honor environment flag for production usage (no mock in production)
+        # Default to false to avoid mock in production unless explicitly enabled
+        env_use_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
+        effective_use_mock = use_mock and env_use_mock
+        if effective_use_mock:
             self.firmware_service = MockFirmwareService()
         else:
             self.firmware_service = FirmwareIntegrationService()
@@ -33,8 +38,7 @@ class SafetyService:
                 "status": "normal",
                 "emergency_stop": False,
                 "obstacles_detected": False,
-                "temperature_normal": True,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                # Keep internal fields minimal; API layer will shape response
             }
             
             # Check for safety issues
@@ -43,11 +47,9 @@ class SafetyService:
                 safety_status["emergency_stop"] = True
                 await self._create_safety_alert("emergency_stop", "critical", "Emergency stop activated")
             
-            # Check temperature
-            if robot_status.get("temperature", 0) > 60:
-                safety_status["temperature_normal"] = False
+            # Optional: warning conditions derived from robot_status without temperature
+            if robot_status.get("status") == "warning":
                 safety_status["status"] = "warning"
-                await self._create_safety_alert("high_temperature", "warning", f"High temperature: {robot_status.get('temperature')}°C")
             
             return safety_status
             
