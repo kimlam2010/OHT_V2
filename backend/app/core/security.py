@@ -42,6 +42,7 @@ SECURITY_CONFIG = {
 # RBAC Permissions Matrix
 RBAC_PERMISSIONS = {
     "admin": {
+        "dashboard": ["read"],
         "robot": ["read", "control", "emergency", "configure"],
         "telemetry": ["read", "write", "delete"],
         "safety": ["read", "configure", "emergency", "acknowledge"],
@@ -56,6 +57,7 @@ RBAC_PERMISSIONS = {
         "monitoring": ["read", "write", "delete", "admin"]
     },
     "administrator": {
+        "dashboard": ["read"],
         "robot": ["read", "control", "emergency", "configure"],
         "telemetry": ["read", "write", "delete"],
         "safety": ["read", "configure", "emergency", "acknowledge"],
@@ -70,6 +72,7 @@ RBAC_PERMISSIONS = {
         "monitoring": ["read", "write", "delete", "admin"]
     },
     "operator": {
+        "dashboard": ["read"],
         "robot": ["read", "control"],
         "telemetry": ["read"],
         "safety": ["read", "emergency"],
@@ -84,6 +87,7 @@ RBAC_PERMISSIONS = {
         "monitoring": ["read"]
     },
     "viewer": {
+        "dashboard": ["read"],
         "robot": ["read"],
         "telemetry": ["read"],
         "safety": ["read"],
