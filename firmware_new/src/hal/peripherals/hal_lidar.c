@@ -929,14 +929,19 @@ static hal_status_t lidar_parse_scan_data(const uint8_t *data, size_t len, lidar
             uint16_t angle = (data[i+3] << 8) | data[i+2];
             uint8_t quality = data[i+4];
             
-            // Skip only completely invalid points
-            if (distance == 0 && quality == 0) {
+            // Skip invalid points (distance or quality is zero)
+            if (distance == 0 || quality == 0) {
                 continue;
             }
             
             // Convert to proper units
             scan_data->points[scan_data->point_count].distance_mm = distance * 4; // Scale factor
-            scan_data->points[scan_data->point_count].angle_deg = angle / 64.0f; // Convert to degrees
+            // Normalize angle to 0..359 degrees
+            {
+                int ang_deg = (int)(angle / 64.0f);
+                ang_deg = ((ang_deg % 360) + 360) % 360;
+                scan_data->points[scan_data->point_count].angle_deg = ang_deg;
+            }
             scan_data->points[scan_data->point_count].quality = quality;
             scan_data->points[scan_data->point_count].timestamp_us = lidar_get_timestamp_us();
             
@@ -954,9 +959,18 @@ static hal_status_t lidar_parse_scan_data(const uint8_t *data, size_t len, lidar
     // Mark as complete if we have enough points
     if (scan_data->point_count > 0) {
         scan_data->scan_complete = true;
-        printf("LiDAR parsed %d points, scan complete\n", scan_data->point_count);
-    } else {
-        printf("LiDAR parsed 0 points, scan incomplete\n");
+        // Only log when a full 360° frame is achieved
+        if (scan_data->point_count >= 360) {
+            printf("LiDAR 360 frame complete: points=%u\n", scan_data->point_count);
+            uint16_t debug_count = 5;
+            for (uint16_t di = 0; di < debug_count; di++) {
+                printf("  p[%u]: d=%u mm, a=%d deg, q=%u\n",
+                       di,
+                       scan_data->points[di].distance_mm,
+                       scan_data->points[di].angle_deg,
+                       scan_data->points[di].quality);
+            }
+        }
     }
     
     return HAL_STATUS_OK;
