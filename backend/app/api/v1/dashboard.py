@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.schemas.dashboard import (
     DashboardSummary,
+    DashboardSafety,
     AlertResponse,
     LogResponse,
     PerformanceMetric,
@@ -23,8 +24,52 @@ from app.schemas.dashboard import (
     LogListResponse,
     DashboardStats
 )
+from app.schemas.dashboard import SafetyState
+from app.services.safety import safety_service
 
 router = APIRouter(prefix="/api/v1/dashboard", tags=["dashboard"])
+@router.get("/safety", response_model=DashboardSafety)
+async def get_dashboard_safety(
+    current_user: User = Depends(require_permission("safety", "read"))
+):
+    """Return simplified safety block data for Dashboard UI."""
+    try:
+        status = await safety_service.get_safety_status()
+
+        if status.get("status") == "error":
+            return DashboardSafety(
+                safety_state=SafetyState.UNAVAILABLE,
+                emergency_status="Unknown (FW offline)",
+                obstacles_present=None,
+                active_alerts_count=0,
+            )
+
+        state_map = {
+            "normal": SafetyState.SAFE,
+            "warning": SafetyState.WARNING,
+            "emergency": SafetyState.EMERGENCY,
+        }
+        safety_state = state_map.get(status.get("status", "normal"), SafetyState.UNAVAILABLE)
+
+        emergency_status = "E‑STOP" if status.get("emergency_stop", False) else "Normal"
+        obstacles_present = status.get("obstacles_detected")
+
+        alerts_count = len(safety_service.get_safety_alerts(limit=5))
+
+        return DashboardSafety(
+            safety_state=safety_state,
+            emergency_status=emergency_status,
+            obstacles_present=obstacles_present if isinstance(obstacles_present, bool) else None,
+            active_alerts_count=alerts_count,
+        )
+    except Exception:
+        # Do not leak internal errors; return UNAVAILABLE
+        return DashboardSafety(
+            safety_state=SafetyState.UNAVAILABLE,
+            emergency_status="Unknown (FW offline)",
+            obstacles_present=None,
+            active_alerts_count=0,
+        )
 
 
 @router.get("/summary", response_model=DashboardSummary)
