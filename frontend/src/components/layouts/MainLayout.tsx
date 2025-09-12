@@ -1,9 +1,9 @@
 import { useLocalStorage } from '@reactuses/core'
 import clsx from 'clsx'
-import ScrollToTopButton from '@/components/shared/scroll-to-top-button'
+import ScrollToTopButton from '@/components/shared/ScrollToTopButton'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import AppSidebar from './app-sidebar'
+import AppSidebar from './AppSidebar'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useLocalStorage<boolean | undefined>('sidebar', undefined)

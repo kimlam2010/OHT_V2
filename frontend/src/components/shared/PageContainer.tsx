@@ -13,7 +13,7 @@ interface Props {
 
 export default function PageContainer({ spacing = true, class: className, children }: Props) {
   return (
-    <div className="container p-4">
+    <div className="p-4 w-full h-full">
       <div className={cn(spacing && 'space-y-4', className)}>
         {children}
       </div>
