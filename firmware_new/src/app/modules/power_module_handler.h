@@ -157,7 +157,7 @@
 #define POWER_REG_RESET_ERROR_CMD        0x0109  // Reset error command (write 1 to reset all error flags)
 #define POWER_REG_MODULE_NAME_LOW        0x00F8  // Module name (low word)
 #define POWER_REG_MODULE_NAME_HIGH       0x00F9  // Module name (high word)
-#define POWER_REG_HARDWARE_VERSION       0x00FA  // Hardware version
+#define POWER_REG_HARDWARE_VERSION_ALT   0x00FA  // Hardware version (alternative)
 #define POWER_REG_SERIAL_NUMBER_LOW      0x00FB  // Serial number (low word)
 #define POWER_REG_SERIAL_NUMBER_HIGH     0x00FC  // Serial number (high word)
 #define POWER_REG_BUILD_DATE_LOW         0x00FD  // Build date (low word)

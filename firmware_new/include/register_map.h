@@ -107,7 +107,7 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define POWER_REG_RESET_ERROR_CMD          0x0109  // Reset error command (write 1 to reset all error flags)
 #define POWER_REG_MODULE_NAME_LOW          0x00F8  // Module name (low word)
 #define POWER_REG_MODULE_NAME_HIGH         0x00F9  // Module name (high word)
-#define POWER_REG_HARDWARE_VERSION         0x00FA  // Hardware version
+#define POWER_REG_HARDWARE_VERSION_ALT     0x00FA  // Hardware version (alternative)
 #define POWER_REG_SERIAL_NUMBER_LOW        0x00FB  // Serial number (low word)
 #define POWER_REG_SERIAL_NUMBER_HIGH       0x00FC  // Serial number (high word)
 #define POWER_REG_BUILD_DATE_LOW           0x00FD  // Build date (low word)
@@ -177,7 +177,7 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define SAFETY_RESET_ERROR_CMD_REG         0x0109  // Reset error command (write 1 to reset all error flags)
 #define SAFETY_MODULE_NAME_LOW_REG         0x00F8  // Module name (low word)
 #define SAFETY_MODULE_NAME_HIGH_REG        0x00F9  // Module name (high word)
-#define SAFETY_HARDWARE_VERSION_REG        0x00FA  // Hardware version
+#define SAFETY_HARDWARE_VERSION_ALT_REG    0x00FA  // Hardware version (alternative)
 #define SAFETY_SERIAL_NUMBER_LOW_REG       0x00FB  // Serial number (low word)
 #define SAFETY_SERIAL_NUMBER_HIGH_REG      0x00FC  // Serial number (high word)
 #define SAFETY_BUILD_DATE_LOW_REG          0x00FD  // Build date (low word)
@@ -233,15 +233,7 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define DC_MOTOR_REG_DO2_ASSIGNMENT       0x0034  // DO2 assignment
 
 // System Registers (0x0100-0x0106)
-#define DC_MOTOR_REG_DEVICE_ID            0x0100  // Device ID (Modbus slave address)
-#define DC_MOTOR_REG_FIRMWARE_VERSION     0x0101  // Firmware version
-#define DC_MOTOR_REG_SYSTEM_STATUS        0x0102  // System status (bit field)
-#define DC_MOTOR_REG_SYSTEM_ERROR         0x0103  // System error (global error code)
-#define DC_MOTOR_REG_RESET_ERROR_CMD      0x0104  // Reset error command
-#define DC_MOTOR_REG_CONFIG_BAUDRATE      0x0105  // Config baudrate
-#define DC_MOTOR_REG_CONFIG_PARITY        0x0106  // Config parity
-
-// Auto Detect Support Registers (0x0100-0x0109)
+// Auto Detect Support Registers (0x0100-0x0109) - Unified
 #define DC_MOTOR_REG_DEVICE_ID            0x0100  // Device ID (Modbus slave address)
 #define DC_MOTOR_REG_CONFIG_BAUDRATE      0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
 #define DC_MOTOR_REG_CONFIG_PARITY        0x0102  // Config parity (0=None, 1=Even, 2=Odd)
@@ -254,7 +246,7 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define DC_MOTOR_REG_RESET_ERROR_CMD      0x0109  // Reset error command (write 1 to reset all error flags)
 #define DC_MOTOR_REG_MODULE_NAME_LOW      0x00F8  // Module name (low word)
 #define DC_MOTOR_REG_MODULE_NAME_HIGH     0x00F9  // Module name (high word)
-#define DC_MOTOR_REG_HARDWARE_VERSION     0x00FA  // Hardware version
+#define DC_MOTOR_REG_HARDWARE_VERSION_ALT 0x00FA  // Hardware version (alternative)
 #define DC_MOTOR_REG_SERIAL_NUMBER_LOW    0x00FB  // Serial number (low word)
 #define DC_MOTOR_REG_SERIAL_NUMBER_HIGH   0x00FC  // Serial number (high word)
 #define DC_MOTOR_REG_BUILD_DATE_LOW       0x00FD  // Build date (low word)
@@ -338,7 +330,7 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define DOCK_REG_RESET_ERROR_CMD          0x0109  // Reset error command (write 1 to reset all error flags)
 #define DOCK_REG_MODULE_NAME_LOW          0x00F8  // Module name (low word)
 #define DOCK_REG_MODULE_NAME_HIGH         0x00F9  // Module name (high word)
-#define DOCK_REG_HARDWARE_VERSION         0x00FA  // Hardware version
+#define DOCK_REG_HARDWARE_VERSION_ALT     0x00FA  // Hardware version (alternative)
 #define DOCK_REG_SERIAL_NUMBER_LOW        0x00FB  // Serial number (low word)
 #define DOCK_REG_SERIAL_NUMBER_HIGH       0x00FC  // Serial number (high word)
 #define DOCK_REG_BUILD_DATE_LOW           0x00FD  // Build date (low word)

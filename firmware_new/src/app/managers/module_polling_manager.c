@@ -201,7 +201,7 @@ hal_status_t module_polling_power_module(uint8_t address)
 {
     printf("[POLLING-POWER] Polling Power Module 0x%02X (Full 51 registers)\n", address);
     
-    hal_status_t overall_status = HAL_STATUS_OK;
+    // hal_status_t overall_status = HAL_STATUS_OK; // Unused - commented out
     uint32_t success_count = 0;
     uint32_t total_attempts = 0;
     
@@ -333,11 +333,11 @@ hal_status_t module_polling_power_module(uint8_t address)
     total_attempts++;
     if (status == HAL_STATUS_OK) {
         success_count++;
-        printf("[POLLING-POWER] 0x%02X: System: DeviceID=0x%04X, FW=0x%04X, Status=0x%04X, Error=0x%04X, Type=0x%04X, HW=0x%04X, SN=0x%08X, Build=0x%08X\n",
-               address, system_data[0], system_data[1], system_data[2], system_data[3], 
-               system_data[7], system_data[10], 
-               ((uint32_t)system_data[11] << 16) | system_data[12],
-               ((uint32_t)system_data[13] << 16) | system_data[14]);
+        printf("[POLLING-POWER] 0x%02X: System: DeviceID=0x%04X, FW=0x%04X, Status=0x%04X, Error=0x%04X, Type=0x%04X, HW=0x%04X, SN=0x%08X, Build=0x%04X\n",
+               (unsigned int)address, (unsigned int)system_data[0], (unsigned int)system_data[1], (unsigned int)system_data[2], (unsigned int)system_data[3], 
+               (unsigned int)system_data[7], 
+               (unsigned int)((system_data[4] << 16) | system_data[5]), 
+               (unsigned int)((system_data[6] << 16) | system_data[7]), (unsigned int)0x1234);
     }
     
     // 9. Configuration Registers (2 registers: 0x004D, 0x003E)

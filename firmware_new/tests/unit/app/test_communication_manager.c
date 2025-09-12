@@ -15,8 +15,8 @@
 
 // Test data structures
 static comm_mgr_config_t test_config;
-static comm_mgr_status_info_t test_status;
-static comm_mgr_stats_t test_stats;
+// static comm_mgr_status_info_t test_status; // Unused - commented out
+// static comm_mgr_stats_t test_stats; // Unused - commented out
 static comm_mgr_modbus_request_t test_request;
 static comm_mgr_modbus_response_t test_response;
 

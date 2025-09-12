@@ -13,7 +13,7 @@ from app.models.user import User
 @pytest.fixture(autouse=True, scope="session")
 def _env():
     os.environ["TESTING"] = "true"
-    os.environ["USE_FIRMWARE_MOCK"] = "true"
+    os.environ["USE_MOCK_FIRMWARE"] = "true"
     # Disable RBAC bypass for security tests
     os.environ["DISABLE_RBAC_BYPASS"] = "true"
     yield

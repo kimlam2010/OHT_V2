@@ -69,7 +69,7 @@ typedef struct dock_module_handler dock_module_handler_t;
 #define DOCK_RESET_ERROR_CMD_REG          0x0109  // Reset error command (write 1 to reset all error flags)
 #define DOCK_MODULE_NAME_LOW_REG          0x00F8  // Module name (low word)
 #define DOCK_MODULE_NAME_HIGH_REG         0x00F9  // Module name (high word)
-#define DOCK_HARDWARE_VERSION_REG         0x00FA  // Hardware version
+#define DOCK_HARDWARE_VERSION_ALT_REG     0x00FA  // Hardware version (alternative)
 #define DOCK_SERIAL_NUMBER_LOW_REG        0x00FB  // Serial number (low word)
 #define DOCK_SERIAL_NUMBER_HIGH_REG       0x00FC  // Serial number (high word)
 #define DOCK_BUILD_DATE_LOW_REG           0x00FD  // Build date (low word)
