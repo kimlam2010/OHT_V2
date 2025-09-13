@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
+#include <pthread.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 
@@ -25,7 +26,7 @@
 ws_server_instance_t g_ws_server = {0};
 
 // Private function declarations
-static hal_status_t ws_server_initialize_defaults(void);
+static hal_status_t ws_server_initialize_defaults(ws_server_config_t *config);
 static hal_status_t ws_server_setup_signal_handlers(void);
 static hal_status_t ws_server_cleanup_resources(void);
 static hal_status_t ws_server_validate_config(const ws_server_config_t *config);
@@ -35,9 +36,6 @@ static hal_status_t ws_server_calculate_accept_key(const char *websocket_key, ch
 static hal_status_t ws_server_send_http_response(int socket_fd, const char *response);
 static hal_status_t ws_server_read_data(int socket_fd, uint8_t *buffer, size_t buffer_size, size_t *received_length);
 static hal_status_t ws_server_write_data(int socket_fd, const uint8_t *data, size_t data_length);
-static hal_status_t ws_server_handle_ping(ws_client_t *client);
-static hal_status_t ws_server_handle_pong(ws_client_t *client);
-static hal_status_t ws_server_handle_close(ws_client_t *client, ws_close_code_t code, const char *reason);
 
 // Signal handler for graceful shutdown
 static volatile bool g_ws_shutdown_requested = false;
@@ -56,6 +54,13 @@ static void ws_server_signal_handler(int signal) {
 hal_status_t ws_server_init(const ws_server_config_t *config) {
     hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Initializing...");
     
+    // Check if already initialized
+    if (g_ws_server.initialized) {
+        hal_log_error("WS_SERVER", "ws_server_init", __LINE__, 
+                     HAL_STATUS_ERROR, "WebSocket Server already initialized");
+        return HAL_STATUS_ERROR;
+    }
+    
     // Validate input parameters
     if (config == NULL) {
         hal_log_error("WS_SERVER", "ws_server_init", __LINE__, 
@@ -63,8 +68,17 @@ hal_status_t ws_server_init(const ws_server_config_t *config) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
+    // Initialize default values for any missing fields
+    ws_server_config_t config_copy = *config; // Make a copy to modify
+    hal_status_t defaults_result = ws_server_initialize_defaults(&config_copy);
+    if (defaults_result != HAL_STATUS_OK) {
+        hal_log_error("WS_SERVER", "ws_server_init", __LINE__, 
+                     defaults_result, "Failed to initialize default values");
+        return defaults_result;
+    }
+    
     // Validate configuration
-    hal_status_t validation_result = ws_server_validate_config(config);
+    hal_status_t validation_result = ws_server_validate_config(&config_copy);
     if (validation_result != HAL_STATUS_OK) {
         hal_log_error("WS_SERVER", "ws_server_init", __LINE__, 
                      validation_result, "Configuration validation failed");
@@ -78,8 +92,8 @@ hal_status_t ws_server_init(const ws_server_config_t *config) {
         return HAL_STATUS_ERROR;
     }
     
-    // Copy configuration
-    memcpy(&g_ws_server.config, config, sizeof(ws_server_config_t));
+    // Copy configuration (with defaults applied)
+    memcpy(&g_ws_server.config, &config_copy, sizeof(ws_server_config_t));
     
     // Initialize status
     memset(&g_ws_server.status, 0, sizeof(ws_server_status_t));
@@ -91,6 +105,11 @@ hal_status_t ws_server_init(const ws_server_config_t *config) {
     
     // Initialize message handler
     g_ws_server.message_handler = NULL;
+    
+    // Initialize telemetry
+    g_ws_server.telemetry_callback = NULL;
+    g_ws_server.telemetry_streaming = false;
+    g_ws_server.telemetry_interval_ms = 1000; // Default 1 second
     
     // Initialize server socket
     g_ws_server.server_socket = -1;
@@ -183,6 +202,18 @@ hal_status_t ws_server_start(void) {
         return HAL_STATUS_ERROR;
     }
     
+    // Start telemetry streaming thread
+    if (pthread_create(&g_ws_server.telemetry_thread, NULL, ws_server_telemetry_thread, NULL) != 0) {
+        hal_log_error("WS_SERVER", "ws_server_start", __LINE__, 
+                     HAL_STATUS_ERROR, "Failed to create telemetry thread: %s", strerror(errno));
+        // Clean up server thread
+        g_ws_server.running = false;
+        pthread_join(g_ws_server.server_thread, NULL);
+        close(g_ws_server.server_socket);
+        g_ws_server.server_socket = -1;
+        return HAL_STATUS_ERROR;
+    }
+    
     g_ws_server.running = true;
     g_ws_server.status.running = true;
     g_ws_server.status.listening = true;
@@ -223,6 +254,12 @@ hal_status_t ws_server_stop(void) {
     if (g_ws_server.server_socket >= 0) {
         close(g_ws_server.server_socket);
         g_ws_server.server_socket = -1;
+    }
+    
+    // Wait for telemetry thread to finish
+    if (g_ws_server.telemetry_thread) {
+        pthread_join(g_ws_server.telemetry_thread, NULL);
+        g_ws_server.telemetry_thread = 0;
     }
     
     // Wait for server thread to finish
@@ -545,6 +582,92 @@ hal_status_t ws_server_broadcast_text(const char *text) {
 }
 
 /**
+ * @brief Send WebSocket binary message
+ * @param socket_fd Client socket file descriptor
+ * @param data Binary data to send
+ * @param data_length Data length
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_send_binary(int socket_fd, const uint8_t *data, size_t data_length) {
+    if (socket_fd < 0 || data == NULL || data_length == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Find client
+    ws_client_t *client;
+    hal_status_t find_result = ws_server_find_client(socket_fd, &client);
+    if (find_result != HAL_STATUS_OK) {
+        return find_result;
+    }
+    
+    // Create binary frame
+    ws_frame_t frame;
+    hal_status_t frame_result = ws_server_create_frame(WS_FRAME_BINARY, data, 
+                                                      data_length, false, &frame);
+    if (frame_result != HAL_STATUS_OK) {
+        return frame_result;
+    }
+    
+    // Send frame
+    hal_status_t send_result = ws_server_send_frame(socket_fd, &frame);
+    
+    // Update client statistics
+    if (send_result == HAL_STATUS_OK) {
+        pthread_mutex_lock(&client->mutex);
+        client->messages_sent++;
+        client->bytes_sent += data_length;
+        gettimeofday(&client->last_activity, NULL);
+        pthread_mutex_unlock(&client->mutex);
+        
+        // Update server statistics
+        pthread_mutex_lock(&g_ws_server.mutex);
+        g_ws_server.status.statistics.total_messages_sent++;
+        g_ws_server.status.statistics.total_bytes_sent += data_length;
+        pthread_mutex_unlock(&g_ws_server.mutex);
+    }
+    
+    return send_result;
+}
+
+/**
+ * @brief Broadcast WebSocket binary message to all connected clients
+ * @param data Binary data to broadcast
+ * @param data_length Data length
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_broadcast_binary(const uint8_t *data, size_t data_length) {
+    if (data == NULL || data_length == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_ws_server.mutex);
+    
+    uint32_t sent_count = 0;
+    for (uint32_t i = 0; i < g_ws_server.client_count; i++) {
+        if (g_ws_server.clients[i].connected && g_ws_server.clients[i].handshake_complete) {
+            hal_status_t send_result = ws_server_send_binary(g_ws_server.clients[i].socket_fd, data, data_length);
+            if (send_result == HAL_STATUS_OK) {
+                sent_count++;
+            }
+        }
+    }
+    
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Broadcast binary message to %d clients", sent_count);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
  * @brief Send WebSocket frame
  * @param socket_fd Client socket file descriptor
  * @param frame Frame to send
@@ -702,24 +825,444 @@ const char* ws_server_get_version_string(void) {
     return WS_SERVER_VERSION_STRING;
 }
 
+/**
+ * @brief Set WebSocket Server configuration
+ * @param config Pointer to configuration structure
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_set_config(const ws_server_config_t *config) {
+    if (config == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    if (g_ws_server.running) {
+        hal_log_error("WS_SERVER", "ws_server_set_config", __LINE__, 
+                     HAL_STATUS_INVALID_STATE, "Cannot change config while server is running");
+        return HAL_STATUS_INVALID_STATE;
+    }
+    
+    // Initialize defaults and validate
+    ws_server_config_t config_copy = *config;
+    hal_status_t defaults_result = ws_server_initialize_defaults(&config_copy);
+    if (defaults_result != HAL_STATUS_OK) {
+        return defaults_result;
+    }
+    
+    hal_status_t validation_result = ws_server_validate_config(&config_copy);
+    if (validation_result != HAL_STATUS_OK) {
+        return validation_result;
+    }
+    
+    // Update configuration
+    pthread_mutex_lock(&g_ws_server.mutex);
+    memcpy(&g_ws_server.config, &config_copy, sizeof(ws_server_config_t));
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Configuration updated");
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get WebSocket Server configuration
+ * @param config Pointer to configuration structure to fill
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_get_config(ws_server_config_t *config) {
+    if (config == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_ws_server.mutex);
+    memcpy(config, &g_ws_server.config, sizeof(ws_server_config_t));
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Set default WebSocket Server configuration
+ * @param config Pointer to configuration structure to fill with defaults
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_set_default_config(ws_server_config_t *config) {
+    if (config == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Initialize with zeros
+    memset(config, 0, sizeof(ws_server_config_t));
+    
+    // Set default values
+    return ws_server_initialize_defaults(config);
+}
+
+/**
+ * @brief Unregister message handler
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_unregister_message_handler(void) {
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    g_ws_server.message_handler = NULL;
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Message handler unregistered");
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get all connected clients
+ * @param clients Pointer to client array to fill
+ * @param count Pointer to count variable (input: max count, output: actual count)
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_get_clients(ws_client_t *clients, uint32_t *count) {
+    if (clients == NULL || count == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_ws_server.mutex);
+    
+    uint32_t max_count = *count;
+    uint32_t actual_count = g_ws_server.client_count;
+    
+    if (actual_count > max_count) {
+        actual_count = max_count;
+    }
+    
+    for (uint32_t i = 0; i < actual_count; i++) {
+        clients[i] = g_ws_server.clients[i];
+    }
+    
+    *count = actual_count;
+    
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get specific client by socket file descriptor
+ * @param socket_fd Client socket file descriptor
+ * @param client Pointer to client structure pointer
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_get_client(int socket_fd, ws_client_t **client) {
+    if (socket_fd < 0 || client == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    return ws_server_find_client(socket_fd, client);
+}
+
+/**
+ * @brief Parse HTTP headers to extract WebSocket key
+ * @param request HTTP request string
+ * @param websocket_key Buffer to store WebSocket key
+ * @param key_size Size of the key buffer
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+static hal_status_t ws_server_parse_http_headers(const char *request, char *websocket_key, size_t key_size) {
+    if (request == NULL || websocket_key == NULL || key_size == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Extract Sec-WebSocket-Key (case-insensitive)
+    const char *needle = "sec-websocket-key:";
+    const char *kpos = NULL;
+    size_t nlen = strlen(needle);
+    
+    // Search for the key header
+    const char *p = request;
+    while (*p) {
+        if (strncasecmp(p, needle, nlen) == 0) {
+            kpos = p;
+            break;
+        }
+        p++;
+    }
+    
+    if (!kpos) {
+        hal_log_error("WS_SERVER", "ws_server_parse_http_headers", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Sec-WebSocket-Key header not found");
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Skip past the header name
+    kpos += nlen;
+    
+    // Skip whitespace
+    while (*kpos == ' ' || *kpos == '\t') {
+        kpos++;
+    }
+    
+    // Extract the key value
+    size_t i = 0;
+    while (i < key_size - 1 && *kpos && *kpos != '\r' && *kpos != '\n') {
+        websocket_key[i++] = *kpos++;
+    }
+    websocket_key[i] = '\0';
+    
+    if (i == 0) {
+        hal_log_error("WS_SERVER", "ws_server_parse_http_headers", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Empty WebSocket key");
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Extracted key: %s", websocket_key);
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Calculate WebSocket accept key from client key
+ * @param websocket_key Client WebSocket key
+ * @param accept_key Buffer to store accept key
+ * @param accept_key_size Size of the accept key buffer
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+static hal_status_t ws_server_calculate_accept_key(const char *websocket_key, char *accept_key, size_t accept_key_size) {
+    if (websocket_key == NULL || accept_key == NULL || accept_key_size == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // WebSocket GUID
+    static const char *GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    
+    // Combine key with GUID
+    char combined[256];
+    int combined_len = snprintf(combined, sizeof(combined), "%s%s", websocket_key, GUID);
+    if (combined_len < 0 || (size_t)combined_len >= sizeof(combined)) {
+        hal_log_error("WS_SERVER", "ws_server_calculate_accept_key", __LINE__, 
+                     HAL_STATUS_ERROR, "Failed to combine key with GUID");
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Compute SHA1 hash
+    uint8_t sha[SHA_DIGEST_LENGTH];
+    SHA1((const unsigned char*)combined, strlen(combined), sha);
+    
+    // Base64 encode
+    int outlen = EVP_EncodeBlock((unsigned char*)accept_key, sha, SHA_DIGEST_LENGTH);
+    if (outlen <= 0 || (size_t)outlen >= accept_key_size) {
+        hal_log_error("WS_SERVER", "ws_server_calculate_accept_key", __LINE__, 
+                     HAL_STATUS_ERROR, "Failed to base64 encode accept key");
+        return HAL_STATUS_ERROR;
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Calculated accept key: %s", accept_key);
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Handle WebSocket ping frame
+ * @param client Client that sent the ping
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_handle_ping(ws_client_t *client) {
+    if (client == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Send pong response
+    hal_status_t result = ws_server_send_pong(client->socket_fd);
+    if (result != HAL_STATUS_OK) {
+        hal_log_error("WS_SERVER", "ws_server_handle_ping", __LINE__, 
+                     result, "Failed to send pong response");
+        return result;
+    }
+    
+    // Update client statistics
+    pthread_mutex_lock(&client->mutex);
+    gettimeofday(&client->last_activity, NULL);
+    client->messages_received++;
+    pthread_mutex_unlock(&client->mutex);
+    
+    // Update server statistics
+    pthread_mutex_lock(&g_ws_server.mutex);
+    g_ws_server.status.statistics.pong_frames_received++;
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Handled ping from client %s", client->client_id);
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Handle WebSocket pong frame
+ * @param client Client that sent the pong
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_handle_pong(ws_client_t *client) {
+    if (client == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Update client activity
+    pthread_mutex_lock(&client->mutex);
+    gettimeofday(&client->last_activity, NULL);
+    gettimeofday(&client->last_ping, NULL);
+    client->messages_received++;
+    pthread_mutex_unlock(&client->mutex);
+    
+    // Update server statistics
+    pthread_mutex_lock(&g_ws_server.mutex);
+    g_ws_server.status.statistics.pong_frames_received++;
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Handled pong from client %s", client->client_id);
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Handle WebSocket close frame
+ * @param client Client that sent the close
+ * @param code Close code
+ * @param reason Close reason
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_handle_close(ws_client_t *client, ws_close_code_t code, const char *reason) {
+    if (client == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Client %s closing connection (code: %d, reason: %s)", 
+                   client->client_id, code, reason ? reason : "none");
+    
+    // Send close response if not already sent
+    if (client->connected) {
+        hal_status_t result = ws_server_send_close(client->socket_fd, code, reason);
+        if (result != HAL_STATUS_OK) {
+            hal_log_error("WS_SERVER", "ws_server_handle_close", __LINE__, 
+                         result, "Failed to send close response");
+        }
+    }
+    
+    // Update server statistics
+    pthread_mutex_lock(&g_ws_server.mutex);
+    g_ws_server.status.statistics.close_frames_received++;
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    return HAL_STATUS_OK;
+}
+
 // Private function implementations
 static hal_status_t ws_server_validate_config(const ws_server_config_t *config) {
+    // Validate port
     if (config->port == 0) {
+        hal_log_error("WS_SERVER", "ws_server_validate_config", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid port: %d (must be 1-65535)", config->port);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
+    // Validate max_clients
     if (config->max_clients == 0 || config->max_clients > WS_SERVER_MAX_CLIENTS) {
+        hal_log_error("WS_SERVER", "ws_server_validate_config", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid max_clients: %d (must be 1-%d)", 
+                     config->max_clients, WS_SERVER_MAX_CLIENTS);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
+    // Validate message sizes
     if (config->max_message_size == 0 || config->max_message_size > WS_SERVER_MAX_MESSAGE_SIZE) {
+        hal_log_error("WS_SERVER", "ws_server_validate_config", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid max_message_size: %d (must be 1-%d)", 
+                     config->max_message_size, WS_SERVER_MAX_MESSAGE_SIZE);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
     if (config->max_frame_size == 0 || config->max_frame_size > WS_SERVER_MAX_FRAME_SIZE) {
+        hal_log_error("WS_SERVER", "ws_server_validate_config", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid max_frame_size: %d (must be 1-%d)", 
+                     config->max_frame_size, WS_SERVER_MAX_FRAME_SIZE);
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
+    // Validate timeouts
+    if (config->timeout_ms == 0 || config->timeout_ms > 300000) { // Max 5 minutes
+        hal_log_error("WS_SERVER", "ws_server_validate_config", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid timeout_ms: %d (must be 1-300000)", config->timeout_ms);
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (config->ping_interval_ms == 0 || config->ping_interval_ms > 300000) {
+        hal_log_error("WS_SERVER", "ws_server_validate_config", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid ping_interval_ms: %d (must be 1-300000)", config->ping_interval_ms);
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (config->pong_timeout_ms == 0 || config->pong_timeout_ms > 60000) { // Max 1 minute
+        hal_log_error("WS_SERVER", "ws_server_validate_config", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid pong_timeout_ms: %d (must be 1-60000)", config->pong_timeout_ms);
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Validate server name
+    if (config->server_name[0] == '\0') {
+        hal_log_error("WS_SERVER", "ws_server_validate_config", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Server name cannot be empty");
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Configuration validation passed");
+    return HAL_STATUS_OK;
+}
+
+static hal_status_t ws_server_initialize_defaults(ws_server_config_t *config) {
+    if (config == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Set default values for any uninitialized fields
+    if (config->port == 0) {
+        config->port = WS_SERVER_DEFAULT_PORT;
+    }
+    
+    if (config->max_clients == 0) {
+        config->max_clients = WS_SERVER_MAX_CLIENTS;
+    }
+    
+    if (config->timeout_ms == 0) {
+        config->timeout_ms = WS_SERVER_DEFAULT_TIMEOUT_MS;
+    }
+    
+    if (config->max_message_size == 0) {
+        config->max_message_size = WS_SERVER_MAX_MESSAGE_SIZE;
+    }
+    
+    if (config->max_frame_size == 0) {
+        config->max_frame_size = WS_SERVER_MAX_FRAME_SIZE;
+    }
+    
+    if (config->ping_interval_ms == 0) {
+        config->ping_interval_ms = WS_SERVER_PING_INTERVAL_MS;
+    }
+    
+    if (config->pong_timeout_ms == 0) {
+        config->pong_timeout_ms = WS_SERVER_PONG_TIMEOUT_MS;
+    }
+    
+    if (config->server_name[0] == '\0') {
+        strncpy(config->server_name, "OHT-50-WebSocket", sizeof(config->server_name) - 1);
+        config->server_name[sizeof(config->server_name) - 1] = '\0';
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Default values initialized");
     return HAL_STATUS_OK;
 }
 
@@ -1002,4 +1545,652 @@ static hal_status_t ws_server_send_http_response(int socket_fd, const char *resp
     if (socket_fd < 0 || !response) return HAL_STATUS_INVALID_PARAMETER;
     size_t len = strlen(response);
     return ws_server_write_data(socket_fd, (const uint8_t*)response, len);
+}
+
+/**
+ * @brief Create WebSocket handshake response
+ * @param request HTTP request string
+ * @param response Buffer to store response
+ * @param response_size Size of response buffer
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_create_handshake_response(const char *request, char *response, size_t response_size) {
+    if (request == NULL || response == NULL || response_size == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Extract WebSocket key
+    char websocket_key[128];
+    hal_status_t key_result = ws_server_parse_http_headers(request, websocket_key, sizeof(websocket_key));
+    if (key_result != HAL_STATUS_OK) {
+        return key_result;
+    }
+    
+    // Calculate accept key
+    char accept_key[128];
+    hal_status_t accept_result = ws_server_calculate_accept_key(websocket_key, accept_key, sizeof(accept_key));
+    if (accept_result != HAL_STATUS_OK) {
+        return accept_result;
+    }
+    
+    // Create response
+    int n = snprintf(response, response_size,
+        "HTTP/1.1 101 Switching Protocols\r\n"
+        "Upgrade: websocket\r\n"
+        "Connection: Upgrade\r\n"
+        "Sec-WebSocket-Accept: %s\r\n\r\n", accept_key);
+    
+    if (n < 0 || (size_t)n >= response_size) {
+        hal_log_error("WS_SERVER", "ws_server_create_handshake_response", __LINE__, 
+                     HAL_STATUS_ERROR, "Response too large for buffer");
+        return HAL_STATUS_ERROR;
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Created handshake response");
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Extract WebSocket key from HTTP request
+ * @param request HTTP request string
+ * @param key Buffer to store key
+ * @param key_size Size of key buffer
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_extract_websocket_key(const char *request, char *key, size_t key_size) {
+    return ws_server_parse_http_headers(request, key, key_size);
+}
+
+/**
+ * @brief Generate WebSocket accept key
+ * @param websocket_key Client WebSocket key
+ * @param accept_key Buffer to store accept key
+ * @param accept_key_size Size of accept key buffer
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_generate_accept_key(const char *websocket_key, char *accept_key, size_t accept_key_size) {
+    return ws_server_calculate_accept_key(websocket_key, accept_key, accept_key_size);
+}
+
+/**
+ * @brief Parse WebSocket frame from data
+ * @param data Raw frame data
+ * @param data_length Length of data
+ * @param frame Frame structure to fill
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_parse_frame(const uint8_t *data, size_t data_length, ws_frame_t *frame) {
+    if (data == NULL || frame == NULL || data_length < 2) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Parse frame header
+    frame->fin = (data[0] & 0x80) != 0;
+    frame->rsv1 = (data[0] & 0x40) != 0;
+    frame->rsv2 = (data[0] & 0x20) != 0;
+    frame->rsv3 = (data[0] & 0x10) != 0;
+    frame->opcode = (ws_frame_type_t)(data[0] & 0x0F);
+    
+    frame->masked = (data[1] & 0x80) != 0;
+    uint64_t payload_length = (data[1] & 0x7F);
+    
+    size_t header_size = 2;
+    
+    // Parse extended payload length
+    if (payload_length == 126) {
+        if (data_length < 4) {
+            return HAL_STATUS_INVALID_PARAMETER;
+        }
+        payload_length = (data[2] << 8) | data[3];
+        header_size = 4;
+    } else if (payload_length == 127) {
+        if (data_length < 10) {
+            return HAL_STATUS_INVALID_PARAMETER;
+        }
+        payload_length = 0;
+        for (int i = 0; i < 8; i++) {
+            payload_length = (payload_length << 8) | data[2 + i];
+        }
+        header_size = 10;
+    }
+    
+    // Parse masking key
+    frame->masking_key = 0;
+    if (frame->masked) {
+        if (data_length < header_size + 4) {
+            return HAL_STATUS_INVALID_PARAMETER;
+        }
+        frame->masking_key = (data[header_size] << 24) | 
+                           (data[header_size + 1] << 16) | 
+                           (data[header_size + 2] << 8) | 
+                           data[header_size + 3];
+        header_size += 4;
+    }
+    
+    // Check if we have enough data for payload
+    if (data_length < header_size + payload_length) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Allocate and copy payload
+    frame->payload_length = payload_length;
+    frame->payload_size = payload_length;
+    if (payload_length > 0) {
+        frame->payload = (uint8_t*)malloc(payload_length);
+        if (frame->payload == NULL) {
+            return HAL_STATUS_NO_MEMORY;
+        }
+        
+        memcpy(frame->payload, data + header_size, payload_length);
+        
+        // Unmask payload if masked
+        if (frame->masked) {
+            ws_server_mask_payload(frame->payload, payload_length, frame->masking_key);
+        }
+    } else {
+        frame->payload = NULL;
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Mask WebSocket payload
+ * @param payload Payload data
+ * @param payload_length Payload length
+ * @param masking_key Masking key
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_mask_payload(uint8_t *payload, size_t payload_length, uint32_t masking_key) {
+    if (payload == NULL || payload_length == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    uint8_t *mask = (uint8_t*)&masking_key;
+    for (size_t i = 0; i < payload_length; i++) {
+        payload[i] ^= mask[i % 4];
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get WebSocket server statistics
+ * @param statistics Pointer to statistics structure
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_get_statistics(ws_server_statistics_t *statistics) {
+    if (statistics == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_ws_server.mutex);
+    
+    // Update uptime
+    g_ws_server.status.statistics.uptime_ms = hal_get_timestamp_ms();
+    g_ws_server.status.statistics.active_connections = g_ws_server.client_count;
+    
+    // Copy statistics
+    memcpy(statistics, &g_ws_server.status.statistics, sizeof(ws_server_statistics_t));
+    
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Reset WebSocket server statistics
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_reset_statistics(void) {
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_ws_server.mutex);
+    
+    // Reset all statistics
+    memset(&g_ws_server.status.statistics, 0, sizeof(ws_server_statistics_t));
+    g_ws_server.status.statistics.uptime_ms = hal_get_timestamp_ms();
+    
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Statistics reset");
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Update WebSocket server statistics
+ * @param stats Statistics structure to update
+ * @param sent True if message was sent, false if received
+ * @param bytes Number of bytes
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_update_statistics(ws_server_statistics_t *stats, bool sent, size_t bytes) {
+    if (stats == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (sent) {
+        stats->total_messages_sent++;
+        stats->total_bytes_sent += bytes;
+    } else {
+        stats->total_messages_received++;
+        stats->total_bytes_received += bytes;
+    }
+    
+    stats->last_activity = hal_get_timestamp_ms();
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Log WebSocket connection event
+ * @param client_ip Client IP address
+ * @param client_port Client port
+ * @param connected True if connected, false if disconnected
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_log_connection(const char *client_ip, uint16_t client_port, bool connected) {
+    if (client_ip == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    const char *action = connected ? "connected" : "disconnected";
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Client %s:%d %s", 
+                   client_ip, client_port, action);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Log WebSocket message event
+ * @param client_id Client identifier
+ * @param message Message content
+ * @param message_length Message length
+ * @param sent True if message was sent, false if received
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_log_message(const char *client_id, const char *message, size_t message_length, bool sent) {
+    if (client_id == NULL || message == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    const char *direction = sent ? "sent to" : "received from";
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Message %s %s (%zu bytes): %.100s%s", 
+                   direction, client_id, message_length, message, 
+                   message_length > 100 ? "..." : "");
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Log WebSocket error event
+ * @param error_message Error message
+ * @param context Error context
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_log_error(const char *error_message, const char *context) {
+    if (error_message == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (context != NULL) {
+        hal_log_error("WS_SERVER", context, __LINE__, HAL_STATUS_ERROR, "%s", error_message);
+    } else {
+        hal_log_error("WS_SERVER", "ws_server_log_error", __LINE__, HAL_STATUS_ERROR, "%s", error_message);
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Base64 encode data
+ * @param input Input data
+ * @param input_length Input data length
+ * @param output Output buffer
+ * @param output_size Output buffer size
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_base64_encode(const uint8_t *input, size_t input_length, char *output, size_t output_size) {
+    if (input == NULL || output == NULL || output_size == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    int outlen = EVP_EncodeBlock((unsigned char*)output, input, input_length);
+    if (outlen <= 0 || (size_t)outlen >= output_size) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Compute SHA1 hash of input string
+ * @param input Input string
+ * @param output Output buffer for hash
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_sha1_hash(const char *input, uint8_t *output) {
+    if (input == NULL || output == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    SHA1((const unsigned char*)input, strlen(input), output);
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Broadcast telemetry data to all connected clients
+ * @param telemetry_data JSON telemetry data
+ * @param data_length Length of telemetry data
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_broadcast_telemetry(const char *telemetry_data, size_t data_length) {
+    if (telemetry_data == NULL || data_length == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized || !g_ws_server.running) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Broadcasting telemetry to %d clients", g_ws_server.client_count);
+    
+    // Broadcast to all connected clients
+    hal_status_t result = ws_server_broadcast_message(telemetry_data, data_length);
+    if (result != HAL_STATUS_OK) {
+        hal_log_error("WS_SERVER", "ws_server_broadcast_telemetry", __LINE__, 
+                     result, "Failed to broadcast telemetry data");
+        return result;
+    }
+    
+    // Update statistics
+    pthread_mutex_lock(&g_ws_server.mutex);
+    g_ws_server.status.statistics.total_messages_sent += g_ws_server.client_count;
+    g_ws_server.status.statistics.total_bytes_sent += data_length * g_ws_server.client_count;
+    g_ws_server.status.statistics.last_activity = hal_get_timestamp_ms();
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Broadcast robot status to all connected clients
+ * @param robot_status Robot status data
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_broadcast_robot_status(const ws_robot_status_t *robot_status) {
+    if (robot_status == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized || !g_ws_server.running) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Create JSON message
+    char json_message[1024];
+    int n = snprintf(json_message, sizeof(json_message),
+        "{"
+        "\"type\":\"robot_status\","
+        "\"timestamp\":%lu,"
+        "\"data\":{"
+        "\"robot_id\":\"%s\","
+        "\"status\":\"%s\","
+        "\"position\":{\"x\":%.3f,\"y\":%.3f},"
+        "\"battery_level\":%d,"
+        "\"temperature\":%.1f,"
+        "\"speed\":%.2f,"
+        "\"connection_status\":\"%s\""
+        "}"
+        "}",
+        hal_get_timestamp_ms(),
+        robot_status->robot_id,
+        robot_status->status,
+        robot_status->position.x,
+        robot_status->position.y,
+        robot_status->battery_level,
+        robot_status->temperature,
+        robot_status->speed,
+        robot_status->connection_status
+    );
+    
+    if (n < 0 || (size_t)n >= sizeof(json_message)) {
+        hal_log_error("WS_SERVER", "ws_server_broadcast_robot_status", __LINE__, 
+                     HAL_STATUS_ERROR, "JSON message too large");
+        return HAL_STATUS_ERROR;
+    }
+    
+    return ws_server_broadcast_telemetry(json_message, strlen(json_message));
+}
+
+/**
+ * @brief Broadcast system alert to all connected clients
+ * @param alert_type Alert type
+ * @param alert_message Alert message
+ * @param severity Alert severity
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_broadcast_alert(const char *alert_type, const char *alert_message, ws_alert_severity_t severity) {
+    if (alert_type == NULL || alert_message == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    if (!g_ws_server.initialized || !g_ws_server.running) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Create JSON alert message
+    char json_message[1024];
+    int n = snprintf(json_message, sizeof(json_message),
+        "{"
+        "\"type\":\"alert\","
+        "\"timestamp\":%lu,"
+        "\"data\":{"
+        "\"alert_type\":\"%s\","
+        "\"message\":\"%s\","
+        "\"severity\":\"%s\","
+        "\"acknowledged\":false"
+        "}"
+        "}",
+        hal_get_timestamp_ms(),
+        alert_type,
+        alert_message,
+        (severity == WS_ALERT_CRITICAL) ? "critical" :
+        (severity == WS_ALERT_WARNING) ? "warning" : "info"
+    );
+    
+    if (n < 0 || (size_t)n >= sizeof(json_message)) {
+        hal_log_error("WS_SERVER", "ws_server_broadcast_alert", __LINE__, 
+                     HAL_STATUS_ERROR, "JSON alert message too large");
+        return HAL_STATUS_ERROR;
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_WARNING, "WebSocket Server: Broadcasting alert: %s - %s", alert_type, alert_message);
+    
+    return ws_server_broadcast_telemetry(json_message, strlen(json_message));
+}
+
+/**
+ * @brief Broadcast system heartbeat to all connected clients
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_broadcast_heartbeat(void) {
+    if (!g_ws_server.initialized || !g_ws_server.running) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Create JSON heartbeat message
+    char json_message[256];
+    int n = snprintf(json_message, sizeof(json_message),
+        "{"
+        "\"type\":\"heartbeat\","
+        "\"timestamp\":%lu,"
+        "\"data\":{"
+        "\"server_status\":\"running\","
+        "\"active_connections\":%d,"
+        "\"uptime_ms\":%lu"
+        "}"
+        "}",
+        hal_get_timestamp_ms(),
+        g_ws_server.client_count,
+        hal_get_timestamp_ms() - g_ws_server.status.statistics.uptime_ms
+    );
+    
+    if (n < 0 || (size_t)n >= sizeof(json_message)) {
+        hal_log_error("WS_SERVER", "ws_server_broadcast_heartbeat", __LINE__, 
+                     HAL_STATUS_ERROR, "JSON heartbeat message too large");
+        return HAL_STATUS_ERROR;
+    }
+    
+    return ws_server_broadcast_telemetry(json_message, strlen(json_message));
+}
+
+/**
+ * @brief Start telemetry streaming thread
+ * @param interval_ms Telemetry interval in milliseconds
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_start_telemetry_streaming(uint32_t interval_ms) {
+    if (!g_ws_server.initialized || !g_ws_server.running) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    if (interval_ms == 0 || interval_ms > 60000) { // Max 1 minute
+        hal_log_error("WS_SERVER", "ws_server_start_telemetry_streaming", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid telemetry interval: %d ms", interval_ms);
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Set telemetry interval
+    pthread_mutex_lock(&g_ws_server.mutex);
+    g_ws_server.telemetry_interval_ms = interval_ms;
+    g_ws_server.telemetry_streaming = true;
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Started telemetry streaming with interval %d ms", interval_ms);
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Stop telemetry streaming
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_stop_telemetry_streaming(void) {
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_ws_server.mutex);
+    g_ws_server.telemetry_streaming = false;
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Stopped telemetry streaming");
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Set telemetry callback function
+ * @param callback Telemetry data callback function
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_set_telemetry_callback(ws_telemetry_callback_t callback) {
+    if (!g_ws_server.initialized) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    pthread_mutex_lock(&g_ws_server.mutex);
+    g_ws_server.telemetry_callback = callback;
+    pthread_mutex_unlock(&g_ws_server.mutex);
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Telemetry callback set");
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Telemetry streaming thread function
+ * @param arg Thread argument (unused)
+ * @return void* Thread return value
+ */
+void* ws_server_telemetry_thread(void *arg) {
+    (void)arg;
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Telemetry streaming thread started");
+    
+    while (g_ws_server.running) {
+        pthread_mutex_lock(&g_ws_server.mutex);
+        bool streaming = g_ws_server.telemetry_streaming;
+        uint32_t interval = g_ws_server.telemetry_interval_ms;
+        ws_telemetry_callback_t callback = g_ws_server.telemetry_callback;
+        pthread_mutex_unlock(&g_ws_server.mutex);
+        
+        if (streaming && callback != NULL) {
+            // Call telemetry callback to get current data
+            char telemetry_data[2048];
+            size_t data_length = sizeof(telemetry_data);
+            
+            hal_status_t result = callback(telemetry_data, &data_length);
+            if (result == HAL_STATUS_OK && data_length > 0) {
+                // Broadcast telemetry data
+                ws_server_broadcast_telemetry(telemetry_data, data_length);
+            }
+        } else if (streaming) {
+            // Send heartbeat if no callback is set
+            ws_server_broadcast_heartbeat();
+        }
+        
+        // Sleep for the specified interval
+        usleep(interval * 1000);
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Telemetry streaming thread stopped");
+    return NULL;
+}
+
+/**
+ * @brief Convert WebSocket frame type to string
+ * @param frame_type WebSocket frame type
+ * @return const char* String representation of frame type
+ */
+const char* ws_frame_type_to_string(ws_frame_type_t frame_type) {
+    switch (frame_type) {
+        case WS_FRAME_CONTINUATION: return "CONTINUATION";
+        case WS_FRAME_TEXT: return "TEXT";
+        case WS_FRAME_BINARY: return "BINARY";
+        case WS_FRAME_CLOSE: return "CLOSE";
+        case WS_FRAME_PING: return "PING";
+        case WS_FRAME_PONG: return "PONG";
+        default: return "UNKNOWN";
+    }
+}
+
+/**
+ * @brief Convert WebSocket close code to string
+ * @param close_code WebSocket close code
+ * @return const char* String representation of close code
+ */
+const char* ws_close_code_to_string(ws_close_code_t close_code) {
+    switch (close_code) {
+        case WS_CLOSE_NORMAL: return "NORMAL";
+        case WS_CLOSE_GOING_AWAY: return "GOING_AWAY";
+        case WS_CLOSE_PROTOCOL_ERROR: return "PROTOCOL_ERROR";
+        case WS_CLOSE_UNSUPPORTED_DATA: return "UNSUPPORTED_DATA";
+        case WS_CLOSE_NO_STATUS: return "NO_STATUS";
+        case WS_CLOSE_ABNORMAL: return "ABNORMAL";
+        case WS_CLOSE_INVALID_DATA: return "INVALID_DATA";
+        case WS_CLOSE_POLICY_VIOLATION: return "POLICY_VIOLATION";
+        case WS_CLOSE_MESSAGE_TOO_BIG: return "MESSAGE_TOO_BIG";
+        case WS_CLOSE_MANDATORY_EXTENSION: return "MANDATORY_EXTENSION";
+        case WS_CLOSE_INTERNAL_ERROR: return "INTERNAL_ERROR";
+        case WS_CLOSE_SERVICE_RESTART: return "SERVICE_RESTART";
+        case WS_CLOSE_TRY_AGAIN_LATER: return "TRY_AGAIN_LATER";
+        case WS_CLOSE_BAD_GATEWAY: return "BAD_GATEWAY";
+        case WS_CLOSE_TLS_HANDSHAKE: return "TLS_HANDSHAKE";
+        default: return "UNKNOWN";
+    }
 }

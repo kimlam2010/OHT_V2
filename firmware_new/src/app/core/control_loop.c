@@ -526,7 +526,7 @@ bool control_loop_validate_config(const control_config_t *config) {
 }
 
 // Internal helper functions
-static hal_status_t update_pid_controller(bool is_position_pid, float setpoint, float input, float *output) {
+static hal_status_t update_pid_controller(bool is_position_pid __attribute__((unused)), float setpoint, float input, float *output) {
     if (output == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
@@ -540,7 +540,7 @@ static hal_status_t update_pid_controller(bool is_position_pid, float setpoint, 
         float integral;
         float derivative;
         pid_params_t params;
-    } *pid = /* position PID removed */ &g_control_loop.velocity_pid;
+    } *pid = (void*)&g_control_loop.velocity_pid; // Use velocity PID only - cast to avoid warning
     
     // Calculate error
     pid->setpoint = setpoint;

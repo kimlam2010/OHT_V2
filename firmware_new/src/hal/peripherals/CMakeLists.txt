@@ -19,4 +19,5 @@ target_link_libraries(hal_peripherals
     hal_common
     hal_gpio
     pthread
+    m
 )

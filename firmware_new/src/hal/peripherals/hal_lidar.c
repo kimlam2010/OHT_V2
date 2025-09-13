@@ -52,6 +52,9 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+// Suppress unused function warnings for this file (contains many placeholder functions)
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS 0x20
 #endif

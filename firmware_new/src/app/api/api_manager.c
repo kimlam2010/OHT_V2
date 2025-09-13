@@ -22,7 +22,7 @@ static volatile int g_running=0;
 
 static ssize_t send_all(int fd, const void *buf, size_t len){ const char *p=(const char*)buf; size_t off=0; while(off<len){ ssize_t n=send(fd,p+off,len-off,0); if(n<0){ if(errno==EINTR) continue; return -1;} if(n==0) break; off+=n;} return (ssize_t)off; }
 
-static int parse_request_line(const char *buf, api_mgr_http_request_t *req){ char m[8]={0}, p[API_MANAGER_MAX_PATH_LENGTH]={0}; if(sscanf(buf, "%7s %255s", m, p)!=2) return -1; if(strcmp(m,"GET")==0) req->method=API_MGR_HTTP_GET; else if(strcmp(m,"POST")==0) req->method=API_MGR_HTTP_POST; else return -1; strncpy(req->path,p,sizeof(req->path)-1); return 0; }
+static int parse_request_line(const char *buf, api_mgr_http_request_t *req){ char m[8]={0}, p[API_MANAGER_MAX_PATH_LENGTH]={0}; if(sscanf(buf, "%7s %255s", m, p)!=2) return -1; if(strcmp(m,"GET")==0) req->method=API_MGR_HTTP_GET; else if(strcmp(m,"POST")==0) req->method=API_MGR_HTTP_POST; else return -1; strncpy(req->path,p,sizeof(req->path)-1); req->path[sizeof(req->path)-1]='\0'; return 0; }
 
 static int api_handle_module_status_by_id_router(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){ return api_handle_module_status_by_id(req,res); }
 

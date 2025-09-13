@@ -27,7 +27,7 @@ class RobotControlService:
         # Use MockFirmwareService only when explicitly allowed and not in production
         import os
         from app.config import settings
-        allow_mock = os.getenv("USE_FIRMWARE_MOCK", "false").lower() == "true" or settings.use_firmware_mock
+        allow_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true" or settings.use_mock_firmware
         is_production = settings.environment.lower() == "production"
         if allow_mock and not is_production:
             self._firmware_service = MockFirmwareService()
@@ -143,7 +143,16 @@ class RobotControlService:
             status_data = await self._fetch_robot_status_from_db()
             
             # Get real-time data from Firmware
+            logger.info("🔍 Fetching real-time data from Firmware...")
             firmware_data = await self._fetch_firmware_status()
+            logger.info(f"📊 Firmware data received: {firmware_data is not None}")
+            
+            # Save Firmware data to database
+            if firmware_data:
+                logger.info("💾 Saving Firmware data to database...")
+                await self._save_firmware_data_to_db(firmware_data)
+            else:
+                logger.warning("⚠️ No Firmware data to save to database")
             
             # Merge database and Firmware data
             combined_status = self._merge_status_data(status_data, firmware_data)
@@ -225,18 +234,113 @@ class RobotControlService:
             return {}
     
     def _merge_status_data(self, db_data: Dict[str, Any], firmware_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Merge database and Firmware data"""
-        merged = db_data.copy()
-        
-        # Override with real-time Firmware data if available
+        """Merge database and Firmware data - PRIORITIZE FIRMWARE DATA"""
+        # Start with Firmware data as base (if available)
         if firmware_data:
-            merged.update(firmware_data)
+            merged = firmware_data.copy()
+            logger.info("✅ Using Firmware data as primary source")
+            
+            # Only add database fields that are missing from Firmware
+            for key, value in db_data.items():
+                if key not in merged or merged[key] is None:
+                    merged[key] = value
+                    logger.debug(f"📊 Added database field {key}: {value}")
+        else:
+            # Fallback to database data if no Firmware data
+            merged = db_data.copy()
+            logger.warning("⚠️ No Firmware data available, using database fallback")
         
-        # Add timestamp
+        # Add timestamp and data source info
         merged["timestamp"] = datetime.now(timezone.utc).isoformat()
-        merged["data_source"] = "database_and_firmware"
+        merged["data_source"] = "firmware_primary" if firmware_data else "database_fallback"
         
         return merged
+    
+    async def _save_firmware_data_to_db(self, firmware_data: Dict[str, Any]) -> None:
+        """Save Firmware data to database"""
+        try:
+            async with get_db_context() as db:
+                # Save robot status
+                robot_id = firmware_data.get("robot_id", "OHT-50-001")
+                
+                # Update or insert robot record
+                from app.models.robot import Robot
+                from sqlalchemy import select, update
+                
+                # Check if robot exists
+                result = await db.execute(select(Robot).where(Robot.robot_id == robot_id))
+                robot = result.scalar_one_or_none()
+                
+                if robot:
+                    # Update existing robot
+                    await db.execute(
+                        update(Robot)
+                        .where(Robot.robot_id == robot_id)
+                        .values(
+                            status=firmware_data.get("status", "idle"),
+                            battery_level=firmware_data.get("battery_level", 0),
+                            temperature=firmware_data.get("temperature", 0.0),
+                            speed=firmware_data.get("speed", 0.0),
+                            updated_at=datetime.now(timezone.utc)
+                        )
+                    )
+                else:
+                    # Create new robot record
+                    new_robot = Robot(
+                        robot_id=robot_id,
+                        status=firmware_data.get("status", "idle"),
+                        battery_level=firmware_data.get("battery_level", 0),
+                        temperature=firmware_data.get("temperature", 0.0),
+                        speed=firmware_data.get("speed", 0.0),
+                        created_at=datetime.now(timezone.utc),
+                        updated_at=datetime.now(timezone.utc)
+                    )
+                    db.add(new_robot)
+                
+                # Save robot position (schema has map_id, session_id required)
+                position_data = firmware_data.get("position", {})
+                if position_data:
+                    from app.models.robot import RobotPosition
+                    
+                    new_position = RobotPosition(
+                        map_id="default_map",  # Default map ID
+                        session_id="default_session",  # Default session ID
+                        x=position_data.get("x", 0.0),
+                        y=position_data.get("y", 0.0),
+                        theta=0.0,  # Default theta
+                        confidence=1.0,  # Default confidence
+                        source="firmware",  # Data source
+                        timestamp=datetime.now(timezone.utc)
+                    )
+                    db.add(new_position)
+                
+                # Save telemetry data (schema has telemetry_type, telemetry_data as TEXT)
+                from app.models.telemetry import TelemetryCurrent
+                import json
+                
+                telemetry_data = {
+                    "motor_speed": firmware_data.get("speed", 0.0),
+                    "motor_temperature": firmware_data.get("temperature", 0.0),
+                    "dock_status": firmware_data.get("docking", "IDLE"),
+                    "safety_status": "normal" if not firmware_data.get("safety", {}).get("estop", False) else "emergency",
+                    "system": firmware_data.get("system", "OHT-50"),
+                    "health": firmware_data.get("health", False)
+                }
+                
+                telemetry = TelemetryCurrent(
+                    robot_id=robot_id,
+                    telemetry_type="robot_status",
+                    telemetry_data=json.dumps(telemetry_data),
+                    timestamp=datetime.now(timezone.utc)
+                )
+                db.add(telemetry)
+                
+                await db.commit()
+                logger.info(f"✅ Saved Firmware data to database for robot {robot_id}")
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to save Firmware data to database: {e}")
+            # Don't raise exception to avoid breaking the main flow
     
     async def send_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
         """Send command to robot via Firmware"""

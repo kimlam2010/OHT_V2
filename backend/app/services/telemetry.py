@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 class TelemetryService:
     """Telemetry service"""
     
-    def __init__(self, use_mock: bool = True):
+    def __init__(self, use_mock: bool = False):
         from app.config import settings
         import os
         testing_mode = os.getenv("TESTING", "false").lower() == "true"
-        allow_mock = os.getenv("USE_FIRMWARE_MOCK", "false").lower() == "true" or settings.use_firmware_mock or use_mock or testing_mode
+        allow_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true" or settings.use_mock_firmware or use_mock or testing_mode
         is_production = settings.environment.lower() == "production"
         if allow_mock and not is_production:
             self.firmware_service = MockFirmwareService()

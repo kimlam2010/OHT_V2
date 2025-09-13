@@ -82,7 +82,7 @@ typedef struct safety_module_handler safety_module_handler_t;
 #define SAFETY_RESET_ERROR_CMD_REG       0x0109  // Reset error command (write 1 to reset all error flags)
 #define SAFETY_MODULE_NAME_LOW_REG       0x00F8  // Module name (low word)
 #define SAFETY_MODULE_NAME_HIGH_REG      0x00F9  // Module name (high word)
-#define SAFETY_HARDWARE_VERSION_REG      0x00FA  // Hardware version
+#define SAFETY_HARDWARE_VERSION_ALT_REG  0x00FA  // Hardware version (alternative)
 #define SAFETY_SERIAL_NUMBER_LOW_REG     0x00FB  // Serial number (low word)
 #define SAFETY_SERIAL_NUMBER_HIGH_REG    0x00FC  // Serial number (high word)
 #define SAFETY_BUILD_DATE_LOW_REG        0x00FD  // Build date (low word)

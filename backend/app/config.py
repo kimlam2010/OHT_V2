@@ -11,6 +11,8 @@ import os
 class Settings(BaseSettings):
     """Application settings"""
     
+    model_config = ConfigDict(extra='ignore')
+    
     # Application
     app_name: str = "OHT-50 Backend"
     app_version: str = "1.0.0"
@@ -61,15 +63,17 @@ class Settings(BaseSettings):
     
     # Firmware Integration
     firmware_url: str = "http://localhost:8081"
+    firmware_url_alt: str = "http://localhost:8080"  # Alternative firmware URL
     firmware_websocket_url: str = "ws://localhost:8081/ws"
-    firmware_timeout: int = 10
-    use_firmware_mock: bool = False  # Only allowed in non-production
+    firmware_timeout: float = 5.0
+    firmware_retry_count: int = 3
+    use_mock_firmware: bool = False  # Only allowed in non-production
     
     # Performance
     max_connections: int = 100
     request_timeout: int = 30
     
-    model_config = ConfigDict(env_file=".env")
+    model_config = ConfigDict(env_file=".env", extra='ignore')
     
     @field_validator('jwt_secret')
     @classmethod

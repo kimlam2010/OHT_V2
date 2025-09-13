@@ -7,6 +7,9 @@
  * @task FW-07 (Module Management Implementation)
  */
 
+// Suppress strncpy truncation warning - we handle null termination explicitly
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+
 #include "module_manager.h"
 #include "communication_manager.h"
 #include "hal_common.h"
@@ -795,6 +798,7 @@ static hal_status_t discover_module_at_address(uint8_t address) {
     module_info.address = address;
     module_info.type = (module_type_t)module_type;
     strncpy(module_info.version, version, sizeof(module_info.version) - 1);
+    module_info.version[sizeof(module_info.version) - 1] = '\0'; // Ensure null termination
     snprintf(module_info.name, sizeof(module_info.name), "%s_%02X", 
              module_manager_get_type_name(module_info.type), address);
     snprintf(module_info.serial_number, sizeof(module_info.serial_number), 
@@ -1022,7 +1026,9 @@ static void enqueue_ws_event(const char *type, const char *payload_json){
     if (!g_ws_batch_open){
         g_ws_batch_len = 0;
         int n = snprintf(g_ws_batch_buf, sizeof(g_ws_batch_buf), "{\"type\":\"batch\",\"events\":[");
-        if (n < 0) return; g_ws_batch_len = (size_t)n; g_ws_batch_open = true;
+        if (n < 0) return;
+        g_ws_batch_len = (size_t)n;
+        g_ws_batch_open = true;
     } else {
         if (g_ws_batch_len < sizeof(g_ws_batch_buf)) g_ws_batch_buf[g_ws_batch_len++] = ',';
     }
