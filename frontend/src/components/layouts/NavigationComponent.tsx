@@ -5,7 +5,7 @@ import { SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@
 
 type Paths = FileRouteTypes['to']
 
-interface Item {
+export interface Item {
   title: string
   path: Paths
   icon: LucideIcon
@@ -34,5 +34,3 @@ export function Navigation({ items }: Props) {
     </SidebarGroup>
   )
 }
-
-export type { Item }

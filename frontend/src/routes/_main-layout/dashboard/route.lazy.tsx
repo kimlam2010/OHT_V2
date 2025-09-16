@@ -1,5 +1,5 @@
 import { createLazyFileRoute, Outlet } from '@tanstack/react-router'
-import PageContainer from '@/components/shared/page-container'
+import PageContainer from '@/components/shared/PageContainer'
 
 export const Route = createLazyFileRoute('/_main-layout/dashboard')({
   component: RouteComponent,

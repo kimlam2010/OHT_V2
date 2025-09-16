@@ -8,7 +8,7 @@ interface WebSocketClientConfig {
 }
 
 export class WebSocketClient {
-  private socket: WebSocket | null = null
+  public socket: WebSocket | null = null
   private reconnectAttempts = 0
   private readonly config: Required<WebSocketClientConfig>
 

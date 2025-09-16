@@ -2,7 +2,7 @@ import { Activity, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 import { menus } from './menu'
-import { Navigation } from './Navigation'
+import { Navigation } from './NavigationComponent'
 
 const defaultProps = { collapsible: 'icon' as const }
 
@@ -18,7 +18,7 @@ export default function AppSidebar({ props = defaultProps }: { props?: React.Com
                   <Activity className="size-6" />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-semibold leading-none whitespace-nowrap text-lg">OHT-50</span>
+                  <span className="text-lg font-semibold leading-none whitespace-nowrap">OHT-50</span>
                 </div>
               </div>
             </SidebarMenuButton>

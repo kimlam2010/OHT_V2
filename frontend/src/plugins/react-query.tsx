@@ -5,7 +5,7 @@ import { HttpStatusCode } from 'axios'
 import { HTTPError } from '@/types/error.type'
 
 const RETRY_LIMIT = 3
-const STALE_TIME = 1000 * 60 * 5 // 5 minutes
+export const STALE_TIME = 1000 * 60 * 5 // 5 minutes
 const TIMEOUT_STATUS_CODES = [
   HttpStatusCode.RequestTimeout,
   HttpStatusCode.GatewayTimeout,

@@ -1,4 +1,4 @@
-import type { Item } from './navigation'
+import type { Item } from './NavigationComponent'
 import { ChartBarBig } from 'lucide-react'
 
 export const menus: Item[] = [

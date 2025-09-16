@@ -29,7 +29,7 @@ export function useWebSocket(url: string, options: WebSocketOptions = {}) {
       maxReconnectDelay,
     })
 
-    const socket = (clientRef.current as any)?.socket
+    const socket = clientRef.current.socket
 
     if (socket) {
       socket.addEventListener('open', handleOpen)
