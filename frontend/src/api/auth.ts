@@ -9,6 +9,11 @@ interface LoginRequest {
   password: string
 }
 
+interface LogoutResponse {
+  success: boolean
+  message: string
+}
+
 interface LoginResponse {
   access_token: string
   refresh_token: string
@@ -46,6 +51,13 @@ interface RefreshTokenResponse {
 export const authApi = {
   login: (data: LoginRequest): Promise<LoginResponse> => {
     return http.post('/auth/login', data, {
+      headers: {
+        'x-api': 'software',
+      },
+    })
+  },
+  logout: (): Promise<LogoutResponse> => {
+    return http.post('/auth/logout', undefined, {
       headers: {
         'x-api': 'software',
       },

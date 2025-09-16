@@ -1,6 +1,7 @@
 import type { User } from '@/types'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { USER_STORE } from '@/constants/string'
 
 interface UserState {
   user: User | null
@@ -18,7 +19,7 @@ export const useUserStore = create<UserState>()(
       clearUser: () => set({ user: null }),
     }),
     {
-      name: 'user',
+      name: USER_STORE,
     },
   ),
 )
