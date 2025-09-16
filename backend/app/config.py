@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     
     # API
     api_prefix: str = "/api/v1"
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080", "http://localhost:5173"]
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080", "http://localhost:5173", "http://localhost:8000"]
     
     # Monitoring
     enable_metrics: bool = True

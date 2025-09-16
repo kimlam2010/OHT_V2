@@ -50,6 +50,10 @@ code {
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.772 0.161 68);
+  --success: oklch(0.696 0.149 162);
+  --success-foreground: oklch(0.98 0.016 73.684);
+  --warning: oklch(0.837 0.164 84);
+  --warning-foreground: oklch(0.98 0.016 73.684);
 }
 
 .dark {
@@ -84,6 +88,10 @@ code {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.646 0.222 41.116);
+  --success: oklch(0.596 0.127 163);
+  --success-foreground: oklch(0.98 0.016 73.684);
+  --warning: oklch(0.666 0.157 58);
+  --warning-foreground: oklch(0.98 0.016 73.684);
 }
 
 @theme inline {
@@ -123,6 +131,10 @@ code {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
 }
 
 @layer base {
@@ -154,11 +166,11 @@ html {
 }
 
 /* Large Desktop */
-@media (min-width: 1280px) {
+/* @media (min-width: 1280px) {
   html {
     font-size: 18px;
   }
-}
+} */
 
 #nprogress .bar {
   background: var(--primary) !important;
