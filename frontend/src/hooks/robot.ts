@@ -27,15 +27,15 @@ export function useRobotMoveBackwardMutation() {
   })
 }
 
-export function useRobotTurnLeftMutation() {
+export function useRobotCargoLowerMutation() {
   return useMutation({
-    mutationFn: robotApi.turnLeftCommand,
+    mutationFn: robotApi.cargoLowerCommand,
   })
 }
 
-export function useRobotTurnRightMutation() {
+export function useRobotCargoLiftMutation() {
   return useMutation({
-    mutationFn: robotApi.turnRightCommand,
+    mutationFn: robotApi.cargoLiftCommand,
   })
 }
 

@@ -12,8 +12,8 @@ export interface MoveRobotResponse {
   timestamp: string
 }
 
-export interface TurnRobotRequest {
-  angle: number
+export interface CargoParamsRequest {
+  position: number
 }
 
 export interface RobotModeResponse {
@@ -61,16 +61,16 @@ export const robotApi = {
       },
     })
   },
-  turnLeftCommand: (params: TurnRobotRequest): Promise<MoveRobotResponse> => {
-    return http.post('/robot/move/left', undefined, {
+  cargoLowerCommand: (params: CargoParamsRequest): Promise<MoveRobotResponse> => {
+    return http.post('/robot/cargo/lower', undefined, {
       params,
       headers: {
         'x-api': 'software',
       },
     })
   },
-  turnRightCommand: (params: TurnRobotRequest): Promise<MoveRobotResponse> => {
-    return http.post('/robot/move/right', undefined, {
+  cargoLiftCommand: (params: CargoParamsRequest): Promise<MoveRobotResponse> => {
+    return http.post('/robot/cargo/lift', undefined, {
       params,
       headers: {
         'x-api': 'software',

@@ -136,37 +136,34 @@ export default function SystemLogCard() {
           success: data => <SystemLogTable logs={data.logs} />,
         })}
       </CardContent>
-      {matchQuery(systemLogQuery, {
-        success: data => (
-          <CardFooter>
-            <div className="flex justify-end items-center w-full gap-2">
-              <div className="text-sm text-muted-foreground">
-                Total:
-                {' '}
-                {data.total_count}
-                {' '}
-                logs
-              </div>
-              <Select value={limit.toString()} onValueChange={handleLimitChange}>
-                <SelectTrigger className="w-fit">
-                  <SelectValue placeholder="Limit" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={page === 1}>
-                Prev
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={!data.has_next}>
-                Next
-              </Button>
-            </div>
-          </CardFooter>
-        ),
-      })}
+
+      <CardFooter>
+        <div className="flex justify-end items-center w-full gap-2">
+          <div className="text-sm text-muted-foreground">
+            Total:
+            {' '}
+            {systemLogQuery.data?.total_count || 0}
+            {' '}
+            logs
+          </div>
+          <Select value={limit.toString()} onValueChange={handleLimitChange}>
+            <SelectTrigger className="w-fit">
+              <SelectValue placeholder="Limit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={page === 1}>
+            Prev
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={!systemLogQuery.data?.has_next}>
+            Next
+          </Button>
+        </div>
+      </CardFooter>
     </Card>
   )
 }
