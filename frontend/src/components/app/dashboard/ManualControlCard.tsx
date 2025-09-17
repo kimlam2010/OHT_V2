@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { MANUAL_CONTROL_ANGLE, MANUAL_CONTROL_SPEED } from '@/constants/string'
-import { useRobotMoveBackwardMutation, useRobotMoveForwardMutation, useRobotStopMutation, useRobotTurnLeftMutation, useRobotTurnRightMutation } from '@/hooks'
+import { MANUAL_CONTROL_POSITION, MANUAL_CONTROL_SPEED } from '@/constants/string'
+import { useRobotCargoLiftMutation, useRobotCargoLowerMutation, useRobotMoveBackwardMutation, useRobotMoveForwardMutation, useRobotStopMutation } from '@/hooks'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -21,14 +21,14 @@ interface Props {
 }
 
 const defaultSpeed = 100
-const defaultAngle = 0
+const defaultPosition = 0
 export default function ManualControlCard({ isEnabled }: Props) {
   const [speed, setSpeed] = useLocalStorage<number>(MANUAL_CONTROL_SPEED, defaultSpeed)
-  const [angle, setAngle] = useLocalStorage<number>(MANUAL_CONTROL_ANGLE, defaultAngle)
+  const [position, setPosition] = useLocalStorage<number>(MANUAL_CONTROL_POSITION, defaultPosition)
   const { mutate: moveForward } = useRobotMoveForwardMutation()
   const { mutate: moveBackward } = useRobotMoveBackwardMutation()
-  const { mutate: turnLeft } = useRobotTurnLeftMutation()
-  const { mutate: turnRight } = useRobotTurnRightMutation()
+  const { mutate: cargoLower } = useRobotCargoLowerMutation()
+  const { mutate: cargoLift } = useRobotCargoLiftMutation()
   const { mutate: stop } = useRobotStopMutation()
 
   const handleMoveForward = () => {
@@ -53,24 +53,24 @@ export default function ManualControlCard({ isEnabled }: Props) {
     })
   }
 
-  const handleTurnLeft = () => {
-    turnLeft({ angle: angle || defaultAngle }, {
+  const handleCargoLower = () => {
+    cargoLower({ position: position || defaultPosition }, {
       onSuccess: (data) => {
         toast.success(data.message)
       },
       onError: () => {
-        toast.error('Turn left failed')
+        toast.error('Cargo lower failed')
       },
     })
   }
 
-  const handleTurnRight = () => {
-    turnRight({ angle: angle || defaultAngle }, {
+  const handleCargoLift = () => {
+    cargoLift({ position: position || defaultPosition }, {
       onSuccess: (data) => {
         toast.success(data.message)
       },
       onError: () => {
-        toast.error('Turn right failed')
+        toast.error('Cargo lift failed')
       },
     })
   }
@@ -95,25 +95,25 @@ export default function ManualControlCard({ isEnabled }: Props) {
       <CardContent>
         <div className="flex flex-wrap gap-4">
           <div className="grid grid-cols-3 gap-4 w-fit">
-            <Button variant="outline" className="flex flex-col col-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleMoveForward}>
+            <Button variant="outline" className="flex flex-col col-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleCargoLift}>
               <ArrowUp className="size-4" />
-              <span className="text-xs">Forward</span>
+              <span className="text-xs">Cargo lift</span>
             </Button>
-            <Button variant="outline" className="flex flex-col row-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleTurnLeft}>
+            <Button variant="outline" className="flex flex-col row-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleMoveBackward}>
               <ArrowLeft className="size-4" />
-              <span className="text-xs">Left</span>
+              <span className="text-xs">Backward</span>
             </Button>
             <Button variant="outline" className="flex flex-col col-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleStop}>
               <Square className="size-4" />
               <span className="text-xs">Stop</span>
             </Button>
-            <Button variant="outline" className="flex flex-col gap-2 h-fit" disabled={!isEnabled} onClick={handleTurnRight}>
+            <Button variant="outline" className="flex flex-col gap-2 h-fit" disabled={!isEnabled} onClick={handleMoveForward}>
               <ArrowRight className="size-4" />
-              <span className="text-xs">Right</span>
+              <span className="text-xs">Forward</span>
             </Button>
-            <Button variant="outline" className="flex flex-col col-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleMoveBackward}>
+            <Button variant="outline" className="flex flex-col col-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleCargoLower}>
               <ArrowDown className="size-4" />
-              <span className="text-xs">Backward</span>
+              <span className="text-xs">Cargo lower</span>
             </Button>
           </div>
           <div className="grid grid-cols-3 gap-2 items-center h-fit">
@@ -128,16 +128,16 @@ export default function ManualControlCard({ isEnabled }: Props) {
               onChange={e => setSpeed(Number(e.target.value))}
             />
             <Label className={cn(isEnabled ? 'text-foreground' : 'text-muted-foreground')}>m/s</Label>
-            <Label className={cn(isEnabled ? 'text-foreground' : 'text-muted-foreground')}>Angle:</Label>
+            <Label className={cn(isEnabled ? 'text-foreground' : 'text-muted-foreground')}>Position:</Label>
             <Input
               disabled={!isEnabled}
               type="number"
               min={0}
               max={360}
-              value={angle ?? defaultAngle}
-              onChange={e => setAngle(Number(e.target.value))}
+              value={position ?? defaultPosition}
+              onChange={e => setPosition(Number(e.target.value))}
             />
-            <Label className={cn(isEnabled ? 'text-foreground' : 'text-muted-foreground')}>° (degree)</Label>
+            <Label className={cn(isEnabled ? 'text-foreground' : 'text-muted-foreground')}> cm</Label>
           </div>
         </div>
 

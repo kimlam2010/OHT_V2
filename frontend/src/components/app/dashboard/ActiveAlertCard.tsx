@@ -1,14 +1,25 @@
+import type { AlertRequest } from '@/api/dashboard'
 import type { AlertItem } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertCircle } from 'lucide-react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import {
   Card,
+  CardAction,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ACTIVE_ALERT_QUERY_KEY, useAcknowledgeAlertMutation, useActiveAlertQuery, useResolveAlertMutation } from '@/hooks/dashboard'
 import { matchQuery } from '@/lib/match-query'
@@ -90,11 +101,34 @@ function ActiveAlertList({ alerts }: { alerts: AlertItem[] }) {
 }
 
 export default function ActiveAlertCard() {
-  const activeAlerts = useActiveAlertQuery(50, 1)
+  const [severity, setSeverity] = useState<AlertRequest['severity']>(undefined)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const activeAlerts = useActiveAlertQuery(limit, page, severity)
+
+  const handleLimitChange = (value: string) => {
+    setLimit(Number(value))
+    setPage(1)
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Active Alerts</CardTitle>
+        <CardAction className="flex gap-3">
+          <Button className="!rounded-none p-1.5 h-fit text-sm !border" variant={severity === undefined ? 'default' : 'outline'} onClick={() => setSeverity(undefined)}>
+            All
+          </Button>
+          <Button className="!rounded-none p-1.5 h-fit text-sm !border" variant={severity === 'medium' ? 'default' : 'outline'} onClick={() => setSeverity('medium')}>
+            Medium
+          </Button>
+          <Button className="!rounded-none p-1.5 h-fit text-sm !border" variant={severity === 'high' ? 'default' : 'outline'} onClick={() => setSeverity('high')}>
+            High
+          </Button>
+          <Button className="!rounded-none p-1.5 h-fit text-sm !border" variant={severity === 'critical' ? 'default' : 'outline'} onClick={() => setSeverity('critical')}>
+            Critical
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent>
         {matchQuery(activeAlerts, {
@@ -103,8 +137,36 @@ export default function ActiveAlertCard() {
           ),
           error: error => <ErrorMessage error={error} />,
           loading: () => <Spinner />,
+          empty: () => <div className="flex flex-col gap-2 justify-center items-center w-full text-muted-foreground">No alerts</div>,
         })}
       </CardContent>
+      <CardFooter>
+        <div className="flex justify-end items-center w-full gap-2">
+          <div className="text-sm text-muted-foreground">
+            Total:
+            {' '}
+            {activeAlerts.data?.total_count || 0}
+            {' '}
+            alerts
+          </div>
+          <Select value={limit.toString()} onValueChange={handleLimitChange}>
+            <SelectTrigger className="w-fit">
+              <SelectValue placeholder="Limit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={page === 1}>
+            Prev
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={!activeAlerts.data?.has_next}>
+            Next
+          </Button>
+        </div>
+      </CardFooter>
     </Card>
   )
 }

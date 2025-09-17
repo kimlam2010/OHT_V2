@@ -1,3 +1,4 @@
+import type { AlertRequest } from '@/api/dashboard'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '@/api/dashboard'
 import { STALE_TIME } from '@/plugins/react-query'
@@ -21,10 +22,10 @@ export function useSystemLogQuery(limit: number, level: string, page: number, { 
   })
 }
 
-export function useActiveAlertQuery(page_size: number, page: number, { staleTime = STALE_TIME }: { staleTime?: number } = {}) {
+export function useActiveAlertQuery(page_size: number, page: number, severity?: AlertRequest['severity'], { staleTime = STALE_TIME }: { staleTime?: number } = {}) {
   return useQuery({
-    queryKey: [ACTIVE_ALERT_QUERY_KEY, page_size, page],
-    queryFn: () => dashboardApi.getActiveAlerts({ page_size, page }),
+    queryKey: [ACTIVE_ALERT_QUERY_KEY, page_size, page, severity],
+    queryFn: () => dashboardApi.getActiveAlerts({ page_size, page, severity }),
     staleTime,
   })
 }

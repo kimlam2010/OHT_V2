@@ -4,7 +4,7 @@ import http from '@/lib/http'
 export interface AlertRequest {
   page: number
   page_size: number
-  severity?: string
+  severity?: 'medium' | 'high' | 'critical'
 }
 
 export interface AlertResponse {
