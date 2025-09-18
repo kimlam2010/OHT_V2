@@ -92,6 +92,24 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"⚠️ RS485 Service failed to initialize: {e}, continuing without it")
         
+        # Start WebSocket RS485 service
+        try:
+            logger.info("📡 Starting WebSocket RS485 service...")
+            from app.services.websocket_rs485_service import websocket_rs485_service
+            await websocket_rs485_service.start()
+            logger.info("✅ WebSocket RS485 service started")
+        except Exception as e:
+            logger.warning(f"⚠️ WebSocket RS485 service failed to start: {e}, continuing without it")
+        
+        # Start Firmware WebSocket Client (Issue #90)
+        try:
+            logger.info("🔌 Starting Firmware WebSocket Client...")
+            from app.services.firmware_websocket_client import firmware_websocket_client
+            await firmware_websocket_client.start()
+            logger.info("✅ Firmware WebSocket Client started - connecting to ws://127.0.0.1:8081")
+        except Exception as e:
+            logger.warning(f"⚠️ Firmware WebSocket Client failed to start: {e}, continuing without it")
+        
         logger.info("🚀 OHT-50 Backend started successfully")
         
     except Exception as e:
@@ -119,6 +137,14 @@ async def lifespan(app: FastAPI):
             logger.info("✅ WebSocket Log service stopped")
         except Exception as e:
             logger.warning(f"⚠️ WebSocket Log service stop failed: {e}")
+        
+        # Stop Firmware WebSocket Client (Issue #90)
+        try:
+            from app.services.firmware_websocket_client import firmware_websocket_client
+            await firmware_websocket_client.stop()
+            logger.info("✅ Firmware WebSocket Client stopped")
+        except Exception as e:
+            logger.warning(f"⚠️ Firmware WebSocket Client stop failed: {e}")
         
         # Stop WebSocket service
         await websocket_service.stop()

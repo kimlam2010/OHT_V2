@@ -826,6 +826,69 @@ const char* ws_server_get_version_string(void) {
 }
 
 /**
+ * @brief Broadcast RS485 module telemetry (Issue #90)
+ * @param module_addr Module address (0x02, 0x03, 0x04, 0x05)
+ * @return HAL status
+ */
+hal_status_t ws_server_broadcast_rs485_telemetry(uint8_t module_addr) {
+    if (!g_ws_server.initialized || !g_ws_server.running) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    // Include telemetry manager header
+    #include "managers/telemetry_manager.h"
+    
+    // Create JSON telemetry data for this module
+    char telemetry_buffer[4096];
+    int json_length = telemetry_manager_serialize_rs485_telemetry(
+        module_addr, telemetry_buffer, sizeof(telemetry_buffer));
+    
+    if (json_length <= 0) {
+        hal_log_error("WS_SERVER", "ws_server_broadcast_rs485_telemetry", __LINE__, 
+                     HAL_STATUS_ERROR, "Failed to serialize RS485 telemetry");
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Broadcast to all connected clients
+    hal_status_t result = ws_server_broadcast_telemetry(telemetry_buffer, json_length);
+    
+    if (result == HAL_STATUS_OK) {
+        hal_log_message(HAL_LOG_LEVEL_DEBUG, 
+                       "WebSocket Server: Broadcasted RS485 telemetry for module 0x%02X (%d bytes)",
+                       module_addr, json_length);
+    }
+    
+    return result;
+}
+
+/**
+ * @brief Start RS485 telemetry streaming for all modules (Issue #90)
+ * @param interval_ms Streaming interval in milliseconds (1000-2000ms recommended)
+ * @return HAL status
+ */
+hal_status_t ws_server_start_rs485_telemetry_streaming(uint32_t interval_ms) {
+    if (!g_ws_server.initialized || !g_ws_server.running) {
+        return HAL_STATUS_NOT_INITIALIZED;
+    }
+    
+    if (interval_ms < 500 || interval_ms > 10000) {
+        hal_log_error("WS_SERVER", "ws_server_start_rs485_telemetry_streaming", __LINE__, 
+                     HAL_STATUS_INVALID_PARAMETER, "Invalid interval (must be 500-10000ms)");
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Set telemetry streaming parameters
+    g_ws_server.telemetry_streaming = true;
+    g_ws_server.telemetry_interval_ms = interval_ms;
+    
+    hal_log_message(HAL_LOG_LEVEL_INFO, 
+                   "WebSocket Server: Started RS485 telemetry streaming (interval: %ums)", 
+                   interval_ms);
+    
+    return HAL_STATUS_OK;
+}
+
+/**
  * @brief Set WebSocket Server configuration
  * @param config Pointer to configuration structure
  * @return hal_status_t HAL_STATUS_OK on success, error code on failure

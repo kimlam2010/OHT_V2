@@ -344,6 +344,14 @@ int main(int argc, char **argv) {
                         fprintf(stderr, "[OHT-50] ❌ WebSocket Server start failed: %d (continuing)\n", ws_result);
                     } else {
                         printf("[OHT-50] ✅ WebSocket Server started on port 8081\n");
+                        
+                        // Start RS485 telemetry streaming (Issue #90)
+                        hal_status_t telemetry_result = ws_server_start_rs485_telemetry_streaming(2000); // 2 second interval
+                        if (telemetry_result != HAL_STATUS_OK) {
+                            fprintf(stderr, "[OHT-50] ⚠️ RS485 telemetry streaming start failed: %d\n", telemetry_result);
+                        } else {
+                            printf("[OHT-50] ✅ RS485 telemetry streaming started (2s interval)\n");
+                        }
                     }
                 }
                 (void)api_register_minimal_endpoints();
@@ -509,12 +517,34 @@ int main(int argc, char **argv) {
             }
         }
         
-        // Telemetry and Status Broadcasting (every 1000ms)
+        // RS485 Module Telemetry Broadcasting (every 2000ms) - Issue #90
         uint64_t current_time = now_ms();
+        static uint64_t last_rs485_telemetry_ms = 0;
+        if (current_time - last_rs485_telemetry_ms >= 2000) {
+            if (!g_dry_run) {
+                // Broadcast telemetry for all discovered modules
+                uint8_t module_addresses[] = {0x02, 0x03, 0x04, 0x05}; // Power, Safety, Motor, Dock
+                for (size_t i = 0; i < sizeof(module_addresses); i++) {
+                    uint8_t addr = module_addresses[i];
+                    
+                    // Check if module is online in registry
+                    module_info_t module_info;
+                    if (registry_get(addr, &module_info) == 0 && module_info.status == MODULE_STATUS_ONLINE) {
+                        hal_status_t ws_result = ws_server_broadcast_rs485_telemetry(addr);
+                        if (ws_result != HAL_STATUS_OK && g_debug_mode) {
+                            printf("[OHT-50][DEBUG] RS485 telemetry broadcast failed for 0x%02X: %d\n", addr, ws_result);
+                        }
+                    }
+                }
+            }
+            last_rs485_telemetry_ms = current_time;
+        }
+        
+        // System Telemetry and Status Broadcasting (every 1000ms)
         static uint64_t last_telemetry_broadcast_ms = 0;
         if (current_time - last_telemetry_broadcast_ms >= 1000) {
             if (!g_dry_run) {
-                // Send telemetry data via WebSocket
+                // Send system telemetry data via WebSocket
                 char telemetry_data[256];
                 snprintf(telemetry_data, sizeof(telemetry_data), 
                         "{\"timestamp\":%lu,\"status\":\"running\",\"modules\":%zu}",
