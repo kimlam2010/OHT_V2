@@ -14,7 +14,8 @@ import time
 from app.schemas.rs485 import (
     RS485ModuleInfo, RS485ModuleType, RS485ModuleStatus,
     RS485BusHealth, RS485BusStatus, RS485ModuleRealTime,
-    RS485DiscoveryStatus, RS485DiscoveryResult
+    RS485DiscoveryStatus, RS485DiscoveryResult,
+    RS485RegisterInfo, RS485ModuleTelemetry
 )
 
 logger = logging.getLogger(__name__)
@@ -223,6 +224,9 @@ class MockRS485Service:
                 self._bus_health.throughput = random.randint(45, 65)
                 self._bus_health.last_scan = datetime.now().strftime("%H:%M:%S")
                 
+                # Notify WebSocket service about updates
+                await self._notify_websocket_updates()
+                
                 await asyncio.sleep(2)  # Update every 2 seconds
                 
             except asyncio.CancelledError:
@@ -230,6 +234,44 @@ class MockRS485Service:
             except Exception as e:
                 logger.error(f"❌ Mock RS485 background update error: {e}")
                 await asyncio.sleep(5)
+                
+    async def _notify_websocket_updates(self) -> None:
+        """Notify WebSocket service about data updates"""
+        try:
+            # Import here to avoid circular imports
+            from app.services.websocket_rs485_service import websocket_rs485_service
+            
+            # Get current data
+            modules = await self.get_modules()
+            bus_health = await self.get_bus_health()
+            
+            # Broadcast updates if there are connections
+            if hasattr(websocket_rs485_service, 'connections') and websocket_rs485_service.connections:
+                # Create update message
+                message_data = {
+                    "modules": [module.model_dump() for module in modules],
+                    "bus_health": bus_health.model_dump(),
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                # Send to WebSocket service for broadcasting
+                from app.core.websocket_service import WebSocketMessage
+                message = WebSocketMessage(
+                    type="rs485_update",
+                    data=message_data,
+                    timestamp=datetime.now()
+                )
+                
+                # Broadcast to all RS485 WebSocket clients
+                for websocket in websocket_rs485_service.connections.copy():
+                    try:
+                        await websocket.send_text(message.json())
+                    except Exception as e:
+                        logger.warning(f"⚠️ Failed to send RS485 update to client: {e}")
+                        websocket_rs485_service.connections.discard(websocket)
+                        
+        except Exception as e:
+            logger.error(f"❌ Failed to notify WebSocket updates: {e}")
                 
     async def get_modules(self) -> List[RS485ModuleInfo]:
         """Get list of all RS485 modules"""
@@ -422,6 +464,181 @@ class MockRS485Service:
         return {
             "success": True,
             "message": "RS485 bus restart successful",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    # New Telemetry Methods for Issue #91
+    def _generate_mock_registers(self, module_addr: int, module_name: str) -> List[RS485RegisterInfo]:
+        """Generate mock telemetry registers for module - Issue #91"""
+        
+        # Different register sets for different module types
+        register_templates = {
+            2: {  # Power Module
+                "registers": [
+                    {"addr": "0x0001", "name": "Battery Level", "unit": "%", "mode": "R", "base": 85.4, "warning": 20, "critical": 10},
+                    {"addr": "0x0002", "name": "Input Voltage", "unit": "V", "mode": "R", "base": 24.2, "warning": 22.0, "critical": 20.0},
+                    {"addr": "0x0003", "name": "Output Current", "unit": "A", "mode": "R", "base": 2.1, "warning": 4.0, "critical": 5.0},
+                    {"addr": "0x0004", "name": "Temperature", "unit": "°C", "mode": "R", "base": 42.5, "warning": 60.0, "critical": 70.0},
+                    {"addr": "0x0010", "name": "Power Limit", "unit": "W", "mode": "RW", "base": 500.0, "warning": 800, "critical": 1000},
+                ]
+            },
+            3: {  # Safety Module
+                "registers": [
+                    {"addr": "0x0001", "name": "E-Stop Status", "unit": "", "mode": "R", "base": 0, "warning": None, "critical": 1},
+                    {"addr": "0x0002", "name": "Safety Zone", "unit": "", "mode": "R", "base": 1, "warning": None, "critical": 0},
+                    {"addr": "0x0003", "name": "Sensor Status", "unit": "", "mode": "R", "base": 0xFF, "warning": 0xFE, "critical": 0xF0},
+                    {"addr": "0x0004", "name": "Response Time", "unit": "ms", "mode": "R", "base": 15.2, "warning": 50, "critical": 100},
+                    {"addr": "0x0010", "name": "Safety Timeout", "unit": "ms", "mode": "RW", "base": 1000, "warning": 2000, "critical": 5000},
+                ]
+            },
+            4: {  # Travel Module
+                "registers": [
+                    {"addr": "0x0001", "name": "Position", "unit": "mm", "mode": "R", "base": 1250.5, "warning": None, "critical": None},
+                    {"addr": "0x0002", "name": "Velocity", "unit": "mm/s", "mode": "R", "base": 150.0, "warning": 300, "critical": 400},
+                    {"addr": "0x0003", "name": "Motor Current", "unit": "A", "mode": "R", "base": 3.2, "warning": 5.0, "critical": 6.0},
+                    {"addr": "0x0004", "name": "Encoder Status", "unit": "", "mode": "R", "base": 1, "warning": None, "critical": 0},
+                    {"addr": "0x0010", "name": "Max Speed", "unit": "mm/s", "mode": "RW", "base": 300, "warning": 400, "critical": 500},
+                ]
+            },
+            5: {  # Dock & Location Module  
+                "registers": [
+                    {"addr": "0x0001", "name": "Dock Status", "unit": "", "mode": "R", "base": 1, "warning": None, "critical": 0},
+                    {"addr": "0x0002", "name": "Position X", "unit": "mm", "mode": "R", "base": 150.5, "warning": None, "critical": None},
+                    {"addr": "0x0003", "name": "Position Y", "unit": "mm", "mode": "R", "base": 200.3, "warning": None, "critical": None},
+                    {"addr": "0x0004", "name": "Orientation", "unit": "deg", "mode": "R", "base": 90.2, "warning": None, "critical": None},
+                    {"addr": "0x0010", "name": "Dock Timeout", "unit": "s", "mode": "RW", "base": 30, "warning": 60, "critical": 120},
+                ]
+            }
+        }
+        
+        # Get template for this module type, fallback to generic
+        template = register_templates.get(module_addr, {
+            "registers": [
+                {"addr": "0x0001", "name": "Status", "unit": "", "mode": "R", "base": 1, "warning": None, "critical": 0},
+                {"addr": "0x0002", "name": "Temperature", "unit": "°C", "mode": "R", "base": 40.0, "warning": 60, "critical": 70},
+                {"addr": "0x0003", "name": "Voltage", "unit": "V", "mode": "R", "base": 24.0, "warning": 22, "critical": 20},
+            ]
+        })
+        
+        registers = []
+        for reg_template in template["registers"]:
+            # Add some random variation to base values
+            base_value = reg_template["base"]
+            if isinstance(base_value, (int, float)) and base_value > 1:
+                variation = base_value * 0.1  # ±10% variation
+                current_value = base_value + random.uniform(-variation, variation)
+            else:
+                current_value = base_value
+                
+            # Determine status based on thresholds
+            status = "normal"
+            if reg_template["critical"] is not None:
+                if (reg_template["critical"] > base_value and current_value >= reg_template["critical"]) or \
+                   (reg_template["critical"] < base_value and current_value <= reg_template["critical"]):
+                    status = "critical"
+                elif reg_template["warning"] is not None:
+                    if (reg_template["warning"] > base_value and current_value >= reg_template["warning"]) or \
+                       (reg_template["warning"] < base_value and current_value <= reg_template["warning"]):
+                        status = "warning"
+            
+            register = RS485RegisterInfo(
+                address=reg_template["addr"],
+                name=reg_template["name"],
+                value=round(current_value, 2) if isinstance(current_value, float) else current_value,
+                unit=reg_template["unit"],
+                mode=reg_template["mode"],
+                status=status,
+                threshold_warning=reg_template["warning"],
+                threshold_critical=reg_template["critical"]
+            )
+            registers.append(register)
+            
+        return registers
+        
+    async def get_module_telemetry(self, address: int) -> Optional[RS485ModuleTelemetry]:
+        """Get module telemetry data - Issue #91"""
+        logger.info(f"🧪 Mock: Getting telemetry for module 0x{address:02X}")
+        
+        if address not in self._mock_modules:
+            logger.warning(f"🧪 Mock: Module 0x{address:02X} not found for telemetry")
+            return None
+            
+        module = self._mock_modules[address]
+        
+        # Generate mock registers for this module
+        registers = self._generate_mock_registers(address, module.name)
+        
+        telemetry = RS485ModuleTelemetry(
+            module_addr=f"0x{address:02X}",
+            module_name=module.name,
+            registers=registers,
+            last_updated=datetime.now()
+        )
+        
+        logger.info(f"🧪 Mock: Generated {len(registers)} telemetry registers for {module.name}")
+        return telemetry
+        
+    async def update_module_register(self, address: int, register_address: str, value: float, force: bool = False) -> Dict[str, Any]:
+        """Update writable module register - Issue #91"""
+        logger.info(f"🧪 Mock: Updating register {register_address} on module 0x{address:02X} to {value}")
+        
+        if address not in self._mock_modules:
+            return {
+                "success": False,
+                "message": f"Module 0x{address:02X} not found",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        # Get current telemetry to find the register
+        telemetry = await self.get_module_telemetry(address)
+        if not telemetry:
+            return {
+                "success": False,
+                "message": f"Failed to get telemetry for module 0x{address:02X}",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        # Find the register
+        target_register = None
+        for register in telemetry.registers:
+            if register.address == register_address:
+                target_register = register
+                break
+                
+        if not target_register:
+            return {
+                "success": False,
+                "message": f"Register {register_address} not found on module 0x{address:02X}",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        # Check if register is writable
+        if target_register.mode not in ["W", "RW"]:
+            return {
+                "success": False,
+                "message": f"Register {register_address} is read-only (mode: {target_register.mode})",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        # Check value safety (if not forced)
+        if not force and target_register.threshold_critical is not None:
+            if (target_register.threshold_critical > target_register.value and value >= target_register.threshold_critical) or \
+               (target_register.threshold_critical < target_register.value and value <= target_register.threshold_critical):
+                return {
+                    "success": False,
+                    "message": f"Value {value} would exceed critical threshold {target_register.threshold_critical}. Use force=true to override.",
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+        # Simulate register update (in real implementation, this would write to hardware)
+        await asyncio.sleep(0.1)  # Simulate write delay
+        
+        return {
+            "success": True,
+            "message": f"Register {register_address} updated successfully",
+            "old_value": target_register.value,
+            "new_value": value,
+            "register_name": target_register.name,
             "timestamp": datetime.now().isoformat()
         }
 

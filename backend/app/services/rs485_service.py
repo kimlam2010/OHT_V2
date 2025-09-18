@@ -10,7 +10,7 @@ from typing import Dict, Any, List, Optional
 from app.config import settings
 from app.schemas.rs485 import (
     RS485ModuleInfo, RS485BusHealth, RS485DiscoveryStatus, 
-    RS485DiscoveryResult
+    RS485DiscoveryResult, RS485ModuleTelemetry
 )
 from app.services.firmware_integration_service import firmware_service
 from app.services.mock_rs485_service import mock_rs485_service
@@ -238,6 +238,43 @@ class RS485Service:
             
         except Exception as e:
             logger.error(f"❌ Failed to quarantine RS485 module 0x{address:02X}: {e}")
+            raise
+            
+    # New Telemetry Methods for Issue #91
+    async def get_module_telemetry(self, address: int) -> Optional[RS485ModuleTelemetry]:
+        """Get module telemetry data - Issue #91"""
+        try:
+            logger.info(f"📊 Getting telemetry for RS485 module 0x{address:02X}")
+            
+            if self._use_mock:
+                # Use mock service
+                return await self._service.get_module_telemetry(address)
+            else:
+                # For real firmware, implement actual API call
+                logger.warning("🔌 Real firmware telemetry API not yet implemented")
+                # Fallback to mock for now
+                return await mock_rs485_service.get_module_telemetry(address)
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to get telemetry for module 0x{address:02X}: {e}")
+            raise
+            
+    async def update_module_register(self, address: int, register_address: str, value: float, force: bool = False) -> Dict[str, Any]:
+        """Update writable module register - Issue #91"""
+        try:
+            logger.info(f"✏️ Updating register {register_address} on module 0x{address:02X} to {value}")
+            
+            if self._use_mock:
+                # Use mock service
+                return await self._service.update_module_register(address, register_address, value, force)
+            else:
+                # For real firmware, implement actual API call
+                logger.warning("🔌 Real firmware register update API not yet implemented")
+                # Fallback to mock for now
+                return await mock_rs485_service.update_module_register(address, register_address, value, force)
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to update register {register_address} on module 0x{address:02X}: {e}")
             raise
 
 
