@@ -1,6 +1,6 @@
 export interface Robot {
   robot_id: string
-  status: string
+  status: 'idle' | 'moving' | 'docking' | 'charging' | 'error' | 'emergency_stop' | 'paused'
   mode: string
   position: {
     x: number

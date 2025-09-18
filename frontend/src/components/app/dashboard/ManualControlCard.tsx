@@ -87,7 +87,7 @@ export default function ManualControlCard({ isEnabled }: Props) {
   }
 
   return (
-    <Card className="shadow">
+    <Card className="gap-3 shadow">
       <CardHeader>
         <CardTitle>Manual Control Panel</CardTitle>
         <CardAction><Badge variant={isEnabled ? 'success' : 'secondary'}>{isEnabled ? 'ENABLE' : 'DISABLE'}</Badge></CardAction>

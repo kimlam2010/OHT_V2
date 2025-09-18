@@ -17,7 +17,7 @@ function StatusBadge() {
 
 export default function CommunicationCard() {
   return (
-    <Card className="shadow">
+    <Card className="gap-3 shadow">
       <CardHeader>
         <CardTitle>Communication</CardTitle>
         <CardAction>
@@ -25,18 +25,18 @@ export default function CommunicationCard() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col space-y-1">
+        <div className="flex flex-col space-y-1 text-sm">
           {/* Connection */}
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Connection</span>
-            <span className="font-semibold text-primary">
+            <span className="text-muted-foreground">Connection</span>
+            <span className="font-medium text-primary">
               Ethernet
             </span>
           </div>
           {/* Signal Strength */}
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Signal Strength</span>
-            <span className="font-semibold text-primary">
+            <span className="text-muted-foreground">Signal Strength</span>
+            <span className="font-medium text-primary">
               -45
               {' '}
               dBm
@@ -44,8 +44,8 @@ export default function CommunicationCard() {
           </div>
           {/* Last Updated */}
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Last Updated</span>
-            <span className="font-semibold text-primary">
+            <span className="text-muted-foreground">Last Updated</span>
+            <span className="font-medium text-primary">
               10:24:31
             </span>
           </div>

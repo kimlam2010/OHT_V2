@@ -6,8 +6,8 @@ import ManualControlCard from '@/components/app/dashboard/ManualControlCard'
 import OperatingModeCard from '@/components/app/dashboard/OperatingModeCard'
 import PerformanceMonitoringCard from '@/components/app/dashboard/PerformanceMonitoringCard'
 import PositionAndSpeedCard from '@/components/app/dashboard/PositionAndSpeedCard'
+import SafetyStatusCard from '@/components/app/dashboard/SafetyStatusCard'
 import SystemLogCard from '@/components/app/dashboard/SystemLogCard'
-// import SafetyStatusCard from '@/components/app/dashboard/SafetyStatusCard'
 import SystemStatusCard from '@/components/app/dashboard/SystemStatusCard'
 import { RequireAuth } from '@/components/shared/RequireAuth'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -26,11 +26,11 @@ function Spinner() {
         // eslint-disable-next-line react/no-array-index-key
         <Card key={index}>
           <CardHeader>
-            <Skeleton className="h-6 w-full" />
+            <Skeleton className="w-full h-6" />
           </CardHeader>
           <CardContent className="space-y-2">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
+            <Skeleton className="w-full h-6" />
+            <Skeleton className="w-full h-6" />
           </CardContent>
         </Card>
       ))}
@@ -42,24 +42,24 @@ function PerformanceSpinner() {
   return (
     <Card>
       <CardHeader>
-        <Skeleton className="h-6 w-full" />
+        <Skeleton className="w-full h-6" />
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2">
-          <div className="border rounded-lg p-2 bg-muted">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-4 w-full mt-2" />
+          <div className="p-2 rounded-lg border bg-muted">
+            <Skeleton className="w-full h-6" />
+            <Skeleton className="mt-2 w-full h-4" />
           </div>
-          <div className="border rounded-lg p-2 bg-muted">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-4 w-full mt-2" />
+          <div className="p-2 rounded-lg border bg-muted">
+            <Skeleton className="w-full h-6" />
+            <Skeleton className="mt-2 w-full h-4" />
           </div>
-          <div className="border rounded-lg p-2 bg-muted">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-4 w-full mt-2" />
+          <div className="p-2 rounded-lg border bg-muted">
+            <Skeleton className="w-full h-6" />
+            <Skeleton className="mt-2 w-full h-4" />
           </div>
         </div>
-        <Skeleton className="h-40 w-full" />
+        <Skeleton className="w-full h-40" />
       </CardContent>
     </Card>
   )
@@ -90,7 +90,7 @@ function RouteComponent() {
               <div className="grid grid-cols-1 gap-4 w-full md:grid-cols-2 lg:grid-cols-4">
                 <SystemStatusCard robot={data.robot} />
                 <PositionAndSpeedCard robot={data.robot} />
-                {/* <SafetyStatusCard /> */}
+                <SafetyStatusCard safety={data.safety} />
                 <CommunicationCard />
               </div>
             ),

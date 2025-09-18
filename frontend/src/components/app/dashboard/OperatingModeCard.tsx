@@ -32,16 +32,16 @@ export default function OperatingModeCard({ mode }: Props) {
     }
   }
   return (
-    <Card className="w-full gap-2 shadow">
+    <Card className="gap-3 w-full shadow">
       <CardHeader>
         <CardTitle>Operating mode</CardTitle>
       </CardHeader>
       <CardContent className="flex gap-4">
-        <Button className="flex-1 h-12 gap-2" variant={mode === 'auto' ? 'default' : 'outline'} onClick={() => handleUpdateMode('auto')}>
+        <Button className="flex-1 gap-2 h-12" variant={mode === 'auto' ? 'default' : 'outline'} onClick={() => handleUpdateMode('auto')}>
           <Play />
           Auto
         </Button>
-        <Button className="flex-1 h-12 gap-2" variant={mode === 'manual' ? 'default' : 'outline'} onClick={() => handleUpdateMode('manual')}>
+        <Button className="flex-1 gap-2 h-12" variant={mode === 'manual' ? 'default' : 'outline'} onClick={() => handleUpdateMode('manual')}>
           <Hand />
           Manual
         </Button>

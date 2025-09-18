@@ -1,4 +1,4 @@
-import type { AlertItem, LogItem, Performance, Robot, System } from '@/types'
+import type { AlertItem, LogItem, Performance, Robot, Safety, System } from '@/types'
 import http from '@/lib/http'
 
 export interface AlertRequest {
@@ -33,6 +33,7 @@ export interface SummaryResponse {
   robot: Robot
   system: System
   performance: Performance
+  safety: Safety
   last_updated: string
 }
 

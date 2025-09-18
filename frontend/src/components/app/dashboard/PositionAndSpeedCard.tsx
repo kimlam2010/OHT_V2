@@ -34,11 +34,11 @@ export default function PositionAndSpeedCard(props: Props) {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col space-y-1">
+        <div className="flex flex-col space-y-1 text-sm">
           {/* Current Speed */}
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Current Speed</span>
-            <span className="font-mono font-semibold text-primary">
+            <span className=" text-muted-foreground">Current Speed</span>
+            <span className=" font-medium text-primary">
               {robot.speed.toFixed(2)}
               {' '}
               m/s
@@ -46,11 +46,11 @@ export default function PositionAndSpeedCard(props: Props) {
           </div>
           {/* Position */}
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Position</span>
+            <span className=" text-muted-foreground">Position</span>
             <div className="grid grid-cols-3 text-center divide-x">
               <div className="px-1">
                 <span className="text-xs text-muted-foreground">X</span>
-                <div className="font-mono font-semibold text-primary">
+                <div className=" font-medium text-primary">
                   {robot.position.x}
                   {' '}
                   m
@@ -58,7 +58,7 @@ export default function PositionAndSpeedCard(props: Props) {
               </div>
               <div className="px-1">
                 <span className="text-xs text-muted-foreground">Y</span>
-                <div className="font-mono font-semibold text-primary">
+                <div className=" font-medium text-primary">
                   {robot.position.y}
                   {' '}
                   m
@@ -66,7 +66,7 @@ export default function PositionAndSpeedCard(props: Props) {
               </div>
               <div className="px-1">
                 <span className="text-xs text-muted-foreground">Z</span>
-                <div className="font-mono font-semibold text-primary">
+                <div className=" font-medium text-primary">
                   {robot.position.z}
                   {' '}
                   m
