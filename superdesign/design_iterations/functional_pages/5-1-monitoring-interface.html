@@ -195,6 +195,20 @@
             50% { opacity: 0.5; }
         }
         
+        /* WebSocket Status Indicator */
+        .ws-connected {
+            color: var(--success-green);
+            animation: pulse 2s infinite;
+        }
+        
+        .ws-disconnected {
+            color: var(--industrial-gray-400);
+        }
+        
+        .ws-error {
+            color: var(--error-red);
+        }
+        
         .bus-actions {
             display: flex;
             gap: var(--space-sm);
@@ -543,6 +557,191 @@
              color: var(--industrial-gray-500);
              font-size: var(--text-sm);
          }
+         
+        /* 🎯 Telemetry Table Styles - Modbus Tool Style */
+        .telemetry-table-container {
+            background: var(--bg-primary);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: var(--space-lg);
+        }
+
+        .telemetry-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md);
+            background: var(--industrial-gray-50);
+            border-bottom: var(--border-width-1) solid var(--border-color-light);
+        }
+
+        .telemetry-table-title {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .telemetry-table-controls {
+            display: flex;
+            gap: var(--space-sm);
+            align-items: center;
+        }
+
+        .telemetry-search {
+            padding: var(--space-xs) var(--space-sm);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-sm);
+            width: 200px;
+        }
+
+        .telemetry-filter {
+            padding: var(--space-xs) var(--space-sm);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-sm);
+            background: var(--bg-primary);
+        }
+
+        .telemetry-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+            font-size: var(--text-sm);
+        }
+
+        .telemetry-table th {
+            background: var(--industrial-gray-100);
+            padding: var(--space-sm) var(--space-md);
+            text-align: left;
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            border-bottom: var(--border-width-1) solid var(--border-color-light);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .telemetry-table td {
+            padding: var(--space-sm) var(--space-md);
+            border-bottom: var(--border-width-1) solid var(--border-color-light);
+            color: var(--industrial-gray-800);
+        }
+
+        .telemetry-table tr:hover {
+            background: var(--primary-orange-light);
+        }
+
+        .telemetry-table .address-cell {
+            font-weight: var(--font-medium);
+            color: var(--primary-orange);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .telemetry-table .value-cell {
+            font-weight: var(--font-semibold);
+            color: var(--industrial-gray-900);
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+        }
+
+        .telemetry-table .value-cell.updated {
+            animation: valueFlash 0.8s ease-out;
+            background: var(--status-warning-light);
+        }
+
+        @keyframes valueFlash {
+            0% { background: var(--status-warning); }
+            100% { background: transparent; }
+        }
+
+        .telemetry-table .status-cell {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .telemetry-table .mode-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: var(--font-medium);
+        }
+
+        .telemetry-table .mode-cell.rw {
+            color: var(--status-success);
+        }
+
+        .telemetry-table .mode-cell.r {
+            color: var(--industrial-gray-600);
+        }
+
+        .telemetry-table .writable-input {
+            background: var(--bg-primary);
+            border: var(--border-width-1) solid var(--border-color-light);
+            border-radius: var(--radius-xs);
+            padding: var(--space-xs);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: var(--text-sm);
+            width: 80px;
+        }
+
+        .telemetry-table .writable-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 2px var(--primary-orange-light);
+        }
+
+        .telemetry-table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md);
+            background: var(--industrial-gray-50);
+            border-top: var(--border-width-1) solid var(--border-color-light);
+            font-size: var(--text-sm);
+            color: var(--industrial-gray-600);
+        }
+
+        .telemetry-export-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--primary-orange);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: var(--text-sm);
+            transition: all var(--transition-fast);
+        }
+
+        .telemetry-export-btn:hover {
+            background: var(--primary-orange-dark);
+            transform: translateY(-1px);
+        }
+
+        /* 📱 Responsive Design for Mobile */
+        @media (max-width: 768px) {
+            .telemetry-table-container {
+                overflow-x: auto;
+            }
+
+            .telemetry-table {
+                min-width: 600px;
+            }
+
+            .telemetry-search {
+                width: 120px;
+            }
+
+            .telemetry-table-controls {
+                flex-direction: column;
+                gap: var(--space-xs);
+            }
+        }
          
          .alerts-list {
              max-height: 300px;
@@ -967,6 +1166,14 @@
         }
         
         .tab-content.active {
+            display: block !important;
+        }
+        
+        /* 🎯 Ensure modal tab-content works properly */
+        #overview-tab.tab-content.active,
+        #telemetry-tab.tab-content.active,
+        #alerts-tab.tab-content.active,
+        #logs-tab.tab-content.active {
             display: block !important;
         }
         
@@ -1569,6 +1776,12 @@
                                     <div class="bus-status-indicator" id="rs485-bus-status-indicator"></div>
                                     <span class="text-sm font-medium" id="rs485-bus-status-text">Online</span>
                                 </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-industrial-gray-600">WebSocket:</span>
+                                    <div id="rs485-ws-status" class="ws-disconnected" title="WebSocket status">
+                                        <div class="w-2 h-2 rounded-full bg-current"></div>
+                                    </div>
+                                </div>
                                 <button id="rs485-btn-scan" class="btn-bus-action">
                                     <i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i>
                                     Scan Now
@@ -1788,7 +2001,7 @@
              
              <div class="modal-tabs">
                  <button class="modal-tab active" onclick="switchTab('overview')">Overview</button>
-                 <button class="modal-tab" onclick="switchTab('telemetry')">Telemetry</button>
+                 <button class="modal-tab" onclick="showTelemetryTab()" id="telemetry-tab-btn">Telemetry</button>
                  <button class="modal-tab" onclick="switchTab('alerts')">Alerts</button>
                  <button class="modal-tab" onclick="switchTab('logs')">Logs</button>
              </div>
@@ -1856,23 +2069,157 @@
                  
                  <!-- Telemetry Tab -->
                  <div id="telemetry-tab" class="tab-content">
-                     <div class="telemetry-chart">
-                         <div class="text-center">
-                             <i data-lucide="activity" class="w-8 h-8 mx-auto mb-2 text-industrial-gray-400"></i>
-                             <p>Telemetry History</p>
-                             <p class="text-xs">Chart.js integration for real-time data</p>
+                    <!-- 🎯 Telemetry Table Container -->
+                    <div class="telemetry-table-container">
+                        <!-- Table Header with Controls -->
+                        <div class="telemetry-table-header">
+                            <div class="telemetry-table-title">
+                                <i data-lucide="database" class="w-5 h-5 text-primary-orange"></i>
+                                <span>Modbus Registers - Power Module (0x02)</span>
+                            </div>
+                            <div class="telemetry-table-controls">
+                                <input type="text" 
+                                       class="telemetry-search" 
+                                       placeholder="Search registers..." 
+                                       id="telemetry-search"
+                                       onkeyup="filterTelemetryTable()">
+                                <select class="telemetry-filter" 
+                                        id="telemetry-mode-filter" 
+                                        onchange="filterTelemetryByMode()">
+                                    <option value="all">All Modes</option>
+                                    <option value="r">Read Only (R)</option>
+                                    <option value="rw">Read/Write (RW)</option>
+                                </select>
                          </div>
                      </div>
                      
-                     <div class="module-actions">
-                         <button class="btn-module-action" onclick="exportTelemetry()">
-                             <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
-                             Export Data
+                        <!-- Telemetry Table -->
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <table class="telemetry-table" id="telemetry-registers-table">
+                                <thead>
+                                    <tr>
+                                        <th>Address</th>
+                                        <th>Parameter Name</th>
+                                        <th>Value</th>
+                                        <th>Unit</th>
+                                        <th>Mode</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="telemetry-table-body">
+                                    <!-- Power Module 0x02 Registers -->
+                                    <tr data-address="0x0000" data-mode="r">
+                                        <td class="address-cell">0x0000</td>
+                                        <td>Battery Voltage</td>
+                                        <td class="value-cell" data-register="battery_voltage">24.2</td>
+                                        <td>V</td>
+                                        <td class="mode-cell r">R</td>
+                                        <td class="status-cell">🟢 Normal</td>
+                                    </tr>
+                                    <tr data-address="0x0001" data-mode="r">
+                                        <td class="address-cell">0x0001</td>
+                                        <td>Battery Current</td>
+                                        <td class="value-cell" data-register="battery_current">2.1</td>
+                                        <td>A</td>
+                                        <td class="mode-cell r">R</td>
+                                        <td class="status-cell">🟢 Normal</td>
+                                    </tr>
+                                    <tr data-address="0x0002" data-mode="r">
+                                        <td class="address-cell">0x0002</td>
+                                        <td>Battery SOC</td>
+                                        <td class="value-cell" data-register="battery_soc">85.4</td>
+                                        <td>%</td>
+                                        <td class="mode-cell r">R</td>
+                                        <td class="status-cell">🟢 Normal</td>
+                                    </tr>
+                                    <tr data-address="0x0003" data-mode="r">
+                                        <td class="address-cell">0x0003</td>
+                                        <td>Max Cell Voltage</td>
+                                        <td class="value-cell" data-register="max_cell_voltage">3450</td>
+                                        <td>mV</td>
+                                        <td class="mode-cell r">R</td>
+                                        <td class="status-cell">🟢 Normal</td>
+                                    </tr>
+                                    <tr data-address="0x0008" data-mode="r">
+                                        <td class="address-cell">0x0008</td>
+                                        <td>Temperature</td>
+                                        <td class="value-cell" data-register="temperature">42</td>
+                                        <td>°C</td>
+                                        <td class="mode-cell r">R</td>
+                                        <td class="status-cell">🟢 Normal</td>
+                                    </tr>
+                                    <tr data-address="0x003C" data-mode="rw">
+                                        <td class="address-cell">0x003C</td>
+                                        <td>Output ON/OFF</td>
+                                        <td class="value-cell" data-register="output_enable">
+                                            <input type="number" 
+                                                   class="writable-input" 
+                                                   value="1" 
+                                                   min="0" 
+                                                   max="1"
+                                                   onchange="writeRegister('0x003C', this.value)">
+                                        </td>
+                                        <td>bool</td>
+                                        <td class="mode-cell rw">RW</td>
+                                        <td class="status-cell">🟢 Normal</td>
+                                    </tr>
+                                    <tr data-address="0x0040" data-mode="r">
+                                        <td class="address-cell">0x0040</td>
+                                        <td>12V Output Voltage</td>
+                                        <td class="value-cell" data-register="output_12v_voltage">12.1</td>
+                                        <td>V</td>
+                                        <td class="mode-cell r">R</td>
+                                        <td class="status-cell">🟢 Normal</td>
+                                    </tr>
+                                    <tr data-address="0x0049" data-mode="rw">
+                                        <td class="address-cell">0x0049</td>
+                                        <td>12V Relay</td>
+                                        <td class="value-cell" data-register="relay_12v">
+                                            <input type="number" 
+                                                   class="writable-input" 
+                                                   value="1" 
+                                                   min="0" 
+                                                   max="1"
+                                                   onchange="writeRegister('0x0049', this.value)">
+                                        </td>
+                                        <td>bool</td>
+                                        <td class="mode-cell rw">RW</td>
+                                        <td class="status-cell">🟢 Normal</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Table Footer with Export and Stats -->
+                        <div class="telemetry-table-footer">
+                            <div>
+                                <span id="telemetry-stats">8 registers total • 6 read-only • 2 writable</span>
+                                <span style="margin-left: var(--space-md); color: var(--status-success);">
+                                    <i data-lucide="wifi" class="w-4 h-4 inline"></i>
+                                    Connected • Last update: <span id="last-update-time">2s ago</span>
+                                </span>
+                            </div>
+                            <div style="display: flex; gap: var(--space-sm);">
+                                <button class="telemetry-export-btn" onclick="exportTelemetryCSV()">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    Export CSV
                          </button>
-                         <button class="btn-module-action" onclick="clearTelemetry()">
-                             <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
-                             Clear History
+                                <button class="telemetry-export-btn" onclick="exportTelemetryExcel()" 
+                                        style="background: var(--status-success);">
+                                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                                    Export Excel
                          </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Section (Optional - can be toggled) -->
+                    <div class="telemetry-chart" style="margin-top: var(--space-lg); display: none;" id="telemetry-chart-section">
+                        <div class="text-center">
+                            <i data-lucide="activity" class="w-8 h-8 mx-auto mb-2 text-industrial-gray-400"></i>
+                            <p>Telemetry History Chart</p>
+                            <p class="text-xs">Chart.js integration for trend analysis</p>
+                        </div>
                      </div>
                  </div>
                  
@@ -1920,6 +2267,9 @@
         lucide.createIcons && lucide.createIcons();
         
         // RS485 API Client
+        // 🎯 DEVELOPMENT MODE - Set to false to disable API calls
+        const USE_REAL_API = false;
+        
         class RS485APIClient {
             constructor() {
                 this.baseURL = 'http://localhost:8000/api/v1/rs485';
@@ -1999,6 +2349,161 @@
         
         // Global RS485 API client instance
         const rs485API = new RS485APIClient();
+        
+        // RS485 WebSocket Client
+        class RS485WebSocketClient {
+            constructor() {
+                this.ws = null;
+                this.isConnected = false;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 1000; // 1 second
+                this.url = 'ws://localhost:8000/ws/rs485';
+            }
+            
+            async connect() {
+                try {
+                    console.log('🔌 Connecting to RS485 WebSocket...');
+                    this.ws = new WebSocket(this.url);
+                    
+                    this.ws.onopen = (event) => {
+                        this.isConnected = true;
+                        this.reconnectAttempts = 0;
+                        console.log('✅ RS485 WebSocket connected');
+                        this.onConnectionStatusChange(true);
+                    };
+                    
+                    this.ws.onmessage = (event) => {
+                        try {
+                            const message = JSON.parse(event.data);
+                            this.handleMessage(message);
+                        } catch (error) {
+                            console.error('❌ Failed to parse WebSocket message:', error);
+                        }
+                    };
+                    
+                    this.ws.onclose = (event) => {
+                        this.isConnected = false;
+                        console.log('🔌 RS485 WebSocket disconnected');
+                        this.onConnectionStatusChange(false);
+                        this.attemptReconnect();
+                    };
+                    
+                    this.ws.onerror = (error) => {
+                        console.error('❌ RS485 WebSocket error:', error);
+                        this.onConnectionStatusChange(false);
+                    };
+                    
+                } catch (error) {
+                    console.error('❌ Failed to create RS485 WebSocket connection:', error);
+                    this.attemptReconnect();
+                }
+            }
+            
+            disconnect() {
+                if (this.ws) {
+                    this.ws.close();
+                    this.ws = null;
+                }
+                this.isConnected = false;
+            }
+            
+            attemptReconnect() {
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    console.log(`🔄 Attempting to reconnect RS485 WebSocket (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                    setTimeout(() => {
+                        this.connect();
+                    }, this.reconnectDelay * this.reconnectAttempts);
+                } else {
+                    console.error('❌ Max reconnection attempts reached for RS485 WebSocket');
+                }
+            }
+            
+            handleMessage(message) {
+                console.log('📡 RS485 WebSocket message:', message.type);
+                
+                switch (message.type) {
+                    case 'rs485_initial':
+                    case 'rs485_update':
+                        this.updateModulesData(message.data);
+                        break;
+                    case 'rs485_module_action':
+                        this.handleModuleAction(message.data);
+                        break;
+                    case 'rs485_discovery':
+                        this.updateDiscoveryStatus(message.data);
+                        break;
+                    case 'rs485_bus_health':
+                        this.updateBusHealth(message.data);
+                        break;
+                    default:
+                        console.log('❓ Unknown RS485 WebSocket message type:', message.type);
+                }
+            }
+            
+            updateModulesData(data) {
+                if (data.modules) {
+                    // Update global modules data
+                    rs485ModulesData = data.modules.map(module => ({
+                        addr: module.addr,
+                        name: module.name,
+                        status: module.status,
+                        last_seen: module.last_seen,
+                        error_rate: module.error_rate,
+                        response_time: module.response_time,
+                        fw_version: module.fw_version,
+                        mandatory: module.mandatory,
+                        real_time: module.real_time
+                    }));
+                    
+                    // Update UI if RS485 tab is active
+                    const activeTab = document.querySelector('.tab-content.active');
+                    if (activeTab && activeTab.id === 'tab-rs485') {
+                        updateRs485ModuleGrid();
+                        updateRs485DetailPanel();
+                    }
+                    
+                    console.log('✅ Updated RS485 modules data from WebSocket:', rs485ModulesData.length, 'modules');
+                }
+                
+                if (data.bus_health) {
+                    updateRs485BusKpis(data.bus_health);
+                }
+            }
+            
+            handleModuleAction(data) {
+                console.log(`⚡ Module action: ${data.action} on ${data.module_addr} - ${data.result.success ? 'Success' : 'Failed'}`);
+                // Could show notification or update UI
+            }
+            
+            updateDiscoveryStatus(data) {
+                console.log(`🔍 Discovery update: ${data.status_message} (${data.progress}%)`);
+                // Update discovery UI elements
+                const prog = document.getElementById('disc-progress');
+                const progressBar = document.getElementById('disc-progress-bar');
+                
+                if (prog) prog.textContent = data.status_message;
+                if (progressBar) progressBar.style.width = `${data.progress}%`;
+            }
+            
+            updateBusHealth(data) {
+                console.log('📊 Bus health update:', data.status);
+                updateRs485BusKpis(data);
+            }
+            
+            onConnectionStatusChange(connected) {
+                // Update UI to show WebSocket connection status
+                const indicator = document.getElementById('rs485-ws-status');
+                if (indicator) {
+                    indicator.className = connected ? 'ws-connected' : 'ws-disconnected';
+                    indicator.title = connected ? 'WebSocket connected - Real-time updates' : 'WebSocket disconnected - Using API polling';
+                }
+            }
+        }
+        
+        // Global RS485 WebSocket client instance
+        const rs485WS = new RS485WebSocketClient();
         
         class MonitoringController {
             constructor() {
@@ -2511,10 +3016,21 @@
          }
 
         function renderModuleGrid(modules) {
+            console.log('🎯 Rendering module grid with modules:', modules.length);
+            
             const grid = document.getElementById('rs485-module-grid');
-            if (!grid) return;
+            console.log('📋 Grid element found:', grid);
+            
+            if (!grid) {
+                console.error('❌ rs485-module-grid element not found!');
+                return;
+            }
+            
             grid.innerHTML = '';
-            modules.forEach(m => {
+            console.log('🧹 Grid cleared, adding modules...');
+            
+            modules.forEach((m, index) => {
+                console.log(`📦 Adding module ${index + 1}:`, m.name, m.addr);
                 const wrap = document.createElement('div');
                 wrap.className = 'module-card';
                 wrap.setAttribute('role','gridcell');
@@ -2548,17 +3064,44 @@
                         </div>
                     </div>
                 `;
-                wrap.addEventListener('click', () => openModuleDetail(m.addr));
-                wrap.addEventListener('keydown', (e) => { if (e.key === 'Enter') openModuleDetail(m.addr); });
+                
+                // Add click handlers with debug
+                console.log(`🖱️ Adding click handler for module ${m.name} (${m.addr})`);
+                wrap.addEventListener('click', (e) => {
+                    console.log('🔄 Module clicked:', m.name, m.addr);
+                    openModuleDetail(m.addr);
+                });
+                wrap.addEventListener('keydown', (e) => { 
+                    if (e.key === 'Enter') {
+                        console.log('⌨️ Module Enter key pressed:', m.name, m.addr);
+                        openModuleDetail(m.addr);
+                    }
+                });
+                
                 grid.appendChild(wrap);
             });
+            
+            console.log('✅ Module grid rendering completed');
         }
 
         function openModuleDetail(addr) {
-            const dlg = document.getElementById('module-detail-modal');
-            const module = mockModules().find(m => m.addr === addr);
+            console.log('🔄 Opening module detail for address:', addr);
             
-            if (!module) return;
+            const dlg = document.getElementById('module-detail-modal');
+            console.log('📋 Modal element found:', dlg);
+            
+            const module = mockModules().find(m => m.addr === addr);
+            console.log('📊 Module data found:', module);
+            
+            if (!module) {
+                console.error('❌ No module found for address:', addr);
+                return;
+            }
+            
+            if (!dlg) {
+                console.error('❌ Modal element not found!');
+                return;
+            }
             
             // Update modal title
             document.getElementById('module-modal-title').textContent = `Module [0x${addr.toString(16).padStart(2,'0').toUpperCase()}]`;
@@ -2577,8 +3120,30 @@
             populateModalAlerts(addr);
             populateModalLogs(addr);
             
+            // 🎯 Initialize tabs properly
+            // Reset all tabs to inactive
+            document.querySelectorAll('.modal-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activate overview tab by default
+            document.querySelector('.modal-tab[onclick*="overview"]').classList.add('active');
+            document.getElementById('overview-tab').classList.add('active');
+            
+            console.log('🎯 Modal tabs initialized');
+            
             // Show modal
             dlg.setAttribute('open', '');
+            
+            // Debug: Check telemetry tab after modal opens
+            setTimeout(() => {
+                const telemetryTab = document.getElementById('telemetry-tab');
+                console.log('📊 Telemetry tab after modal open:', telemetryTab);
+                console.log('📊 Telemetry tab classes:', telemetryTab?.className);
+            }, 100);
         }
         
         function closeModuleDetail() {
@@ -2587,9 +3152,12 @@
         }
         
         function switchTab(tabName) {
+            console.log('🔄 Switching to tab:', tabName);
+            
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
+                console.log('Hiding tab:', tab.id);
             });
             
             // Remove active class from all tabs
@@ -2598,10 +3166,25 @@
             });
             
             // Show selected tab content
-            document.getElementById(`${tabName}-tab`).classList.add('active');
+            const targetTab = document.getElementById(`${tabName}-tab`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+                console.log('✅ Showing tab:', targetTab.id);
+            } else {
+                console.error('❌ Tab not found:', `${tabName}-tab`);
+            }
             
             // Add active class to clicked tab
+            if (event && event.target) {
             event.target.classList.add('active');
+            } else {
+                // Fallback: find the tab button by text content
+                document.querySelectorAll('.modal-tab').forEach(tab => {
+                    if (tab.textContent.toLowerCase().includes(tabName.toLowerCase())) {
+                        tab.classList.add('active');
+                    }
+                });
+            }
         }
         
         function populateModalAlerts(addr) {
@@ -2927,6 +3510,11 @@
 
         // Real API functions (with mock fallback)
         async function getModules() {
+            if (!USE_REAL_API) {
+                console.log('🧪 Using mock data (API disabled)');
+                return mockModulesFallback();
+            }
+            
             try {
                 const response = await rs485API.getModules();
                 if (response.success && response.data) {
@@ -2950,6 +3538,11 @@
         }
         
         async function getBusHealth() {
+            if (!USE_REAL_API) {
+                console.log('🧪 Using mock bus data (API disabled)');
+                return mockBusFallback();
+            }
+            
             try {
                 const response = await rs485API.getBusHealth();
                 if (response.success && response.data) {
@@ -2966,19 +3559,23 @@
             }
         }
         
-        // Fallback mock data functions
+        // 💪 FORCE FIX: Mock data functions
+        function mockModules() {
+            console.log('💪 FORCE: Using hardcoded mock modules');
+            return [
+                { addr: 1, name: 'Power', mandatory: true, health: 'healthy', error_rate: 0.0191, response_time_p95: 79, last_seen: '2:34:34 PM', fw_version: 'v1.2.1' },
+                { addr: 2, name: 'Safety', mandatory: true, health: 'healthy', error_rate: 0.0127, response_time_p95: 142, last_seen: '2:34:34 PM', fw_version: 'v1.2.2' },
+                { addr: 3, name: 'Travel', mandatory: true, health: 'healthy', error_rate: 0.0070, response_time_p95: 76, last_seen: '2:34:34 PM', fw_version: 'v1.2.3' },
+                { addr: 4, name: 'Dock & Location', mandatory: true, health: 'healthy', error_rate: 0.0019, response_time_p95: 168, last_seen: '2:34:34 PM', fw_version: 'v1.2.4' },
+                { addr: 5, name: 'Master', mandatory: true, health: 'healthy', error_rate: 0.0114, response_time_p95: 68, last_seen: '2:34:34 PM', fw_version: 'v1.2.5' },
+                { addr: 6, name: 'Lifter', mandatory: false, health: 'healthy', error_rate: 0.0021, response_time_p95: 163, last_seen: '2:34:34 PM', fw_version: 'v1.2.6' },
+                { addr: 7, name: 'Cargo', mandatory: false, health: 'healthy', error_rate: 0.0178, response_time_p95: 118, last_seen: '2:34:34 PM', fw_version: 'v1.2.7' }
+            ];
+        }
+        
         function mockModulesFallback() {
-            const used = [...mandatoryAddresses, ...usedOptional];
-            return used.map((addr, i) => ({
-                addr,
-                name: ['Power','Safety','Travel','Dock & Location','Master','Lifter','Cargo'][i] || 'Module',
-                mandatory: mandatoryAddresses.includes(addr),
-                health: 'healthy',
-                error_rate: Math.random()*0.02,
-                response_time_p95: Math.floor(60 + Math.random()*120),
-                last_seen: new Date().toLocaleTimeString(),
-                fw_version: 'v1.2.' + (i+1)
-            }));
+            console.log('💪 FORCE: Using fallback mock modules');
+            return mockModules(); // Use same data
         }
         
         function mockBusFallback() {
@@ -3301,10 +3898,16 @@
              // Update RS485 bus status
              updateRs485BusStatus();
              
-             // Start live updates for RS485 modules
+            // Connect to RS485 WebSocket for real-time updates
+            if (!rs485WS.isConnected) {
+                rs485WS.connect();
+                console.log('🔌 Connecting to RS485 WebSocket for real-time updates...');
+            }
+            
+            // Start live updates for RS485 modules (fallback for when WebSocket is not available)
              startRs485LiveUpdates();
              
-             console.log('RS485 tab initialized with live updates');
+            console.log('RS485 tab initialized with WebSocket + API live updates');
          }
          
         async function renderRs485ModuleGrid() {
@@ -3855,6 +4458,10 @@
              // Initialize alert filters
              initializeAlertFilters();
              updateAlertCount();
+            
+            // Initialize RS485 WebSocket (for real-time updates)
+            console.log('🔌 Initializing RS485 WebSocket...');
+            rs485WS.connect();
              
              // Debug: Test tab functionality
              console.log('Tab system initialized. Testing tab switching...');
@@ -3869,6 +4476,454 @@
                  });
              });
          });
+
+        // 🎯 Telemetry Table Functions
+        
+        /**
+         * Filter telemetry table by search text
+         */
+        function filterTelemetryTable() {
+            const searchText = document.getElementById('telemetry-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#telemetry-table-body tr');
+            
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const address = row.querySelector('.address-cell').textContent.toLowerCase();
+                const name = row.cells[1].textContent.toLowerCase();
+                const shouldShow = address.includes(searchText) || name.includes(searchText);
+                
+                row.style.display = shouldShow ? '' : 'none';
+                if (shouldShow) visibleCount++;
+            });
+            
+            updateTelemetryStats(visibleCount);
+        }
+
+        /**
+         * Filter telemetry table by mode (R, RW)
+         */
+        function filterTelemetryByMode() {
+            const selectedMode = document.getElementById('telemetry-mode-filter').value;
+            const rows = document.querySelectorAll('#telemetry-table-body tr');
+            
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const mode = row.dataset.mode;
+                const shouldShow = selectedMode === 'all' || mode === selectedMode;
+                
+                row.style.display = shouldShow ? '' : 'none';
+                if (shouldShow) visibleCount++;
+            });
+            
+            updateTelemetryStats(visibleCount);
+        }
+
+        /**
+         * Update telemetry statistics display
+         */
+        function updateTelemetryStats(visibleCount = null) {
+            const allRows = document.querySelectorAll('#telemetry-table-body tr');
+            const readOnlyRows = document.querySelectorAll('#telemetry-table-body tr[data-mode="r"]');
+            const writableRows = document.querySelectorAll('#telemetry-table-body tr[data-mode="rw"]');
+            
+            const total = visibleCount !== null ? visibleCount : allRows.length;
+            const readOnly = readOnlyRows.length;
+            const writable = writableRows.length;
+            
+            document.getElementById('telemetry-stats').textContent = 
+                `${total} registers ${visibleCount !== null ? 'shown' : 'total'} • ${readOnly} read-only • ${writable} writable`;
+        }
+
+        /**
+         * Write value to register (RW mode)
+         */
+        function writeRegister(address, value) {
+            console.log(`Writing register ${address} = ${value}`);
+            
+            // Simulate API call to backend
+            const writeData = {
+                address: address,
+                value: parseInt(value),
+                timestamp: new Date().toISOString()
+            };
+            
+            // Show loading state
+            const input = event.target;
+            input.disabled = true;
+            input.style.opacity = '0.6';
+            
+            // Simulate API call
+            setTimeout(() => {
+                input.disabled = false;
+                input.style.opacity = '1';
+                
+                // Flash success
+                const cell = input.closest('.value-cell');
+                cell.classList.add('updated');
+                setTimeout(() => cell.classList.remove('updated'), 800);
+                
+                console.log('Register write successful:', writeData);
+                
+                // Update via WebSocket if available
+                if (rs485WS && rs485WS.isConnected) {
+                    rs485WS.sendMessage({
+                        type: 'write_register',
+                        data: writeData
+                    });
+                }
+            }, 500);
+        }
+
+        /**
+         * Update telemetry table with real-time data
+         */
+        function updateTelemetryTable(telemetryData) {
+            if (!telemetryData || !telemetryData.registers) return;
+            
+            Object.keys(telemetryData.registers).forEach(registerName => {
+                const value = telemetryData.registers[registerName];
+                const cell = document.querySelector(`[data-register="${registerName}"]`);
+                
+                if (cell && !cell.querySelector('input')) {
+                    const oldValue = cell.textContent;
+                    const newValue = value.toString();
+                    
+                    if (oldValue !== newValue) {
+                        cell.textContent = newValue;
+                        cell.classList.add('updated');
+                        setTimeout(() => cell.classList.remove('updated'), 800);
+                    }
+                }
+            });
+            
+            // Update last update time
+            document.getElementById('last-update-time').textContent = '0s ago';
+        }
+
+        /**
+         * Export telemetry data to CSV
+         */
+        function exportTelemetryCSV() {
+            const table = document.getElementById('telemetry-registers-table');
+            const rows = table.querySelectorAll('tr');
+            
+            let csvContent = '';
+            
+            // Header
+            const headers = Array.from(rows[0].cells).map(cell => cell.textContent.trim());
+            csvContent += headers.join(',') + '\\n';
+            
+            // Data rows
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].style.display !== 'none') {
+                    const cells = Array.from(rows[i].cells);
+                    const rowData = cells.map(cell => {
+                        const input = cell.querySelector('input');
+                        return input ? input.value : cell.textContent.trim();
+                    });
+                    csvContent += rowData.join(',') + '\\n';
+                }
+            }
+            
+            // Download
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `telemetry_registers_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            console.log('Telemetry CSV exported');
+        }
+
+        /**
+         * Export telemetry data to Excel format
+         */
+        function exportTelemetryExcel() {
+            // This would require a library like SheetJS for full Excel support
+            // For now, export as CSV with .xlsx extension
+            exportTelemetryCSV();
+            console.log('Telemetry Excel export (as CSV)');
+        }
+
+        // 🔌 Extend RS485WebSocketClient for telemetry
+        if (typeof RS485WebSocketClient !== 'undefined') {
+            const originalHandleMessage = RS485WebSocketClient.prototype.handleMessage;
+            
+            RS485WebSocketClient.prototype.handleMessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                // Handle telemetry updates
+                if (data.type === 'telemetry_update' || data.type === 'register_data') {
+                    updateTelemetryTable(data);
+                    return;
+                }
+                
+                // Call original handler for other message types
+                if (originalHandleMessage) {
+                    originalHandleMessage.call(this, event);
+                }
+            };
+        }
+
+        // 🕒 Auto-update last update time
+        setInterval(() => {
+            const lastUpdateElement = document.getElementById('last-update-time');
+            if (lastUpdateElement) {
+                const currentText = lastUpdateElement.textContent;
+                if (currentText.includes('s ago')) {
+                    const seconds = parseInt(currentText) + 1;
+                    lastUpdateElement.textContent = `${seconds}s ago`;
+                }
+            }
+        }, 1000);
+
+        // 🔧 Debug function to test telemetry tab
+        function debugTelemetryTab() {
+            console.log('🔍 Debug Telemetry Tab:');
+            
+            const telemetryTab = document.getElementById('telemetry-tab');
+            const telemetryButton = document.querySelector('.modal-tab[onclick*="telemetry"]');
+            
+            console.log('Telemetry tab element:', telemetryTab);
+            console.log('Telemetry button:', telemetryButton);
+            console.log('Tab classes:', telemetryTab?.className);
+            console.log('Tab display style:', telemetryTab?.style.display);
+            console.log('Tab computed style:', window.getComputedStyle(telemetryTab)?.display);
+            
+            // Force show telemetry tab for testing
+            if (telemetryTab) {
+                telemetryTab.classList.add('active');
+                telemetryTab.style.display = 'block';
+                console.log('✅ Forced telemetry tab to show');
+            }
+        }
+
+        // 💪 FORCE FIX: Guaranteed modal show function
+        function forceShowModal(addr = 1) {
+            console.log('💪 FORCE: Force showing modal for address:', addr);
+            
+            const modal = document.getElementById('module-detail-modal');
+            if (!modal) {
+                console.error('❌ FORCE: Modal element not found!');
+                return;
+            }
+            
+            // Force show modal immediately
+            modal.style.display = 'flex';
+            modal.setAttribute('open', '');
+            modal.style.zIndex = '9999';
+            modal.style.visibility = 'visible';
+            modal.style.opacity = '1';
+            
+            console.log('💪 FORCE: Modal force-shown!');
+            
+            // Force populate data
+            const module = mockModules().find(m => m.addr === addr);
+            if (module) {
+                document.getElementById('module-modal-title').textContent = `Module [0x${addr.toString(16).padStart(2,'0').toUpperCase()}]`;
+                document.getElementById('modal-module-name').textContent = module.name;
+                document.getElementById('modal-module-addr').textContent = `0x${addr.toString(16).padStart(2,'0').toUpperCase()}`;
+                document.getElementById('modal-module-type').textContent = module.mandatory ? 'Mandatory' : 'Optional';
+                document.getElementById('modal-module-fw').textContent = module.fw_version;
+                document.getElementById('modal-module-status').textContent = module.health.toUpperCase();
+                document.getElementById('modal-module-last-seen').textContent = module.last_seen;
+                document.getElementById('modal-module-error-rate').textContent = `${(module.error_rate*100).toFixed(2)}%`;
+                document.getElementById('modal-module-response-p95').textContent = `${module.response_time_p95} ms`;
+                console.log('💪 FORCE: Modal data populated!');
+            }
+            
+            // Force show telemetry tab
+            setTimeout(() => {
+                showTelemetryTab();
+                console.log('💪 FORCE: Telemetry tab shown!');
+            }, 500);
+        }
+
+        // 🎯 SIMPLE TELEMETRY TAB FUNCTION - NO COMPLICATIONS
+        function showTelemetryTab() {
+            console.log('🎯 SIMPLE: Showing telemetry tab');
+            
+            // Step 1: Hide ALL tabs
+            const allTabs = document.querySelectorAll('.tab-content');
+            allTabs.forEach(tab => {
+                tab.classList.remove('active');
+                tab.style.display = 'none';
+            });
+            
+            // Step 2: Remove active from ALL buttons
+            const allButtons = document.querySelectorAll('.modal-tab');
+            allButtons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Step 3: Show ONLY telemetry tab
+            const telemetryTab = document.getElementById('telemetry-tab');
+            const telemetryBtn = document.getElementById('telemetry-tab-btn');
+            
+            if (telemetryTab && telemetryBtn) {
+                telemetryTab.style.display = 'block';
+                telemetryTab.classList.add('active');
+                telemetryBtn.classList.add('active');
+                console.log('✅ SIMPLE: Telemetry tab shown!');
+            } else {
+                console.error('❌ SIMPLE: Elements not found');
+            }
+        }
+
+        // 🚀 Emergency fix: Force telemetry tab to work
+        function forceTelemetryTab() {
+            console.log('🚑 Emergency telemetry tab fix...');
+            
+            const telemetryTab = document.getElementById('telemetry-tab');
+            const telemetryButton = document.getElementById('telemetry-tab-btn');
+            
+            if (telemetryTab && telemetryButton) {
+                // Remove existing onclick and add new one
+                telemetryButton.removeAttribute('onclick');
+                telemetryButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('🔄 Telemetry button clicked - emergency handler!');
+                    
+                    // Hide all tabs
+                    document.querySelectorAll('.tab-content').forEach(tab => {
+                        tab.classList.remove('active');
+                        tab.style.display = 'none';
+                    });
+                    
+                    // Remove active from all buttons
+                    document.querySelectorAll('.modal-tab').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Show telemetry tab
+                    telemetryTab.classList.add('active');
+                    telemetryTab.style.display = 'block';
+                    telemetryButton.classList.add('active');
+                    
+                    console.log('✅ Telemetry tab forced to show!');
+                });
+                
+                console.log('✅ Emergency handler attached');
+            }
+        }
+
+        // 🧪 TEST FUNCTION - Call this in console
+        function testTelemetryTab() {
+            console.log('🧪 TESTING telemetry tab...');
+            
+            // First open a modal
+            console.log('1. Opening modal...');
+            openModuleDetail(0x01);
+            
+            // Wait then try to show telemetry
+            setTimeout(() => {
+                console.log('2. Showing telemetry tab...');
+                showTelemetryTab();
+                
+                // Check result
+                setTimeout(() => {
+                    const telemetryTab = document.getElementById('telemetry-tab');
+                    const isVisible = telemetryTab && window.getComputedStyle(telemetryTab).display !== 'none';
+                    console.log('3. Test result:', isVisible ? '✅ SUCCESS' : '❌ FAILED');
+                }, 500);
+            }, 500);
+        }
+
+        // 🧪 TEST FUNCTION - Force render modules and test modal
+        function testModulesAndModal() {
+            console.log('🧪 TESTING modules and modal...');
+            
+            // Step 1: Check if grid exists
+            const grid = document.getElementById('rs485-module-grid');
+            console.log('1. Grid element:', grid);
+            
+            // Step 2: Force render modules
+            console.log('2. Force rendering modules...');
+            const testModules = mockModules();
+            console.log('   Mock modules:', testModules);
+            renderModuleGrid(testModules);
+            
+            // Step 3: Test modal opening
+            setTimeout(() => {
+                console.log('3. Testing modal opening...');
+                openModuleDetail(0x01);
+                
+                // Check if modal opened
+                setTimeout(() => {
+                    const modal = document.getElementById('module-detail-modal');
+                    const isOpen = modal && modal.hasAttribute('open');
+                    console.log('4. Modal test result:', isOpen ? '✅ SUCCESS' : '❌ FAILED');
+                }, 500);
+            }, 1000);
+        }
+
+        // 🎯 API Toggle Function
+        function toggleAPI() {
+            window.USE_REAL_API = !USE_REAL_API;
+            console.log('🔄 API Mode changed to:', USE_REAL_API ? 'REAL API' : 'MOCK DATA');
+            
+            // Re-render modules with new mode
+            setTimeout(() => {
+                console.log('🔄 Re-rendering modules...');
+                tick(); // Trigger a refresh
+            }, 500);
+        }
+
+        // 🔧 Initialize telemetry tab on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Page loaded - FORCE FIX MODE ACTIVE!');
+            console.log('💡 API Mode:', USE_REAL_API ? 'REAL API (will show CORS errors)' : 'MOCK DATA (no errors)');
+            console.log('💪 FORCE COMMANDS:');
+            console.log('   forceShowModal() - Force show modal immediately');
+            console.log('   forceRenderModules() - Force render modules');
+            console.log('   testModulesAndModal() - Full test');
+            console.log('💡 NORMAL COMMANDS:');
+            console.log('   toggleAPI() - Toggle API mode');
+            console.log('   testTelemetryTab() - Test telemetry');
+            
+            // Make test functions global for console access
+            window.testTelemetryTab = testTelemetryTab;
+            window.testModulesAndModal = testModulesAndModal;
+            window.showTelemetryTab = showTelemetryTab;
+            window.openModuleDetail = openModuleDetail;
+            window.renderModuleGrid = renderModuleGrid;
+            window.toggleAPI = toggleAPI;
+            window.USE_REAL_API = USE_REAL_API; // Make it global
+            
+            // 💪 FORCE FIX: Global force functions
+            window.forceShowModal = forceShowModal;
+            window.mockModules = mockModules;
+            window.forceRenderModules = () => {
+                console.log('💪 FORCE: Manual module render');
+                const modules = mockModules();
+                renderModuleGrid(modules);
+            };
+            
+            // 💪 FORCE FIX: Immediate module rendering
+            console.log('💪 FORCE: Immediate module rendering...');
+            try {
+                const modules = mockModules();
+                console.log('💪 FORCE: Modules data:', modules);
+                renderModuleGrid(modules);
+                console.log('💪 FORCE: Modules rendered successfully!');
+            } catch (error) {
+                console.error('❌ FORCE: Auto-render failed:', error);
+            }
+            
+            // Backup: Try again after 1 second
+            setTimeout(() => {
+                console.log('💪 FORCE: Backup render attempt...');
+                try {
+                    const modules = mockModules();
+                    renderModuleGrid(modules);
+                } catch (error) {
+                    console.error('❌ FORCE: Backup render failed:', error);
+                }
+            }, 1000);
+        });
+
     </script>
 </body>
 </html>
