@@ -244,6 +244,10 @@ hal_status_t ws_server_start_telemetry_streaming(uint32_t interval_ms);
 hal_status_t ws_server_stop_telemetry_streaming(void);
 hal_status_t ws_server_set_telemetry_callback(ws_telemetry_callback_t callback);
 
+// RS485 Telemetry Functions (Issue #90)
+hal_status_t ws_server_broadcast_rs485_telemetry(uint8_t module_addr);
+hal_status_t ws_server_start_rs485_telemetry_streaming(uint32_t interval_ms);
+
 // WebSocket Server Thread Functions
 void* ws_server_thread(void *arg);
 void* ws_server_client_thread(void *arg);

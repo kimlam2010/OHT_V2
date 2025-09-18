@@ -330,6 +330,15 @@ hal_status_t telemetry_manager_update_status(const telemetry_status_t *status);
 int telemetry_manager_serialize_json(const telemetry_data_t *data, char *json_buffer, size_t buffer_size);
 
 /**
+ * @brief Serialize RS485 module telemetry to JSON (Issue #90 format)
+ * @param module_addr Module address (0x02, 0x03, 0x04, 0x05)
+ * @param json_buffer Output JSON buffer
+ * @param buffer_size Buffer size
+ * @return Number of bytes written, -1 on error
+ */
+int telemetry_manager_serialize_rs485_telemetry(uint8_t module_addr, char *json_buffer, size_t buffer_size);
+
+/**
  * @brief Get telemetry statistics
  * @param stats Statistics structure
  * @return HAL status

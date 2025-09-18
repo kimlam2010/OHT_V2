@@ -419,6 +419,94 @@ hal_status_t telemetry_manager_reset_statistics(void) {
     return HAL_STATUS_OK;
 }
 
+/**
+ * @brief Serialize RS485 module telemetry to JSON (Issue #90 format)
+ * @param module_addr Module address (0x02, 0x03, 0x04, 0x05)
+ * @param json_buffer Output JSON buffer
+ * @param buffer_size Buffer size
+ * @return Number of bytes written, -1 on error
+ */
+int telemetry_manager_serialize_rs485_telemetry(uint8_t module_addr, char *json_buffer, size_t buffer_size) {
+    if (json_buffer == NULL || buffer_size == 0) {
+        return -1;
+    }
+    
+    // Get current timestamp
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    char timestamp[32];
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S", gmtime(&ts.tv_sec));
+    snprintf(timestamp + strlen(timestamp), sizeof(timestamp) - strlen(timestamp), 
+             ".%06ldZ", ts.tv_nsec / 1000);
+    
+    // Get module name based on address
+    const char *module_name;
+    switch (module_addr) {
+        case 0x02: module_name = "Power"; break;
+        case 0x03: module_name = "Safety"; break;
+        case 0x04: module_name = "Travel Motor"; break;
+        case 0x05: module_name = "Dock & Location"; break;
+        default: module_name = "Unknown"; break;
+    }
+    
+    int written = 0;
+    int result;
+    
+    // Start JSON object with issue #90 format
+    result = snprintf(json_buffer + written, buffer_size - written,
+        "{\n"
+        "  \"type\": \"telemetry\",\n"
+        "  \"data\": {\n"
+        "    \"module_addr\": \"0x%02X\",\n"
+        "    \"module_name\": \"%s\",\n"
+        "    \"registers\": [",
+        module_addr, module_name);
+    
+    if (result < 0 || result >= (int)(buffer_size - written)) {
+        return -1;
+    }
+    written += result;
+    
+    // Add module-specific registers based on address
+    if (module_addr == 0x02) {
+        // Power module registers (DalyBMS + SK60X + INA219)
+        result = serialize_power_module_registers(json_buffer + written, buffer_size - written);
+    } else if (module_addr == 0x03) {
+        // Safety module registers
+        result = serialize_safety_module_registers(json_buffer + written, buffer_size - written);
+    } else if (module_addr == 0x04) {
+        // Travel Motor module registers
+        result = serialize_motor_module_registers(json_buffer + written, buffer_size - written);
+    } else if (module_addr == 0x05) {
+        // Dock & Location module registers
+        result = serialize_dock_module_registers(json_buffer + written, buffer_size - written);
+    } else {
+        // Unknown module - basic registers
+        result = snprintf(json_buffer + written, buffer_size - written,
+            "\n      {\"addr\": \"0x0100\", \"name\": \"Device_ID\", \"value\": 0, \"unit\": \"hex\", \"mode\": \"R\"}");
+    }
+    
+    if (result < 0 || result >= (int)(buffer_size - written)) {
+        return -1;
+    }
+    written += result;
+    
+    // Close JSON object
+    result = snprintf(json_buffer + written, buffer_size - written,
+        "\n    ],\n"
+        "    \"timestamp\": \"%s\"\n"
+        "  }\n"
+        "}",
+        timestamp);
+    
+    if (result < 0 || result >= (int)(buffer_size - written)) {
+        return -1;
+    }
+    written += result;
+    
+    return written;
+}
+
 // Helper functions
 
 static void initialize_telemetry_data(telemetry_data_t *data) {
@@ -722,6 +810,12 @@ static int serialize_safety_json(const telemetry_safety_t *safety, char *buffer,
         safety->emergency_stop ? "true" : "false");
 }
 
+// Forward declarations for RS485 module register serializers
+static int serialize_power_module_registers(char *buffer, size_t buffer_size);
+static int serialize_safety_module_registers(char *buffer, size_t buffer_size);
+static int serialize_motor_module_registers(char *buffer, size_t buffer_size);
+static int serialize_dock_module_registers(char *buffer, size_t buffer_size);
+
 static int serialize_status_json(const telemetry_status_t *status, char *buffer, size_t buffer_size) {
     const char *state_str = "idle";
     switch (status->state) {
@@ -754,4 +848,202 @@ static int serialize_status_json(const telemetry_status_t *status, char *buffer,
         status->acc_mms2,
         status->target.pos_mm,
         status->target.vel_mms);
+}
+
+// RS485 Module Register Serializers for Issue #90
+
+/**
+ * @brief Serialize Power Module (0x02) registers - DalyBMS + SK60X + INA219
+ */
+static int serialize_power_module_registers(char *buffer, size_t buffer_size) {
+    // Read actual data from Power Module via communication manager
+    uint16_t battery_data[11] = {0};  // Battery registers 0x0000-0x000A
+    uint16_t charging_data[8] = {0};  // SK60X registers 0x0030-0x0037
+    uint16_t power_data[12] = {0};    // INA219 registers 0x0040-0x004B
+    
+    // Read battery data (best effort)
+    comm_manager_modbus_read_holding_registers(0x02, 0x0000, 11, battery_data);
+    comm_manager_modbus_read_holding_registers(0x02, 0x0032, 4, &charging_data[2]); // SK60X subset
+    comm_manager_modbus_read_holding_registers(0x02, 0x0040, 12, power_data);
+    
+    return snprintf(buffer, buffer_size,
+        "\n      // DalyBMS Status Registers\n"
+        "      {\"addr\": \"0x0000\", \"name\": \"Battery_Voltage\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0001\", \"name\": \"Battery_Current\", \"value\": %.1f, \"unit\": \"A\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0002\", \"name\": \"Battery_SOC\", \"value\": %.1f, \"unit\": \"%%\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0003\", \"name\": \"Max_Cell_Voltage\", \"value\": %d, \"unit\": \"mV\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0004\", \"name\": \"Min_Cell_Voltage\", \"value\": %d, \"unit\": \"mV\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0008\", \"name\": \"Temperature\", \"value\": %d, \"unit\": \"°C\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0009\", \"name\": \"Connection_Status\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x000B\", \"name\": \"Charge_MOS\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x000C\", \"name\": \"Discharge_MOS\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0011\", \"name\": \"Charge_Status\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"R\"},\n"
+        "      \n"
+        "      // SK60X Power Supply Registers\n"
+        "      {\"addr\": \"0x0032\", \"name\": \"Output_Voltage\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0033\", \"name\": \"Output_Current\", \"value\": %.1f, \"unit\": \"A\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0034\", \"name\": \"Output_Power\", \"value\": %.1f, \"unit\": \"W\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x003C\", \"name\": \"Output_ON_OFF\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"RW\"},\n"
+        "      \n"
+        "      // INA219 Multi-rail Monitoring\n"
+        "      {\"addr\": \"0x0040\", \"name\": \"12V_Output_Voltage\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0041\", \"name\": \"12V_Output_Current\", \"value\": %.1f, \"unit\": \"A\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0043\", \"name\": \"5V_Output_Voltage\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0044\", \"name\": \"5V_Output_Current\", \"value\": %.1f, \"unit\": \"A\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0046\", \"name\": \"3V3_Output_Voltage\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x0047\", \"name\": \"3V3_Output_Current\", \"value\": %.1f, \"unit\": \"A\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      \n"
+        "      // Relay Controls\n"
+        "      {\"addr\": \"0x0049\", \"name\": \"12V_Relay\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x004A\", \"name\": \"5V_Relay\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x004B\", \"name\": \"3V3_Relay\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"RW\"}",
+        
+        // DalyBMS values
+        battery_data[0] * 0.1f,  // Battery_Voltage
+        (int16_t)battery_data[1] * 0.1f,  // Battery_Current (signed)
+        battery_data[2] * 0.1f,  // Battery_SOC
+        battery_data[3],         // Max_Cell_Voltage
+        battery_data[4],         // Min_Cell_Voltage
+        (int16_t)battery_data[8], // Temperature (signed)
+        battery_data[9],         // Connection_Status
+        battery_data[10] & 0x01, // Charge_MOS (bit 0)
+        (battery_data[10] >> 1) & 0x01, // Discharge_MOS (bit 1)
+        battery_data[10] >> 2,   // Charge_Status
+        
+        // SK60X values
+        charging_data[2] * 0.1f, // Output_Voltage
+        charging_data[3] * 0.1f, // Output_Current
+        charging_data[4] * 0.1f, // Output_Power
+        charging_data[7] & 0x01, // Output_ON_OFF
+        
+        // INA219 values
+        power_data[0] * 0.1f,    // 12V_Output_Voltage
+        power_data[1] * 0.1f,    // 12V_Output_Current
+        power_data[3] * 0.1f,    // 5V_Output_Voltage
+        power_data[4] * 0.1f,    // 5V_Output_Current
+        power_data[6] * 0.1f,    // 3V3_Output_Voltage
+        power_data[7] * 0.1f,    // 3V3_Output_Current
+        
+        // Relay states
+        power_data[9],           // 12V_Relay
+        power_data[10],          // 5V_Relay
+        power_data[11]           // 3V3_Relay
+    );
+}
+
+/**
+ * @brief Serialize Safety Module (0x03) registers - Proximity Sensors + Relays
+ */
+static int serialize_safety_module_registers(char *buffer, size_t buffer_size) {
+    // Read actual data from Safety Module
+    uint16_t safety_data[8] = {0};   // Safety status registers 0x0000-0x0007
+    uint16_t analog_data[4] = {0};   // Analog inputs 0x0010-0x0013
+    uint16_t digital_data[1] = {0};  // Digital inputs 0x0020
+    uint16_t relay_data[1] = {0};    // Relay control 0x0030
+    
+    // Read safety data (best effort)
+    comm_manager_modbus_read_holding_registers(0x03, 0x0000, 8, safety_data);
+    comm_manager_modbus_read_holding_registers(0x03, 0x0010, 4, analog_data);
+    comm_manager_modbus_read_holding_registers(0x03, 0x0020, 1, digital_data);
+    comm_manager_modbus_read_holding_registers(0x03, 0x0030, 1, relay_data);
+    
+    return snprintf(buffer, buffer_size,
+        "\n      {\"addr\": \"0x0000\", \"name\": \"Safety_Status\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0001\", \"name\": \"Emergency_Stop\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0002\", \"name\": \"Safety_Zone\", \"value\": %d, \"unit\": \"enum\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0003\", \"name\": \"Proximity_Alert\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0010\", \"name\": \"Analog_Input_1\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0011\", \"name\": \"Analog_Input_2\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0012\", \"name\": \"Analog_Input_3\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0013\", \"name\": \"Analog_Input_4\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0020\", \"name\": \"Digital_Inputs\", \"value\": %d, \"unit\": \"bitmask\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0030\", \"name\": \"Relay_Control\", \"value\": %d, \"unit\": \"bitmask\", \"mode\": \"RW\"}",
+        
+        safety_data[0],          // Safety_Status
+        safety_data[1],          // Emergency_Stop
+        safety_data[2],          // Safety_Zone
+        safety_data[3],          // Proximity_Alert
+        analog_data[0] * 0.1f,   // Analog_Input_1 (scaled to V)
+        analog_data[1] * 0.1f,   // Analog_Input_2
+        analog_data[2] * 0.1f,   // Analog_Input_3
+        analog_data[3] * 0.1f,   // Analog_Input_4
+        digital_data[0],         // Digital_Inputs
+        relay_data[0]            // Relay_Control
+    );
+}
+
+/**
+ * @brief Serialize Travel Motor Module (0x04) registers
+ */
+static int serialize_motor_module_registers(char *buffer, size_t buffer_size) {
+    // Read actual data from Travel Motor Module
+    uint16_t control_data[16] = {0}; // Control registers 0x0000-0x000F
+    uint16_t status_data[16] = {0};  // Status registers 0x0010-0x001F
+    
+    // Read motor data (best effort)
+    comm_manager_modbus_read_holding_registers(0x04, 0x0000, 16, control_data);
+    comm_manager_modbus_read_holding_registers(0x04, 0x0010, 16, status_data);
+    
+    return snprintf(buffer, buffer_size,
+        "\n      {\"addr\": \"0x0000\", \"name\": \"Motor_Enable\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x0001\", \"name\": \"Operation_Mode\", \"value\": %d, \"unit\": \"enum\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x0002\", \"name\": \"Speed_Target\", \"value\": %d, \"unit\": \"rpm\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x0003\", \"name\": \"Speed_Actual\", \"value\": %d, \"unit\": \"rpm\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0004\", \"name\": \"Position_Target\", \"value\": %d, \"unit\": \"mm\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x0005\", \"name\": \"Position_Actual\", \"value\": %d, \"unit\": \"mm\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x0006\", \"name\": \"Direction\", \"value\": %d, \"unit\": \"enum\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x000B\", \"name\": \"Temperature\", \"value\": %d, \"unit\": \"°C\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x000C\", \"name\": \"Voltage\", \"value\": %.1f, \"unit\": \"V\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x000D\", \"name\": \"Current\", \"value\": %.1f, \"unit\": \"A\", \"mode\": \"R\", \"scaling\": 0.1},\n"
+        "      {\"addr\": \"0x000E\", \"name\": \"Fault_Status\", \"value\": %d, \"unit\": \"bitmask\", \"mode\": \"R\"}",
+        
+        control_data[0],         // Motor_Enable
+        control_data[1],         // Operation_Mode
+        control_data[2],         // Speed_Target
+        control_data[3],         // Speed_Actual
+        control_data[4],         // Position_Target
+        control_data[5],         // Position_Actual
+        control_data[6],         // Direction
+        (int16_t)control_data[11], // Temperature (signed)
+        control_data[12] * 0.1f, // Voltage
+        control_data[13] * 0.1f, // Current
+        control_data[14]         // Fault_Status
+    );
+}
+
+/**
+ * @brief Serialize Dock & Location Module (0x05) registers
+ */
+static int serialize_dock_module_registers(char *buffer, size_t buffer_size) {
+    // Read actual data from Dock Module
+    uint16_t position_data[8] = {0}; // Position registers 0x7000-0x7007
+    uint16_t control_data[2] = {0};  // Control registers 0x8000-0x8001
+    uint16_t fault_data[1] = {0};    // Fault register 0x9000
+    
+    // Read dock data (best effort)
+    comm_manager_modbus_read_holding_registers(0x05, 0x7000, 8, position_data);
+    comm_manager_modbus_read_holding_registers(0x05, 0x8000, 2, control_data);
+    comm_manager_modbus_read_holding_registers(0x05, 0x9000, 1, fault_data);
+    
+    return snprintf(buffer, buffer_size,
+        "\n      {\"addr\": \"0x7000\", \"name\": \"Position_Target\", \"value\": %d, \"unit\": \"mm\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x7001\", \"name\": \"Current_Position\", \"value\": %d, \"unit\": \"mm\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x7002\", \"name\": \"Approach_Speed\", \"value\": %d, \"unit\": \"mm/s\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x7005\", \"name\": \"Dock_Status\", \"value\": %d, \"unit\": \"enum\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x7006\", \"name\": \"Distance_to_Dock\", \"value\": %d, \"unit\": \"mm\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x7007\", \"name\": \"Alignment_Angle\", \"value\": %d, \"unit\": \"deg*10\", \"mode\": \"R\"},\n"
+        "      {\"addr\": \"0x8000\", \"name\": \"Dock_Enable\", \"value\": %d, \"unit\": \"bool\", \"mode\": \"RW\"},\n"
+        "      {\"addr\": \"0x8001\", \"name\": \"Start_Docking\", \"value\": %d, \"unit\": \"cmd\", \"mode\": \"W\"},\n"
+        "      {\"addr\": \"0x9000\", \"name\": \"Fault_Status\", \"value\": %d, \"unit\": \"bitmask\", \"mode\": \"R\"}",
+        
+        position_data[0],        // Position_Target
+        position_data[1],        // Current_Position
+        position_data[2],        // Approach_Speed
+        position_data[5],        // Dock_Status
+        position_data[6],        // Distance_to_Dock
+        position_data[7],        // Alignment_Angle
+        control_data[0],         // Dock_Enable
+        control_data[1],         // Start_Docking
+        fault_data[0]            // Fault_Status
+    );
 }
