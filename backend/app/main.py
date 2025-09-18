@@ -80,6 +80,18 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"⚠️ WebSocket Log service failed to start: {e}, continuing without it")
         
+        # Initialize RS485 Service
+        try:
+            logger.info("🔌 Initializing RS485 Service...")
+            from app.services.rs485_service import rs485_service
+            rs485_initialized = await rs485_service.initialize()
+            if rs485_initialized:
+                logger.info("✅ RS485 Service initialized successfully")
+            else:
+                logger.warning("⚠️  RS485 Service initialization failed - continuing with limited functionality")
+        except Exception as e:
+            logger.warning(f"⚠️ RS485 Service failed to initialize: {e}, continuing without it")
+        
         logger.info("🚀 OHT-50 Backend started successfully")
         
     except Exception as e:
@@ -422,6 +434,10 @@ app.include_router(map.router)
 app.include_router(sensors.router)
 app.include_router(localization.router)
 app.include_router(health.router)
+
+# Include RS485 API router
+from app.api.v1 import rs485
+app.include_router(rs485.router)
 
 # Include WebSocket router
 app.include_router(websocket.router)

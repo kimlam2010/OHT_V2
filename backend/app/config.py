@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     firmware_websocket_url: str = "ws://localhost:8081/ws"
     firmware_timeout: float = 5.0
     firmware_retry_count: int = 3
-    use_mock_firmware: bool = False  # Only allowed in non-production
+    use_mock_firmware: bool = False  # Use mock firmware (includes RS485 mock) - Only allowed in non-production
     
     # Performance
     max_connections: int = 100

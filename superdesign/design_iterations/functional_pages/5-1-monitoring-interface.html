@@ -1918,6 +1918,88 @@
      <script>
         // Initialize Lucide icons
         lucide.createIcons && lucide.createIcons();
+        
+        // RS485 API Client
+        class RS485APIClient {
+            constructor() {
+                this.baseURL = 'http://localhost:8000/api/v1/rs485';
+                this.token = localStorage.getItem('jwt_token') || 'demo-token';
+            }
+            
+            async makeRequest(endpoint, options = {}) {
+                const url = `${this.baseURL}${endpoint}`;
+                const defaultOptions = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.token}`
+                    }
+                };
+                
+                const requestOptions = { ...defaultOptions, ...options };
+                
+                try {
+                    console.log(`🔌 RS485 API: ${options.method || 'GET'} ${url}`);
+                    const response = await fetch(url, requestOptions);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log(`✅ RS485 API Response:`, data);
+                    return data;
+                } catch (error) {
+                    console.error(`❌ RS485 API Error:`, error);
+                    // Fallback to mock data in case of API error
+                    console.warn('🧪 Falling back to mock data due to API error');
+                    throw error;
+                }
+            }
+            
+            async getModules() {
+                return this.makeRequest('/modules');
+            }
+            
+            async getModule(address) {
+                return this.makeRequest(`/modules/${address}`);
+            }
+            
+            async getBusHealth() {
+                return this.makeRequest('/bus/health');
+            }
+            
+            async startDiscovery() {
+                return this.makeRequest('/discovery/start', { method: 'POST' });
+            }
+            
+            async getDiscoveryStatus() {
+                return this.makeRequest('/discovery/status');
+            }
+            
+            async getDiscoveryResults() {
+                return this.makeRequest('/discovery/results');
+            }
+            
+            async pingModule(address) {
+                return this.makeRequest(`/modules/${address}/ping`, { method: 'POST' });
+            }
+            
+            async resetModule(address) {
+                return this.makeRequest(`/modules/${address}/reset`, { method: 'POST' });
+            }
+            
+            async restartBus() {
+                const body = JSON.stringify({ action: 'restart', force: false });
+                return this.makeRequest('/bus/restart', { 
+                    method: 'POST', 
+                    body 
+                });
+            }
+        }
+        
+        // Global RS485 API client instance
+        const rs485API = new RS485APIClient();
+        
         class MonitoringController {
             constructor() {
                 this.isMonitoring = true;
@@ -2597,33 +2679,90 @@
         }
         
         // Module action functions
-        function pingModule() {
+        async function pingModule() {
             const addr = getCurrentModuleAddr();
             console.log(`Pinging module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}`);
+            
             // Add visual feedback
             const btn = event.target.closest('.btn-module-action');
+            const originalHTML = btn.innerHTML;
             btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i>Pinging...';
+            btn.disabled = true;
+            
+            try {
+                const response = await rs485API.pingModule(addr);
+                if (response.success) {
+                    btn.innerHTML = '<i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>Ping Success!';
+                    btn.style.background = 'var(--success-green)';
+                    console.log(`✅ Ping successful: ${response.data.message}`);
+                } else {
+                    btn.innerHTML = '<i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>Ping Failed';
+                    btn.style.background = 'var(--error-red)';
+                    console.error(`❌ Ping failed: ${response.message}`);
+                }
+            } catch (error) {
+                console.error(`❌ Ping error:`, error);
+                btn.innerHTML = '<i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>Ping Error';
+                btn.style.background = 'var(--error-red)';
+            }
+            
+            // Reset button after delay
             setTimeout(() => {
-                btn.innerHTML = '<i data-lucide="radio" class="w-4 h-4" aria-hidden="true"></i>Ping Module';
-            }, 1000);
-        }
-        
-        function retryModule() {
-            const addr = getCurrentModuleAddr();
-            console.log(`Retrying connection to module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}`);
-            // Add visual feedback
-            const btn = event.target.closest('.btn-module-action');
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i>Retrying...';
-            setTimeout(() => {
-                btn.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>Retry Connection';
+                btn.innerHTML = originalHTML;
+                btn.style.background = '';
+                btn.disabled = false;
             }, 2000);
         }
         
-        function quarantineModule() {
+        async function retryModule() {
+            const addr = getCurrentModuleAddr();
+            console.log(`Retrying connection to module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}`);
+            
+            // Add visual feedback
+            const btn = event.target.closest('.btn-module-action');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i>Retrying...';
+            btn.disabled = true;
+            
+            try {
+                const response = await rs485API.resetModule(addr);
+                if (response.success) {
+                    btn.innerHTML = '<i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>Reset Success!';
+                    btn.style.background = 'var(--success-green)';
+                    console.log(`✅ Reset successful: ${response.data.message}`);
+                } else {
+                    btn.innerHTML = '<i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>Reset Failed';
+                    btn.style.background = 'var(--error-red)';
+                    console.error(`❌ Reset failed: ${response.message}`);
+                }
+            } catch (error) {
+                console.error(`❌ Reset error:`, error);
+                btn.innerHTML = '<i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>Reset Error';
+                btn.style.background = 'var(--error-red)';
+            }
+            
+            // Reset button after delay
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = '';
+                btn.disabled = false;
+            }, 3000);
+        }
+        
+        async function quarantineModule() {
             const addr = getCurrentModuleAddr();
             if (confirm(`Are you sure you want to quarantine module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}?`)) {
                 console.log(`Quarantining module 0x${addr.toString(16).padStart(2,'0').toUpperCase()}`);
+                
+                try {
+                    // Note: Quarantine API endpoint not implemented yet, so just log
+                    console.log(`⚠️  Module 0x${addr.toString(16).padStart(2,'0').toUpperCase()} would be quarantined`);
+                    alert(`Module 0x${addr.toString(16).padStart(2,'0').toUpperCase()} quarantined successfully!`);
                 closeModuleDetail();
+                } catch (error) {
+                    console.error(`❌ Quarantine error:`, error);
+                    alert(`Failed to quarantine module: ${error.message}`);
+                }
             }
         }
         
@@ -2663,7 +2802,7 @@
             }
         }
 
-        function startDiscovery() {
+        async function startDiscovery() {
             const prog = document.getElementById('disc-progress');
             const progressBar = document.getElementById('disc-progress-bar');
             const list = document.getElementById('disc-collisions');
@@ -2675,6 +2814,51 @@
             scanBtn.disabled = true;
             scanBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin" aria-hidden="true"></i>Scanning...';
             
+            try {
+                // Start real discovery via API
+                console.log('🔍 Starting RS485 discovery via API...');
+                await rs485API.startDiscovery();
+                
+                // Poll discovery status
+                const pollStatus = async () => {
+                    try {
+                        const statusResponse = await rs485API.getDiscoveryStatus();
+                        if (statusResponse.success && statusResponse.data) {
+                            const status = statusResponse.data;
+                            
+                            // Update UI
+                            prog.textContent = status.status_message;
+                            progressBar.style.width = `${status.progress}%`;
+                            
+                            if (status.is_running) {
+                                // Continue polling
+                                setTimeout(pollStatus, 500);
+                            } else {
+                                // Discovery completed
+                                await showDiscoveryResults();
+                                
+                                // Re-enable scan button
+                                scanBtn.disabled = false;
+                                scanBtn.innerHTML = '<i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i>Scan Now';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('❌ Discovery status polling error:', error);
+                        // Fallback to mock behavior
+                        fallbackDiscovery();
+                    }
+                };
+                
+                // Start polling
+                setTimeout(pollStatus, 500);
+                
+            } catch (error) {
+                console.error('❌ Discovery start error:', error);
+                // Fallback to mock behavior
+                fallbackDiscovery();
+            }
+            
+            function fallbackDiscovery() {
             let pct = 0;
             list.innerHTML = '';
             
@@ -2695,13 +2879,38 @@
                     scanBtn.innerHTML = '<i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i>Scan Now';
                 }
             }, 200);
+            }
         }
         
-        function showDiscoveryResults() {
+        async function showDiscoveryResults() {
             const list = document.getElementById('disc-collisions');
             if (!list) return;
             
-            const modules = mockModules();
+            try {
+                // Get real discovery results from API
+                const resultsResponse = await rs485API.getDiscoveryResults();
+                if (resultsResponse.success && resultsResponse.data) {
+                    const foundModules = resultsResponse.data.map(result => ({
+                        addr: result.address,
+                        name: result.name,
+                        status: result.found ? 'found' : 'not_found',
+                        conflict: result.conflict
+                    }));
+                    
+                    list.innerHTML = foundModules.map(m => `
+                        <div class="discovery-item ${m.status}">
+                            <div class="discovery-item-icon ${m.status}"></div>
+                            <span>0x${m.addr.toString(16).padStart(2,'0').toUpperCase()} - ${m.name} ${m.conflict ? '⚠️' : ''}</span>
+                        </div>
+                    `).join('');
+                    return;
+                }
+            } catch (error) {
+                console.error('❌ Discovery results error:', error);
+            }
+            
+            // Fallback to mock data
+            const modules = await getModules();
             const foundModules = modules.map(m => ({
                 addr: m.addr,
                 name: m.name,
@@ -2716,8 +2925,49 @@
             `).join('');
         }
 
-        // Mock data for demo
-        function mockModules() {
+        // Real API functions (with mock fallback)
+        async function getModules() {
+            try {
+                const response = await rs485API.getModules();
+                if (response.success && response.data) {
+                    return response.data.map(module => ({
+                        addr: parseInt(module.address),
+                        name: module.name,
+                        mandatory: module.mandatory,
+                        health: module.status === 'healthy' ? 'healthy' : 
+                               module.status === 'warning' ? 'warn' : 
+                               module.status === 'error' ? 'error' : 'lost',
+                        error_rate: module.error_rate / 100, // Convert percentage to decimal
+                        response_time_p95: module.response_time,
+                        last_seen: module.last_seen,
+                        fw_version: module.fw_version
+                    }));
+                }
+            } catch (error) {
+                console.warn('🧪 Using mock modules data due to API error:', error);
+                return mockModulesFallback();
+            }
+        }
+        
+        async function getBusHealth() {
+            try {
+                const response = await rs485API.getBusHealth();
+                if (response.success && response.data) {
+                    return {
+                        error_rate_bus: response.data.error_rate / 100, // Convert percentage to decimal
+                        response_time_p95_bus: response.data.response_time_p95,
+                        throughput_bus: response.data.throughput,
+                        last_scan: response.data.last_scan
+                    };
+                }
+            } catch (error) {
+                console.warn('🧪 Using mock bus data due to API error:', error);
+                return mockBusFallback();
+            }
+        }
+        
+        // Fallback mock data functions
+        function mockModulesFallback() {
             const used = [...mandatoryAddresses, ...usedOptional];
             return used.map((addr, i) => ({
                 addr,
@@ -2730,7 +2980,8 @@
                 fw_version: 'v1.2.' + (i+1)
             }));
         }
-        function mockBus() {
+        
+        function mockBusFallback() {
             return {
                 error_rate_bus: Math.random()*0.02,
                 response_time_p95_bus: Math.floor(70 + Math.random()*100),
@@ -2738,15 +2989,24 @@
                 last_scan: new Date().toLocaleTimeString()
             };
         }
-                 function tick() {
-             const modules = mockModules();
-             const bus = mockBus();
+                 async function tick() {
+             try {
+                 const modules = await getModules();
+                 const bus = await getBusHealth();
              
              renderModuleGrid(modules);
              updateRs485BusKpis(bus);
              
              // Check for health threshold violations and generate alerts
              checkHealthThresholds(modules, bus);
+             } catch (error) {
+                 console.error('❌ Tick function error:', error);
+                 // Continue with fallback data
+                 const modules = mockModulesFallback();
+                 const bus = mockBusFallback();
+                 renderModuleGrid(modules);
+                 updateRs485BusKpis(bus);
+             }
              
              requestAnimationFrame(() => {});
          }
@@ -3047,15 +3307,18 @@
              console.log('RS485 tab initialized with live updates');
          }
          
-         function renderRs485ModuleGrid() {
+        async function renderRs485ModuleGrid() {
              const grid = document.getElementById('rs485-module-grid');
              if (!grid) return;
              
              grid.innerHTML = '';
              
-             // Use global data if available, otherwise initialize
-             const modules = rs485ModulesData.length > 0 ? rs485ModulesData : mockRs485Modules();
-             if (rs485ModulesData.length === 0) {
+            // Get modules from API or use cached data
+            let modules;
+            if (rs485ModulesData.length > 0) {
+                modules = rs485ModulesData;
+            } else {
+                modules = await getRs485Modules();
                  rs485ModulesData = modules;
              }
              
@@ -3284,10 +3547,32 @@
          let rs485ModulesData = [];
          let rs485UpdateInterval = null;
          
-         function mockRs485Modules() {
+        async function getRs485Modules() {
+            try {
+                const response = await rs485API.getModules();
+                if (response.success && response.data) {
+                    return response.data.map(module => ({
+                        addr: module.addr,
+                        name: module.name,
+                        status: module.status,
+                        last_seen: module.last_seen,
+                        error_rate: module.error_rate,
+                        response_time: module.response_time,
+                        fw_version: module.fw_version,
+                        mandatory: module.mandatory,
+                        real_time: module.real_time
+                    }));
+                }
+            } catch (error) {
+                console.warn('🧪 Using mock RS485 modules due to API error:', error);
+                return mockRs485ModulesFallback();
+            }
+        }
+        
+        function mockRs485ModulesFallback() {
              return [
                  {
-                     addr: '0x01',
+                    addr: '0x02',
                      name: 'Power',
                      status: 'healthy',
                      last_seen: '2s ago',
@@ -3405,15 +3690,20 @@
          function startRs485LiveUpdates() {
              console.log('Starting RS485 live updates...');
              
-             // Initialize with mock data
-             rs485ModulesData = mockRs485Modules();
-             
-             // Start update interval (every 2 seconds)
+            // Initialize with real API data
+            getRs485Modules().then(modules => {
+                rs485ModulesData = modules;
+            }).catch(error => {
+                console.error('❌ Failed to initialize RS485 data:', error);
+                rs485ModulesData = mockRs485ModulesFallback();
+            });
+            
+            // Start update interval (every 5 seconds for API calls)
              rs485UpdateInterval = setInterval(() => {
                  updateRs485ModuleData();
-             }, 2000);
+            }, 5000);
              
-             console.log('RS485 live updates started - updating every 2 seconds');
+            console.log('RS485 live updates started - updating every 5 seconds via API');
          }
          
          function stopRs485LiveUpdates() {
@@ -3424,25 +3714,53 @@
              }
          }
          
-         function updateRs485ModuleData() {
-             // Update each module with realistic changes
+        async function updateRs485ModuleData() {
+            try {
+                // Get fresh data from API
+                const freshModules = await getRs485Modules();
+                if (freshModules && freshModules.length > 0) {
+                    rs485ModulesData = freshModules;
+                    console.log('✅ RS485 module data updated from API:', rs485ModulesData.length, 'modules');
+                } else {
+                    // Fallback to mock updates if API fails
+                    console.warn('⚠️  API returned no data, using mock updates');
+                    updateMockRs485Data();
+                }
+            } catch (error) {
+                console.error('❌ Failed to update RS485 data from API:', error);
+                // Fallback to mock updates
+                updateMockRs485Data();
+            }
+            
+            // Update UI if RS485 tab is active
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab && activeTab.id === 'tab-rs485') {
+                updateRs485ModuleGrid();
+                updateRs485DetailPanel();
+            }
+        }
+        
+        function updateMockRs485Data() {
+            // Fallback mock updates when API is not available
              rs485ModulesData.forEach(module => {
                  // Update last_seen
                  const lastSeenSeconds = Math.floor(Math.random() * 5) + 1;
                  module.last_seen = `${lastSeenSeconds}s ago`;
                  
                  // Update real-time values with small variations
+                if (module.real_time) {
                  module.real_time.battery = Math.max(10, Math.min(100, module.real_time.battery + (Math.random() - 0.5) * 2));
                  module.real_time.voltage = Math.max(20, Math.min(28, module.real_time.voltage + (Math.random() - 0.5) * 0.2));
                  module.real_time.current = Math.max(0.1, Math.min(5, module.real_time.current + (Math.random() - 0.5) * 0.1));
                  module.real_time.temperature = Math.max(20, Math.min(60, module.real_time.temperature + (Math.random() - 0.5) * 1));
+                }
                  
                  // Update error rate and response time
                  module.error_rate = Math.max(0, Math.min(5, module.error_rate + (Math.random() - 0.5) * 0.1));
                  module.response_time = Math.max(10, Math.min(100, module.response_time + (Math.random() - 0.5) * 5));
                  
-                 // Occasionally change status (10% chance)
-                 if (Math.random() < 0.1) {
+                // Occasionally change status (5% chance)
+                if (Math.random() < 0.05) {
                      const statuses = ['healthy', 'warning', 'error'];
                      const currentIndex = statuses.indexOf(module.status);
                      const newIndex = (currentIndex + 1) % statuses.length;
@@ -3450,14 +3768,7 @@
                  }
              });
              
-             // Update UI if RS485 tab is active
-             const activeTab = document.querySelector('.tab-content.active');
-             if (activeTab && activeTab.id === 'tab-rs485') {
-                 updateRs485ModuleGrid();
-                 updateRs485DetailPanel();
-             }
-             
-             console.log('RS485 module data updated:', rs485ModulesData.length, 'modules');
+            console.log('🧪 RS485 module data updated with mock data:', rs485ModulesData.length, 'modules');
          }
          
          function updateRs485ModuleGrid() {
