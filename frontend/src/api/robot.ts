@@ -61,7 +61,7 @@ export const robotApi = {
       },
     })
   },
-  cargoLowerCommand: (params: CargoParamsRequest): Promise<MoveRobotResponse> => {
+  cargoDownCommand: (params: CargoParamsRequest): Promise<MoveRobotResponse> => {
     return http.post('/robot/cargo/down', undefined, {
       params,
       headers: {
@@ -69,7 +69,7 @@ export const robotApi = {
       },
     })
   },
-  cargoLiftCommand: (params: CargoParamsRequest): Promise<MoveRobotResponse> => {
+  cargoUpCommand: (params: CargoParamsRequest): Promise<MoveRobotResponse> => {
     return http.post('/robot/cargo/up', undefined, {
       params,
       headers: {

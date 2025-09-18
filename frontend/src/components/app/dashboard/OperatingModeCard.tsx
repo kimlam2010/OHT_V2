@@ -21,16 +21,9 @@ export default function OperatingModeCard({ mode }: Props) {
   const handleUpdateMode = (newMode: RobotModeResponse['mode']) => {
     if (newMode !== mode) {
       updateMode(newMode, {
-        onSuccess: (data) => {
-          // Optimistically update the mode in the cache
-          queryClient.setQueryData([ROBOT_MODE_KEY], (oldData: RobotModeResponse) => (oldData
-            ? {
-                ...oldData,
-                mode: data.current_mode,
-              }
-            : undefined))
+        onSuccess: () => {
           // Invalidate the query to refetch the latest mode from the server
-          // queryClient.invalidateQueries({ queryKey: [ROBOT_MODE_KEY] })
+          queryClient.invalidateQueries({ queryKey: [ROBOT_MODE_KEY] })
         },
         onError: (error) => {
           toast.error((error as Error).message || 'Failed to update mode')

@@ -1,10 +1,10 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { AlertCircle } from 'lucide-react'
 import ActiveAlertCard from '@/components/app/dashboard/ActiveAlertCard'
+import CommunicationCard from '@/components/app/dashboard/CommunicationCard'
 import ManualControlCard from '@/components/app/dashboard/ManualControlCard'
 import OperatingModeCard from '@/components/app/dashboard/OperatingModeCard'
 import PerformanceMonitoringCard from '@/components/app/dashboard/PerformanceMonitoringCard'
-// import CommunicationCard from '@/components/app/dashboard/CommunicationCard'
 import PositionAndSpeedCard from '@/components/app/dashboard/PositionAndSpeedCard'
 import SystemLogCard from '@/components/app/dashboard/SystemLogCard'
 // import SafetyStatusCard from '@/components/app/dashboard/SafetyStatusCard'
@@ -79,7 +79,7 @@ function RouteComponent() {
   const robotModeQuery = useRobotModeQuery()
   return (
     <RequireAuth>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Information Cards Renderer */}
         {matchQuery(
           dashboardSummaryQuery,
@@ -91,7 +91,7 @@ function RouteComponent() {
                 <SystemStatusCard robot={data.robot} />
                 <PositionAndSpeedCard robot={data.robot} />
                 {/* <SafetyStatusCard /> */}
-                {/* <CommunicationCard /> */}
+                <CommunicationCard />
               </div>
             ),
           },
@@ -104,7 +104,7 @@ function RouteComponent() {
             success: data => (
               <>
                 <OperatingModeCard mode={data.mode} />
-                <div className="grid grid-cols-1 gap-4 w-full md:grid-cols-2">
+                <div className="flex flex-wrap gap-4">
                   <ManualControlCard isEnabled={robotModeQuery.data?.mode === 'manual'} />
                 </div>
               </>
