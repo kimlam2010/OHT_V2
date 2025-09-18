@@ -64,6 +64,14 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"⚠️ WebSocket service failed to start: {e}, continuing without it")
         
+        # Start WebSocket Alert service
+        try:
+            from app.services.websocket_alert_service import websocket_alert_service
+            await websocket_alert_service.start()
+            logger.info("✅ WebSocket Alert service started")
+        except Exception as e:
+            logger.warning(f"⚠️ WebSocket Alert service failed to start: {e}, continuing without it")
+        
         logger.info("🚀 OHT-50 Backend started successfully")
         
     except Exception as e:
@@ -76,6 +84,14 @@ async def lifespan(app: FastAPI):
     logger.info("🛑 Shutting down OHT-50 Backend...")
     
     try:
+        # Stop WebSocket Alert service
+        try:
+            from app.services.websocket_alert_service import websocket_alert_service
+            await websocket_alert_service.stop()
+            logger.info("✅ WebSocket Alert service stopped")
+        except Exception as e:
+            logger.warning(f"⚠️ WebSocket Alert service stop failed: {e}")
+        
         # Stop WebSocket service
         await websocket_service.stop()
         logger.info("✅ WebSocket service stopped")
