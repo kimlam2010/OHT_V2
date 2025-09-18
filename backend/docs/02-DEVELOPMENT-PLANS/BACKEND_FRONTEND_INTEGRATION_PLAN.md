@@ -41,8 +41,8 @@
 ##### **Manual Control:**
 - **POST /api/v1/robot/move/forward** - Move forward
 - **POST /api/v1/robot/move/backward** - Move backward
-- **POST /api/v1/robot/move/left** - Turn left
-- **POST /api/v1/robot/move/right** - Turn right
+- **POST /api/v1/robot/cargo/up** - Lift cargo up
+- **POST /api/v1/robot/cargo/down** - Lower cargo down
 - **POST /api/v1/robot/move/stop** - Stop movement
 
 ##### **Speed Control:**
@@ -248,22 +248,22 @@ async def move_backward(
     # Implementation: Send backward movement command
     pass
 
-@router.post("/move/left")
-async def turn_left(
-    angle: float = 90.0,
+@router.post("/cargo/up")
+async def cargo_up(
+    position: float = 100.0,
     current_user: User = Depends(require_permission("robot", "control"))
 ):
-    """Turn robot left"""
-    # Implementation: Send left turn command
+    """Lift cargo up"""
+    # Implementation: Send cargo lift command
     pass
 
-@router.post("/move/right")
-async def turn_right(
-    angle: float = 90.0,
+@router.post("/cargo/down")
+async def cargo_down(
+    position: float = 0.0,
     current_user: User = Depends(require_permission("robot", "control"))
 ):
-    """Turn robot right"""
-    # Implementation: Send right turn command
+    """Lower cargo down"""
+    # Implementation: Send cargo lower command
     pass
 
 @router.post("/move/stop")

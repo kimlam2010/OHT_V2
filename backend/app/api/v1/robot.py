@@ -372,47 +372,47 @@ async def move_backward(
         )
 
 
-@router.post("/move/left", response_model=MovementResponse)
-async def turn_left(
-    angle: float = Query(90.0, ge=0.0, le=360.0, description="Turn angle in degrees"),
+@router.post("/cargo/up", response_model=MovementResponse)
+async def cargo_up(
+    position: float = Query(100.0, ge=0.0, le=100.0, description="Cargo lift position in percentage"),
     current_user: User = Depends(require_permission("robot", "control"))
 ):
-    """Turn robot left"""
+    """Lift cargo up"""
     try:
         return MovementResponse(
             success=True,
-            message=f"Robot turning left {angle} degrees",
-            direction=MovementDirection.LEFT,
+            message=f"Cargo lifting up to {position}% position",
+            direction=MovementDirection.CARGO_UP,
             speed=0.5,
-            estimated_duration=2.0,
+            estimated_duration=3.0,
             timestamp=datetime.now(timezone.utc)
         )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to turn robot left: {str(e)}"
+            detail=f"Failed to lift cargo up: {str(e)}"
         )
 
 
-@router.post("/move/right", response_model=MovementResponse)
-async def turn_right(
-    angle: float = Query(90.0, ge=0.0, le=360.0, description="Turn angle in degrees"),
+@router.post("/cargo/down", response_model=MovementResponse)
+async def cargo_down(
+    position: float = Query(0.0, ge=0.0, le=100.0, description="Cargo lower position in percentage"),
     current_user: User = Depends(require_permission("robot", "control"))
 ):
-    """Turn robot right"""
+    """Lower cargo down"""
     try:
         return MovementResponse(
             success=True,
-            message=f"Robot turning right {angle} degrees",
-            direction=MovementDirection.RIGHT,
+            message=f"Cargo lowering down to {position}% position",
+            direction=MovementDirection.CARGO_DOWN,
             speed=0.5,
-            estimated_duration=2.0,
+            estimated_duration=3.0,
             timestamp=datetime.now(timezone.utc)
         )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to turn robot right: {str(e)}"
+            detail=f"Failed to lower cargo down: {str(e)}"
         )
 
 

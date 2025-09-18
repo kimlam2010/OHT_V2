@@ -13,8 +13,8 @@ from .dashboard import RobotMode, RobotStatus
 class MovementDirection(str, Enum):
     FORWARD = "forward"
     BACKWARD = "backward"
-    LEFT = "left"
-    RIGHT = "right"
+    CARGO_UP = "cargo_up"
+    CARGO_DOWN = "cargo_down"
     STOP = "stop"
 
 

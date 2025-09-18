@@ -130,13 +130,13 @@ async def move_forward(speed: float = 1.0):
 async def move_backward(speed: float = 1.0):
     """Move robot backward"""
 
-@router.post("/move/left")
-async def turn_left(angle: float = 90.0):
-    """Turn robot left"""
+@router.post("/cargo/up")
+async def cargo_up(position: float = 100.0):
+    """Lift cargo up"""
 
-@router.post("/move/right")
-async def turn_right(angle: float = 90.0):
-    """Turn robot right"""
+@router.post("/cargo/down")
+async def cargo_down(position: float = 0.0):
+    """Lower cargo down"""
 
 @router.post("/move/stop")
 async def stop_movement():
