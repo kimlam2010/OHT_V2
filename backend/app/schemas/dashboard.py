@@ -127,6 +127,7 @@ class DashboardSummary(BaseModel):
     robot: RobotSummary = Field(..., description="Robot summary")
     system: SystemSummary = Field(..., description="System summary")
     performance: PerformanceMetric = Field(..., description="Current performance metrics")
+    safety: DashboardSafety = Field(..., description="Safety status summary")
     last_updated: datetime = Field(..., description="Last update timestamp")
 
 

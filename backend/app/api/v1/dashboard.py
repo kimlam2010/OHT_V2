@@ -77,7 +77,7 @@ async def get_dashboard_summary(
     current_user: User = Depends(require_permission("dashboard", "read")),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get dashboard overview data - robot status, alerts, performance"""
+    """Get dashboard overview data - robot status, alerts, performance, safety"""
     try:
         # Get robot status (mock data for now)
         robot_summary = RobotSummary(
@@ -117,10 +117,50 @@ async def get_dashboard_summary(
             throughput=150.0
         )
         
+        # Get safety status (reuse logic from dashboard/safety endpoint)
+        try:
+            status = await safety_service.get_safety_status()
+
+            if status.get("status") == "error":
+                safety_summary = DashboardSafety(
+                    safety_state=SafetyState.UNAVAILABLE,
+                    emergency_status="Unknown (FW offline)",
+                    obstacles_present=None,
+                    active_alerts_count=0,
+                )
+            else:
+                state_map = {
+                    "normal": SafetyState.SAFE,
+                    "warning": SafetyState.WARNING,
+                    "emergency": SafetyState.EMERGENCY,
+                }
+                safety_state = state_map.get(status.get("status", "normal"), SafetyState.UNAVAILABLE)
+
+                emergency_status = "E‑STOP" if status.get("emergency_stop", False) else "Normal"
+                obstacles_present = status.get("obstacles_detected")
+
+                alerts_count = len(safety_service.get_safety_alerts(limit=5))
+
+                safety_summary = DashboardSafety(
+                    safety_state=safety_state,
+                    emergency_status=emergency_status,
+                    obstacles_present=obstacles_present if isinstance(obstacles_present, bool) else None,
+                    active_alerts_count=alerts_count,
+                )
+        except Exception:
+            # Do not leak internal errors; return UNAVAILABLE
+            safety_summary = DashboardSafety(
+                safety_state=SafetyState.UNAVAILABLE,
+                emergency_status="Unknown (FW offline)",
+                obstacles_present=None,
+                active_alerts_count=0,
+            )
+        
         return DashboardSummary(
             robot=robot_summary,
             system=system_summary,
             performance=performance,
+            safety=safety_summary,
             last_updated=datetime.now(timezone.utc)
         )
         
@@ -206,6 +246,84 @@ async def get_active_alerts(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get alerts: {str(e)}"
+        )
+
+
+@router.post("/alerts/{alert_id}/acknowledge")
+async def acknowledge_alert(
+    alert_id: str,
+    current_user: User = Depends(require_permission("dashboard", "write")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Acknowledge an alert"""
+    try:
+        from app.services.alert_system import alert_system
+        from app.services.websocket_alert_service import websocket_alert_service
+        
+        # Acknowledge alert in alert system
+        success = await alert_system.acknowledge_alert(alert_id, current_user.username)
+        
+        if success:
+            # Broadcast alert update via WebSocket
+            await websocket_alert_service.broadcast_alert_update(alert_id, "acknowledged")
+            
+            return {
+                "success": True,
+                "message": f"Alert {alert_id} acknowledged successfully",
+                "acknowledged_by": current_user.username,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Alert not found"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to acknowledge alert: {str(e)}"
+        )
+
+
+@router.post("/alerts/{alert_id}/resolve")
+async def resolve_alert(
+    alert_id: str,
+    current_user: User = Depends(require_permission("dashboard", "write")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Resolve an alert"""
+    try:
+        from app.services.alert_system import alert_system
+        from app.services.websocket_alert_service import websocket_alert_service
+        
+        # Resolve alert in alert system
+        success = await alert_system.resolve_alert(alert_id, current_user.username)
+        
+        if success:
+            # Broadcast alert update via WebSocket
+            await websocket_alert_service.broadcast_alert_update(alert_id, "resolved")
+            
+            return {
+                "success": True,
+                "message": f"Alert {alert_id} resolved successfully",
+                "resolved_by": current_user.username,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Alert not found"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resolve alert: {str(e)}"
         )
 
 

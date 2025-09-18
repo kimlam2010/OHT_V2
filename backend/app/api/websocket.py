@@ -322,24 +322,45 @@ async def websocket_alerts_endpoint(websocket: WebSocket):
         
         # Send initial alerts data
         try:
-            active_alerts = await monitoring_service.get_active_alerts()
+            from app.services.websocket_alert_service import websocket_alert_service
+            from app.services.alert_system import alert_system
+            
+            # Get active alerts from alert system
+            active_alerts = alert_system.get_active_alerts()
+            
+            # Convert to response format
+            alert_responses = []
+            for alert in active_alerts:
+                alert_response = {
+                    "id": hash(alert.alert_id) & 0x7FFFFFFF,  # Convert UUID to int
+                    "title": alert.title,
+                    "message": alert.message,
+                    "severity": alert.severity.value,
+                    "status": alert.status.value,
+                    "source": alert.source.value,
+                    "timestamp": alert.created_at.isoformat(),
+                    "acknowledged_by": alert.acknowledged_by,
+                    "acknowledged_at": alert.acknowledged_at.isoformat() if alert.acknowledged_at else None,
+                    "resolved_at": alert.resolved_at.isoformat() if alert.resolved_at else None,
+                    "metadata": alert.metadata
+                }
+                alert_responses.append(alert_response)
+            
+            # Send initial alerts message
             message = WebSocketMessage(
-                type="alerts_update",
+                type="active_alerts_update",
                 data={
-                    "alerts_count": len(active_alerts),
-                    "alerts": [
-                        {
-                            "id": alert.id,
-                            "level": alert.level,
-                            "message": alert.message,
-                            "timestamp": alert.timestamp.isoformat()
-                        }
-                        for alert in active_alerts
-                    ]
+                    "alerts": alert_responses,
+                    "total_count": len(alert_responses),
+                    "critical_count": len([a for a in alert_responses if a["severity"] == "critical"]),
+                    "warning_count": len([a for a in alert_responses if a["severity"] in ["high", "medium", "warning"]])
                 },
                 timestamp=datetime.now()
             )
             await websocket_service.send_to_client(websocket, message)
+            
+            logger.info(f"📨 Sent initial alerts to client: {len(alert_responses)} alerts")
+            
         except Exception as e:
             logger.error(f"❌ Failed to send initial alerts: {e}")
         
@@ -351,12 +372,12 @@ async def websocket_alerts_endpoint(websocket: WebSocket):
                 await websocket_service.handle_message(websocket, data)
                 
         except WebSocketDisconnect:
-            logger.info("🔌 WebSocket client disconnected")
+            logger.info("🔌 WebSocket alerts client disconnected")
         except Exception as e:
             logger.error(f"❌ WebSocket communication error: {e}")
             
     except Exception as e:
-        logger.error(f"❌ WebSocket endpoint error: {e}")
+        logger.error(f"❌ WebSocket alerts endpoint error: {e}")
     finally:
         # Clean up connection
         await websocket_service.disconnect(websocket)
