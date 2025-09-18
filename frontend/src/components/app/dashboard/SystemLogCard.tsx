@@ -36,10 +36,10 @@ function Spinner() {
         {Array.from({ length: 8 }).map((_, index) => (
           // eslint-disable-next-line react/no-array-index-key
           <TableRow key={`skeleton-row-${index}`}>
-            <TableCell className="font-medium px-2">
+            <TableCell className="px-2 font-medium">
               <Skeleton className="h-[calc(var(--spacing)*5.5)] w-44" />
             </TableCell>
-            <TableCell className="w-fit justify-start px-2">
+            <TableCell className="justify-start px-2 w-fit">
               <Skeleton className="h-[calc(var(--spacing)*5.5)] w-24" />
             </TableCell>
             <TableCell>
@@ -54,7 +54,7 @@ function Spinner() {
 
 function ErrorMessage({ error }: { error: Error }) {
   return (
-    <div className=" flex gap-2 items-center text-destructive">
+    <div className="flex gap-2 items-center  text-destructive">
       <AlertCircle className="size-6" />
       <p>Error: </p>
       {error.message}
@@ -64,7 +64,7 @@ function ErrorMessage({ error }: { error: Error }) {
 
 function LevelBadge({ level }: { level: string }) {
   if (level === 'info') {
-    return <Badge variant="outline" className="bg-blue-500 text-white">Info</Badge>
+    return <Badge variant="outline" className="text-white bg-blue-500">Info</Badge>
   }
   if (level === 'warning') {
     return <Badge variant="warning">Warning</Badge>
@@ -85,9 +85,9 @@ function SystemLogTable({ logs }: { logs: LogItem[] }) {
         <TableBody>
           {logs.map(log => (
             <TableRow key={log.id}>
-              <TableCell className="font-medium text-muted-foreground text-sm font-mono">{formatDate(log.timestamp)}</TableCell>
-              <TableCell className=" uppercase"><LevelBadge level={log.level} /></TableCell>
-              <TableCell className="text-sm font-mono">{log.message}</TableCell>
+              <TableCell className="font-mono text-sm font-medium text-muted-foreground">{formatDate(log.timestamp)}</TableCell>
+              <TableCell className="uppercase"><LevelBadge level={log.level} /></TableCell>
+              <TableCell className="font-mono text-sm">{log.message}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -108,7 +108,7 @@ export default function SystemLogCard() {
   }
 
   return (
-    <Card>
+    <Card className="gap-3 shadow">
       <CardHeader>
         <CardTitle>System Log</CardTitle>
         <CardAction className="flex gap-3">
@@ -138,7 +138,7 @@ export default function SystemLogCard() {
       </CardContent>
 
       <CardFooter>
-        <div className="flex justify-end items-center w-full gap-2">
+        <div className="flex gap-2 justify-end items-center w-full">
           <div className="text-sm text-muted-foreground">
             Total:
             {' '}

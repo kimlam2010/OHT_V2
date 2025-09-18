@@ -112,7 +112,7 @@ export default function ActiveAlertCard() {
   }
 
   return (
-    <Card>
+    <Card className="gap-3 shadow">
       <CardHeader>
         <CardTitle>Active Alerts</CardTitle>
         <CardAction className="flex gap-3">
@@ -141,7 +141,7 @@ export default function ActiveAlertCard() {
         })}
       </CardContent>
       <CardFooter>
-        <div className="flex justify-end items-center w-full gap-2">
+        <div className="flex gap-2 justify-end items-center w-full">
           <div className="text-sm text-muted-foreground">
             Total:
             {' '}

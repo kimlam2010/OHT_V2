@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MANUAL_CONTROL_POSITION, MANUAL_CONTROL_SPEED } from '@/constants/string'
-import { useRobotCargoLiftMutation, useRobotCargoLowerMutation, useRobotMoveBackwardMutation, useRobotMoveForwardMutation, useRobotStopMutation } from '@/hooks'
+import { useRobotCargoDownMutation, useRobotCargoUpMutation, useRobotMoveBackwardMutation, useRobotMoveForwardMutation, useRobotStopMutation } from '@/hooks'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -27,8 +27,8 @@ export default function ManualControlCard({ isEnabled }: Props) {
   const [position, setPosition] = useLocalStorage<number>(MANUAL_CONTROL_POSITION, defaultPosition)
   const { mutate: moveForward } = useRobotMoveForwardMutation()
   const { mutate: moveBackward } = useRobotMoveBackwardMutation()
-  const { mutate: cargoLower } = useRobotCargoLowerMutation()
-  const { mutate: cargoLift } = useRobotCargoLiftMutation()
+  const { mutate: cargoDown } = useRobotCargoDownMutation()
+  const { mutate: cargoUp } = useRobotCargoUpMutation()
   const { mutate: stop } = useRobotStopMutation()
 
   const handleMoveForward = () => {
@@ -54,23 +54,23 @@ export default function ManualControlCard({ isEnabled }: Props) {
   }
 
   const handleCargoLower = () => {
-    cargoLower({ position: position || defaultPosition }, {
+    cargoDown({ position: position || defaultPosition }, {
       onSuccess: (data) => {
         toast.success(data.message)
       },
       onError: () => {
-        toast.error('Cargo lower failed')
+        toast.error('Cargo down failed')
       },
     })
   }
 
   const handleCargoLift = () => {
-    cargoLift({ position: position || defaultPosition }, {
+    cargoUp({ position: position || defaultPosition }, {
       onSuccess: (data) => {
         toast.success(data.message)
       },
       onError: () => {
-        toast.error('Cargo lift failed')
+        toast.error('Cargo up failed')
       },
     })
   }
@@ -87,7 +87,7 @@ export default function ManualControlCard({ isEnabled }: Props) {
   }
 
   return (
-    <Card className="shadow">
+    <Card className="gap-3 shadow">
       <CardHeader>
         <CardTitle>Manual Control Panel</CardTitle>
         <CardAction><Badge variant={isEnabled ? 'success' : 'secondary'}>{isEnabled ? 'ENABLE' : 'DISABLE'}</Badge></CardAction>
@@ -97,7 +97,7 @@ export default function ManualControlCard({ isEnabled }: Props) {
           <div className="grid grid-cols-3 gap-4 w-fit">
             <Button variant="outline" className="flex flex-col col-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleCargoLift}>
               <ArrowUp className="size-4" />
-              <span className="text-xs">Cargo lift</span>
+              <span className="text-xs">Cargo up</span>
             </Button>
             <Button variant="outline" className="flex flex-col row-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleMoveBackward}>
               <ArrowLeft className="size-4" />
@@ -113,10 +113,10 @@ export default function ManualControlCard({ isEnabled }: Props) {
             </Button>
             <Button variant="outline" className="flex flex-col col-start-2 gap-2 h-fit" disabled={!isEnabled} onClick={handleCargoLower}>
               <ArrowDown className="size-4" />
-              <span className="text-xs">Cargo lower</span>
+              <span className="text-xs">Cargo down</span>
             </Button>
           </div>
-          <div className="grid grid-cols-3 gap-2 items-center h-fit">
+          <div className="grid grid-cols-3 gap-4 items-center h-fit">
             <Label className={cn(isEnabled ? 'text-foreground' : 'text-muted-foreground')}>Speed:</Label>
             <Input
               disabled={!isEnabled}
@@ -133,11 +133,11 @@ export default function ManualControlCard({ isEnabled }: Props) {
               disabled={!isEnabled}
               type="number"
               min={0}
-              max={360}
+              max={100}
               value={position ?? defaultPosition}
               onChange={e => setPosition(Number(e.target.value))}
             />
-            <Label className={cn(isEnabled ? 'text-foreground' : 'text-muted-foreground')}> cm</Label>
+            <Label className={cn(isEnabled ? 'text-foreground' : 'text-muted-foreground')}> %</Label>
           </div>
         </div>
 

@@ -1,3 +1,10 @@
+export interface Safety {
+  safety_state: 'SAFE' | 'WARNING' | 'EMERGENCY' | 'UNAVAILABLE'
+  emergency_status: 'Normal' | 'E-STOP' | 'Unknown (FW offline)'
+  obstacles_present: boolean | null
+  active_alerts_count: number | null
+}
+
 export interface SafetyStatusResponse {
   status: string
   emergency_stop: boolean
