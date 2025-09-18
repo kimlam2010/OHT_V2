@@ -383,6 +383,77 @@ async def websocket_alerts_endpoint(websocket: WebSocket):
         await websocket_service.disconnect(websocket)
 
 
+@router.websocket("/ws/logs")
+async def websocket_logs_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time system log streaming - Issue #78"""
+    try:
+        # Connect to WebSocket service
+        await websocket_service.connect(websocket, {"type": "logs"})
+        
+        # Send initial logs data
+        try:
+            from app.services.websocket_log_service import websocket_log_service
+            
+            # Send recent logs (default: info level and above, last 50 entries)
+            await websocket_log_service.send_recent_logs(
+                websocket, 
+                level_filter="info", 
+                limit=50
+            )
+            
+            logger.info("📨 Sent initial logs to client")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to send initial logs: {e}")
+        
+        # Handle WebSocket communication
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                
+                # Parse client message
+                try:
+                    message_data = json.loads(data)
+                    message_type = message_data.get("type")
+                    
+                    # Handle log-specific messages
+                    if message_type == "set_log_level":
+                        level = message_data.get("data", {}).get("level", "info")
+                        await websocket_log_service.set_log_level_filter(websocket, level)
+                        
+                        # Send confirmation
+                        confirm_message = WebSocketMessage(
+                            type="log_level_set",
+                            data={"level": level, "message": f"Log level filter set to {level}"},
+                            timestamp=datetime.now()
+                        )
+                        await websocket_service.send_to_client(websocket, confirm_message)
+                        
+                    elif message_type == "get_recent_logs":
+                        level = message_data.get("data", {}).get("level", "info")
+                        limit = message_data.get("data", {}).get("limit", 50)
+                        await websocket_log_service.send_recent_logs(websocket, level, limit)
+                        
+                    else:
+                        # Handle standard WebSocket messages
+                        await websocket_service.handle_message(websocket, data)
+                        
+                except json.JSONDecodeError:
+                    logger.warning(f"⚠️ Invalid JSON in logs WebSocket: {data}")
+                
+        except WebSocketDisconnect:
+            logger.info("🔌 WebSocket logs client disconnected")
+        except Exception as e:
+            logger.error(f"❌ WebSocket logs communication error: {e}")
+            
+    except Exception as e:
+        logger.error(f"❌ WebSocket logs endpoint error: {e}")
+    finally:
+        # Clean up connection
+        await websocket_service.disconnect(websocket)
+
+
 @router.get("/ws/status")
 async def get_websocket_status(
     current_user: User = Depends(require_permission("system", "read"))
