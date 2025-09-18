@@ -5,6 +5,7 @@ This module provides WebSocket endpoints for real-time monitoring and communicat
 """
 
 import logging
+import json
 from typing import Dict, Any
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
@@ -381,6 +382,94 @@ async def websocket_alerts_endpoint(websocket: WebSocket):
     finally:
         # Clean up connection
         await websocket_service.disconnect(websocket)
+
+
+@router.websocket("/ws/rs485")
+async def websocket_rs485_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time RS485 modules data"""
+    try:
+        # Accept WebSocket connection
+        await websocket.accept()
+        logger.info("📡 RS485 WebSocket connection accepted")
+        
+        # Add to RS485 WebSocket service
+        from app.services.websocket_rs485_service import websocket_rs485_service
+        await websocket_rs485_service.add_connection(websocket)
+        
+        # Send initial RS485 data directly
+        try:
+            from app.services.rs485_service import rs485_service
+            
+            # Get initial modules data
+            modules = await rs485_service.get_modules()
+            bus_health = await rs485_service.get_bus_health()
+            
+            # Send initial data directly
+            initial_message = {
+                "type": "rs485_initial",
+                "data": {
+                    "modules": [module.model_dump() for module in modules],
+                    "bus_health": bus_health.model_dump(),
+                    "timestamp": datetime.now().isoformat()
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            await websocket.send_text(json.dumps(initial_message, default=str))
+            logger.info("📨 Sent initial RS485 data to client")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to send initial RS485 data: {e}")
+        
+        # Handle WebSocket communication
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                logger.info(f"📡 Received RS485 WebSocket message: {data}")
+                
+                # Parse and handle message
+                try:
+                    message = json.loads(data)
+                    message_type = message.get('type')
+                    
+                    if message_type == 'ping':
+                        # Send pong response
+                        pong_message = {
+                            "type": "pong",
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        await websocket.send_text(json.dumps(pong_message, default=str))
+                        
+                    elif message_type == 'get_modules':
+                        # Send current modules data
+                        modules = await rs485_service.get_modules()
+                        modules_message = {
+                            "type": "rs485_modules",
+                            "data": {
+                                "modules": [module.model_dump() for module in modules]
+                            },
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        await websocket.send_text(json.dumps(modules_message, default=str))
+                        
+                except json.JSONDecodeError:
+                    logger.warning(f"⚠️ Invalid JSON received: {data}")
+                
+        except WebSocketDisconnect:
+            logger.info("🔌 RS485 WebSocket client disconnected")
+        except Exception as e:
+            logger.error(f"❌ RS485 WebSocket communication error: {e}")
+            
+    except Exception as e:
+        logger.error(f"❌ RS485 WebSocket endpoint error: {e}")
+    finally:
+        # Remove from RS485 WebSocket service
+        try:
+            from app.services.websocket_rs485_service import websocket_rs485_service
+            await websocket_rs485_service.remove_connection(websocket)
+        except Exception as e:
+            logger.error(f"❌ Failed to remove WebSocket connection: {e}")
 
 
 @router.websocket("/ws/logs")
