@@ -47,6 +47,50 @@ class RS485ModuleRealTime(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
+# New Telemetry Schemas for Issue #91
+class RS485RegisterInfo(BaseModel):
+    """RS485 Module Register Information - Issue #91"""
+    address: str = Field(..., description="Register address (e.g., '0x0001')")
+    name: str = Field(..., description="Register name (e.g., 'Battery Level')")
+    value: float = Field(..., description="Current register value")
+    unit: str = Field(..., description="Value unit (e.g., '%', 'V', 'A', '°C')")
+    mode: str = Field(..., description="Register mode: 'R' (read), 'W' (write), 'RW' (read-write)")
+    status: str = Field(..., description="Register status: 'normal', 'warning', 'critical'")
+    threshold_warning: Optional[float] = Field(None, description="Warning threshold value")
+    threshold_critical: Optional[float] = Field(None, description="Critical threshold value")
+
+
+class RS485ModuleTelemetry(BaseModel):
+    """RS485 Module Telemetry Data - Issue #91"""
+    module_addr: str = Field(..., description="Module address (e.g., '0x02')")
+    module_name: str = Field(..., description="Module name (e.g., 'Power')")
+    registers: List[RS485RegisterInfo] = Field(..., description="List of module registers")
+    last_updated: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+
+
+class RS485TelemetryResponse(BaseModel):
+    """Response for RS485 Telemetry API - Issue #91"""
+    success: bool = Field(..., description="Request success")
+    data: RS485ModuleTelemetry = Field(..., description="Module telemetry data")
+    message: str = Field(..., description="Response message")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class RS485RegisterUpdateRequest(BaseModel):
+    """Request to update writable register - Issue #91"""
+    register_address: str = Field(..., description="Register address to update (e.g., '0x0001')")
+    value: float = Field(..., description="New register value")
+    force: bool = Field(default=False, description="Force update even if value is out of safe range")
+
+
+class RS485RegisterUpdateResponse(BaseModel):
+    """Response for register update - Issue #91"""
+    success: bool = Field(..., description="Update success")
+    data: Dict[str, Any] = Field(..., description="Update result data")
+    message: str = Field(..., description="Response message")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
 class RS485ModuleInfo(BaseModel):
     """RS485 Module Information - Match with firmware format"""
     address: int = Field(..., description="Module address (0x01-0x0F)", ge=1, le=15)

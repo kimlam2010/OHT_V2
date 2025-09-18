@@ -15,7 +15,8 @@ from app.schemas.rs485 import (
     RS485ModulesResponse, RS485ModuleResponse, RS485BusHealthResponse,
     RS485DiscoveryResponse, RS485DiscoveryResultsResponse, 
     RS485ModuleActionRequest, RS485ModuleActionResponse,
-    RS485BusActionRequest, RS485BusActionResponse
+    RS485BusActionRequest, RS485BusActionResponse,
+    RS485TelemetryResponse, RS485RegisterUpdateRequest, RS485RegisterUpdateResponse
 )
 
 logger = logging.getLogger(__name__)
@@ -364,5 +365,83 @@ async def get_rs485_health(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get RS485 system health: {str(e)}"
+        )
+
+
+# New Telemetry Endpoints for Issue #91
+@router.get("/modules/{address}/telemetry", response_model=RS485TelemetryResponse)
+async def get_module_telemetry(
+    address: int = Path(..., description="Module address (1-15)", ge=1, le=15),
+    current_user: User = Depends(require_permission("monitoring", "read"))
+):
+    """Get module telemetry table - Issue #91"""
+    try:
+        logger.info(f"📊 Getting telemetry for RS485 module 0x{address:02X}")
+        
+        telemetry = await rs485_service.get_module_telemetry(address)
+        
+        if not telemetry:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"RS485 module 0x{address:02X} not found or no telemetry available"
+            )
+            
+        return RS485TelemetryResponse(
+            success=True,
+            data=telemetry,
+            message=f"Retrieved telemetry for module 0x{address:02X} ({telemetry.module_name}) with {len(telemetry.registers)} registers",
+            timestamp=datetime.utcnow()
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to get telemetry for module 0x{address:02X}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get module telemetry: {str(e)}"
+        )
+
+
+@router.post("/modules/{address}/telemetry", response_model=RS485RegisterUpdateResponse)
+async def update_module_register(
+    request: RS485RegisterUpdateRequest,
+    address: int = Path(..., description="Module address (1-15)", ge=1, le=15),
+    current_user: User = Depends(require_permission("system", "configure"))
+):
+    """Update module register (if writable) - Issue #91"""
+    try:
+        logger.info(f"✏️ Updating register {request.register_address} on module 0x{address:02X}")
+        
+        result = await rs485_service.update_module_register(
+            address=address,
+            register_address=request.register_address,
+            value=request.value,
+            force=request.force
+        )
+        
+        # Broadcast register update via WebSocket
+        try:
+            from app.services.websocket_rs485_service import websocket_rs485_service
+            await websocket_rs485_service.broadcast_register_update(
+                module_addr=address,
+                register_addr=request.register_address,
+                update_result=result
+            )
+        except Exception as ws_error:
+            logger.warning(f"⚠️ Failed to broadcast register update via WebSocket: {ws_error}")
+        
+        return RS485RegisterUpdateResponse(
+            success=result.get("success", False),
+            data=result,
+            message=result.get("message", f"Register update completed"),
+            timestamp=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to update register {request.register_address} on module 0x{address:02X}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update module register: {str(e)}"
         )
 
