@@ -26,6 +26,7 @@
 #include "travel_motor_module_handler.h"
 #include "api_manager.h"
 #include "api_endpoints.h"
+#include "app/websocket_server.h"
 #include "constants.h"
 
 static volatile sig_atomic_t g_should_run = 1;
@@ -317,6 +318,34 @@ int main(int argc, char **argv) {
                 
                 // Register Minimal API v1 endpoints
                 extern int api_register_minimal_endpoints(void);
+                
+                // Initialize WebSocket Server on port 8081
+                ws_server_config_t ws_config = {
+                    .port = 8081,
+                    .max_clients = 10,
+                    .timeout_ms = 60000,
+                    .max_message_size = 4096,
+                    .max_frame_size = 8192,
+                    .ping_interval_ms = 30000,
+                    .pong_timeout_ms = 5000,
+                    .enable_compression = false,
+                    .enable_authentication = false,
+                    .server_name = "OHT-50-WebSocket"
+                };
+                
+                hal_status_t ws_result = ws_server_init(&ws_config);
+                if (ws_result != HAL_STATUS_OK) {
+                    fprintf(stderr, "[OHT-50] ❌ WebSocket Server init failed: %d (continuing)\n", ws_result);
+                } else {
+                    printf("[OHT-50] ✅ WebSocket Server initialized\n");
+                    
+                    ws_result = ws_server_start();
+                    if (ws_result != HAL_STATUS_OK) {
+                        fprintf(stderr, "[OHT-50] ❌ WebSocket Server start failed: %d (continuing)\n", ws_result);
+                    } else {
+                        printf("[OHT-50] ✅ WebSocket Server started on port 8081\n");
+                    }
+                }
                 (void)api_register_minimal_endpoints();
                 printf("[OHT-50] ✅ Minimal API v1 endpoints registered\n");
             }
@@ -357,7 +386,7 @@ int main(int argc, char **argv) {
     (void)last_comm_poll_ms;
     (void)last_discovery_poll_ms;
     (void)last_motor_poll_ms;
-    uint64_t last_module_manager_poll_ms = now_ms();
+    // uint64_t last_module_manager_poll_ms = now_ms(); // Unused - commented out
     bool heartbeat_on = false;
 
     // Power module handler instance

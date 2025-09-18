@@ -11,3 +11,9 @@ export function useRegister() {
     mutationFn: authApi.register,
   })
 }
+
+export function useLogout() {
+  return useMutation({
+    mutationFn: authApi.logout,
+  })
+}

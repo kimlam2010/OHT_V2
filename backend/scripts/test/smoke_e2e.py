@@ -1,6 +1,6 @@
 import os
 os.environ.setdefault("TESTING", "true")
-os.environ.setdefault("USE_FIRMWARE_MOCK", "true")
+os.environ.setdefault("USE_MOCK_FIRMWARE", "true")
 
 from fastapi.testclient import TestClient
 from app.main import app

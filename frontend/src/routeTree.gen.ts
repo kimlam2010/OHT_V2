@@ -11,60 +11,72 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MainLayoutRouteImport } from './routes/_main-layout'
 
-const DashboardRouteLazyRouteImport = createFileRoute('/dashboard')()
 const AuthRouteLazyRouteImport = createFileRoute('/_auth')()
 const IndexLazyRouteImport = createFileRoute('/')()
-const DashboardIndexLazyRouteImport = createFileRoute('/dashboard/')()
 const AuthLoginLazyRouteImport = createFileRoute('/_auth/login')()
+const MainLayoutDashboardRouteLazyRouteImport = createFileRoute(
+  '/_main-layout/dashboard',
+)()
+const MainLayoutDashboardIndexLazyRouteImport = createFileRoute(
+  '/_main-layout/dashboard/',
+)()
 
-const DashboardRouteLazyRoute = DashboardRouteLazyRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() =>
-  import('./routes/dashboard/route.lazy').then((d) => d.Route),
-)
 const AuthRouteLazyRoute = AuthRouteLazyRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/_auth/route.lazy').then((d) => d.Route))
+const MainLayoutRoute = MainLayoutRouteImport.update({
+  id: '/_main-layout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexLazyRoute = IndexLazyRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
-const DashboardIndexLazyRoute = DashboardIndexLazyRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardRouteLazyRoute,
-} as any).lazy(() =>
-  import('./routes/dashboard/index.lazy').then((d) => d.Route),
-)
 const AuthLoginLazyRoute = AuthLoginLazyRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => AuthRouteLazyRoute,
 } as any).lazy(() => import('./routes/_auth/login.lazy').then((d) => d.Route))
+const MainLayoutDashboardRouteLazyRoute =
+  MainLayoutDashboardRouteLazyRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => MainLayoutRoute,
+  } as any).lazy(() =>
+    import('./routes/_main-layout/dashboard/route.lazy').then((d) => d.Route),
+  )
+const MainLayoutDashboardIndexLazyRoute =
+  MainLayoutDashboardIndexLazyRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => MainLayoutDashboardRouteLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_main-layout/dashboard/index.lazy').then((d) => d.Route),
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
-  '/dashboard': typeof DashboardRouteLazyRouteWithChildren
+  '/dashboard': typeof MainLayoutDashboardRouteLazyRouteWithChildren
   '/login': typeof AuthLoginLazyRoute
-  '/dashboard/': typeof DashboardIndexLazyRoute
+  '/dashboard/': typeof MainLayoutDashboardIndexLazyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
   '/login': typeof AuthLoginLazyRoute
-  '/dashboard': typeof DashboardIndexLazyRoute
+  '/dashboard': typeof MainLayoutDashboardIndexLazyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexLazyRoute
+  '/_main-layout': typeof MainLayoutRouteWithChildren
   '/_auth': typeof AuthRouteLazyRouteWithChildren
-  '/dashboard': typeof DashboardRouteLazyRouteWithChildren
+  '/_main-layout/dashboard': typeof MainLayoutDashboardRouteLazyRouteWithChildren
   '/_auth/login': typeof AuthLoginLazyRoute
-  '/dashboard/': typeof DashboardIndexLazyRoute
+  '/_main-layout/dashboard/': typeof MainLayoutDashboardIndexLazyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -74,32 +86,33 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_main-layout'
     | '/_auth'
-    | '/dashboard'
+    | '/_main-layout/dashboard'
     | '/_auth/login'
-    | '/dashboard/'
+    | '/_main-layout/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
+  MainLayoutRoute: typeof MainLayoutRouteWithChildren
   AuthRouteLazyRoute: typeof AuthRouteLazyRouteWithChildren
-  DashboardRouteLazyRoute: typeof DashboardRouteLazyRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteLazyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_auth': {
       id: '/_auth'
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthRouteLazyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main-layout': {
+      id: '/_main-layout'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof MainLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -109,13 +122,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexLazyRouteImport
-      parentRoute: typeof DashboardRouteLazyRoute
-    }
     '/_auth/login': {
       id: '/_auth/login'
       path: '/login'
@@ -123,8 +129,49 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginLazyRouteImport
       parentRoute: typeof AuthRouteLazyRoute
     }
+    '/_main-layout/dashboard': {
+      id: '/_main-layout/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof MainLayoutDashboardRouteLazyRouteImport
+      parentRoute: typeof MainLayoutRoute
+    }
+    '/_main-layout/dashboard/': {
+      id: '/_main-layout/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof MainLayoutDashboardIndexLazyRouteImport
+      parentRoute: typeof MainLayoutDashboardRouteLazyRoute
+    }
   }
 }
+
+interface MainLayoutDashboardRouteLazyRouteChildren {
+  MainLayoutDashboardIndexLazyRoute: typeof MainLayoutDashboardIndexLazyRoute
+}
+
+const MainLayoutDashboardRouteLazyRouteChildren: MainLayoutDashboardRouteLazyRouteChildren =
+  {
+    MainLayoutDashboardIndexLazyRoute: MainLayoutDashboardIndexLazyRoute,
+  }
+
+const MainLayoutDashboardRouteLazyRouteWithChildren =
+  MainLayoutDashboardRouteLazyRoute._addFileChildren(
+    MainLayoutDashboardRouteLazyRouteChildren,
+  )
+
+interface MainLayoutRouteChildren {
+  MainLayoutDashboardRouteLazyRoute: typeof MainLayoutDashboardRouteLazyRouteWithChildren
+}
+
+const MainLayoutRouteChildren: MainLayoutRouteChildren = {
+  MainLayoutDashboardRouteLazyRoute:
+    MainLayoutDashboardRouteLazyRouteWithChildren,
+}
+
+const MainLayoutRouteWithChildren = MainLayoutRoute._addFileChildren(
+  MainLayoutRouteChildren,
+)
 
 interface AuthRouteLazyRouteChildren {
   AuthLoginLazyRoute: typeof AuthLoginLazyRoute
@@ -138,21 +185,10 @@ const AuthRouteLazyRouteWithChildren = AuthRouteLazyRoute._addFileChildren(
   AuthRouteLazyRouteChildren,
 )
 
-interface DashboardRouteLazyRouteChildren {
-  DashboardIndexLazyRoute: typeof DashboardIndexLazyRoute
-}
-
-const DashboardRouteLazyRouteChildren: DashboardRouteLazyRouteChildren = {
-  DashboardIndexLazyRoute: DashboardIndexLazyRoute,
-}
-
-const DashboardRouteLazyRouteWithChildren =
-  DashboardRouteLazyRoute._addFileChildren(DashboardRouteLazyRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
+  MainLayoutRoute: MainLayoutRouteWithChildren,
   AuthRouteLazyRoute: AuthRouteLazyRouteWithChildren,
-  DashboardRouteLazyRoute: DashboardRouteLazyRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

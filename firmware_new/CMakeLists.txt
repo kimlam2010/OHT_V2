@@ -46,10 +46,12 @@ target_link_libraries(oht50_main
     app_managers
     app_modules
     app_api
+    websocket_server
     utils
     pthread
     ssl
     crypto
+    m
 )
 
 # Include directories

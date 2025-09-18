@@ -56,6 +56,26 @@ typedef struct dock_module_handler dock_module_handler_t;
 #define DOCK_CONFIG_DEBOUNCE_TIME_REG     0xA005  // Sensor debounce time (ms)
 #define DOCK_CONFIG_ALIGNMENT_TOLERANCE_REG 0xA006 // Alignment tolerance (degrees * 10)
 
+// System Registers (0x0100-0x0109) - Auto Detect Support
+#define DOCK_DEVICE_ID_REG                0x0100  // Device ID (Modbus slave address)
+#define DOCK_CONFIG_BAUDRATE_REG          0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
+#define DOCK_CONFIG_PARITY_REG            0x0102  // Config parity (0=None, 1=Even, 2=Odd)
+#define DOCK_CONFIG_STOP_BITS_REG         0x0103  // Config stop bits (1=1, 2=2)
+#define DOCK_MODULE_TYPE_REG              0x0104  // Module type (0x0005 = Dock Module)
+#define DOCK_FIRMWARE_VERSION_REG         0x0105  // Firmware version (e.g. 0x0101 = v1.01)
+#define DOCK_HARDWARE_VERSION_REG         0x0106  // Hardware version (e.g. 0x0101 = v1.01)
+#define DOCK_SYSTEM_STATUS_REG            0x0107  // System status (bit field)
+#define DOCK_SYSTEM_ERROR_REG             0x0108  // System error (global error code)
+#define DOCK_RESET_ERROR_CMD_REG          0x0109  // Reset error command (write 1 to reset all error flags)
+#define DOCK_MODULE_NAME_LOW_REG          0x00F8  // Module name (low word)
+#define DOCK_MODULE_NAME_HIGH_REG         0x00F9  // Module name (high word)
+#define DOCK_HARDWARE_VERSION_ALT_REG     0x00FA  // Hardware version (alternative)
+#define DOCK_SERIAL_NUMBER_LOW_REG        0x00FB  // Serial number (low word)
+#define DOCK_SERIAL_NUMBER_HIGH_REG       0x00FC  // Serial number (high word)
+#define DOCK_BUILD_DATE_LOW_REG           0x00FD  // Build date (low word)
+#define DOCK_BUILD_DATE_HIGH_REG          0x00FE  // Build date (high word)
+#define DOCK_CHECKSUM_REG                 0x00FF  // Register checksum
+
 // ============================================================================
 // DATA STRUCTURES
 // ============================================================================

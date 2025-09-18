@@ -14,6 +14,7 @@ target_include_directories(test_hal_common PRIVATE
 target_link_libraries(test_hal_common
     hal_common
     unity
+    m
 )
 
 # HAL GPIO tests
@@ -30,6 +31,7 @@ target_link_libraries(test_hal_gpio
     hal_gpio
     hal_common
     unity
+    m
 )
 
 # Application API Manager tests - DISABLED due to API incompatibility
@@ -64,6 +66,7 @@ target_link_libraries(test_hal_lidar
     hal_peripherals
     hal_common
     unity
+    m
 )
 
 # HAL RS485 tests
@@ -80,6 +83,7 @@ target_link_libraries(test_hal_rs485
     hal_communication
     hal_common
     unity
+    m
 )
 
 # HAL Network tests
@@ -97,6 +101,7 @@ target_link_libraries(test_hal_network
     hal_communication
     hal_common
     unity
+    m
 )
 
 # HAL E-Stop tests
@@ -363,6 +368,7 @@ target_link_libraries(test_safety_monitor_latency
     app_core
     hal_safety
     unity
+    m
 )
 
 add_executable(test_control_loop_timing
@@ -378,6 +384,7 @@ target_link_libraries(test_control_loop_timing
     hal_common
     app_core
     unity
+    m
 )
 
 add_executable(test_telemetry_json_fields
@@ -394,6 +401,7 @@ target_link_libraries(test_telemetry_json_fields
     hal_common
     app_managers
     unity
+    m
 )
 
 add_test(NAME test_safety_monitor_latency COMMAND test_safety_monitor_latency)

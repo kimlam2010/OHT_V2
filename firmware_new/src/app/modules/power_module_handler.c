@@ -878,7 +878,7 @@ static hal_status_t power_module_read_battery_data(void)
     // Read battery temperature with timeout
     status = power_module_handler_read_register_with_timeout(POWER_REG_TEMPERATURE, &value, POWER_MODULE_TIMEOUT_READ_REGISTER_MS);
     if (status == HAL_STATUS_OK) {
-        // power_module_state.data.battery_temp = (float)value; // Not available in struct
+         power_module_state.data.temperature = (uint8_t)value; // Temperature in °C
     } else if (status == HAL_STATUS_TIMEOUT) {
         printf("[POWER-TIMEOUT] Battery temperature read timeout\n");
     }

@@ -93,7 +93,7 @@ async def login(
         
         # Verify password
         try:
-            if not verify_password(login_data.password, str(user.password_hash)):
+            if not verify_password(login_data.password, str(user.hashed_password)):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid credentials"
@@ -220,7 +220,7 @@ async def register(
         new_user = User(
             username=register_data.username,
             email=register_data.email,
-            password_hash=get_password_hash(register_data.password),
+            hashed_password=get_password_hash(register_data.password),
             role=register_data.role,
             is_active=True
         )

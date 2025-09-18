@@ -43,9 +43,7 @@ void test_complete_end_to_end_workflow(void) {
     
     // Step 3: Register a dummy endpoint
     (void)api_manager_register_endpoint; // In case register is not available in minimal build
-    int handler(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
-        (void)req; (void)res; return HAL_STATUS_OK;
-    }
+    // Removed nested function to avoid warning
     result = HAL_STATUS_OK;
     printf("register_endpoint => %d\n", result);
     TEST_ASSERT_EQUAL(HAL_STATUS_OK, result);

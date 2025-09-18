@@ -7,6 +7,9 @@
  * @task FW-07 (Module Management Implementation)
  */
 
+// Suppress strncpy truncation warning - we handle null termination explicitly
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+
 #include "module_manager.h"
 #include "communication_manager.h"
 #include "hal_common.h"
@@ -599,10 +602,10 @@ static hal_status_t perform_health_check(uint8_t module_id) {
     // Real health check: measure response time and check module status
     uint64_t start_time = hal_get_timestamp_us();
     
-    // Try to read Device ID register (0x00F0) to check if module is responsive
+    // Try to read Device ID register (0x0100) to check if module is responsive
     uint16_t device_id;
     hal_status_t status = comm_manager_modbus_read_holding_registers(
-        module_id, 0x00F0, 1, &device_id);
+        module_id, 0x0100, 1, &device_id);
     
     uint64_t end_time = hal_get_timestamp_us();
     uint32_t response_time = (uint32_t)((end_time - start_time) / 1000ULL); // Convert to ms
@@ -739,17 +742,17 @@ static hal_status_t discover_module_at_address(uint8_t address) {
 	uint16_t device_id, module_type;
 	char version[16] = {0};
     
-    // Read Device ID register (0x00F0) - use single register read
+    // Read Device ID register (0x0100) - use single register read
     hal_status_t status = comm_manager_modbus_read_holding_registers(
-        address, 0x00F0, 1, &device_id);
+        address, 0x0100, 1, &device_id);
     
     if (status != HAL_STATUS_OK) {
         return status; // Module not responding
     }
     
-    // Read Module Type register (0x00F7) - use single register read
+    // Read Module Type register (0x0104) - use single register read
     status = comm_manager_modbus_read_holding_registers(
-        address, 0x00F7, 1, &module_type);
+        address, 0x0104, 1, &module_type);
     
     if (status != HAL_STATUS_OK) {
         return status;
@@ -795,6 +798,7 @@ static hal_status_t discover_module_at_address(uint8_t address) {
     module_info.address = address;
     module_info.type = (module_type_t)module_type;
     strncpy(module_info.version, version, sizeof(module_info.version) - 1);
+    module_info.version[sizeof(module_info.version) - 1] = '\0'; // Ensure null termination
     snprintf(module_info.name, sizeof(module_info.name), "%s_%02X", 
              module_manager_get_type_name(module_info.type), address);
     snprintf(module_info.serial_number, sizeof(module_info.serial_number), 
@@ -861,10 +865,10 @@ static hal_status_t read_module_capabilities(uint8_t address, module_type_t type
 	}
     *capabilities = 0; // Default to no capabilities
     
-    // Read capabilities register (0x0100) - use single register read
+    // Read capabilities register (0x0105) - use single register read
     uint16_t caps_reg;
     hal_status_t status = comm_manager_modbus_read_holding_registers(
-        address, 0x0100, 1, &caps_reg);
+        address, 0x0105, 1, &caps_reg);
     
     if (status == HAL_STATUS_OK) {
         *capabilities = caps_reg;
@@ -1022,7 +1026,9 @@ static void enqueue_ws_event(const char *type, const char *payload_json){
     if (!g_ws_batch_open){
         g_ws_batch_len = 0;
         int n = snprintf(g_ws_batch_buf, sizeof(g_ws_batch_buf), "{\"type\":\"batch\",\"events\":[");
-        if (n < 0) return; g_ws_batch_len = (size_t)n; g_ws_batch_open = true;
+        if (n < 0) return;
+        g_ws_batch_len = (size_t)n;
+        g_ws_batch_open = true;
     } else {
         if (g_ws_batch_len < sizeof(g_ws_batch_buf)) g_ws_batch_buf[g_ws_batch_len++] = ',';
     }

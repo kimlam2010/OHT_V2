@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { ACCESS_TOKEN, REFRESH_TOKEN } from '@/constants/string'
-import { useLogin } from '@/hooks/auth'
+import { useLogin } from '@/hooks'
 import { useUserStore } from '@/stores/user.store'
 import { HTTPError } from '@/types/error.type'
 
@@ -65,8 +65,8 @@ export function LoginForm() {
 
   return (
     <Card className="w-full max-w-sm pt-0 overflow-hidden shadow-2xl">
-      <CardHeader className="flex flex-col gap-2 items-center justify-center bg-primary py-6">
-        <CardTitle className="text-2xl text-white dark:text-black flex items-center gap-2">
+      <CardHeader className="flex flex-col items-center justify-center gap-2 py-6 bg-primary">
+        <CardTitle className="flex items-center gap-2 text-2xl text-white dark:text-black">
           <ShieldCheck className="size-6" />
           OHT-50
         </CardTitle>
@@ -88,7 +88,7 @@ export function LoginForm() {
                       <Input
                         placeholder="Username"
                         {...field}
-                        className="pl-9 rounded-full shadow-sm"
+                        className="rounded-full shadow-sm pl-9"
                       />
                       <User className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     </div>
@@ -109,7 +109,7 @@ export function LoginForm() {
                         type="password"
                         placeholder="Password"
                         {...field}
-                        className="pl-9 rounded-full shadow-sm"
+                        className="rounded-full shadow-sm pl-9"
                       />
                       <Lock className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     </div>
@@ -118,7 +118,7 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full flex items-center gap-2 shadow-sm">
+            <Button type="submit" className="flex items-center w-full gap-2 shadow-sm">
               <LogIn />
               Login to system
             </Button>

@@ -733,6 +733,7 @@ static int serialize_status_json(const telemetry_status_t *status, char *buffer,
     }
     
     const char *health_str = "ok";
+    (void)health_str; // Suppress unused warning
     switch (status->enc.health) {
         case ENCODER_HEALTH_WARNING: health_str = "warning"; break;
         case ENCODER_HEALTH_ERROR: health_str = "error"; break;

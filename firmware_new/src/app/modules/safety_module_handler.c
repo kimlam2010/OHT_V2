@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 // Global safety module handler instance
-static safety_module_handler_t g_safety_module_handler = {0};
+// static safety_module_handler_t g_safety_module_handler = {0}; // Unused - commented out
 static safety_event_callback_t g_event_callback = NULL;
 
 // Default configuration
@@ -238,6 +238,11 @@ hal_status_t safety_module_get_analog_sensor(safety_module_handler_t *handler, u
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
+    // Bounds check to prevent array access warnings
+    if (sensor_number >= 4) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
     *distance = handler->data.analog_sensors[sensor_number];
     return HAL_STATUS_OK;
 }
@@ -252,6 +257,11 @@ hal_status_t safety_module_get_analog_raw(safety_module_handler_t *handler, uint
     }
     
     if (!safety_module_validate_sensor_number(sensor_number)) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Bounds check to prevent array access warnings
+    if (sensor_number >= 4) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
@@ -449,7 +459,11 @@ hal_status_t safety_module_get_zone_level(safety_module_handler_t *handler, uint
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
-    // Get distance for this zone
+    // Get distance for this zone with bounds check
+    if (zone_number >= 4) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
     uint16_t distance = handler->data.analog_sensors[zone_number];
     uint16_t threshold = handler->config.zone_thresholds[zone_number];
     
@@ -595,6 +609,11 @@ hal_status_t safety_module_set_zone_threshold(safety_module_handler_t *handler, 
         return HAL_STATUS_INVALID_PARAMETER;
     }
     
+    // Bounds check to prevent array access warnings
+    if (zone_number >= 4) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
     handler->config.zone_thresholds[zone_number] = threshold;
     return HAL_STATUS_OK;
 }
@@ -609,6 +628,11 @@ hal_status_t safety_module_get_zone_threshold(safety_module_handler_t *handler, 
     }
     
     if (!safety_module_validate_zone_number(zone_number)) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Bounds check to prevent array access warnings
+    if (zone_number >= 4) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
     

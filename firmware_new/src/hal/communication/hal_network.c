@@ -915,7 +915,7 @@ static void* network_monitor_thread_func(void *arg) {
         
         // Check failover if enabled
         if (failover_enabled) {
-            bool connected;
+            bool connected = false; // Initialize to prevent uninitialized warning
             hal_status_t status = hal_network_is_connected(active_network, &connected);
             if (status == HAL_STATUS_OK && !connected) {
                 printf("Network failover: switching to backup\n");

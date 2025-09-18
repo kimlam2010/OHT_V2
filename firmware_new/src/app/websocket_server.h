@@ -94,6 +94,30 @@ typedef struct {
 // WebSocket Message Handler Function Type
 typedef hal_status_t (*ws_message_handler_t)(const char *message, size_t message_length, ws_client_t *client);
 
+// WebSocket Telemetry Callback Function Type
+typedef hal_status_t (*ws_telemetry_callback_t)(char *telemetry_data, size_t *data_length);
+
+// WebSocket Alert Severity
+typedef enum {
+    WS_ALERT_INFO = 0,
+    WS_ALERT_WARNING = 1,
+    WS_ALERT_CRITICAL = 2
+} ws_alert_severity_t;
+
+// WebSocket Robot Status Structure
+typedef struct {
+    char robot_id[64];
+    char status[32];
+    struct {
+        float x;
+        float y;
+    } position;
+    int battery_level;
+    float temperature;
+    float speed;
+    char connection_status[32];
+} ws_robot_status_t;
+
 // WebSocket Server Configuration Structure
 typedef struct {
     uint16_t port;
@@ -140,11 +164,15 @@ typedef struct {
     ws_client_t clients[WS_SERVER_MAX_CLIENTS];
     uint32_t client_count;
     ws_message_handler_t message_handler;
+    ws_telemetry_callback_t telemetry_callback;
     int server_socket;
     pthread_t server_thread;
+    pthread_t telemetry_thread;
     pthread_mutex_t mutex;
     bool initialized;
     bool running;
+    bool telemetry_streaming;
+    uint32_t telemetry_interval_ms;
 } ws_server_instance_t;
 
 // WebSocket Server Core Functions
@@ -207,15 +235,30 @@ hal_status_t ws_server_log_connection(const char *client_ip, uint16_t client_por
 hal_status_t ws_server_log_message(const char *client_id, const char *message, size_t message_length, bool sent);
 hal_status_t ws_server_log_error(const char *error_message, const char *context);
 
+// WebSocket Server Telemetry Functions
+hal_status_t ws_server_broadcast_telemetry(const char *telemetry_data, size_t data_length);
+hal_status_t ws_server_broadcast_robot_status(const ws_robot_status_t *robot_status);
+hal_status_t ws_server_broadcast_alert(const char *alert_type, const char *alert_message, ws_alert_severity_t severity);
+hal_status_t ws_server_broadcast_heartbeat(void);
+hal_status_t ws_server_start_telemetry_streaming(uint32_t interval_ms);
+hal_status_t ws_server_stop_telemetry_streaming(void);
+hal_status_t ws_server_set_telemetry_callback(ws_telemetry_callback_t callback);
+
 // WebSocket Server Thread Functions
 void* ws_server_thread(void *arg);
 void* ws_server_client_thread(void *arg);
+void* ws_server_telemetry_thread(void *arg);
 
 // WebSocket Server Utility Functions
 const char* ws_frame_type_to_string(ws_frame_type_t frame_type);
 const char* ws_close_code_to_string(ws_close_code_t close_code);
 hal_status_t ws_server_base64_encode(const uint8_t *input, size_t input_length, char *output, size_t output_size);
 hal_status_t ws_server_sha1_hash(const char *input, uint8_t *output);
+
+// WebSocket Server Protocol Handlers (for internal use)
+hal_status_t ws_server_handle_ping(ws_client_t *client);
+hal_status_t ws_server_handle_pong(ws_client_t *client);
+hal_status_t ws_server_handle_close(ws_client_t *client, ws_close_code_t code, const char *reason);
 
 // WebSocket Server Global Instance
 extern ws_server_instance_t g_ws_server;

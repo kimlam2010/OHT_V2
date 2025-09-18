@@ -69,23 +69,25 @@ typedef struct safety_module_handler safety_module_handler_t;
 #define SAFETY_AUTO_RESET_ENABLE_REG     0x0052
 #define SAFETY_SAFETY_MODE_REG           0x0053
 
-#define SAFETY_DEVICE_ID_REG             0x00F0
-#define SAFETY_FIRMWARE_VERSION_REG      0x00F1
-#define SAFETY_SYSTEM_STATUS_REG         0x00F2  // Auto-detect system status
-#define SAFETY_REG_SYSTEM_STATUS         0x00F2  // System status register
-#define SAFETY_SYSTEM_ERROR_REG          0x00F3
-#define SAFETY_RESET_ERROR_CMD_REG       0x00F4
-#define SAFETY_CONFIG_BAUDRATE_REG       0x00F5
-#define SAFETY_CONFIG_PARITY_REG         0x00F6
-#define SAFETY_MODULE_TYPE_REG           0x00F7
-#define SAFETY_MODULE_NAME_LOW_REG       0x00F8
-#define SAFETY_MODULE_NAME_HIGH_REG      0x00F9
-#define SAFETY_HARDWARE_VERSION_REG      0x00FA
-#define SAFETY_SERIAL_NUMBER_LOW_REG     0x00FB
-#define SAFETY_SERIAL_NUMBER_HIGH_REG    0x00FC
-#define SAFETY_BUILD_DATE_LOW_REG        0x00FD
-#define SAFETY_BUILD_DATE_HIGH_REG       0x00FE
-#define SAFETY_CHECKSUM_REG              0x00FF
+// System Registers (0x0100-0x0109) - Auto Detect Support
+#define SAFETY_DEVICE_ID_REG             0x0100  // Device ID (Modbus slave address)
+#define SAFETY_CONFIG_BAUDRATE_REG       0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
+#define SAFETY_CONFIG_PARITY_REG         0x0102  // Config parity (0=None, 1=Even, 2=Odd)
+#define SAFETY_CONFIG_STOP_BITS_REG      0x0103  // Config stop bits (1=1, 2=2)
+#define SAFETY_MODULE_TYPE_REG           0x0104  // Module type (0x0003 = Safety Module)
+#define SAFETY_FIRMWARE_VERSION_REG      0x0105  // Firmware version (e.g. 0x0101 = v1.01)
+#define SAFETY_HARDWARE_VERSION_REG      0x0106  // Hardware version (e.g. 0x0101 = v1.01)
+#define SAFETY_SYSTEM_STATUS_REG         0x0107  // System status (bit field)
+#define SAFETY_SYSTEM_ERROR_REG          0x0108  // System error (global error code)
+#define SAFETY_RESET_ERROR_CMD_REG       0x0109  // Reset error command (write 1 to reset all error flags)
+#define SAFETY_MODULE_NAME_LOW_REG       0x00F8  // Module name (low word)
+#define SAFETY_MODULE_NAME_HIGH_REG      0x00F9  // Module name (high word)
+#define SAFETY_HARDWARE_VERSION_ALT_REG  0x00FA  // Hardware version (alternative)
+#define SAFETY_SERIAL_NUMBER_LOW_REG     0x00FB  // Serial number (low word)
+#define SAFETY_SERIAL_NUMBER_HIGH_REG    0x00FC  // Serial number (high word)
+#define SAFETY_BUILD_DATE_LOW_REG        0x00FD  // Build date (low word)
+#define SAFETY_BUILD_DATE_HIGH_REG       0x00FE  // Build date (high word)
+#define SAFETY_CHECKSUM_REG              0x00FF  // Register checksum
 
 // Safety Module Fault Codes - Using unified safety_fault_t from safety_types.h
 

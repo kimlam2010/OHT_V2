@@ -34,15 +34,25 @@ typedef struct motor_module_handler motor_module_handler_t;
 #define MOTOR_MODULE_RESPONSE_TIME_MS   100    // < 100ms response time
 
 // Motor Module Register Map (Based on Real Hardware - Driver_2_Motor)
-// System Registers (0x00F0-0x00FF)
-#define MOTOR_DEVICE_ID_REG             0x00F0
-#define MOTOR_FIRMWARE_VERSION_REG      0x00F1
-#define MOTOR_HARDWARE_VERSION_REG      0x00F2
-#define MOTOR_STATUS_REG                0x00F3
-#define MOTOR_ERROR_CODE_REG            0x00F4
-#define MOTOR_MODULE_TYPE_REG           0x00F5
-#define MOTOR_SERIAL_NUMBER_REG         0x00F6
-#define MOTOR_BUILD_NUMBER_REG          0x00F7
+// System Registers (0x0100-0x0109) - Auto Detect Support
+#define MOTOR_DEVICE_ID_REG             0x0100  // Device ID (Modbus slave address)
+#define MOTOR_CONFIG_BAUDRATE_REG       0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
+#define MOTOR_CONFIG_PARITY_REG         0x0102  // Config parity (0=None, 1=Even, 2=Odd)
+#define MOTOR_CONFIG_STOP_BITS_REG      0x0103  // Config stop bits (1=1, 2=2)
+#define MOTOR_MODULE_TYPE_REG           0x0104  // Module type (0x0001 = Travel Motor Module)
+#define MOTOR_FIRMWARE_VERSION_REG      0x0105  // Firmware version (e.g. 0x0101 = v1.01)
+#define MOTOR_HARDWARE_VERSION_REG      0x0106  // Hardware version (e.g. 0x0101 = v1.01)
+#define MOTOR_SYSTEM_STATUS_REG         0x0107  // System status (bit field)
+#define MOTOR_SYSTEM_ERROR_REG          0x0108  // System error (global error code)
+#define MOTOR_RESET_ERROR_CMD_REG       0x0109  // Reset error command (write 1 to reset all error flags)
+#define MOTOR_MODULE_NAME_LOW_REG       0x00F8  // Module name (low word)
+#define MOTOR_MODULE_NAME_HIGH_REG      0x00F9  // Module name (high word)
+#define MOTOR_HARDWARE_VERSION_ALT_REG  0x00FA  // Hardware version (alternative)
+#define MOTOR_SERIAL_NUMBER_LOW_REG     0x00FB  // Serial number (low word)
+#define MOTOR_SERIAL_NUMBER_HIGH_REG    0x00FC  // Serial number (high word)
+#define MOTOR_BUILD_DATE_LOW_REG        0x00FD  // Build date (low word)
+#define MOTOR_BUILD_DATE_HIGH_REG       0x00FE  // Build date (high word)
+#define MOTOR_CHECKSUM_REG              0x00FF  // Register checksum
 
 // Motor Control Registers (0x0000-0x000F)
 #define MOTOR_ENABLE_REG                0x0000

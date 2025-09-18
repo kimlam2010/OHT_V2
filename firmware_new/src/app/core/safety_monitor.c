@@ -658,6 +658,7 @@ static hal_status_t safety_monitor_check_zones(void)
     
     // OPTIMIZATION: Use static buffer to avoid stack allocation
     static uint8_t zone_status_buffer[MAX_SAFETY_ZONES];
+    (void)zone_status_buffer; // Suppress unused warning
     uint8_t violation_count = 0;
     
     // Check each configured safety zone with optimized logic

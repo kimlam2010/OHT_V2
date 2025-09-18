@@ -94,18 +94,20 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define POWER_REG_RL_FAUL                  0x004C  // State of Faul relay
 #define POWER_REG_USE_V_THS                0x004D  // Voltage usage threshold (/100.0 scaling)
 
-// System Registers (0x00F0-0x00FF) - Auto Detect Support
-#define POWER_REG_DEVICE_ID                0x00F0  // Device ID (Modbus slave address)
-#define POWER_REG_FIRMWARE_VERSION         0x00F1  // Firmware version (e.g. 0x0101 = v1.01)
-#define POWER_REG_SYSTEM_STATUS            0x00F2  // System status (bit field)
-#define POWER_REG_SYSTEM_ERROR             0x00F3  // System error (global error code)
-#define POWER_REG_RESET_ERROR_CMD          0x00F4  // Reset error command (write 1 to reset all error flags)
-#define POWER_REG_CONFIG_BAUDRATE          0x00F5  // Config baudrate (1=9600, 2=19200, 3=38400,...)
-#define POWER_REG_CONFIG_PARITY            0x00F6  // Config parity (0=None, 1=Even, 2=Odd)
-#define POWER_REG_MODULE_TYPE              0x00F7  // Module type (0x0002 = Power Module)
+// System Registers (0x0100-0x0109) - Auto Detect Support
+#define POWER_REG_DEVICE_ID                0x0100  // Device ID (Modbus slave address)
+#define POWER_REG_CONFIG_BAUDRATE          0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
+#define POWER_REG_CONFIG_PARITY            0x0102  // Config parity (0=None, 1=Even, 2=Odd)
+#define POWER_REG_CONFIG_STOP_BITS         0x0103  // Config stop bits (1=1, 2=2)
+#define POWER_REG_MODULE_TYPE              0x0104  // Module type (0x0002 = Power Module)
+#define POWER_REG_FIRMWARE_VERSION         0x0105  // Firmware version (e.g. 0x0101 = v1.01)
+#define POWER_REG_HARDWARE_VERSION         0x0106  // Hardware version (e.g. 0x0101 = v1.01)
+#define POWER_REG_SYSTEM_STATUS            0x0107  // System status (bit field)
+#define POWER_REG_SYSTEM_ERROR             0x0108  // System error (global error code)
+#define POWER_REG_RESET_ERROR_CMD          0x0109  // Reset error command (write 1 to reset all error flags)
 #define POWER_REG_MODULE_NAME_LOW          0x00F8  // Module name (low word)
 #define POWER_REG_MODULE_NAME_HIGH         0x00F9  // Module name (high word)
-#define POWER_REG_HARDWARE_VERSION         0x00FA  // Hardware version
+#define POWER_REG_HARDWARE_VERSION_ALT     0x00FA  // Hardware version (alternative)
 #define POWER_REG_SERIAL_NUMBER_LOW        0x00FB  // Serial number (low word)
 #define POWER_REG_SERIAL_NUMBER_HIGH       0x00FC  // Serial number (high word)
 #define POWER_REG_BUILD_DATE_LOW           0x00FD  // Build date (low word)
@@ -162,18 +164,20 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define SAFETY_AUTO_RESET_ENABLE_REG       0x0052  // Auto reset enable
 #define SAFETY_SAFETY_MODE_REG             0x0053  // Safety mode
 
-// System Registers (0x00F0-0x00FF) - Auto Detect Support
-#define SAFETY_DEVICE_ID_REG               0x00F0  // Device ID (Modbus slave address)
-#define SAFETY_FIRMWARE_VERSION_REG        0x00F1  // Firmware version
-#define SAFETY_SYSTEM_STATUS_REG           0x00F2  // System status (auto-detect)
-#define SAFETY_SYSTEM_ERROR_REG            0x00F3  // System error
-#define SAFETY_RESET_ERROR_CMD_REG         0x00F4  // Reset error command
-#define SAFETY_CONFIG_BAUDRATE_REG         0x00F5  // Config baudrate
-#define SAFETY_CONFIG_PARITY_REG           0x00F6  // Config parity
-#define SAFETY_MODULE_TYPE_REG             0x00F7  // Module type (0x0003 = Safety Module)
+// System Registers (0x0100-0x0109) - Auto Detect Support
+#define SAFETY_DEVICE_ID_REG               0x0100  // Device ID (Modbus slave address)
+#define SAFETY_CONFIG_BAUDRATE_REG         0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
+#define SAFETY_CONFIG_PARITY_REG           0x0102  // Config parity (0=None, 1=Even, 2=Odd)
+#define SAFETY_CONFIG_STOP_BITS_REG        0x0103  // Config stop bits (1=1, 2=2)
+#define SAFETY_MODULE_TYPE_REG             0x0104  // Module type (0x0003 = Safety Module)
+#define SAFETY_FIRMWARE_VERSION_REG        0x0105  // Firmware version (e.g. 0x0101 = v1.01)
+#define SAFETY_HARDWARE_VERSION_REG        0x0106  // Hardware version (e.g. 0x0101 = v1.01)
+#define SAFETY_SYSTEM_STATUS_REG           0x0107  // System status (bit field)
+#define SAFETY_SYSTEM_ERROR_REG            0x0108  // System error (global error code)
+#define SAFETY_RESET_ERROR_CMD_REG         0x0109  // Reset error command (write 1 to reset all error flags)
 #define SAFETY_MODULE_NAME_LOW_REG         0x00F8  // Module name (low word)
 #define SAFETY_MODULE_NAME_HIGH_REG        0x00F9  // Module name (high word)
-#define SAFETY_HARDWARE_VERSION_REG        0x00FA  // Hardware version
+#define SAFETY_HARDWARE_VERSION_ALT_REG    0x00FA  // Hardware version (alternative)
 #define SAFETY_SERIAL_NUMBER_LOW_REG       0x00FB  // Serial number (low word)
 #define SAFETY_SERIAL_NUMBER_HIGH_REG      0x00FC  // Serial number (high word)
 #define SAFETY_BUILD_DATE_LOW_REG          0x00FD  // Build date (low word)
@@ -229,19 +233,20 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define DC_MOTOR_REG_DO2_ASSIGNMENT       0x0034  // DO2 assignment
 
 // System Registers (0x0100-0x0106)
+// Auto Detect Support Registers (0x0100-0x0109) - Unified
 #define DC_MOTOR_REG_DEVICE_ID            0x0100  // Device ID (Modbus slave address)
-#define DC_MOTOR_REG_FIRMWARE_VERSION     0x0101  // Firmware version
-#define DC_MOTOR_REG_SYSTEM_STATUS        0x0102  // System status (bit field)
-#define DC_MOTOR_REG_SYSTEM_ERROR         0x0103  // System error (global error code)
-#define DC_MOTOR_REG_RESET_ERROR_CMD      0x0104  // Reset error command
-#define DC_MOTOR_REG_CONFIG_BAUDRATE      0x0105  // Config baudrate
-#define DC_MOTOR_REG_CONFIG_PARITY        0x0106  // Config parity
-
-// Auto Detect Support Registers (0x00F7-0x00FF)
-#define DC_MOTOR_REG_MODULE_TYPE          0x00F7  // Module type (0x0004 = Travel Motor)
+#define DC_MOTOR_REG_CONFIG_BAUDRATE      0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
+#define DC_MOTOR_REG_CONFIG_PARITY        0x0102  // Config parity (0=None, 1=Even, 2=Odd)
+#define DC_MOTOR_REG_CONFIG_STOP_BITS     0x0103  // Config stop bits (1=1, 2=2)
+#define DC_MOTOR_REG_MODULE_TYPE          0x0104  // Module type (0x0004 = Travel Motor)
+#define DC_MOTOR_REG_FIRMWARE_VERSION     0x0105  // Firmware version (e.g. 0x0101 = v1.01)
+#define DC_MOTOR_REG_HARDWARE_VERSION     0x0106  // Hardware version (e.g. 0x0101 = v1.01)
+#define DC_MOTOR_REG_SYSTEM_STATUS        0x0107  // System status (bit field)
+#define DC_MOTOR_REG_SYSTEM_ERROR         0x0108  // System error (global error code)
+#define DC_MOTOR_REG_RESET_ERROR_CMD      0x0109  // Reset error command (write 1 to reset all error flags)
 #define DC_MOTOR_REG_MODULE_NAME_LOW      0x00F8  // Module name (low word)
 #define DC_MOTOR_REG_MODULE_NAME_HIGH     0x00F9  // Module name (high word)
-#define DC_MOTOR_REG_HARDWARE_VERSION     0x00FA  // Hardware version
+#define DC_MOTOR_REG_HARDWARE_VERSION_ALT 0x00FA  // Hardware version (alternative)
 #define DC_MOTOR_REG_SERIAL_NUMBER_LOW    0x00FB  // Serial number (low word)
 #define DC_MOTOR_REG_SERIAL_NUMBER_HIGH   0x00FC  // Serial number (high word)
 #define DC_MOTOR_REG_BUILD_DATE_LOW       0x00FD  // Build date (low word)
@@ -312,18 +317,20 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 #define DOCK_REG_DOCKING_RETRY_COUNT      0x004E  // Docking retry count
 #define DOCK_REG_DOCKING_SUCCESS_COUNT    0x004F  // Successful docking count
 
-// System Registers (0x00F0-0x00FF) - Auto Detect Support
-#define DOCK_REG_DEVICE_ID                0x00F0  // Device ID (Modbus slave address)
-#define DOCK_REG_FIRMWARE_VERSION         0x00F1  // Firmware version
-#define DOCK_REG_SYSTEM_STATUS            0x00F2  // System status
-#define DOCK_REG_SYSTEM_ERROR             0x00F3  // System error
-#define DOCK_REG_RESET_ERROR_CMD          0x00F4  // Reset error command
-#define DOCK_REG_CONFIG_BAUDRATE          0x00F5  // Config baudrate
-#define DOCK_REG_CONFIG_PARITY            0x00F6  // Config parity
-#define DOCK_REG_MODULE_TYPE              0x00F7  // Module type (0x0005 = Dock Module)
+// System Registers (0x0100-0x0109) - Auto Detect Support
+#define DOCK_REG_DEVICE_ID                0x0100  // Device ID (Modbus slave address)
+#define DOCK_REG_CONFIG_BAUDRATE          0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
+#define DOCK_REG_CONFIG_PARITY            0x0102  // Config parity (0=None, 1=Even, 2=Odd)
+#define DOCK_REG_CONFIG_STOP_BITS         0x0103  // Config stop bits (1=1, 2=2)
+#define DOCK_REG_MODULE_TYPE              0x0104  // Module type (0x0005 = Dock Module)
+#define DOCK_REG_FIRMWARE_VERSION         0x0105  // Firmware version (e.g. 0x0101 = v1.01)
+#define DOCK_REG_HARDWARE_VERSION         0x0106  // Hardware version (e.g. 0x0101 = v1.01)
+#define DOCK_REG_SYSTEM_STATUS            0x0107  // System status (bit field)
+#define DOCK_REG_SYSTEM_ERROR             0x0108  // System error (global error code)
+#define DOCK_REG_RESET_ERROR_CMD          0x0109  // Reset error command (write 1 to reset all error flags)
 #define DOCK_REG_MODULE_NAME_LOW          0x00F8  // Module name (low word)
 #define DOCK_REG_MODULE_NAME_HIGH         0x00F9  // Module name (high word)
-#define DOCK_REG_HARDWARE_VERSION         0x00FA  // Hardware version
+#define DOCK_REG_HARDWARE_VERSION_ALT     0x00FA  // Hardware version (alternative)
 #define DOCK_REG_SERIAL_NUMBER_LOW        0x00FB  // Serial number (low word)
 #define DOCK_REG_SERIAL_NUMBER_HIGH       0x00FC  // Serial number (high word)
 #define DOCK_REG_BUILD_DATE_LOW           0x00FD  // Build date (low word)

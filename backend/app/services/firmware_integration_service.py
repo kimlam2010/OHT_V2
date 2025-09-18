@@ -101,8 +101,8 @@ class FirmwareIntegrationService:
         try:
             logger.info("🔌 Initializing firmware connection to %s", self.firmware_url)
             
-            # Test connection with heartbeat
-            response = await self._send_request("GET", "/api/v1/health")
+            # Test connection with system status (health endpoint doesn't exist)
+            response = await self._send_request("GET", "/api/v1/system/status")
             
             if response.success:
                 self.status = FirmwareStatus.CONNECTED
@@ -278,12 +278,54 @@ class FirmwareIntegrationService:
             Robot status data or None
         """
         try:
-            response = await self._send_request("GET", "/api/v1/robot/status")
+            logger.info("🔍 Getting robot status from Firmware...")
             
-            if response.success and response.data:
-                return response.data
+            # Get system status from firmware
+            logger.debug("📡 Calling /api/v1/system/status")
+            system_response = await self._send_request("GET", "/api/v1/system/status")
+            logger.debug(f"📡 System response: success={system_response.success}, data={system_response.data}")
             
-            return None
+            logger.debug("📡 Calling /api/v1/motion/state")
+            motion_response = await self._send_request("GET", "/api/v1/motion/state")
+            logger.debug(f"📡 Motion response: success={motion_response.success}, data={motion_response.data}")
+            
+            if system_response.success and motion_response.success:
+                # Validate response data
+                if not self._validate_firmware_response(system_response.data, motion_response.data):
+                    logger.error("❌ Invalid Firmware response data")
+                    return None
+                
+                # Combine system and motion data into robot status format
+                robot_status = {
+                    "robot_id": "OHT-50-001",
+                    "status": "idle" if motion_response.data.get("v", 0) == 0 else "moving",
+                    "mode": "auto",
+                    "position": {
+                        "x": motion_response.data.get("x_est", 0.0),
+                        "y": 0.0,  # Y position not available in motion state
+                        "z": 0.0
+                    },
+                    "speed": motion_response.data.get("v", 0.0),
+                    "target_speed": motion_response.data.get("target_v", 0.0),
+                    "remaining_distance": motion_response.data.get("remaining", 0.0),
+                    "battery_level": None,  # MISSING: Firmware doesn't provide battery level
+                    "temperature": None,     # MISSING: Firmware doesn't provide temperature
+                    "safety": {
+                        "estop": motion_response.data.get("safety", {}).get("estop", False),
+                        "p95": motion_response.data.get("safety", {}).get("p95", 0)
+                    },
+                    "docking": motion_response.data.get("docking", "IDLE"),
+                    "health": motion_response.data.get("health", False),
+                    "freshness_ms": motion_response.data.get("freshness_ms", 0),
+                    "system": system_response.data.get("system", "OHT-50"),
+                    "system_status": system_response.data.get("status", "ok"),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                logger.info(f"✅ Successfully got robot status: {robot_status}")
+                return robot_status
+            else:
+                logger.warning(f"⚠️ Failed to get complete robot status: system_success={system_response.success}, motion_success={motion_response.success}")
+                return None
             
         except Exception as e:
             logger.error("❌ Failed to get robot status: %s", e)
@@ -351,7 +393,7 @@ class FirmwareIntegrationService:
             True if firmware is responsive
         """
         try:
-            response = await self._send_request("GET", "/api/v1/health")
+            response = await self._send_request("GET", "/api/v1/system/status")
             
             if response.success:
                 self.status = FirmwareStatus.CONNECTED
@@ -368,6 +410,37 @@ class FirmwareIntegrationService:
             self.connection_errors += 1
             logger.error("❌ Firmware heartbeat failed: %s", e)
             return False
+    
+    async def get_telemetry_data(self) -> Optional[Dict[str, Any]]:
+        """
+        Get telemetry data from firmware
+        
+        Returns:
+            Telemetry data or None
+        """
+        try:
+            # Get robot status and modules data
+            robot_status = await self.get_robot_status()
+            modules_response = await self._send_request("GET", "/api/v1/modules")
+            
+            if robot_status and modules_response.success:
+                telemetry_data = {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "robot_status": robot_status,
+                    "modules": modules_response.data.get("modules", []),
+                    "system_health": {
+                        "firmware_connected": True,
+                        "modules_count": len(modules_response.data.get("modules", [])),
+                        "active_modules": len([m for m in modules_response.data.get("modules", []) if m.get("status", 0) > 0])
+                    }
+                }
+                return telemetry_data
+            
+            return None
+            
+        except Exception as e:
+            logger.error("❌ Failed to get telemetry data: %s", e)
+            return None
     
     async def get_connection_status(self) -> Dict[str, Any]:
         """
@@ -497,6 +570,66 @@ class FirmwareIntegrationService:
             logger.info("✅ Firmware integration service cleaned up")
         except Exception as e:
             logger.error("❌ Error during cleanup: %s", e)
+    
+    def _validate_firmware_response(self, system_data: Dict[str, Any], motion_data: Dict[str, Any]) -> bool:
+        """
+        Validate Firmware response data
+        
+        Args:
+            system_data: System status data
+            motion_data: Motion state data
+            
+        Returns:
+            True if data is valid
+        """
+        try:
+            # Validate system data
+            if not system_data or not isinstance(system_data, dict):
+                logger.error("❌ Invalid system data: not a dict or empty")
+                return False
+            
+            # System data is nested in "data" field
+            actual_system_data = system_data.get("data", system_data)
+            if "system" not in actual_system_data or "status" not in actual_system_data:
+                logger.error("❌ Invalid system data: missing required fields")
+                return False
+            
+            # Validate motion data
+            if not motion_data or not isinstance(motion_data, dict):
+                logger.error("❌ Invalid motion data: not a dict or empty")
+                return False
+            
+            # Motion data is nested in "data" field
+            actual_motion_data = motion_data.get("data", motion_data)
+            
+            # Check for required motion fields
+            required_fields = ["x_est", "v", "safety"]
+            for field in required_fields:
+                if field not in actual_motion_data:
+                    logger.error(f"❌ Invalid motion data: missing field '{field}'")
+                    return False
+            
+            # Validate data types
+            if not isinstance(actual_motion_data.get("x_est"), (int, float)):
+                logger.error("❌ Invalid motion data: x_est must be numeric")
+                return False
+            
+            if not isinstance(actual_motion_data.get("v"), (int, float)):
+                logger.error("❌ Invalid motion data: v must be numeric")
+                return False
+            
+            # Validate safety data
+            safety = actual_motion_data.get("safety", {})
+            if not isinstance(safety, dict):
+                logger.error("❌ Invalid motion data: safety must be a dict")
+                return False
+            
+            logger.debug("✅ Firmware response data validation passed")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Data validation error: {e}")
+            return False
 
 
 # Global firmware integration service instance

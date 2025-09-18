@@ -144,18 +144,20 @@
 #define POWER_REG_RL_FAULT             0x004C  // State of Fault relay
 #define POWER_REG_USE_V_THS            0x004D  // Setting voltage usage threshold (/100.0 scaling)
 
-// System Registers (0x00F0-0x00FF) - Auto Detect Support
-#define POWER_REG_DEVICE_ID              0x00F0  // Device ID (Modbus slave address)
-#define POWER_REG_FIRMWARE_VERSION       0x00F1  // Firmware version (e.g. 0x0101 = v1.01)
-#define POWER_REG_SYSTEM_STATUS          0x00F2  // System status (bit field)
-#define POWER_REG_SYSTEM_ERROR           0x00F3  // System error (global error code)
-#define POWER_REG_RESET_ERROR_CMD        0x00F4  // Reset error command (write 1 to reset all error flags)
-#define POWER_REG_CONFIG_BAUDRATE        0x00F5  // Config baudrate (1=9600, 2=19200, 3=38400,...)
-#define POWER_REG_CONFIG_PARITY          0x00F6  // Config parity (0=None, 1=Even, 2=Odd)
-#define POWER_REG_MODULE_TYPE            0x00F7  // Module type (0x0002 = Power Module)
+// System Registers (0x0100-0x0109) - Auto Detect Support
+#define POWER_REG_DEVICE_ID              0x0100  // Device ID (Modbus slave address)
+#define POWER_REG_CONFIG_BAUDRATE        0x0101  // Config baudrate (1=9600, 2=19200, 3=38400,...)
+#define POWER_REG_CONFIG_PARITY          0x0102  // Config parity (0=None, 1=Even, 2=Odd)
+#define POWER_REG_CONFIG_STOP_BITS       0x0103  // Config stop bits (1=1, 2=2)
+#define POWER_REG_MODULE_TYPE            0x0104  // Module type (0x0002 = Power Module)
+#define POWER_REG_FIRMWARE_VERSION       0x0105  // Firmware version (e.g. 0x0101 = v1.01)
+#define POWER_REG_HARDWARE_VERSION       0x0106  // Hardware version (e.g. 0x0101 = v1.01)
+#define POWER_REG_SYSTEM_STATUS          0x0107  // System status (bit field)
+#define POWER_REG_SYSTEM_ERROR           0x0108  // System error (global error code)
+#define POWER_REG_RESET_ERROR_CMD        0x0109  // Reset error command (write 1 to reset all error flags)
 #define POWER_REG_MODULE_NAME_LOW        0x00F8  // Module name (low word)
 #define POWER_REG_MODULE_NAME_HIGH       0x00F9  // Module name (high word)
-#define POWER_REG_HARDWARE_VERSION       0x00FA  // Hardware version
+#define POWER_REG_HARDWARE_VERSION_ALT   0x00FA  // Hardware version (alternative)
 #define POWER_REG_SERIAL_NUMBER_LOW      0x00FB  // Serial number (low word)
 #define POWER_REG_SERIAL_NUMBER_HIGH     0x00FC  // Serial number (high word)
 #define POWER_REG_BUILD_DATE_LOW         0x00FD  // Build date (low word)
