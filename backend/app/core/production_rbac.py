@@ -47,7 +47,8 @@ class ProductionRBAC:
                 "safety": ["read", "write", "delete", "override", "acknowledge"],
                 "configuration": ["read", "write", "delete"],
                 "users": ["read", "write", "delete", "manage"],
-                "system": ["read", "write", "delete", "admin"]
+                "system": ["read", "write", "delete", "admin"],
+                "dashboard": ["read", "write", "delete", "admin"]
             },
             "administrator": {
                 "robot": ["read", "write", "delete", "control"],
@@ -56,6 +57,7 @@ class ProductionRBAC:
                 "configuration": ["read", "write", "delete"],
                 "users": ["read", "write", "delete", "manage"],
                 "system": ["read", "write", "delete", "admin"],
+                "dashboard": ["read", "write", "delete", "admin"],
                 "map": ["read", "write", "delete", "control"],
                 "sensors": ["read", "write", "delete", "control"],
                 "localization": ["read", "write", "delete", "control"],
@@ -67,7 +69,8 @@ class ProductionRBAC:
                 "safety": ["read", "override"],
                 "configuration": ["read"],
                 "users": ["read"],
-                "system": ["read"]
+                "system": ["read"],
+                "dashboard": ["read", "write"]
             },
             "viewer": {
                 "robot": ["read"],
@@ -75,7 +78,8 @@ class ProductionRBAC:
                 "safety": ["read"],
                 "configuration": ["read"],
                 "users": ["read"],
-                "system": ["read"]
+                "system": ["read"],
+                "dashboard": ["read"]
             },
             "guest": {
                 "robot": ["read"],
