@@ -1,0 +1,476 @@
+---
+alwaysApply: true
+---
+
+# 🔧 EMBED TEAM RULES - OHT-50
+
+**Phiên bản:** v1.0  
+**Ngày cập nhật:** 2025-01-28  
+**Mục tiêu:** Chuẩn hóa quy trình phát triển phần cứng và firmware cho OHT-50 với focus vào hardware bring-up, driver development và system integration
+
+---
+
+## 🎯 **VAI TRÒ & TRÁCH NHIỆM EMBED TEAM**
+
+### **🔌 EMBED HARDWARE ENGINEER**
+- **Hardware Bring-up:** Platform initialization, pinmux configuration, hardware validation
+- **Driver Development:** HAL drivers, device drivers, hardware abstraction layer
+- **System Integration:** Hardware-firmware integration, performance optimization
+- **Quality Assurance:** Hardware testing, validation, compliance verification
+
+### **⚙️ FIRMWARE ENGINEER** 
+- **Low-level Firmware:** HAL implementation, device control, real-time operations
+- **Communication Protocols:** RS485, CAN, Ethernet, wireless communication
+- **Safety Systems:** E-Stop implementation, safety monitoring, fault handling
+- **Performance Optimization:** Real-time constraints, resource optimization
+
+---
+
+## 🚨 **CRITICAL REQUIREMENTS (BẮT BUỘC)**
+
+### **1. HARDWARE PLATFORM COMPLIANCE**
+```
+✅ PLATFORM CHUẨN: Orange Pi 5B (RK3588)
+✅ RS485 INTERFACE: UART1 (/dev/ttyS1 → /dev/ttyOHT485)
+✅ GPIO CONTROL: GPIO1_D3 (Relay1), GPIO1_D2 (Relay2)
+✅ SAFETY SYSTEM: E-Stop hardware implementation
+✅ LED INDICATORS: 5x status LEDs (Power, System, Comm, Network, Error)
+```
+
+### **2. HARDWARE VALIDATION REQUIREMENTS**
+```
+BEFORE APPROVAL:
+□ Hardware bring-up completed và validated
+□ All interfaces tested và functional
+□ Driver integration verified
+□ Performance benchmarks met
+□ Safety systems validated
+```
+
+### **3. FIRMWARE INTEGRATION COMPLIANCE**
+```
+MUST FOLLOW:
+- HAL API standards theo architecture documents
+- Real-time constraints compliance
+- Safety system integration
+- Communication protocol implementation
+- Error handling và recovery mechanisms
+```
+
+---
+
+## 📋 **QUY TRÌNH DEVELOPMENT 6 BƯỚC (BẮT BUỘC)**
+
+### **BƯỚC 1: HARDWARE SPECIFICATION REVIEW**
+```
+EMBED Hardware Engineer MUST:
+□ Review platform specifications (Orange Pi 5B)
+□ Validate pinout và GPIO assignments
+□ Confirm interface requirements (RS485, GPIO, LEDs)
+□ Approve hardware design và layout
+□ Document hardware specifications
+```
+
+### **BƯỚC 2: HARDWARE BRING-UP**
+```
+EMBED Hardware Engineer MUST:
+□ Initialize platform (power, clock, I/O)
+□ Configure pinmux và pinctrl
+□ Enable UART1 trong device tree
+□ Setup RS485 transceiver (DE/RE, termination)
+□ Validate GPIO control (GPIO1_D3, GPIO1_D2)
+□ Test LED indicators
+□ Create udev rules cho /dev/ttyOHT485
+```
+
+### **BƯỚC 3: DRIVER DEVELOPMENT**
+```
+Firmware Engineer MUST:
+□ Implement HAL UART/RS485 drivers
+□ Develop GPIO/Relay control drivers
+□ Create LED status management
+□ Implement safety system drivers
+□ Add error handling và recovery
+□ Create driver simulation cho development
+```
+
+### **BƯỚC 4: SYSTEM INTEGRATION**
+```
+Both Teams MUST:
+□ Integrate hardware với firmware
+□ Test end-to-end functionality
+□ Validate performance requirements
+□ Test safety system operation
+□ Verify communication protocols
+□ Optimize system performance
+```
+
+### **BƯỚC 5: HARDWARE-IN-THE-LOOP TESTING**
+```
+EMBED Team MUST:
+□ Setup HIL test bench
+□ Execute loopback testing
+□ Measure BER và latency
+□ Test fault injection
+□ Validate safety responses
+□ Document test results
+```
+
+### **BƯỚC 6: VALIDATION & DOCUMENTATION**
+```
+EMBED Team Lead MUST:
+□ Review all deliverables
+□ Validate compliance với specifications
+□ Approve hardware và firmware integration
+□ Update documentation
+□ Sign-off cho production readiness
+```
+
+---
+
+## 🔧 **HARDWARE STANDARDS**
+
+### **Platform Configuration (BẮT BUỘC)**
+```bash
+# Orange Pi 5B Platform Setup
+# Device Tree Configuration
+/boot/dtb/rockchip/rk3588s-orangepi-5b.dtb
+
+# UART1 Enable for RS485
+&uart1 {
+    status = "okay";
+    pinctrl-names = "default";
+    pinctrl-0 = <&uart1m1_xfer>;
+};
+
+# GPIO Configuration for Relays
+&gpio1 {
+    status = "okay";
+    relay1 {
+        gpios = <&gpio1 RK_PD3 GPIO_ACTIVE_HIGH>;
+        label = "relay1";
+    };
+    relay2 {
+        gpios = <&gpio1 RK_PD2 GPIO_ACTIVE_HIGH>;
+        label = "relay2";
+    };
+};
+```
+
+### **RS485 Interface Standards (BẮT BUỘC)**
+```c
+// RS485 HAL Implementation
+typedef struct {
+    int uart_fd;
+    int de_re_gpio;
+    uint32_t baudrate;
+    uint8_t data_bits;
+    uint8_t stop_bits;
+    char parity;
+    bool termination_enabled;
+} rs485_config_t;
+
+// RS485 API
+int rs485_init(rs485_config_t *config);
+int rs485_send(uint8_t *data, size_t len);
+int rs485_receive(uint8_t *buffer, size_t max_len, uint32_t timeout_ms);
+int rs485_set_termination(bool enable);
+void rs485_get_stats(rs485_stats_t *stats);
+```
+
+### **GPIO/Relay Control Standards (BẮT BUỘC)**
+```c
+// GPIO HAL Implementation
+typedef enum {
+    RELAY_CHANNEL_1 = 1,
+    RELAY_CHANNEL_2 = 2
+} relay_channel_t;
+
+// Relay Control API
+int relay_init(void);
+int relay_set(relay_channel_t channel, bool state);
+bool relay_get(relay_channel_t channel);
+int relay_toggle(relay_channel_t channel);
+void relay_emergency_off_all(void);
+```
+
+---
+
+## 🔍 **QUALITY CONTROL CHECKLIST**
+
+### **Hardware Validation Checklist (MUST PASS)**
+```
+□ Platform boots successfully
+□ All interfaces initialized properly
+□ UART1 accessible tại /dev/ttyOHT485
+□ RS485 communication functional
+□ GPIO control working (GPIO1_D3, GPIO1_D2)
+□ LED indicators responsive
+□ Power consumption trong giới hạn
+□ Temperature operating range validated
+□ EMI/EMC compliance preliminary check
+□ Mechanical fit và finish acceptable
+```
+
+### **Driver Integration Checklist (MUST PASS)**
+```
+□ HAL drivers compile without errors
+□ API functions work as specified
+□ Error handling comprehensive
+□ Memory leaks eliminated
+□ Performance requirements met
+□ Thread safety implemented
+□ Resource cleanup proper
+□ Documentation complete
+□ Unit tests passing
+□ Integration tests successful
+```
+
+### **Safety System Checklist (MUST PASS)**
+```
+□ E-Stop hardware circuit functional
+□ Safety response time < 100ms
+□ Fail-safe behavior verified
+□ Fault detection working
+□ Recovery procedures tested
+□ Safety interlocks operational
+□ Emergency shutdown complete
+□ Safety documentation updated
+□ Safety test procedures documented
+□ Compliance validation completed
+```
+
+---
+
+## 🧪 **TESTING REQUIREMENTS**
+
+### **Hardware-in-the-Loop Testing (BẮT BUỘC)**
+```python
+# HIL Test Framework
+class HILTestSuite:
+    def __init__(self):
+        self.test_bench = HILTestBench()
+        self.metrics = TestMetrics()
+        
+    def test_rs485_loopback(self):
+        """Test RS485 communication loopback"""
+        # Send test patterns
+        # Measure BER, latency, throughput
+        # Validate CRC, timeout handling
+        pass
+        
+    def test_gpio_control(self):
+        """Test GPIO/Relay control"""
+        # Test relay switching
+        # Measure response time
+        # Validate state consistency
+        pass
+        
+    def test_safety_system(self):
+        """Test safety system response"""
+        # Trigger E-Stop
+        # Measure response time
+        # Validate fail-safe behavior
+        pass
+```
+
+### **Performance Benchmarking (BẮT BUỘC)**
+```c
+// Performance Test Implementation
+typedef struct {
+    uint32_t rs485_baudrate;
+    uint32_t rs485_latency_us;
+    float rs485_ber;
+    uint32_t gpio_response_time_us;
+    uint32_t safety_response_time_ms;
+    float cpu_usage_percent;
+    uint32_t memory_usage_kb;
+} performance_metrics_t;
+
+void run_performance_tests(performance_metrics_t *metrics);
+bool validate_performance_requirements(performance_metrics_t *metrics);
+```
+
+---
+
+## 🚨 **COMMON MISTAKES TO AVOID**
+
+### **HARDWARE MISTAKES**
+```
+❌ Sai GPIO offset hoặc pinmux configuration
+❌ Thiếu termination hoặc bias cho RS485
+❌ Không kiểm tra power consumption
+❌ Bỏ qua EMI/EMC considerations
+❌ Thiếu protection circuits
+❌ Không test thermal performance
+```
+
+### **FIRMWARE MISTAKES**
+```
+❌ Blocking operations trong real-time context
+❌ Không handle timeouts properly
+❌ Memory leaks trong drivers
+❌ Race conditions trong multi-threaded code
+❌ Insufficient error handling
+❌ Poor resource management
+```
+
+### **INTEGRATION MISTAKES**
+```
+❌ Không test với real hardware
+❌ Mock data trong production builds
+❌ Inconsistent API interfaces
+❌ Missing safety interlocks
+❌ Poor performance optimization
+❌ Inadequate documentation
+```
+
+---
+
+## 📁 **FILE STRUCTURE & NAMING**
+
+### **Hardware Documentation Structure**
+```
+docs/
+├── hardware/
+│   ├── platform_orangepi_5b.md
+│   ├── pinout_gpio_mapping.md
+│   ├── rs485_interface_spec.md
+│   ├── safety_system_design.md
+│   └── performance_requirements.md
+├── firmware/
+│   ├── hal_api_specification.md
+│   ├── driver_development_guide.md
+│   ├── safety_implementation.md
+│   └── testing_procedures.md
+└── validation/
+    ├── hil_test_procedures.md
+    ├── performance_benchmarks.md
+    └── compliance_validation.md
+```
+
+### **Code Structure**
+```
+firmware/
+├── hal/
+│   ├── hal_uart_rs485.c/.h
+│   ├── hal_gpio_relay.c/.h
+│   ├── hal_led_status.c/.h
+│   └── hal_safety_system.c/.h
+├── drivers/
+│   ├── rs485_driver.c/.h
+│   ├── relay_driver.c/.h
+│   └── safety_driver.c/.h
+├── tests/
+│   ├── unit_tests/
+│   ├── integration_tests/
+│   └── hil_tests/
+└── tools/
+    ├── relayctl.c
+    ├── rs485test.c
+    └── performance_test.c
+```
+
+---
+
+## 📊 **SUCCESS METRICS**
+
+### **Hardware Success Metrics**
+```
+✅ 100% hardware interfaces functional
+✅ 100% GPIO control working
+✅ RS485 BER < specified threshold
+✅ Safety response time < 100ms
+✅ 0 hardware-related critical issues
+✅ Power consumption trong giới hạn
+```
+
+### **Firmware Success Metrics**
+```
+✅ 100% HAL API functions implemented
+✅ 100% driver integration successful
+✅ 0 memory leaks trong production code
+✅ Performance requirements met
+✅ 100% safety tests passing
+✅ Code coverage > 90%
+```
+
+### **Integration Success Metrics**
+```
+✅ 100% HIL tests passing
+✅ End-to-end functionality verified
+✅ Performance benchmarks achieved
+✅ Safety validation completed
+✅ Documentation 100% updated
+✅ Production readiness achieved
+```
+
+---
+
+## 🚀 **IMPLEMENTATION GUIDELINES**
+
+### **For EMBED Hardware Engineer**
+1. **Always validate hardware trước khi firmware development**
+2. **Document all GPIO assignments và pinout mappings**
+3. **Test hardware interfaces thoroughly**
+4. **Ensure proper power và thermal management**
+5. **Validate safety systems comprehensively**
+
+### **For Firmware Engineer**
+1. **Follow HAL API standards strictly**
+2. **Implement comprehensive error handling**
+3. **Optimize cho real-time performance**
+4. **Add extensive logging và diagnostics**
+5. **Test với real hardware continuously**
+
+### **For EMBED Team Lead**
+1. **Review all hardware và firmware integration**
+2. **Ensure compliance với specifications**
+3. **Validate performance requirements**
+4. **Approve production readiness**
+5. **Maintain technical documentation**
+
+---
+
+## 🔄 **CONTINUOUS IMPROVEMENT**
+
+### **Performance Monitoring**
+```c
+// Continuous Performance Monitoring
+typedef struct {
+    uint32_t uptime_seconds;
+    uint32_t error_count;
+    uint32_t timeout_count;
+    uint32_t crc_error_count;
+    float average_latency_ms;
+    float cpu_usage_percent;
+    uint32_t memory_usage_kb;
+} system_health_t;
+
+void monitor_system_health(system_health_t *health);
+void log_performance_metrics(system_health_t *health);
+bool check_health_thresholds(system_health_t *health);
+```
+
+### **Quality Improvement Process**
+1. **Weekly performance review**
+2. **Monthly hardware health assessment**
+3. **Quarterly technology update evaluation**
+4. **Annual platform roadmap planning**
+5. **Continuous learning và skill development**
+
+---
+
+**🚨 REMEMBER: Hardware reliability is the foundation of system safety!**
+
+**Changelog v1.0:**
+- ✅ Created comprehensive EMBED team rules
+- ✅ Added hardware platform specifications
+- ✅ Added driver development standards
+- ✅ Added HIL testing requirements
+- ✅ Added safety system validation
+- ✅ Added performance monitoring guidelines
+- ✅ Added quality control checklists
+- ✅ Added continuous improvement process
+
+**🚨 Lưu ý:** EMBED team phải tuân thủ strict hardware validation và safety standards để đảm bảo system reliability và operational safety.
