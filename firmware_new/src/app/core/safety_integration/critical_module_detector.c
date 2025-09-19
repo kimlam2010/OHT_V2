@@ -926,9 +926,34 @@ uint32_t critical_module_get_adaptive_polling_interval(uint8_t module_addr) {
 }
 
 hal_status_t critical_module_update_led_patterns(safety_response_level_t level) {
-    // Phase 2.3 implementation placeholder
     debug_log("LED pattern update for response level: %s", 
               critical_module_get_response_level_name(level));
+    
+    // Call graduated response system for LED pattern management
+    // Note: This would call graduated_response_update_led_patterns() in real implementation
+    // For now, we simulate the LED pattern update
+    
+    switch (level) {
+        case RESPONSE_LEVEL_NORMAL:
+            debug_log("💚 LED Pattern: All green steady (normal operation)");
+            break;
+        case RESPONSE_LEVEL_MONITORING:
+            debug_log("💚 LED Pattern: Green blinking (monitoring mode)");
+            break;
+        case RESPONSE_LEVEL_WARNING:
+            debug_log("🟡 LED Pattern: Yellow steady (warning mode)");
+            break;
+        case RESPONSE_LEVEL_CRITICAL:
+            debug_log("🔴 LED Pattern: Red blinking (critical mode)");
+            break;
+        case RESPONSE_LEVEL_EMERGENCY:
+            debug_log("🚨 LED Pattern: Red steady + alarm (emergency mode)");
+            break;
+        default:
+            warning_log("Unknown response level for LED pattern: %d", level);
+            break;
+    }
+    
     return HAL_OK;
 }
 
