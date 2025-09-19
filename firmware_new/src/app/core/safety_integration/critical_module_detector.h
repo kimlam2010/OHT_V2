@@ -57,18 +57,19 @@ typedef enum {
 } safety_response_level_t;
 
 /**
- * @brief Module Health Status
+ * @brief Critical Module Health Status
  * 
  * Comprehensive health assessment for each module.
+ * Uses different enum name to avoid conflicts with module_manager.h
  */
 typedef enum {
-    MODULE_HEALTH_UNKNOWN = 0,
-    MODULE_HEALTH_HEALTHY,               // All systems normal
-    MODULE_HEALTH_DEGRADED,              // Some issues but operational
-    MODULE_HEALTH_FAILING,               // Significant issues, may fail soon
-    MODULE_HEALTH_FAILED,                // Module has failed
-    MODULE_HEALTH_OFFLINE                // Module not responding
-} module_health_status_t;
+    CRITICAL_MODULE_HEALTH_UNKNOWN = 0,
+    CRITICAL_MODULE_HEALTH_HEALTHY,      // All systems normal
+    CRITICAL_MODULE_HEALTH_DEGRADED,     // Some issues but operational
+    CRITICAL_MODULE_HEALTH_FAILING,      // Significant issues, may fail soon
+    CRITICAL_MODULE_HEALTH_FAILED,       // Module has failed
+    CRITICAL_MODULE_HEALTH_OFFLINE       // Module not responding
+} critical_module_health_status_t;
 
 // 📊 **MODULE PRIORITY MATRIX STRUCTURE**
 
@@ -109,7 +110,7 @@ typedef struct {
  */
 typedef struct {
     uint8_t module_address;              // Module address
-    module_health_status_t health_status; // Current health status
+    critical_module_health_status_t health_status; // Current health status
     safety_response_level_t response_level; // Current response level
     
     // Timing information
@@ -391,7 +392,7 @@ const char* critical_module_get_response_level_name(safety_response_level_t leve
  * @param health Health status
  * @return Health status name string
  */
-const char* critical_module_get_health_name(module_health_status_t health);
+const char* critical_module_get_health_name(critical_module_health_status_t health);
 
 /**
  * @brief Check if module is critical

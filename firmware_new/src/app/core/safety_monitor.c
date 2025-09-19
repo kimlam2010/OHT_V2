@@ -15,6 +15,7 @@
 // #include "hal_config_persistence.h" - REMOVED (config persistence simplified)
 #include "hal_rs485.h"
 #include "system_state_machine.h"
+#include "safety_integration/critical_module_detector.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +47,7 @@ static struct {
     uint64_t last_sensor_check;
     uint64_t last_watchdog_check;
     uint64_t last_estop_check;
+    uint64_t last_critical_module_check;
     
     // State
     bool initialized;
@@ -248,6 +250,7 @@ hal_status_t safety_monitor_update(void)
                               (current_time - safety_monitor_instance.last_sensor_check >= safety_monitor_instance.config.sensor_check_period_ms);
     bool watchdog_check_needed = safety_monitor_instance.config.enable_watchdog_monitoring && 
                                 (current_time - safety_monitor_instance.last_watchdog_check >= safety_monitor_instance.config.watchdog_timeout_ms);
+    bool module_check_needed = (current_time - safety_monitor_instance.last_critical_module_check >= 100); // 100ms interval
     
     // Check E-Stop (highest priority) - always check if needed
     if (estop_check_needed) {
@@ -297,6 +300,16 @@ hal_status_t safety_monitor_update(void)
             safety_monitor_instance.last_error_time = current_time;
         }
         safety_monitor_instance.last_watchdog_check = current_time;
+    }
+    
+    // Check critical module health (added in Phase 2.2)
+    if (module_check_needed) {
+        hal_status_t module_status = critical_module_safety_monitor_integration();
+        if (module_status != HAL_STATUS_OK) {
+            safety_monitor_instance.error_count++;
+            safety_monitor_instance.last_error_time = current_time;
+        }
+        safety_monitor_instance.last_critical_module_check = current_time;
     }
     
 update_statistics:

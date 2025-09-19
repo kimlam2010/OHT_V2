@@ -202,10 +202,10 @@ hal_status_t critical_module_detector_init(void) {
     g_detector_status.system_check_interval_ms = 100; // Default 100ms
     g_detector_status.overall_response_level = RESPONSE_LEVEL_NORMAL;
     
-    // Initialize module assessments
+        // Initialize module assessments
     for (size_t i = 0; i < NUM_CONFIGURED_MODULES; i++) {
         g_module_assessments[i].module_address = g_module_configs[i].module_address;
-        g_module_assessments[i].health_status = MODULE_HEALTH_UNKNOWN;
+        g_module_assessments[i].health_status = CRITICAL_MODULE_HEALTH_UNKNOWN;
         g_module_assessments[i].response_level = RESPONSE_LEVEL_NORMAL;
         g_module_assessments[i].last_seen_ms = current_time;
         g_module_assessments[i].last_health_check_ms = current_time;
@@ -356,16 +356,16 @@ hal_status_t critical_module_check_single_module(uint8_t module_addr,
         
         // Determine health status based on response
         if (response.safety_status >= 3) { // ESTOP or FAULT
-            stored_assessment->health_status = MODULE_HEALTH_FAILED;
+            stored_assessment->health_status = CRITICAL_MODULE_HEALTH_FAILED;
             stored_assessment->response_level = RESPONSE_LEVEL_EMERGENCY;
         } else if (response.safety_status == 2) { // CRITICAL
-            stored_assessment->health_status = MODULE_HEALTH_FAILING;
+            stored_assessment->health_status = CRITICAL_MODULE_HEALTH_FAILING;
             stored_assessment->response_level = RESPONSE_LEVEL_CRITICAL;
         } else if (response.safety_status == 1) { // WARNING
-            stored_assessment->health_status = MODULE_HEALTH_DEGRADED;
+            stored_assessment->health_status = CRITICAL_MODULE_HEALTH_DEGRADED;
             stored_assessment->response_level = RESPONSE_LEVEL_WARNING;
         } else { // SAFE
-            stored_assessment->health_status = MODULE_HEALTH_HEALTHY;
+            stored_assessment->health_status = CRITICAL_MODULE_HEALTH_HEALTHY;
             stored_assessment->response_level = RESPONSE_LEVEL_NORMAL;
         }
         
@@ -373,8 +373,8 @@ hal_status_t critical_module_check_single_module(uint8_t module_addr,
         if (response.timestamps.response_time_ms > config->max_response_time_ms) {
             warning_log("Module 0x%02X response time %u ms exceeds limit %u ms",
                        module_addr, response.timestamps.response_time_ms, config->max_response_time_ms);
-            if (stored_assessment->health_status == MODULE_HEALTH_HEALTHY) {
-                stored_assessment->health_status = MODULE_HEALTH_DEGRADED;
+            if (stored_assessment->health_status == CRITICAL_MODULE_HEALTH_HEALTHY) {
+                stored_assessment->health_status = CRITICAL_MODULE_HEALTH_DEGRADED;
                 stored_assessment->response_level = RESPONSE_LEVEL_MONITORING;
             }
         }
@@ -383,8 +383,8 @@ hal_status_t critical_module_check_single_module(uint8_t module_addr,
             warning_log("Module 0x%02X success rate %.2f%% below minimum %.2f%%",
                        module_addr, stored_assessment->current_success_rate * 100.0f, 
                        config->min_success_rate * 100.0f);
-            if (stored_assessment->health_status == MODULE_HEALTH_HEALTHY) {
-                stored_assessment->health_status = MODULE_HEALTH_DEGRADED;
+            if (stored_assessment->health_status == CRITICAL_MODULE_HEALTH_HEALTHY) {
+                stored_assessment->health_status = CRITICAL_MODULE_HEALTH_DEGRADED;
                 stored_assessment->response_level = RESPONSE_LEVEL_MONITORING;
             }
         }
@@ -416,7 +416,7 @@ hal_status_t critical_module_check_single_module(uint8_t module_addr,
             if (stored_assessment->offline_since_ms == 0) {
                 // Module just went offline
                 stored_assessment->offline_since_ms = current_time;
-                stored_assessment->health_status = MODULE_HEALTH_OFFLINE;
+                stored_assessment->health_status = CRITICAL_MODULE_HEALTH_OFFLINE;
                 stored_assessment->response_level = RESPONSE_LEVEL_WARNING;
                 
                 warning_log("Module 0x%02X went OFFLINE (last seen %u ms ago)",
@@ -470,15 +470,15 @@ hal_status_t critical_module_check_all_modules(void) {
         if (result == HAL_OK) {
             // Update system counters based on module health
             switch (assessment.health_status) {
-                case MODULE_HEALTH_HEALTHY:
+                case CRITICAL_MODULE_HEALTH_HEALTHY:
                     g_detector_status.modules_online++;
                     break;
-                case MODULE_HEALTH_DEGRADED:
-                case MODULE_HEALTH_FAILING:
+                case CRITICAL_MODULE_HEALTH_DEGRADED:
+                case CRITICAL_MODULE_HEALTH_FAILING:
                     g_detector_status.modules_degraded++;
                     break;
-                case MODULE_HEALTH_FAILED:
-                case MODULE_HEALTH_OFFLINE:
+                case CRITICAL_MODULE_HEALTH_FAILED:
+                case CRITICAL_MODULE_HEALTH_OFFLINE:
                     g_detector_status.modules_failed++;
                     if (config->criticality >= MODULE_CRITICALITY_ESSENTIAL) {
                         g_detector_status.critical_modules_offline++;
@@ -661,7 +661,7 @@ hal_status_t critical_module_handle_recovery(uint8_t module_addr) {
     assessment->offline_since_ms = 0;
     
     // Update health status
-    assessment->health_status = MODULE_HEALTH_HEALTHY;
+    assessment->health_status = CRITICAL_MODULE_HEALTH_HEALTHY;
     assessment->response_level = RESPONSE_LEVEL_NORMAL;
     
     debug_log("Module 0x%02X recovery completed", module_addr);
@@ -705,15 +705,15 @@ const char* critical_module_get_response_level_name(safety_response_level_t leve
     }
 }
 
-const char* critical_module_get_health_name(module_health_status_t health) {
+const char* critical_module_get_health_name(critical_module_health_status_t health) {
     switch (health) {
-        case MODULE_HEALTH_UNKNOWN:   return "UNKNOWN";
-        case MODULE_HEALTH_HEALTHY:   return "HEALTHY";
-        case MODULE_HEALTH_DEGRADED:  return "DEGRADED";
-        case MODULE_HEALTH_FAILING:   return "FAILING";
-        case MODULE_HEALTH_FAILED:    return "FAILED";
-        case MODULE_HEALTH_OFFLINE:   return "OFFLINE";
-        default:                      return "UNKNOWN";
+        case CRITICAL_MODULE_HEALTH_UNKNOWN:   return "UNKNOWN";
+        case CRITICAL_MODULE_HEALTH_HEALTHY:   return "HEALTHY";
+        case CRITICAL_MODULE_HEALTH_DEGRADED:  return "DEGRADED";
+        case CRITICAL_MODULE_HEALTH_FAILING:   return "FAILING";
+        case CRITICAL_MODULE_HEALTH_FAILED:    return "FAILED";
+        case CRITICAL_MODULE_HEALTH_OFFLINE:   return "OFFLINE";
+        default:                               return "UNKNOWN";
     }
 }
 
@@ -912,14 +912,14 @@ uint32_t critical_module_get_adaptive_polling_interval(uint8_t module_addr) {
     
     // Adaptive polling based on health status
     switch (assessment->health_status) {
-        case MODULE_HEALTH_FAILED:
-        case MODULE_HEALTH_OFFLINE:
+        case CRITICAL_MODULE_HEALTH_FAILED:
+        case CRITICAL_MODULE_HEALTH_OFFLINE:
             return config->health_check_interval_ms / 4; // 4x faster when failed
-        case MODULE_HEALTH_FAILING:
+        case CRITICAL_MODULE_HEALTH_FAILING:
             return config->health_check_interval_ms / 2; // 2x faster when failing
-        case MODULE_HEALTH_DEGRADED:
+        case CRITICAL_MODULE_HEALTH_DEGRADED:
             return config->health_check_interval_ms * 2 / 3; // 1.5x faster when degraded
-        case MODULE_HEALTH_HEALTHY:
+        case CRITICAL_MODULE_HEALTH_HEALTHY:
         default:
             return config->health_check_interval_ms; // Normal interval
     }
