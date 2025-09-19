@@ -58,9 +58,11 @@ static int route_request(const api_mgr_http_request_t *req, api_mgr_http_respons
 
 static void *srv_loop(void *arg){ (void)arg; struct sockaddr_in addr={0}; addr.sin_family=AF_INET; addr.sin_addr.s_addr=htonl(INADDR_ANY); addr.sin_port=htons(g_port);
  g_srv_fd=socket(AF_INET, SOCK_STREAM, 0);
+ if(g_srv_fd<0){ fprintf(stderr,"[API] socket() failed: %s\n", strerror(errno)); return NULL; }
  int opt=1; setsockopt(g_srv_fd,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
- bind(g_srv_fd,(struct sockaddr*)&addr,sizeof(addr));
- listen(g_srv_fd,BACKLOG);
+ if(bind(g_srv_fd,(struct sockaddr*)&addr,sizeof(addr))<0){ fprintf(stderr,"[API] bind() failed on port %d: %s\n", g_port, strerror(errno)); close(g_srv_fd); return NULL; }
+ if(listen(g_srv_fd,BACKLOG)<0){ fprintf(stderr,"[API] listen() failed: %s\n", strerror(errno)); close(g_srv_fd); return NULL; }
+ printf("[API] Successfully bound to port %d\n", g_port);
  g_running=1;
  while(g_running){ int cfd=accept(g_srv_fd,NULL,NULL); if(cfd<0){ if(errno==EINTR) continue; break; }
  char buf[2048]={0}; ssize_t r=recv(cfd,buf,sizeof(buf)-1,0); if(r<=0){ close(cfd); continue; }

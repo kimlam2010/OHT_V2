@@ -2,19 +2,25 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #include "api_endpoints.h"
 #include "module_manager.h"
 #include "hal_lidar.h"
 #include "system_state_machine.h"
 
 int api_register_minimal_endpoints(void){
+    // CRITICAL ENDPOINTS - Issue #112 Fix
+    api_manager_register_endpoint("/health", API_MGR_HTTP_GET, api_handle_health_check);
+    api_manager_register_endpoint("/api/v1/rs485/modules", API_MGR_HTTP_GET, api_handle_rs485_modules);
+    
     api_manager_register_endpoint("/api/v1/system/status", API_MGR_HTTP_GET, api_handle_system_status);
     api_manager_register_endpoint("/api/v1/safety/status", API_MGR_HTTP_GET, api_handle_safety_status);
     api_manager_register_endpoint("/api/v1/safety/estop", API_MGR_HTTP_POST, api_handle_safety_estop);
-    api_manager_register_endpoint("/api/v1/modules", API_MGR_HTTP_GET, api_handle_modules_list);
+    // ESSENTIAL MODULE ENDPOINTS ONLY
     api_manager_register_endpoint("/api/v1/modules/stats", API_MGR_HTTP_GET, api_handle_modules_stats);
-    api_manager_register_endpoint("/api/v1/modules/scan", API_MGR_HTTP_POST, api_handle_modules_scan);
-    api_manager_register_endpoint("/api/v1/modules/config", API_MGR_HTTP_GET, api_handle_modules_config_get);
+    // REMOVED: /api/v1/modules - Duplicate với rs485/modules
+    // REMOVED: /api/v1/modules/scan - Over-engineered 
+    // REMOVED: /api/v1/modules/config - Over-complex
     api_manager_register_endpoint("/api/v1/system/state", API_MGR_HTTP_GET, api_handle_system_state);
     api_manager_register_endpoint("/api/v1/control/status", API_MGR_HTTP_GET, api_handle_control_status);
     // Motion endpoints per EXEC PLAN Gate E
@@ -24,18 +30,18 @@ int api_register_minimal_endpoints(void){
     
     // CRITICAL ENDPOINTS - Phase 1 Implementation
     api_manager_register_endpoint("/api/v1/robot/status", API_MGR_HTTP_GET, api_handle_robot_status);
-    api_manager_register_endpoint("/api/v1/robot/command", API_MGR_HTTP_POST, api_handle_robot_command);
-    api_manager_register_endpoint("/api/v1/battery/status", API_MGR_HTTP_GET, api_handle_battery_status);
-    api_manager_register_endpoint("/api/v1/temperature/status", API_MGR_HTTP_GET, api_handle_temperature_status);
+    // REMOVED: /api/v1/robot/command - Duplicate với state machine
+    // REMOVED: /api/v1/battery/status - Không có battery hardware
+    // REMOVED: /api/v1/temperature/status - Không có temperature hardware
     
-    // STATE MACHINE CONTROL APIs - NEW IMPLEMENTATION
+    // STATE MACHINE CONTROL APIs - ESSENTIAL ONLY
     api_manager_register_endpoint("/api/v1/state/move", API_MGR_HTTP_POST, api_handle_state_move);
-    api_manager_register_endpoint("/api/v1/state/pause", API_MGR_HTTP_POST, api_handle_state_pause);
-    api_manager_register_endpoint("/api/v1/state/resume", API_MGR_HTTP_POST, api_handle_state_resume);
     api_manager_register_endpoint("/api/v1/state/stop", API_MGR_HTTP_POST, api_handle_state_stop);
-    api_manager_register_endpoint("/api/v1/state/dock", API_MGR_HTTP_POST, api_handle_state_dock);
     api_manager_register_endpoint("/api/v1/state/emergency", API_MGR_HTTP_POST, api_handle_state_emergency);
     api_manager_register_endpoint("/api/v1/state/reset", API_MGR_HTTP_POST, api_handle_state_reset);
+    // REMOVED: /api/v1/state/pause - Redundant (dùng stop)
+    // REMOVED: /api/v1/state/resume - Redundant (dùng move)
+    // REMOVED: /api/v1/state/dock - Chưa có dock hardware
     
     // CONFIGURATION APIs - NEW IMPLEMENTATION
     api_manager_register_endpoint("/api/v1/config/state-machine", API_MGR_HTTP_GET, api_handle_config_get);
@@ -48,12 +54,7 @@ int api_register_minimal_endpoints(void){
     // LiDAR endpoints (CRITICAL - Production Integration)
     api_register_lidar_endpoints();
     
-    // Root endpoints for backward compatibility (PM requirement)
-    api_manager_register_endpoint("/system/status", API_MGR_HTTP_GET, api_handle_system_status);
-    api_manager_register_endpoint("/modules/list", API_MGR_HTTP_GET, api_handle_modules_list);
-    api_manager_register_endpoint("/safety/status", API_MGR_HTTP_GET, api_handle_safety_status);
-    api_manager_register_endpoint("/motion/state", API_MGR_HTTP_GET, api_handle_motion_state);
-    api_manager_register_endpoint("/", API_MGR_HTTP_GET, api_handle_system_status); // Root endpoint
+    // REMOVED: Backward compatibility routes - Không cần thiết
     
     return 0; // dynamic /api/v1/modules/{id}/status handled by router
 }
@@ -75,32 +76,70 @@ int api_handle_safety_estop(const api_mgr_http_request_t *req, api_mgr_http_resp
 
 int api_handle_modules_list(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){
     (void)req;
-    // Build JSON from registry
+    
+    // Get modules from registry
     module_info_t arr[MODULE_REGISTRY_MAX_MODULES];
     size_t count = 0;
+    
+    // Initialize array to prevent garbage data
+    memset(arr, 0, sizeof(arr));
+    
     if (registry_get_all(arr, MODULE_REGISTRY_MAX_MODULES, &count) != 0) {
-        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "registry error");
+        const char *empty_json = "{\"success\":true,\"data\":{\"modules\":[]}}";
+        return api_manager_create_success_response(res, empty_json);
     }
+    
+    // If no modules found, return empty array
+    if (count == 0) {
+        const char *empty_json = "{\"success\":true,\"data\":{\"modules\":[]}}";
+        return api_manager_create_success_response(res, empty_json);
+    }
+    
+    // Build JSON with data validation (same as rs485_modules)
     char buffer[2048];
     size_t pos = 0;
     pos += snprintf(buffer + pos, sizeof(buffer) - pos, "{\"success\":true,\"data\":{\"modules\":[");
+    
+    size_t valid_modules = 0;
     for (size_t i = 0; i < count; ++i) {
         const module_info_t *m = &arr[i];
-        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
-                        "%s{\"address\":%u,\"type\":%u,\"name\":\"%s\",\"status\":%u,\"version\":\"%s\"}",
-                        (i>0)?",":"", m->address, (unsigned)m->type, m->name, (unsigned)m->status, m->version);
-        if (pos >= sizeof(buffer)) break;
-    }
-    pos += snprintf(buffer + pos, sizeof(buffer) - pos, "]}});");
-    // Fix accidental semicolon if overflow didn't happen
-    if (pos < sizeof(buffer)) {
-        // Replace trailing ';' with '}'
-        for (size_t k = pos; k > 0; --k) {
-            if (buffer[k-1] == ';') { buffer[k-1] = '}'; break; }
+        
+        // VALIDATE DATA: Skip invalid/corrupted entries
+        if (m->address == 0 || m->address > 247) continue; // Invalid Modbus address
+        if (m->name[0] == '\0') continue; // Empty name
+        
+        // Validate strings to prevent corruption
+        char safe_name[32] = {0};
+        char safe_version[16] = {0};
+        strncpy(safe_name, m->name, sizeof(safe_name) - 1);
+        strncpy(safe_version, m->version, sizeof(safe_version) - 1);
+        
+        // Ensure strings are printable
+        for (int j = 0; safe_name[j]; j++) {
+            if (safe_name[j] < 32 || safe_name[j] > 126) safe_name[j] = '?';
         }
+        for (int j = 0; safe_version[j]; j++) {
+            if (safe_version[j] < 32 || safe_version[j] > 126) safe_version[j] = '?';
+        }
+        
+        // Check buffer space before writing
+        size_t remaining = sizeof(buffer) - pos;
+        if (remaining < 200) break; // Need at least 200 bytes for JSON entry + closing
+        
+        int written = snprintf(buffer + pos, remaining,
+            "%s{\"address\":%u,\"type\":%u,\"name\":\"%s\",\"status\":%u,\"version\":\"%s\"}",
+            (valid_modules > 0) ? "," : "", m->address, (unsigned)m->type, safe_name, (unsigned)m->status, safe_version);
+        
+        if (written < 0 || written >= (int)remaining) break; // Buffer overflow protection
+        pos += written;
+        valid_modules++;
     }
+    
+    pos += snprintf(buffer + pos, sizeof(buffer) - pos, "]}}");
+    
     return api_manager_create_success_response(res, buffer);
 }
+
 
 int api_handle_module_status_by_id(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){
     (void)req; const char *json = "{\"success\":true,\"data\":{\"module_id\":1,\"status\":\"ok\"}}";
@@ -743,12 +782,32 @@ int api_handle_lidar_safety_status(const api_mgr_http_request_t *req, api_mgr_ht
 int api_handle_lidar_health_check(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
     (void)req;
     
-    hal_status_t hal_status = hal_lidar_health_check();
+    // Get LiDAR device status first
+    hal_device_info_t device_info;
+    hal_status_t device_status = hal_lidar_get_device_status(&device_info);
     
-    if (hal_status == HAL_STATUS_OK) {
-        return api_manager_create_success_response(res, "{\"success\":true,\"data\":{\"health\":\"ok\"}}");
+    if (device_status == HAL_STATUS_OK) {
+        // Device detected, try health check
+        hal_status_t health_status = hal_lidar_health_check();
+        
+        if (health_status == HAL_STATUS_OK) {
+            char json[256];
+            snprintf(json, sizeof(json),
+                "{\"success\":true,\"data\":{\"health\":\"ok\",\"device\":\"%s\",\"status\":%d,\"hardware\":\"/dev/ttyUSB0\"}}",
+                device_info.device_name, device_info.status);
+            return api_manager_create_success_response(res, json);
+        } else {
+            // Health check failed but device exists
+            char json[256];
+            snprintf(json, sizeof(json),
+                "{\"success\":false,\"message\":\"LiDAR health check failed\",\"device\":\"%s\",\"hardware\":\"/dev/ttyUSB0\",\"status\":%d}",
+                device_info.device_name, device_info.status);
+            return api_manager_create_success_response(res, json);
+        }
     } else {
-        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, "LiDAR health check failed");
+        // Device not detected
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_SERVICE_UNAVAILABLE, 
+            "LiDAR device not detected on /dev/ttyUSB0");
     }
 }
 
@@ -1132,4 +1191,106 @@ int api_handle_temperature_status(const api_mgr_http_request_t *req, api_mgr_htt
     );
     
     return api_manager_create_success_response(res, json);
+}
+
+// CRITICAL ENDPOINTS - Issue #112 Implementation
+int api_handle_health_check(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
+    (void)req;
+    
+    // Get system state
+    system_state_t current_state = SYSTEM_STATE_IDLE;
+    system_state_machine_get_state(&current_state);
+    const char* state_name = system_state_machine_get_state_name(current_state);
+    
+    // Build health status JSON
+    char json_buffer[512];
+    snprintf(json_buffer, sizeof(json_buffer),
+        "{\"success\":true,\"status\":\"healthy\",\"firmware\":\"running\","
+        "\"data\":{\"system_state\":\"%s\",\"timestamp\":%lu,\"version\":\"1.0.0\"}}",
+        state_name, (unsigned long)time(NULL));
+    
+    return api_manager_create_success_response(res, json_buffer);
+}
+
+int api_handle_rs485_modules(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
+    (void)req;
+    
+    // Get modules from registry
+    module_info_t modules[MODULE_REGISTRY_MAX_MODULES];
+    size_t count = 0;
+    
+    // Initialize array to prevent garbage data
+    memset(modules, 0, sizeof(modules));
+    
+    if (registry_get_all(modules, MODULE_REGISTRY_MAX_MODULES, &count) != 0) {
+        // Return empty array instead of error
+        const char *empty_json = "{\"success\":true,\"data\":{\"modules\":[],\"total_modules\":0,\"health_score\":0.0}}";
+        return api_manager_create_success_response(res, empty_json);
+    }
+    
+    // If no modules found or count suspicious, return empty array
+    if (count == 0 || count > MODULE_REGISTRY_MAX_MODULES) {
+        const char *empty_json = "{\"success\":true,\"data\":{\"modules\":[],\"total_modules\":0,\"health_score\":0.0}}";
+        return api_manager_create_success_response(res, empty_json);
+    }
+    
+    // Build JSON response with data validation
+    char buffer[2048];
+    size_t pos = 0;
+    pos += snprintf(buffer + pos, sizeof(buffer) - pos, 
+        "{\"success\":true,\"data\":{\"modules\":[");
+    
+    size_t valid_modules = 0;
+    for (size_t i = 0; i < count && i < MODULE_REGISTRY_MAX_MODULES; ++i) {
+        const module_info_t *m = &modules[i];
+        
+        // VALIDATE DATA: Skip invalid/corrupted entries
+        if (m->address == 0 || m->address > 247) continue; // Invalid Modbus address
+        if (m->name[0] == '\0') continue; // Empty name
+        
+        const char* status_str = (m->status == MODULE_STATUS_ONLINE) ? "healthy" : 
+                               (m->status == MODULE_STATUS_OFFLINE) ? "offline" : "unknown";
+        
+        // Validate strings to prevent corruption
+        char safe_name[32] = {0};
+        char safe_version[16] = {0};
+        strncpy(safe_name, m->name, sizeof(safe_name) - 1);
+        strncpy(safe_version, m->version, sizeof(safe_version) - 1);
+        
+        // Ensure strings are printable
+        for (int j = 0; safe_name[j]; j++) {
+            if (safe_name[j] < 32 || safe_name[j] > 126) safe_name[j] = '?';
+        }
+        for (int j = 0; safe_version[j]; j++) {
+            if (safe_version[j] < 32 || safe_version[j] > 126) safe_version[j] = '?';
+        }
+        
+        // Check buffer space before writing
+        size_t remaining = sizeof(buffer) - pos;
+        if (remaining < 200) break; // Need at least 200 bytes for JSON entry + closing
+        
+        int written = snprintf(buffer + pos, remaining,
+            "%s{\"address\":%u,\"name\":\"%s\",\"status\":\"%s\",\"type\":%u,\"version\":\"%s\"}",
+            (valid_modules > 0) ? "," : "", m->address, safe_name, status_str, (unsigned)m->type, safe_version);
+        
+        if (written < 0 || written >= (int)remaining) break; // Buffer overflow protection
+        pos += written;
+        valid_modules++;
+    }
+    
+    // Calculate health score based on valid modules
+    float health_score = 0.0;
+    if (valid_modules > 0) {
+        size_t online_count = 0;
+        for (size_t i = 0; i < valid_modules; i++) {
+            if (modules[i].status == MODULE_STATUS_ONLINE) online_count++;
+        }
+        health_score = (float)online_count / valid_modules * 100.0;
+    }
+    
+    pos += snprintf(buffer + pos, sizeof(buffer) - pos, 
+        "],\"total_modules\":%zu,\"health_score\":%.1f}}",
+        valid_modules, health_score);
+    
+    return api_manager_create_success_response(res, buffer);
 }

@@ -185,7 +185,7 @@ static module_health_assessment_t* find_module_assessment(uint8_t module_addr) {
 hal_status_t critical_module_detector_init(void) {
     if (g_detector_initialized) {
         warning_log("Critical module detector already initialized");
-        return HAL_OK;
+        return HAL_STATUS_OK;
     }
     
     debug_log("Initializing critical module detector...");
@@ -223,12 +223,12 @@ hal_status_t critical_module_detector_init(void) {
     debug_log("Monitoring %u modules: Safety(0x03), Power(0x02), Travel(0x04), Dock(0x06)", 
               NUM_CONFIGURED_MODULES);
     
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_detector_deinit(void) {
     if (!g_detector_initialized) {
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     g_detector_active = false;
@@ -236,18 +236,18 @@ hal_status_t critical_module_detector_deinit(void) {
     g_detector_initialized = false;
     
     debug_log("Critical module detector deinitialized");
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_detector_start(void) {
     if (!g_detector_initialized) {
         error_log("Detector not initialized");
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     if (g_detector_active) {
         warning_log("Detector already active");
-        return HAL_OK;
+        return HAL_STATUS_OK;
     }
     
     g_detector_active = true;
@@ -255,19 +255,19 @@ hal_status_t critical_module_detector_start(void) {
     g_detector_status.last_system_check_ms = get_timestamp_ms();
     
     debug_log("Critical module detector started");
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_detector_stop(void) {
     if (!g_detector_initialized) {
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     g_detector_active = false;
     g_detector_status.system_active = false;
     
     debug_log("Critical module detector stopped");
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 // 🔍 **CORE DETECTION FUNCTIONS**
@@ -275,24 +275,24 @@ hal_status_t critical_module_detector_stop(void) {
 hal_status_t critical_module_check_single_module(uint8_t module_addr, 
                                                 module_health_assessment_t *assessment) {
     if (!g_detector_initialized || !g_detector_active) {
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     if (!assessment) {
         error_log("NULL assessment pointer");
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     const critical_module_config_t *config = find_module_config(module_addr);
     if (!config) {
         error_log("Module 0x%02X not configured for monitoring", module_addr);
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     module_health_assessment_t *stored_assessment = find_module_assessment(module_addr);
     if (!stored_assessment) {
         error_log("Module 0x%02X assessment not found", module_addr);
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     uint64_t current_time = get_timestamp_ms();
@@ -329,7 +329,7 @@ hal_status_t critical_module_check_single_module(uint8_t module_addr,
     uint64_t check_end_time = get_timestamp_ms();
     uint32_t check_duration = (uint32_t)(check_end_time - check_start_time);
     
-    if (read_result == HAL_OK && response.connection_online) {
+    if (read_result == HAL_STATUS_OK && response.connection_online) {
         // Module is responding
         stored_assessment->successful_checks++;
         stored_assessment->consecutive_failures = 0;
@@ -441,12 +441,12 @@ hal_status_t critical_module_check_single_module(uint8_t module_addr,
         g_detector_stats.max_system_check_time_ms = check_duration;
     }
     
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_check_all_modules(void) {
     if (!g_detector_initialized || !g_detector_active) {
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     uint64_t check_start_time = get_timestamp_ms();
@@ -458,7 +458,7 @@ hal_status_t critical_module_check_all_modules(void) {
     g_detector_status.modules_failed = 0;
     g_detector_status.critical_modules_offline = 0;
     
-    hal_status_t overall_result = HAL_OK;
+    hal_status_t overall_result = HAL_STATUS_OK;
     
     // Check each configured module
     for (size_t i = 0; i < NUM_CONFIGURED_MODULES; i++) {
@@ -467,7 +467,7 @@ hal_status_t critical_module_check_all_modules(void) {
         
         hal_status_t result = critical_module_check_single_module(config->module_address, &assessment);
         
-        if (result == HAL_OK) {
+        if (result == HAL_STATUS_OK) {
             // Update system counters based on module health
             switch (assessment.health_status) {
                 case CRITICAL_MODULE_HEALTH_HEALTHY:
@@ -505,7 +505,7 @@ hal_status_t critical_module_check_all_modules(void) {
                         hal_status_t action_result = critical_module_execute_safety_action(
                             config->module_address, config->failure_action, reason);
                         
-                        if (action_result == HAL_OK) {
+                        if (action_result == HAL_STATUS_OK) {
                             // Mark action as triggered
                             module_health_assessment_t *stored = find_module_assessment(config->module_address);
                             if (stored) {
@@ -515,14 +515,14 @@ hal_status_t critical_module_check_all_modules(void) {
                             }
                         } else {
                             error_log("Failed to execute safety action for module 0x%02X", config->module_address);
-                            overall_result = HAL_ERROR;
+                            overall_result = HAL_STATUS_ERROR;
                         }
                     }
                 }
             }
         } else {
             error_log("Failed to check module 0x%02X health", config->module_address);
-            overall_result = HAL_ERROR;
+            overall_result = HAL_STATUS_ERROR;
         }
     }
     
@@ -562,7 +562,7 @@ hal_status_t critical_module_check_all_modules(void) {
 
 hal_status_t critical_module_determine_response_level(safety_response_level_t *response_level) {
     if (!response_level) {
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     safety_response_level_t highest_level = RESPONSE_LEVEL_NORMAL;
@@ -589,7 +589,7 @@ hal_status_t critical_module_determine_response_level(safety_response_level_t *r
     }
     
     *response_level = highest_level;
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 // 🚨 **SAFETY ACTION FUNCTIONS**
@@ -602,7 +602,7 @@ hal_status_t critical_module_execute_safety_action(uint8_t module_addr,
     
     g_detector_stats.total_safety_actions++;
     
-    hal_status_t result = HAL_OK;
+    hal_status_t result = HAL_STATUS_OK;
     
     switch (action) {
         case SAFETY_RS485_ACTION_LOG_ONLY:
@@ -639,7 +639,7 @@ hal_status_t critical_module_execute_safety_action(uint8_t module_addr,
             
         default:
             error_log("Unknown safety action %d for module 0x%02X", action, module_addr);
-            result = HAL_ERROR;
+            result = HAL_STATUS_ERROR;
             break;
     }
     
@@ -652,7 +652,7 @@ hal_status_t critical_module_handle_recovery(uint8_t module_addr) {
     module_health_assessment_t *assessment = find_module_assessment(module_addr);
     if (!assessment) {
         error_log("Module 0x%02X not found for recovery", module_addr);
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     // Reset safety action trigger
@@ -665,7 +665,7 @@ hal_status_t critical_module_handle_recovery(uint8_t module_addr) {
     assessment->response_level = RESPONSE_LEVEL_NORMAL;
     
     debug_log("Module 0x%02X recovery completed", module_addr);
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_update_response_level(safety_response_level_t new_level) {
@@ -679,7 +679,7 @@ hal_status_t critical_module_update_response_level(safety_response_level_t new_l
     // Update LED patterns (Phase 2.3 implementation)
     critical_module_update_led_patterns(new_level);
     
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 // 🔧 **UTILITY FUNCTIONS IMPLEMENTATION**
@@ -742,41 +742,41 @@ uint32_t critical_module_time_since_last_seen(uint8_t module_addr) {
 // 📊 **STATUS AND STATISTICS FUNCTIONS**
 
 hal_status_t critical_module_get_status(critical_module_detector_status_t *status) {
-    if (!status) return HAL_ERROR;
-    if (!g_detector_initialized) return HAL_ERROR;
+    if (!status) return HAL_STATUS_ERROR;
+    if (!g_detector_initialized) return HAL_STATUS_ERROR;
     
     memcpy(status, &g_detector_status, sizeof(critical_module_detector_status_t));
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_get_statistics(critical_module_detector_stats_t *stats) {
-    if (!stats) return HAL_ERROR;
-    if (!g_detector_initialized) return HAL_ERROR;
+    if (!stats) return HAL_STATUS_ERROR;
+    if (!g_detector_initialized) return HAL_STATUS_ERROR;
     
     memcpy(stats, &g_detector_stats, sizeof(critical_module_detector_stats_t));
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_reset_statistics(void) {
-    if (!g_detector_initialized) return HAL_ERROR;
+    if (!g_detector_initialized) return HAL_STATUS_ERROR;
     
     memset(&g_detector_stats, 0, sizeof(g_detector_stats));
     g_detector_stats.min_detection_time_ms = UINT32_MAX;
     g_detector_stats.min_system_check_time_ms = UINT32_MAX;
     
     debug_log("Critical module detector statistics reset");
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_get_health_assessment(uint8_t module_addr, 
                                                   module_health_assessment_t *assessment) {
-    if (!assessment) return HAL_ERROR;
+    if (!assessment) return HAL_STATUS_ERROR;
     
     const module_health_assessment_t *stored = find_module_assessment(module_addr);
-    if (!stored) return HAL_ERROR;
+    if (!stored) return HAL_STATUS_ERROR;
     
     memcpy(assessment, stored, sizeof(module_health_assessment_t));
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 // 🧪 **TESTING AND DIAGNOSTICS FUNCTIONS**
@@ -786,10 +786,10 @@ hal_status_t critical_module_self_test(void) {
     
     if (!g_detector_initialized) {
         error_log("Self-test failed: Detector not initialized");
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
-    hal_status_t overall_result = HAL_OK;
+    hal_status_t overall_result = HAL_STATUS_OK;
     uint32_t tests_passed = 0;
     uint32_t tests_total = 0;
     
@@ -797,12 +797,12 @@ hal_status_t critical_module_self_test(void) {
     {
         tests_total++;
         hal_status_t result = critical_module_check_all_modules();
-        if (result == HAL_OK) {
+        if (result == HAL_STATUS_OK) {
             debug_log("✅ Test 1 PASSED: All modules check OK");
             tests_passed++;
         } else {
             error_log("❌ Test 1 FAILED: All modules check failed");
-            overall_result = HAL_ERROR;
+            overall_result = HAL_STATUS_ERROR;
         }
     }
     
@@ -811,13 +811,13 @@ hal_status_t critical_module_self_test(void) {
         tests_total++;
         safety_response_level_t level;
         hal_status_t result = critical_module_determine_response_level(&level);
-        if (result == HAL_OK) {
+        if (result == HAL_STATUS_OK) {
             debug_log("✅ Test 2 PASSED: Response level determination OK (level: %s)", 
                      critical_module_get_response_level_name(level));
             tests_passed++;
         } else {
             error_log("❌ Test 2 FAILED: Response level determination failed");
-            overall_result = HAL_ERROR;
+            overall_result = HAL_STATUS_ERROR;
         }
     }
     
@@ -826,20 +826,20 @@ hal_status_t critical_module_self_test(void) {
         tests_total++;
         const char *crit_name = critical_module_get_criticality_name(MODULE_CRITICALITY_SAFETY_CRITICAL);
         const char *level_name = critical_module_get_response_level_name(RESPONSE_LEVEL_EMERGENCY);
-        const char *health_name = critical_module_get_health_name(MODULE_HEALTH_HEALTHY);
+        const char *health_name = critical_module_get_health_name(CRITICAL_MODULE_HEALTH_HEALTHY);
         
         if (crit_name && level_name && health_name) {
             debug_log("✅ Test 3 PASSED: Utility functions OK");
             tests_passed++;
         } else {
             error_log("❌ Test 3 FAILED: Utility functions failed");
-            overall_result = HAL_ERROR;
+            overall_result = HAL_STATUS_ERROR;
         }
     }
     
     debug_log("Critical module detector self-test completed: %u/%u tests passed", tests_passed, tests_total);
     
-    if (overall_result == HAL_OK) {
+    if (overall_result == HAL_STATUS_OK) {
         debug_log("✅ ALL TESTS PASSED - Critical module detector is healthy");
     } else {
         error_log("❌ SOME TESTS FAILED - Critical module detector has issues");
@@ -849,10 +849,10 @@ hal_status_t critical_module_self_test(void) {
 }
 
 hal_status_t critical_module_get_diagnostics(char *info, size_t max_len) {
-    if (!info || max_len == 0) return HAL_ERROR;
+    if (!info || max_len == 0) return HAL_STATUS_ERROR;
     if (!g_detector_initialized) {
         snprintf(info, max_len, "Critical module detector not initialized");
-        return HAL_ERROR;
+        return HAL_STATUS_ERROR;
     }
     
     snprintf(info, max_len,
@@ -887,13 +887,13 @@ hal_status_t critical_module_get_diagnostics(char *info, size_t max_len) {
         g_detector_stats.avg_system_check_time_ms
     );
     
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_set_debug_logging(bool enable) {
     g_debug_logging_enabled = enable;
     debug_log("Debug logging %s", enable ? "ENABLED" : "DISABLED");
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 // 🔗 **INTEGRATION FUNCTIONS (Phase 2.2 Placeholders)**
@@ -954,31 +954,31 @@ hal_status_t critical_module_update_led_patterns(safety_response_level_t level) 
             break;
     }
     
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 // Configuration functions (placeholders)
 hal_status_t critical_module_get_config(uint8_t module_addr, critical_module_config_t *config) {
-    if (!config) return HAL_ERROR;
+    if (!config) return HAL_STATUS_ERROR;
     
     const critical_module_config_t *stored = find_module_config(module_addr);
-    if (!stored) return HAL_ERROR;
+    if (!stored) return HAL_STATUS_ERROR;
     
     memcpy(config, stored, sizeof(critical_module_config_t));
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_set_config(uint8_t module_addr, const critical_module_config_t *config) {
     debug_log("critical_module_set_config() - Phase 3 implementation pending");
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_load_default_config(void) {
     debug_log("critical_module_load_default_config() - Phase 3 implementation pending");
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }
 
 hal_status_t critical_module_simulate_failure(uint8_t module_addr, uint32_t failure_duration_ms) {
     debug_log("critical_module_simulate_failure() - Testing function placeholder");
-    return HAL_OK;
+    return HAL_STATUS_OK;
 }

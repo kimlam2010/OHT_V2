@@ -8,6 +8,8 @@ add_library(app_core STATIC
     safety_monitor.c
     estimator_1d.c
     system_controller.c
+    safety_integration/critical_module_detector.c  # SAFETY-CRITICAL: Restored after fixing build errors
+    safety_integration/safety_rs485_integration.c  # REAL Safety RS485 Integration - NO STUBS!
 )
 
 # Include directories
