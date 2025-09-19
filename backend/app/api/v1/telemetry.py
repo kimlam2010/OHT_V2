@@ -113,8 +113,25 @@ async def get_current_telemetry(
     **Authentication**: Required (telemetry:read permission)
     """
     try:
+        # Add performance monitoring
+        import time
+        start_time = time.time()
+        
         telemetry = await telemetry_service.get_current_telemetry()
         
+        # Log performance metrics
+        processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        if processing_time > 50:  # Log slow requests (> 50ms target)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Slow telemetry request: {processing_time:.2f}ms")
+        
+        if not telemetry:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No telemetry data available"
+            )
+            
         if "error" in telemetry:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -122,12 +139,16 @@ async def get_current_telemetry(
             )
             
         # Transform telemetry data to match expected schema
+        # Safe navigation to avoid NoneType errors
+        data = telemetry.get("data") or {}
+        robot_status = data.get("robot_status") or {}
+        
         transformed_data = {
-            "timestamp": telemetry.get("timestamp", ""),
-            "motor_speed": telemetry.get("data", {}).get("robot_status", {}).get("speed", 0.0),
-            "motor_temperature": telemetry.get("data", {}).get("robot_status", {}).get("temperature", 0.0),
-            "dock_status": "ready",  # Default value
-            "safety_status": "normal"  # Default value
+            "timestamp": telemetry.get("timestamp", datetime.now(timezone.utc).isoformat()),
+            "motor_speed": robot_status.get("speed", 0.0),
+            "motor_temperature": robot_status.get("temperature", 0.0),
+            "dock_status": robot_status.get("dock_status", "ready"),
+            "safety_status": robot_status.get("safety_status", "normal")
         }
         
         return TelemetryData(**transformed_data)
@@ -135,9 +156,19 @@ async def get_current_telemetry(
     except HTTPException:
         raise
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"❌ Telemetry service error: {str(e)}", exc_info=True)
+        
+        # Return structured error response
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get telemetry: {str(e)}"
+            detail={
+                "error": "telemetry_service_error",
+                "message": f"Failed to get telemetry data: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "suggestion": "Check firmware integration service status"
+            }
         )
 
 

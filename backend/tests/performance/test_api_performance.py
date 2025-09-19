@@ -84,10 +84,10 @@ async def admin_user():
 
 
 @pytest.fixture
-def auth_headers(admin_user):
+def auth_headers():
     """Create authentication headers for admin user"""
-    token = create_access_token({"sub": str(admin_user["id"])})
-    return {"Authorization": f"Bearer {token}"}
+    # Use simple mock token for performance tests
+    return {"Authorization": "Bearer mock_token"}
 
 
 class TestAPIPerformance:

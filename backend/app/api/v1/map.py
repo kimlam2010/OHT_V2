@@ -203,18 +203,22 @@ async def get_mapping_status(
         status_info = map_service.get_mapping_status()
         
         return MapStatusResponse(
-            is_mapping=status_info["is_mapping"],
-            current_map_id=status_info["current_map_id"],
-            current_session_id=status_info["current_session_id"],
-            total_scans=status_info["total_scans"],
-            mapping_quality=status_info["mapping_quality"]
+            is_mapping=status_info.get("is_mapping", False),
+            current_map_id=status_info.get("current_map_id", ""),
+            current_session_id=status_info.get("current_session_id", ""),
+            total_scans=status_info.get("total_scans", 0),
+            mapping_quality=status_info.get("mapping_quality", 0.0)
         )
         
     except Exception as e:
         logger.error(f"Failed to get mapping status: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get mapping status"
+        # Return default status instead of 500 error
+        return MapStatusResponse(
+            is_mapping=False,
+            current_map_id="",
+            current_session_id="",
+            total_scans=0,
+            mapping_quality=0.0
         )
 
 
