@@ -28,11 +28,15 @@ class TestAuditLogger:
         """AuditLogger instance with mock database"""
         return AuditLogger(mock_db)
     
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_audit_logger_creation(self, audit_logger, mock_db):
         """Test AuditLogger creation"""
         assert audit_logger.db == mock_db
         assert isinstance(audit_logger, AuditLogger)
     
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_log_security_event_success(self, audit_logger, mock_db):
         """Test successful security event logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -53,6 +57,8 @@ class TestAuditLogger:
             mock_db.commit.assert_called_once()
             mock_db.rollback.assert_not_called()
     
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_log_security_event_failure(self, audit_logger, mock_db):
         """Test security event logging failure"""
         mock_db.commit.side_effect = Exception("Database error")
@@ -72,6 +78,8 @@ class TestAuditLogger:
             mock_db.commit.assert_called_once()
             mock_db.rollback.assert_called_once()
     
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_log_security_event_no_details(self, audit_logger, mock_db):
         """Test security event logging without details"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -88,6 +96,8 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_log_user_login_success(self, audit_logger, mock_db):
         """Test successful user login logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -105,6 +115,8 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_log_user_login_failure(self, audit_logger, mock_db):
         """Test failed user login logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -122,6 +134,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_user_login_with_details(self, audit_logger, mock_db):
         """Test user login logging with additional details"""
         details = {"reason": "invalid_password", "attempts": 3}
@@ -142,6 +155,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_user_logout(self, audit_logger, mock_db):
         """Test user logout logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -157,6 +171,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_permission_denied(self, audit_logger, mock_db):
         """Test permission denied logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -174,6 +189,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_resource_access_success(self, audit_logger, mock_db):
         """Test successful resource access logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -193,6 +209,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_resource_access_failure(self, audit_logger, mock_db):
         """Test failed resource access logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -212,6 +229,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_system_event(self, audit_logger, mock_db):
         """Test system event logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -226,6 +244,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_system_event_with_user(self, audit_logger, mock_db):
         """Test system event logging with user ID"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -241,6 +260,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_system_event_failure(self, audit_logger, mock_db):
         """Test system event logging failure"""
         mock_db.commit.side_effect = Exception("Database error")
@@ -258,6 +278,7 @@ class TestAuditLogger:
             mock_db.commit.assert_called_once()
             mock_db.rollback.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_log_configuration_change(self, audit_logger, mock_db):
         """Test configuration change logging"""
         with patch('app.core.audit_logger.datetime') as mock_datetime:
@@ -277,6 +298,7 @@ class TestAuditLogger:
             mock_db.add.assert_called_once()
             mock_db.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_get_audit_logs_basic(self, audit_logger, mock_db):
         """Test basic audit logs retrieval"""
         mock_result = MagicMock()
@@ -288,6 +310,7 @@ class TestAuditLogger:
         assert result == []
         mock_db.execute.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_get_audit_logs_with_filters(self, audit_logger, mock_db):
         """Test audit logs retrieval with filters"""
         mock_result = MagicMock()
@@ -304,6 +327,7 @@ class TestAuditLogger:
         assert result == []
         mock_db.execute.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_get_audit_logs_with_pagination(self, audit_logger, mock_db):
         """Test audit logs retrieval with pagination"""
         mock_result = MagicMock()
@@ -318,6 +342,7 @@ class TestAuditLogger:
         assert result == []
         mock_db.execute.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_get_audit_logs_error(self, audit_logger, mock_db):
         """Test audit logs retrieval error handling"""
         mock_db.execute.side_effect = Exception("Database error")
@@ -326,6 +351,7 @@ class TestAuditLogger:
         
         assert result == []
     
+    @pytest.mark.asyncio
     async def test_get_user_audit_summary(self, audit_logger, mock_db):
         """Test user audit summary retrieval"""
         mock_result = MagicMock()
@@ -337,6 +363,7 @@ class TestAuditLogger:
         assert isinstance(result, dict)
         mock_db.execute.assert_called()
     
+    @pytest.mark.asyncio
     async def test_get_user_audit_summary_error(self, audit_logger, mock_db):
         """Test user audit summary retrieval error handling"""
         mock_db.execute.side_effect = Exception("Database error")
@@ -348,6 +375,7 @@ class TestAuditLogger:
         assert "user_id" in result
         assert "total_events" in result
     
+    @pytest.mark.asyncio
     async def test_get_security_alerts(self, audit_logger, mock_db):
         """Test security alerts retrieval"""
         # Mock the result to handle the event_type field issue
@@ -361,6 +389,7 @@ class TestAuditLogger:
         # Note: execute might not be called due to field validation errors
         # Just verify the result is a list
     
+    @pytest.mark.asyncio
     async def test_get_security_alerts_error(self, audit_logger, mock_db):
         """Test security alerts retrieval error handling"""
         mock_db.execute.side_effect = Exception("Database error")
@@ -370,6 +399,7 @@ class TestAuditLogger:
         assert isinstance(result, list)
         assert len(result) == 0
     
+    @pytest.mark.asyncio
     async def test_cleanup_old_logs(self, audit_logger, mock_db):
         """Test cleanup of old audit logs"""
         # Mock the result to handle the event_type field issue
@@ -383,6 +413,7 @@ class TestAuditLogger:
         # Note: execute and commit might not be called due to field validation errors
         # Just verify the result is an integer
     
+    @pytest.mark.asyncio
     async def test_cleanup_old_logs_error(self, audit_logger, mock_db):
         """Test cleanup of old audit logs error handling"""
         mock_db.execute.side_effect = Exception("Database error")
@@ -392,6 +423,7 @@ class TestAuditLogger:
         assert result == 0
         mock_db.rollback.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_export_audit_logs(self, audit_logger, mock_db):
         """Test audit logs export"""
         mock_result = MagicMock()
@@ -408,6 +440,7 @@ class TestAuditLogger:
         assert "ID,Event Type,User ID,Resource,Action,Details,IP Address,User Agent,Timestamp" in result
         mock_db.execute.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_export_audit_logs_error(self, audit_logger, mock_db):
         """Test audit logs export error handling"""
         mock_db.execute.side_effect = Exception("Database error")

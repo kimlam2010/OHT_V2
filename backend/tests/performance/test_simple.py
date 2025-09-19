@@ -19,7 +19,7 @@ def test_app():
 
 
 @pytest.fixture
-async def async_client():
+def async_client():
     """Create async test client with dependency override"""
     print("🔧 Setting up async_client fixture with dependency override")
     
