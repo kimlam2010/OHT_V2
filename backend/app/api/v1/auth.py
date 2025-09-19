@@ -91,9 +91,17 @@ async def login(
                     detail="Invalid credentials"
                 )
         
-        # Verify password
+        # Verify password - fix field name inconsistency
         try:
-            if not verify_password(login_data.password, str(user.hashed_password)):
+            # Handle both possible field names for password hash
+            password_hash = getattr(user, 'password_hash', None) or getattr(user, 'hashed_password', None)
+            if not password_hash:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="User password hash not found"
+                )
+                
+            if not verify_password(login_data.password, str(password_hash)):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid credentials"
@@ -136,11 +144,13 @@ async def login(
             if callable(commit_fn):
                 commit_fn()
         
-        # Create tokens
+        # Create tokens with consistent expiry
         user_id = getattr(user, 'id', 1)
+        
+        # Use config-based expiry (30 minutes = 1800 seconds)
         access_token = create_access_token(
             data={"sub": str(user_id)},
-            expires_delta=timedelta(minutes=30)
+            expires_delta=timedelta(seconds=1800)  # Explicit 30 minutes
         )
         refresh_token = create_refresh_token(
             data={"sub": str(user_id)},
@@ -336,10 +346,10 @@ async def refresh_token(
                 detail="User not found or inactive"
             )
         
-        # Create new access token
+        # Create new access token with consistent expiry
         access_token = create_access_token(
             data={"sub": str(user.id)},
-            expires_delta=timedelta(minutes=30)
+            expires_delta=timedelta(seconds=1800)  # Explicit 30 minutes
         )
         
         return RefreshTokenResponse(

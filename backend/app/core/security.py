@@ -25,15 +25,19 @@ from app.config import settings
 # Security configuration
 import os
 
-# Use fallback JWT secret for testing mode
+# JWT configuration with proper fallback handling
 jwt_secret = settings.jwt_secret
-if not jwt_secret and os.getenv("TESTING", "false").lower() == "true":
-    jwt_secret = "test-jwt-secret-for-testing-only"
+if not jwt_secret:
+    testing_mode = os.getenv("TESTING", "false").lower() == "true"
+    if testing_mode:
+        jwt_secret = "test-jwt-secret-key-for-testing-only-not-for-production-use"
+    else:
+        raise ValueError("JWT_SECRET must be set for production. Generate with: openssl rand -hex 32")
 
 SECURITY_CONFIG = {
     "jwt_secret": jwt_secret,
     "jwt_algorithm": settings.jwt_algorithm,
-    "jwt_expiry": int(getattr(settings, "jwt_expiry", 3600)),
+    "jwt_expiry": settings.jwt_expiry,  # Use consistent jwt_expiry from config
     "password_min_length": 12,
     "max_login_attempts": 5,
     "lockout_duration": 1800,  # 30 minutes
@@ -147,9 +151,17 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(hours=1)
-    to_encode.update({"exp": expire, "type": "access"})
+        # Use configured expiry time (30 minutes = 1800 seconds)
+        expire = datetime.now(timezone.utc) + timedelta(seconds=SECURITY_CONFIG["jwt_expiry"])
+    
+    to_encode.update({
+        "exp": expire, 
+        "type": "access",
+        "iat": datetime.now(timezone.utc)  # Add issued at time
+    })
+    
     encoded_jwt = jwt.encode(to_encode, SECURITY_CONFIG["jwt_secret"], algorithm=SECURITY_CONFIG["jwt_algorithm"])
+    logger.info(f"Created JWT token expiring at: {expire}")
     return encoded_jwt
 
 def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -166,13 +178,32 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
 def verify_token(token: str) -> Optional[Dict[str, Any]]:
     """Verify JWT token"""
     try:
-        payload = jwt.decode(token, SECURITY_CONFIG["jwt_secret"], algorithms=[SECURITY_CONFIG["jwt_algorithm"]])
+        payload = jwt.decode(
+            token, 
+            SECURITY_CONFIG["jwt_secret"], 
+            algorithms=[SECURITY_CONFIG["jwt_algorithm"]]
+        )
+        
+        # Additional validation
+        if "type" not in payload:
+            logger.warning("Token missing type field")
+            return None
+            
+        if "exp" not in payload:
+            logger.warning("Token missing expiry field")
+            return None
+            
+        logger.info(f"Token verified successfully for user: {payload.get('sub')}")
         return payload
+        
     except ExpiredSignatureError:
-        logger.warning("Token expired")
+        logger.warning("JWT token has expired")
         return None
-    except JWTError:
-        logger.warning("Invalid token")
+    except JWTError as e:
+        logger.warning(f"JWT token validation failed: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error during token verification: {str(e)}")
         return None
 
 async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> User:

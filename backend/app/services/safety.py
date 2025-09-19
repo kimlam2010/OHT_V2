@@ -20,11 +20,20 @@ class SafetyService:
         # Honor environment flag for production usage (no mock in production)
         # Default to false to avoid mock in production unless explicitly enabled
         env_use_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
-        effective_use_mock = use_mock and env_use_mock
+        testing_mode = os.getenv("TESTING", "false").lower() == "true"
+        
+        # Use mock if testing mode OR both flags are true
+        effective_use_mock = testing_mode or (use_mock and env_use_mock)
+        
         if effective_use_mock:
             self.firmware_service = MockFirmwareService()
+            logger.info("🧪 SafetyService: Using MockFirmwareService (testing_mode=%s, use_mock=%s, env_use_mock=%s)", 
+                       testing_mode, use_mock, env_use_mock)
         else:
             self.firmware_service = FirmwareIntegrationService()
+            logger.info("🔌 SafetyService: Using FirmwareIntegrationService (testing_mode=%s, use_mock=%s, env_use_mock=%s)", 
+                       testing_mode, use_mock, env_use_mock)
+        
         self.safety_alerts = []
         self.max_alerts = 100
         

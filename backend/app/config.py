@@ -46,8 +46,8 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379"
     
-    # JWT Settings
-    jwt_expiry: str = "3600"
+    # JWT Settings (consistent with jwt_expiry_minutes)
+    jwt_expiry: int = 1800  # 30 minutes in seconds
     
     # Rate Limiting
     rate_limit_requests: int = 1000
@@ -80,11 +80,16 @@ class Settings(BaseSettings):
     def validate_jwt_secret(cls, v: str) -> str:
         """Validate JWT secret is set for production"""
         # Allow empty JWT secret only in testing mode
-        if not v and os.getenv("TESTING", "false").lower() != "true":
+        testing_mode = os.getenv("TESTING", "false").lower() == "true"
+        if not v and not testing_mode:
             raise ValueError(
                 "JWT_SECRET must be set via environment variable for production. "
-                "Set JWT_SECRET in your .env file or environment variables."
+                "Set JWT_SECRET in your .env file or environment variables. "
+                "Generate with: openssl rand -hex 32"
             )
+        # Provide strong default for testing
+        if not v and testing_mode:
+            return "test-jwt-secret-key-for-testing-only-not-for-production-use"
         return v
 
 
