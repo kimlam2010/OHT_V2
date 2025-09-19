@@ -24,7 +24,10 @@ def async_client_admin():
     async def override_get_current_user():
         return User(id=1, username="admin", email="admin@test.com", role="admin", is_active=True)
     app.dependency_overrides[get_current_user] = override_get_current_user
-    return AsyncClient(app=app, base_url="http://test")
+    
+    # Create client with mock token header for security tests
+    headers = {"Authorization": "Bearer mock_token"}
+    return AsyncClient(app=app, base_url="http://test", headers=headers)
 
 
 @pytest.fixture
@@ -32,7 +35,10 @@ def async_client_viewer():
     async def override_get_current_user():
         return User(id=2, username="viewer", email="viewer@test.com", role="viewer", is_active=True)
     app.dependency_overrides[get_current_user] = override_get_current_user
-    return AsyncClient(app=app, base_url="http://test")
+    
+    # Create client with mock token header for security tests
+    headers = {"Authorization": "Bearer mock_token"}
+    return AsyncClient(app=app, base_url="http://test", headers=headers)
 
 
 @pytest.mark.asyncio

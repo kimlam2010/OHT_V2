@@ -31,7 +31,7 @@ class TestUserManagementService:
             id=1,
             username="testuser",
             email="test@example.com",
-            password_hash="hashed_password",
+            hashed_password="hashed_password",
             role="viewer",
             is_active=True,
             created_at=datetime.now(timezone.utc)
@@ -612,7 +612,7 @@ class TestUserManagementService:
                 id=2,
                 username="updateduser",  # Same as update data
                 email="other@example.com",
-                password_hash="hashed_password",
+                hashed_password="hashed_password",
                 role="viewer",
                 is_active=True,
                 created_at=datetime.now(timezone.utc)
