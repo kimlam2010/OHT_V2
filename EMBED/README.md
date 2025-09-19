@@ -8,6 +8,13 @@ Folder EMBED chứa tất cả file liên quan đến phần cứng và driver c
 **Platform:** Orange Pi 5B (RK3588)  
 **Status:** ✅ **PRODUCTION READY** - Hardware đã được cấu hình và validate hoàn chỉnh
 
+## 🚨 **QUAN TRỌNG - OVERLAY CONFIGURATION**
+
+### **✅ SỬ DỤNG SYSTEM OVERLAY (KHUYẾN NGHỊ):**
+- **Overlay:** `uart1-m1` (có sẵn trong hệ thống)
+- **Ưu điểm:** Stable, tested, không cần compile
+- **Boot config:** `overlays=uart1-m1`
+
 ## 🚨 **QUAN TRỌNG - QUY TRÌNH SETUP HOÀN CHỈNH**
 
 ### **🔥 Setup từ đầu (First Time Setup):**
@@ -19,11 +26,11 @@ sudo ./setup_oht_gpio_correct.sh
 # 2. Cài đặt pyserial (BẮT BUỘC)
 sudo pip3 install pyserial
 
-# 3. Copy device tree overlay (BẮT BUỘC)
-sudo cp uart1_46_47.dtbo /boot/dtb-6.1.43-rockchip-rk3588/rockchip/overlay/
+# 3. Enable UART1 system overlay (BẮT BUỘC) - SỬ DỤNG OVERLAY CÓ SẴN
+# KHÔNG CẦN copy file overlay - sử dụng system overlay uart1-m1
 
-# 4. Enable UART1 overlay (BẮT BUỘC)
-sudo bash -c "echo 'overlays=uart1_46_47' >> /boot/orangepiEnv.txt"
+# 4. Enable UART1 system overlay (BẮT BUỘC)
+sudo bash -c "echo 'overlays=uart1-m1' >> /boot/orangepiEnv.txt"
 
 # 5. REBOOT để kích hoạt UART1 (BẮT BUỘC)
 sudo reboot

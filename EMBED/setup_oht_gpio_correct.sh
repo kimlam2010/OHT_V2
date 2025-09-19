@@ -32,9 +32,9 @@ declare -A GPIO_MAP=(
     ["RELAY1"]="131"        # GPIO4_A3 - Relay 1 Output
     ["RELAY2"]="132"        # GPIO4_A4 - Relay 2 Output
     
-    # RS485 Communication
-    ["UART1_TX"]="46"       # UART1_TX - RS485 TX Control
-    ["UART1_RX"]="47"       # UART1_RX - RS485 RX Control
+    # RS485 Communication - KHÔNG EXPORT (được quản lý bởi Device Tree)
+    # ["UART1_TX"]="46"       # UART1_TX - Managed by Device Tree overlay
+    # ["UART1_RX"]="47"       # UART1_RX - Managed by Device Tree overlay
 )
 
 # Function để export GPIO
@@ -105,9 +105,9 @@ set_direction "59" "in" "ESTOP_CH1"
 set_direction "131" "out" "RELAY1"
 set_direction "132" "out" "RELAY2"
 
-# Set directions cho UART1 (đã có sẵn)
-set_direction "46" "out" "UART1_TX"
-set_direction "47" "in" "UART1_RX"
+# UART1 pins KHÔNG được set direction - được quản lý bởi Device Tree overlay
+# set_direction "46" "out" "UART1_TX"  # KHÔNG EXPORT - Device Tree quản lý
+# set_direction "47" "in" "UART1_RX"   # KHÔNG EXPORT - Device Tree quản lý
 
 echo ""
 echo "📋 Setting initial values..."
@@ -123,16 +123,19 @@ set_value "58" "0" "LED_ERROR"
 set_value "131" "0" "RELAY1"
 set_value "132" "0" "RELAY2"
 
-# Set initial value cho UART1_TX (LOW)
-set_value "46" "0" "UART1_TX"
+# UART1_TX KHÔNG được set value - được quản lý bởi Device Tree overlay
+# set_value "46" "0" "UART1_TX"  # KHÔNG EXPORT - Device Tree quản lý
 
 echo ""
 echo "📋 Reading current GPIO values..."
 
-# Read current values
+# Read current values (chỉ GPIO đã export, không đọc UART pins)
 for name in "${!GPIO_MAP[@]}"; do
     pin="${GPIO_MAP[$name]}"
-    get_value "$pin" "$name"
+    # Skip UART pins vì chúng được quản lý bởi Device Tree
+    if [[ "$name" != "UART1_TX" && "$name" != "UART1_RX" ]]; then
+        get_value "$pin" "$name"
+    fi
 done
 
 echo ""
@@ -142,7 +145,7 @@ echo "📋 GPIO Summary (CORRECTED):"
 echo "  LED: POWER=GPIO54, SYSTEM=GPIO35, COMM=GPIO28, NETWORK=GPIO29, ERROR=GPIO58"
 echo "  E-Stop: CH1=GPIO59"
 echo "  Relay: RELAY1=GPIO131, RELAY2=GPIO132"
-echo "  UART1: TX=GPIO46, RX=GPIO47"
+echo "  UART1: TX=GPIO46, RX=GPIO47 (Managed by Device Tree overlay - NOT exported)"
 echo ""
 echo "🧪 Test commands:"
 echo "  # Test LED"
