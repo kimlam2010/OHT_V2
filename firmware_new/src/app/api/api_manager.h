@@ -9,12 +9,20 @@
 #define API_MANAGER_MAX_CLIENTS 8
 
 typedef enum { API_MGR_HTTP_GET=0, API_MGR_HTTP_POST } api_mgr_http_method_t;
-typedef enum { API_MGR_RESPONSE_OK=200, API_MGR_RESPONSE_BAD_REQUEST=400, API_MGR_RESPONSE_NOT_FOUND=404, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR=500 } api_mgr_http_response_code_t;
+typedef enum { 
+    API_MGR_RESPONSE_OK=200, 
+    API_MGR_RESPONSE_BAD_REQUEST=400, 
+    API_MGR_RESPONSE_NOT_FOUND=404, 
+    API_MGR_RESPONSE_INTERNAL_SERVER_ERROR=500,
+    API_MGR_RESPONSE_SERVICE_UNAVAILABLE=503
+} api_mgr_http_response_code_t;
 
 typedef struct { char name[64]; char value[256]; } api_mgr_http_header_t;
 typedef struct {
     api_mgr_http_method_t method;
     char path[API_MANAGER_MAX_PATH_LENGTH];
+    char *body;
+    size_t body_length;
 } api_mgr_http_request_t;
 
 typedef struct {

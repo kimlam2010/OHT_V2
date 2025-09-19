@@ -10,12 +10,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
+#include <unistd.h>
 #include "telemetry_manager.h"
 #include "hal_common.h"
 #include "system_state_machine.h"
 #include "module_manager.h"
 #include "safety_monitor.h"
 #include "control_loop.h"
+
+// Forward declarations for static functions
+static int serialize_power_module_registers(char *buffer, size_t buffer_size);
+static int serialize_safety_module_registers(char *buffer, size_t buffer_size);
+static int serialize_motor_module_registers(char *buffer, size_t buffer_size);
+static int serialize_dock_module_registers(char *buffer, size_t buffer_size);
 
 // Telemetry Manager instance
 static struct {
@@ -810,11 +818,7 @@ static int serialize_safety_json(const telemetry_safety_t *safety, char *buffer,
         safety->emergency_stop ? "true" : "false");
 }
 
-// Forward declarations for RS485 module register serializers
-static int serialize_power_module_registers(char *buffer, size_t buffer_size);
-static int serialize_safety_module_registers(char *buffer, size_t buffer_size);
-static int serialize_motor_module_registers(char *buffer, size_t buffer_size);
-static int serialize_dock_module_registers(char *buffer, size_t buffer_size);
+// RS485 module register serializers (implementations below)
 
 static int serialize_status_json(const telemetry_status_t *status, char *buffer, size_t buffer_size) {
     const char *state_str = "idle";
