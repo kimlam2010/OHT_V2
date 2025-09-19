@@ -37,6 +37,10 @@ int api_handle_lidar_scan_frame(const api_mgr_http_request_t *req, api_mgr_http_
 // 360-bin frame (0..359 degrees) via GET query (?reducer=max&min_q=0&max_range=0)
 int api_handle_lidar_scan_frame_360(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 
+// CRITICAL ENDPOINTS - Issue #112 Fix
+int api_handle_health_check(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_rs485_modules(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+
 // CRITICAL ENDPOINTS - Phase 1 Implementation
 int api_handle_robot_status(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 int api_handle_robot_command(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);

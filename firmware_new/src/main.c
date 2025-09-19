@@ -219,6 +219,11 @@ int main(int argc, char **argv) {
 
         // Initialize Module Manager
         printf("[MAIN] Initializing module manager...\n");
+        
+        // Clear registry to prevent garbage data
+        printf("[MAIN] Clearing module registry...\n");
+        registry_clear();
+        
         hal_status_t module_status = module_manager_init();
         if (module_status != HAL_STATUS_OK) {
             printf("[MAIN] WARNING: module_manager_init failed (status=%d), continuing...\n", module_status);
