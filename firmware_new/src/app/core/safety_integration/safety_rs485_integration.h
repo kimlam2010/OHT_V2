@@ -20,8 +20,8 @@
 #include <time.h>
 
 // Include existing headers - NO MODIFICATIONS to existing files
-#include "../managers/communication_manager.h"
-#include "../managers/module_manager.h"
+#include "../../managers/communication_manager.h"
+#include "../../managers/module_manager.h"
 #include "safety_monitor.h"
 
 #ifdef __cplusplus
