@@ -5,6 +5,7 @@
 #include "api_endpoints.h"
 #include "module_manager.h"
 #include "hal_lidar.h"
+#include "system_state_machine.h"
 
 int api_register_minimal_endpoints(void){
     api_manager_register_endpoint("/api/v1/system/status", API_MGR_HTTP_GET, api_handle_system_status);
@@ -26,6 +27,23 @@ int api_register_minimal_endpoints(void){
     api_manager_register_endpoint("/api/v1/robot/command", API_MGR_HTTP_POST, api_handle_robot_command);
     api_manager_register_endpoint("/api/v1/battery/status", API_MGR_HTTP_GET, api_handle_battery_status);
     api_manager_register_endpoint("/api/v1/temperature/status", API_MGR_HTTP_GET, api_handle_temperature_status);
+    
+    // STATE MACHINE CONTROL APIs - NEW IMPLEMENTATION
+    api_manager_register_endpoint("/api/v1/state/move", API_MGR_HTTP_POST, api_handle_state_move);
+    api_manager_register_endpoint("/api/v1/state/pause", API_MGR_HTTP_POST, api_handle_state_pause);
+    api_manager_register_endpoint("/api/v1/state/resume", API_MGR_HTTP_POST, api_handle_state_resume);
+    api_manager_register_endpoint("/api/v1/state/stop", API_MGR_HTTP_POST, api_handle_state_stop);
+    api_manager_register_endpoint("/api/v1/state/dock", API_MGR_HTTP_POST, api_handle_state_dock);
+    api_manager_register_endpoint("/api/v1/state/emergency", API_MGR_HTTP_POST, api_handle_state_emergency);
+    api_manager_register_endpoint("/api/v1/state/reset", API_MGR_HTTP_POST, api_handle_state_reset);
+    
+    // CONFIGURATION APIs - NEW IMPLEMENTATION
+    api_manager_register_endpoint("/api/v1/config/state-machine", API_MGR_HTTP_GET, api_handle_config_get);
+    api_manager_register_endpoint("/api/v1/config/state-machine", API_MGR_HTTP_POST, api_handle_config_set);
+    api_manager_register_endpoint("/api/v1/config/timeouts", API_MGR_HTTP_POST, api_handle_config_timeouts);
+    
+    // STATISTICS APIs - NEW IMPLEMENTATION
+    api_manager_register_endpoint("/api/v1/state/statistics", API_MGR_HTTP_GET, api_handle_state_statistics);
     
     // LiDAR endpoints (CRITICAL - Production Integration)
     api_register_lidar_endpoints();
@@ -89,8 +107,58 @@ int api_handle_module_status_by_id(const api_mgr_http_request_t *req, api_mgr_ht
     return api_manager_create_success_response(res, json);
 }
 
-int api_handle_system_state(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){
-    (void)req; const char *json = "{\"success\":true,\"data\":{\"state\":\"IDLE\"}}";
+int api_handle_system_state(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
+    (void)req;
+    
+    // Get real state from state machine
+    system_status_t status;
+    hal_status_t result = system_state_machine_get_status(&status);
+    
+    if (result != HAL_STATUS_OK) {
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, 
+            "Failed to get system state");
+    }
+    
+    // Get state statistics for additional info
+    system_state_statistics_t stats;
+    system_state_machine_get_state_statistics(&stats);
+    
+    // Build comprehensive response with REAL data
+    char json[1024];
+    snprintf(json, sizeof(json),
+        "{"
+        "\"success\":true,"
+        "\"data\":{"
+            "\"current_state\":\"%s\","
+            "\"previous_state\":\"%s\","
+            "\"state_duration_ms\":%lu,"
+            "\"total_transitions\":%u,"
+            "\"system_ready\":%s,"
+            "\"safety_ok\":%s,"
+            "\"communication_ok\":%s,"
+            "\"sensors_ok\":%s,"
+            "\"location_ok\":%s,"
+            "\"last_event\":\"%s\","
+            "\"current_fault\":\"%s\","
+            "\"state_timeout_ms\":%u,"
+            "\"timestamp\":%lu"
+        "}"
+        "}",
+        system_state_machine_get_state_name(status.current_state),
+        system_state_machine_get_state_name(status.previous_state),
+        (hal_get_timestamp_us() - status.state_entry_time) / 1000,
+        status.state_transition_count,
+        status.system_ready ? "true" : "false",
+        status.safety_ok ? "true" : "false",
+        status.communication_ok ? "true" : "false",
+        status.sensors_ok ? "true" : "false",
+        status.location_ok ? "true" : "false",
+        system_state_machine_get_event_name(status.last_event),
+        system_state_machine_get_fault_name(status.current_fault),
+        status.state_timeout_ms,
+        hal_get_timestamp_ms()
+    );
+    
     return api_manager_create_success_response(res, json);
 }
 
@@ -762,52 +830,201 @@ int api_handle_robot_status(const api_mgr_http_request_t *req, api_mgr_http_resp
 }
 
 // POST /api/v1/robot/command
+// Command types enum
+typedef enum {
+    ROBOT_CMD_MOVE,
+    ROBOT_CMD_STOP,
+    ROBOT_CMD_PAUSE,
+    ROBOT_CMD_RESUME,
+    ROBOT_CMD_EMERGENCY_STOP,
+    ROBOT_CMD_DOCK,
+    ROBOT_CMD_UNKNOWN
+} robot_command_type_t;
+
+// Command structure
+typedef struct {
+    robot_command_type_t type;
+    union {
+        struct {
+            float x, y;
+            float speed;
+            char direction[16];
+        } move;
+        struct {
+            char station_id[32];
+        } dock;
+    } params;
+} robot_command_t;
+
+// Helper function to parse command type from JSON
+robot_command_type_t parse_command_type(const char *json) {
+    if (strstr(json, "\"command\":\"move\"")) return ROBOT_CMD_MOVE;
+    if (strstr(json, "\"command\":\"stop\"")) return ROBOT_CMD_STOP;
+    if (strstr(json, "\"command\":\"pause\"")) return ROBOT_CMD_PAUSE;
+    if (strstr(json, "\"command\":\"resume\"")) return ROBOT_CMD_RESUME;
+    if (strstr(json, "\"command\":\"emergency_stop\"")) return ROBOT_CMD_EMERGENCY_STOP;
+    if (strstr(json, "\"command\":\"dock\"")) return ROBOT_CMD_DOCK;
+    return ROBOT_CMD_UNKNOWN;
+}
+
+// Helper function to get command type string
+const char* get_command_type_string(robot_command_type_t type) {
+    switch (type) {
+        case ROBOT_CMD_MOVE: return "move";
+        case ROBOT_CMD_STOP: return "stop";
+        case ROBOT_CMD_PAUSE: return "pause";
+        case ROBOT_CMD_RESUME: return "resume";
+        case ROBOT_CMD_EMERGENCY_STOP: return "emergency_stop";
+        case ROBOT_CMD_DOCK: return "dock";
+        default: return "unknown";
+    }
+}
+
+// Parse JSON command parameters
+hal_status_t parse_robot_command_json(const char *json, robot_command_t *cmd) {
+    cmd->type = parse_command_type(json);
+    
+    if (cmd->type == ROBOT_CMD_UNKNOWN) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Parse parameters based on command type
+    if (cmd->type == ROBOT_CMD_MOVE) {
+        // Extract move parameters - simplified JSON parsing
+        char *x_pos = strstr(json, "\"x\":");
+        char *y_pos = strstr(json, "\"y\":");
+        char *speed_pos = strstr(json, "\"speed\":");
+        char *dir_pos = strstr(json, "\"direction\":");
+        
+        if (x_pos) sscanf(x_pos + 4, "%f", &cmd->params.move.x);
+        if (y_pos) sscanf(y_pos + 4, "%f", &cmd->params.move.y);
+        if (speed_pos) sscanf(speed_pos + 8, "%f", &cmd->params.move.speed);
+        if (dir_pos) {
+            sscanf(dir_pos + 12, "\"%15[^\"]\"", cmd->params.move.direction);
+        } else {
+            strcpy(cmd->params.move.direction, "forward");
+        }
+    } else if (cmd->type == ROBOT_CMD_DOCK) {
+        char *station_pos = strstr(json, "\"station_id\":");
+        if (station_pos) {
+            sscanf(station_pos + 13, "\"%31[^\"]\"", cmd->params.dock.station_id);
+        } else {
+            strcpy(cmd->params.dock.station_id, "default");
+        }
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+// Validate command parameters
+hal_status_t validate_robot_command(const robot_command_t *cmd) {
+    switch (cmd->type) {
+        case ROBOT_CMD_MOVE:
+            if (cmd->params.move.speed <= 0 || cmd->params.move.speed > 10.0f) {
+                return HAL_STATUS_INVALID_PARAMETER;
+            }
+            break;
+        case ROBOT_CMD_DOCK:
+            if (strlen(cmd->params.dock.station_id) == 0) {
+                return HAL_STATUS_INVALID_PARAMETER;
+            }
+            break;
+        default:
+            break;
+    }
+    return HAL_STATUS_OK;
+}
+
+// Execute robot command through state machine
+hal_status_t execute_robot_command(const robot_command_t *cmd) {
+    switch (cmd->type) {
+        case ROBOT_CMD_MOVE:
+            return system_state_machine_enter_move();
+        case ROBOT_CMD_STOP:
+            return system_state_machine_process_event(SYSTEM_EVENT_STOP_COMMAND);
+        case ROBOT_CMD_PAUSE:
+            return system_state_machine_enter_paused();
+        case ROBOT_CMD_RESUME:
+            return system_state_machine_resume_from_pause();
+        case ROBOT_CMD_EMERGENCY_STOP:
+            return system_state_machine_enter_estop();
+        case ROBOT_CMD_DOCK:
+            return system_state_machine_enter_dock();
+        default:
+            return HAL_STATUS_INVALID_PARAMETER;
+    }
+}
+
+// POST /api/v1/robot/command - REAL IMPLEMENTATION
 int api_handle_robot_command(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
     if (!req || !req->body || strlen(req->body) == 0) {
-        return api_manager_create_error_response(res, API_MGR_RESPONSE_BAD_REQUEST, "Request body required");
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_BAD_REQUEST, 
+            "Request body required");
     }
     
-    // Parse command from JSON body
-    char command_type[32] = {0};
-    char direction[16] = {0};
-    float speed = 0.0f;
-    float distance = 0.0f;
-    
-    // TODO: Parse JSON request body
-    // - Extract command_type (move|stop|pause|resume|emergency_stop)
-    // - Extract parameters (direction, speed, distance)
-    // - Validate command parameters
-    
-    // TODO: Process command through motion controller
-    // - Send command to motion controller
-    // - Wait for command acknowledgment
-    // - Return real command execution result
-    
-    // For now, return error if command processing not available
-    if (strlen(command_type) == 0) {
-        return api_manager_create_error_response(res, API_MGR_RESPONSE_SERVICE_UNAVAILABLE, 
-            "Robot command processing system not available");
+    // Parse JSON command
+    robot_command_t cmd;
+    if (parse_robot_command_json(req->body, &cmd) != HAL_STATUS_OK) {
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_BAD_REQUEST,
+            "Invalid command JSON format");
     }
     
-    // Generate real command ID
+    // Validate command parameters
+    if (validate_robot_command(&cmd) != HAL_STATUS_OK) {
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_BAD_REQUEST,
+            "Invalid command parameters");
+    }
+    
+    // Get current system state for validation
+    system_status_t status;
+    if (system_state_machine_get_status(&status) != HAL_STATUS_OK) {
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
+            "Cannot get system status");
+    }
+    
+    // Execute command through state machine
+    hal_status_t result = execute_robot_command(&cmd);
+    
+    // Generate command ID
     uint64_t command_id = hal_get_timestamp_ms();
     
-    // Build response JSON
+    // Build response
     char json[512];
-    snprintf(json, sizeof(json),
-        "{"
-        "\"success\":true,"
-        "\"message\":\"Command executed successfully\","
-        "\"command_id\":\"cmd_%lu\","
-        "\"command_type\":\"%s\","
-        "\"timestamp\":%lu"
-        "}",
-        command_id,
-        command_type,
-        hal_get_timestamp_ms()
-    );
-    
-    return api_manager_create_success_response(res, json);
+    if (result == HAL_STATUS_OK) {
+        snprintf(json, sizeof(json),
+            "{"
+            "\"success\":true,"
+            "\"message\":\"Command executed successfully\","
+            "\"command_id\":\"cmd_%lu\","
+            "\"command_type\":\"%s\","
+            "\"previous_state\":\"%s\","
+            "\"timestamp\":%lu"
+            "}",
+            command_id,
+            get_command_type_string(cmd.type),
+            system_state_machine_get_state_name(status.current_state),
+            hal_get_timestamp_ms()
+        );
+        return api_manager_create_success_response(res, json);
+    } else {
+        snprintf(json, sizeof(json),
+            "{"
+            "\"success\":false,"
+            "\"error\":\"Command execution failed\","
+            "\"command_id\":\"cmd_%lu\","
+            "\"command_type\":\"%s\","
+            "\"current_state\":\"%s\","
+            "\"error_code\":%d,"
+            "\"timestamp\":%lu"
+            "}",
+            command_id,
+            get_command_type_string(cmd.type),
+            system_state_machine_get_state_name(status.current_state),
+            (int)result,
+            hal_get_timestamp_ms()
+        );
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, json);
+    }
 }
 
 // GET /api/v1/battery/status

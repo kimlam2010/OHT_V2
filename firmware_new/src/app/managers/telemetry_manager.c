@@ -12,6 +12,8 @@
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/sysinfo.h>
+#include <sys/statvfs.h>
 #include "telemetry_manager.h"
 #include "hal_common.h"
 #include "system_state_machine.h"
@@ -47,6 +49,64 @@ static struct {
     uint64_t last_safety_update;
     uint64_t last_system_update;
 } g_telemetry_manager;
+
+// ✅ REAL TELEMETRY MEASUREMENT FUNCTIONS (FIXED: No more fake data)
+static float telemetry_get_cpu_usage(void) {
+    static unsigned long long prev_idle = 0, prev_total = 0;
+    FILE *file = fopen("/proc/stat", "r");
+    if (!file) return -1.0f;
+    
+    unsigned long long user, nice, system, idle, iowait, irq, softirq, steal;
+    if (fscanf(file, "cpu %llu %llu %llu %llu %llu %llu %llu %llu",
+               &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal) != 8) {
+        fclose(file);
+        return -1.0f;
+    }
+    fclose(file);
+    
+    unsigned long long total = user + nice + system + idle + iowait + irq + softirq + steal;
+    unsigned long long diff_idle = idle - prev_idle;
+    unsigned long long diff_total = total - prev_total;
+    
+    if (diff_total == 0) return 0.0f;
+    
+    float cpu_usage = 100.0f * (1.0f - ((float)diff_idle / (float)diff_total));
+    
+    prev_idle = idle;
+    prev_total = total;
+    
+    return (cpu_usage < 0.0f) ? 0.0f : cpu_usage;
+}
+
+static float telemetry_get_memory_usage(void) {
+    struct sysinfo info;
+    if (sysinfo(&info) != 0) return -1.0f;
+    
+    unsigned long total_ram = info.totalram * info.mem_unit;
+    unsigned long free_ram = info.freeram * info.mem_unit;
+    unsigned long used_ram = total_ram - free_ram;
+    
+    return (float)used_ram / (float)total_ram * 100.0f;
+}
+
+static float telemetry_get_system_temperature(void) {
+    // Try to read from thermal zone (common on ARM systems like Orange Pi)
+    FILE *file = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+    if (!file) {
+        // Fallback: try CPU temperature
+        file = fopen("/sys/devices/virtual/thermal/thermal_zone0/temp", "r");
+        if (!file) return -1.0f; // No temperature sensor available
+    }
+    
+    int temp_millicelsius;
+    if (fscanf(file, "%d", &temp_millicelsius) != 1) {
+        fclose(file);
+        return -1.0f;
+    }
+    fclose(file);
+    
+    return (float)temp_millicelsius / 1000.0f; // Convert to Celsius
+}
 
 // Default configuration
 static const telemetry_config_t default_config = {
@@ -550,11 +610,10 @@ static void collect_system_data(telemetry_data_t *data) {
         data->status.state = system_status.current_state;
     }
     
-    // Get real system metrics from HAL (when available)
-    // For now, use basic system calls to get real data
-    data->cpu_usage = 0.0f;  // TODO: Implement real CPU usage measurement
-    data->memory_usage = 0.0f; // TODO: Implement real memory usage measurement
-    data->temperature = 0.0f;  // TODO: Implement real temperature measurement
+    // Get real system metrics (FIXED: Implement real measurements)
+    data->cpu_usage = telemetry_get_cpu_usage();
+    data->memory_usage = telemetry_get_memory_usage();
+    data->temperature = telemetry_get_system_temperature();
     
     // Get real connection status from communication manager
     comm_mgr_status_info_t comm_status;

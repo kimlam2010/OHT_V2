@@ -42,3 +42,20 @@ int api_handle_robot_status(const api_mgr_http_request_t *req, api_mgr_http_resp
 int api_handle_robot_command(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 int api_handle_battery_status(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 int api_handle_temperature_status(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+
+// STATE MACHINE CONTROL APIs - NEW IMPLEMENTATION
+int api_handle_state_move(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_state_pause(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_state_resume(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_state_stop(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_state_dock(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_state_emergency(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_state_reset(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+
+// CONFIGURATION APIs - NEW IMPLEMENTATION
+int api_handle_config_get(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_config_set(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_config_timeouts(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+
+// STATISTICS APIs - NEW IMPLEMENTATION  
+int api_handle_state_statistics(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
