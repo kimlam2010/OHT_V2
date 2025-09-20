@@ -13,8 +13,8 @@ from app.schemas.user import UserResponse as User
 from app.services.telemetry import telemetry_service
 from app.services.telemetry_data_collector import telemetry_data_collector, DataSource
 from app.services.lidar_data_processor import lidar_data_processor
-from app.services.sensor_data_processor import sensor_processor
-from app.services.firmware_integration_service import SensorType
+from app.services.sensor_data_processor import sensor_data_processor
+from app.services.firmware_integration_service import SensorType, MockFirmwareService
 
 router = APIRouter(
     prefix="/api/v1/telemetry", 
@@ -94,6 +94,29 @@ class PerformanceMetricsResponse(BaseModel):
     system_resources: Dict[str, Any]
     error_rates: Dict[str, float]
     throughput: Dict[str, Any]
+
+
+class FirmwareConnectionStatus(BaseModel):
+    """Response model for firmware connection status"""
+    connected: bool = Field(..., description="Whether firmware is connected")
+    firmware_url: str = Field(..., description="Firmware URL")
+    using_mock_data: bool = Field(..., description="Whether using mock data")
+    last_heartbeat: Optional[str] = Field(None, description="Last successful heartbeat")
+    connection_errors: int = Field(0, description="Number of connection errors")
+    status_message: str = Field(..., description="Human readable status message")
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "connected": True,
+                "firmware_url": "http://localhost:8081",
+                "using_mock_data": False,
+                "last_heartbeat": "2025-01-28T10:30:00Z",
+                "connection_errors": 0,
+                "status_message": "✅ Connected to real firmware"
+            }
+        }
+    )
 
 
 @router.get("/current", response_model=TelemetryData)
@@ -669,4 +692,54 @@ async def get_telemetry_performance(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get performance metrics: {str(e)}"
+        )
+
+
+@router.get("/firmware-status", response_model=FirmwareConnectionStatus)
+async def get_firmware_connection_status(
+    current_user: User = Depends(require_permission("telemetry", "read"))
+):
+    """
+    Get firmware connection status
+    
+    Returns information about firmware connection including:
+    - Whether connected to real firmware or using mock data
+    - Firmware URL and connection details
+    - Connection health and error statistics
+    - Last heartbeat timestamp
+    
+    **Critical**: This endpoint helps identify if system is using mock data
+    **Performance Target**: < 100ms response time
+    **Authentication**: Required (telemetry:read permission)
+    """
+    try:
+        # Check if telemetry service is using mock
+        is_mock = isinstance(telemetry_service.firmware_service, MockFirmwareService)
+        
+        if is_mock:
+            return FirmwareConnectionStatus(
+                connected=False,
+                firmware_url="N/A (Using Mock)",
+                using_mock_data=True,
+                last_heartbeat=None,
+                connection_errors=0,
+                status_message="🚨 WARNING: Using MOCK data - NOT connected to real firmware!"
+            )
+        else:
+            # Get connection status from real firmware service
+            connection_status = await telemetry_service.firmware_service.get_connection_status()
+            
+            return FirmwareConnectionStatus(
+                connected=connection_status["status"] == "connected",
+                firmware_url=connection_status["firmware_url"],
+                using_mock_data=False,
+                last_heartbeat=connection_status["last_heartbeat"],
+                connection_errors=connection_status["connection_errors"],
+                status_message="✅ Connected to real firmware" if connection_status["is_healthy"] else "⚠️ Firmware connection issues detected"
+            )
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get firmware status: {str(e)}"
         )

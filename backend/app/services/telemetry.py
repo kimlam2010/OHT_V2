@@ -21,17 +21,40 @@ class TelemetryService:
         testing_mode = os.getenv("TESTING", "false").lower() == "true"
         allow_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true" or settings.use_mock_firmware or use_mock or testing_mode
         is_production = settings.environment.lower() == "production"
+        
         if allow_mock and not is_production:
             self.firmware_service = MockFirmwareService()
             logger.warning("🧪 MOCK ENABLED: TelemetryService using MockFirmwareService (non-production)")
         else:
             self.firmware_service = FirmwareIntegrationService()
+            logger.info("🔌 REAL FIRMWARE: TelemetryService using FirmwareIntegrationService")
+        
         self.telemetry_history = []
+        # Add validation flag
+        self._validated_connection = False
         self.max_history_size = 1000
         
+    async def validate_firmware_connection(self) -> bool:
+        """Validate firmware connection and warn if using mock data"""
+        if not self._validated_connection:
+            # Check if firmware service has validation method
+            if hasattr(self.firmware_service, 'validate_firmware_connection'):
+                self._validated_connection = await self.firmware_service.validate_firmware_connection()
+            else:
+                # For mock service, always return False and warn
+                if isinstance(self.firmware_service, MockFirmwareService):
+                    logger.warning("🚨 TELEMETRY MOCK WARNING: Using MockFirmwareService - NOT real firmware data!")
+                    self._validated_connection = False
+                else:
+                    self._validated_connection = True
+        
+        return self._validated_connection
+    
     async def get_current_telemetry(self) -> Dict[str, Any]:
         """Get current telemetry data"""
         try:
+            # Validate firmware connection first
+            await self.validate_firmware_connection()
             telemetry = await self.firmware_service.get_telemetry_data()
             
             # Add timestamp

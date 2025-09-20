@@ -122,6 +122,36 @@ class FirmwareIntegrationService:
             logger.error("❌ Firmware initialization failed: %s", e)
             return False
     
+    async def validate_firmware_connection(self) -> bool:
+        """
+        Validate firmware connection and warn if using mock data
+        
+        Returns:
+            True if real firmware connected, False if using mock
+        """
+        try:
+            # Check if this is a mock service
+            if isinstance(self, MockFirmwareService):
+                logger.warning("🚨 MOCK DATA WARNING: Using MockFirmwareService - NOT connected to real firmware!")
+                logger.warning("🚨 This should NEVER happen in production!")
+                return False
+            
+            # Test real connection
+            response = await self._send_request("GET", "/api/v1/system/status")
+            
+            if response.success:
+                logger.info("✅ REAL FIRMWARE: Successfully connected to firmware at %s", self.firmware_url)
+                return True
+            else:
+                logger.error("❌ REAL FIRMWARE: Connection failed - %s", response.error)
+                logger.warning("🚨 WARNING: Backend may fallback to mock data if firmware unavailable!")
+                return False
+                
+        except Exception as e:
+            logger.error("❌ FIRMWARE VALIDATION: Connection validation failed - %s", e)
+            logger.warning("🚨 WARNING: Backend may fallback to mock data if firmware unavailable!")
+            return False
+    
     async def get_sensor_data(self, sensor_type: SensorType, sensor_id: str = None) -> Optional[SensorReading]:
         """
         Get sensor data from firmware
@@ -788,42 +818,51 @@ def get_firmware_service(use_mock: bool = False) -> FirmwareIntegrationService:
     """
     import os
     testing_mode = os.getenv("TESTING", "false").lower() == "true"
+    use_mock_env = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
+    is_production = os.getenv("ENVIRONMENT", "development").lower() == "production"
     
-    if use_mock or testing_mode:
-        logger.warning("🧪 Using MOCK Firmware Service - NOT for production!")
+    # PRODUCTION: NEVER use mock
+    if is_production:
+        logger.info("🔌 PRODUCTION MODE: Using REAL Firmware Service ONLY")
+        return firmware_service
+    
+    # TESTING MODE: Always use mock
+    if testing_mode:
+        logger.warning("🧪 TESTING MODE: Using MOCK Firmware Service")
         # In tests some code expects a Mock instance; provide compatibility
         try:
             from unittest.mock import Mock as _Mock
-            if testing_mode:
-                mock_instance = _Mock(spec=MockFirmwareService)
-                # Add required methods to mock
-                mock_instance.get_robot_status.return_value = {
-                    "robot_id": "OHT-50-001",
-                    "status": "idle",
-                    "position": {"x": 150.5, "y": 200.3},
-                    "battery_level": 87,
-                    "temperature": 42.5
-                }
-                mock_instance.get_telemetry_data.return_value = {
-                    "timestamp": "2025-01-28T10:30:00Z",
-                    "motor_speed": 1500.0,
-                    "motor_temperature": 42.5,
-                    "dock_status": "ready",
-                    "safety_status": "normal"
-                }
-                mock_instance.emergency_stop.return_value = True
-                mock_instance.get_module_status.return_value = {"status": "active"}
-                mock_instance.discover_modules.return_value = []
-                mock_instance.initialize.return_value = True
-                mock_instance.connection_errors = 0
-                mock_instance.status = "CONNECTED"
-                return mock_instance  # type: ignore[return-value]
+            mock_instance = _Mock(spec=MockFirmwareService)
+            # Add required methods to mock
+            mock_instance.get_robot_status.return_value = {
+                "robot_id": "OHT-50-001",
+                "status": "idle",
+                "position": {"x": 150.5, "y": 200.3},
+                "battery_level": 87,
+                "temperature": 42.5
+            }
+            mock_instance.get_telemetry_data.return_value = {
+                "timestamp": "2025-01-28T10:30:00Z",
+                "motor_speed": 1500.0,
+                "motor_temperature": 42.5,
+                "dock_status": "ready",
+                "safety_status": "normal"
+            }
+            mock_instance.emergency_stop.return_value = True
+            mock_instance.get_module_status.return_value = {"status": "active"}
+            mock_instance.discover_modules.return_value = []
+            mock_instance.initialize.return_value = True
+            mock_instance.connection_errors = 0
+            mock_instance.status = "CONNECTED"
+            return mock_instance  # type: ignore[return-value]
         except Exception:
             pass
         return MockFirmwareService()
+    
+    # DEVELOPMENT: Check environment flags
+    if use_mock and use_mock_env:
+        logger.warning("🧪 DEVELOPMENT MODE: Using MOCK Firmware Service (use_mock=True and USE_MOCK_FIRMWARE=true)")
+        return MockFirmwareService()
     else:
-        logger.info("🔌 Using REAL Firmware Service - connecting to actual Firmware")
-        # For testing mode, still return mock even when use_mock=False
-        if testing_mode:
-            return MockFirmwareService()
+        logger.info("🔌 DEVELOPMENT MODE: Using REAL Firmware Service - connecting to actual Firmware")
         return firmware_service
