@@ -1,54 +1,43 @@
 """
-Firmware Integration Service for OHT-50 Backend
-Handles communication with Firmware via HTTP API (NOT RS485)
+Firmware Integration Service - OHT-50 Backend
+
+This service provides high-level integration with the OHT-50 Firmware,
+handling HTTP API communication, WebSocket real-time updates, and
+connection management.
+
+WARNING: This service MUST connect to real Firmware via HTTP API
+DO NOT use mock data in production
 """
 
-import logging
 import asyncio
-import httpx
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass
+import logging
+import time
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Any, Optional, List, AsyncGenerator
 from enum import Enum
+from dataclasses import dataclass
 
+from app.lib.fw_client import FWClient, FWConfig, FWConnectionStatus, FWClientError
 from app.config import settings
-from app.models.telemetry import SensorData
-from app.models.sensors import SensorConfiguration
 
 logger = logging.getLogger(__name__)
 
 
-class SensorType(Enum):
-    """Sensor types supported by firmware"""
-    RFID = "rfid"
-    ACCELEROMETER = "accelerometer"
-    PROXIMITY = "proximity"
-    LIDAR = "lidar"
-
-
 class FirmwareStatus(Enum):
     """Firmware connection status"""
-    CONNECTED = "connected"
     DISCONNECTED = "disconnected"
+    CONNECTING = "connecting"
+    CONNECTED = "connected"
     ERROR = "error"
-    TIMEOUT = "timeout"
-
-
-@dataclass
-class FirmwareResponse:
-    """Firmware API response"""
-    success: bool
-    data: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    timestamp: Optional[datetime] = None
+    RECONNECTING = "reconnecting"
 
 
 @dataclass
 class SensorReading:
-    """Sensor reading from firmware"""
-    sensor_type: SensorType
+    """Sensor reading data structure"""
     sensor_id: str
-    data: Dict[str, Any]
+    value: float
+    unit: str
     quality: float
     timestamp: datetime
     is_valid: bool = True
@@ -69,11 +58,17 @@ class FirmwareIntegrationService:
         Args:
             firmware_url: Firmware HTTP API URL
         """
-        self.firmware_url = firmware_url or getattr(settings, 'firmware_url', 'http://localhost:8081')
-        self.http_client = httpx.AsyncClient(
-            base_url=self.firmware_url,
-            timeout=httpx.Timeout(5.0),  # 5 second timeout
-            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+        self.firmware_url = firmware_url or getattr(settings, 'firmware_url', 'http://localhost:8080')
+        self.firmware_ws_url = getattr(settings, 'firmware_websocket_url', 'ws://localhost:8081/ws')
+        
+        # Initialize FW client
+        self.fw_client: Optional[FWClient] = None
+        self.fw_config = FWConfig(
+            host="localhost",
+            http_port=8080,
+            ws_port=8081,
+            timeout=settings.firmware_timeout,
+            max_retries=settings.firmware_retry_count
         )
         
         # Connection status
@@ -86,6 +81,10 @@ class FirmwareIntegrationService:
         self.sensor_cache: Dict[str, SensorReading] = {}
         self.cache_timeout = timedelta(seconds=1)  # 1 second cache timeout
         
+        # Background tasks
+        self._health_monitor_task: Optional[asyncio.Task] = None
+        self._telemetry_task: Optional[asyncio.Task] = None
+        
         # WARNING: This service MUST connect to real Firmware
         # DO NOT use mock data in production
         logger.warning("🔌 Firmware Integration: Connecting to REAL Firmware at %s", self.firmware_url)
@@ -93,34 +92,188 @@ class FirmwareIntegrationService:
         
     async def initialize(self) -> bool:
         """
-        Initialize connection to firmware
+        Initialize firmware integration service
         
         Returns:
-            True if initialization successful
+            True if initialization successful, False otherwise
         """
         try:
-            logger.info("🔌 Initializing firmware connection to %s", self.firmware_url)
+            logger.info("🚀 Initializing Firmware Integration Service...")
             
-            # Test connection with system status (health endpoint doesn't exist)
-            response = await self._send_request("GET", "/api/v1/system/status")
+            # Create FW client
+            self.fw_client = FWClient(self.fw_config)
             
-            if response.success:
+            # Connect to firmware
+            connected = await self.fw_client.connect()
+            if not connected:
+                logger.error("❌ Failed to connect to firmware during initialization")
+                self.status = FirmwareStatus.ERROR
+                return False
+            
+            self.status = FirmwareStatus.CONNECTED
+            self.last_heartbeat = datetime.now(timezone.utc)
+            
+            # Start background monitoring tasks
+            await self._start_background_tasks()
+            
+            logger.info("✅ Firmware Integration Service initialized successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Firmware Integration Service initialization failed: {e}")
+            self.status = FirmwareStatus.ERROR
+            return False
+    
+    async def shutdown(self) -> None:
+        """Shutdown firmware integration service"""
+        logger.info("🛑 Shutting down Firmware Integration Service...")
+        
+        # Stop background tasks
+        if self._health_monitor_task:
+            self._health_monitor_task.cancel()
+        if self._telemetry_task:
+            self._telemetry_task.cancel()
+        
+        # Disconnect from firmware
+        if self.fw_client:
+            await self.fw_client.disconnect()
+        
+        self.status = FirmwareStatus.DISCONNECTED
+        logger.info("✅ Firmware Integration Service shutdown complete")
+    
+    async def _start_background_tasks(self) -> None:
+        """Start background monitoring tasks"""
+        # Health monitoring task
+        self._health_monitor_task = asyncio.create_task(self._health_monitor_loop())
+        
+        # Telemetry streaming task
+        self._telemetry_task = asyncio.create_task(self._telemetry_loop())
+        
+        logger.info("✅ Background monitoring tasks started")
+    
+    async def _health_monitor_loop(self) -> None:
+        """Background health monitoring loop"""
+        while True:
+            try:
+                if self.fw_client:
+                    is_healthy = await self.fw_client.check_connection_health()
+                    
+                    if is_healthy:
+                        self.status = FirmwareStatus.CONNECTED
+                        self.connection_errors = 0
+                    else:
+                        self.status = FirmwareStatus.ERROR
+                        self.connection_errors += 1
+                        
+                        # Attempt reconnection if too many errors
+                        if self.connection_errors >= self.max_connection_errors:
+                            await self._attempt_reconnection()
+                
+                # Wait before next check
+                await asyncio.sleep(10)  # Check every 10 seconds
+                
+            except asyncio.CancelledError:
+                logger.info("🛑 Health monitor task cancelled")
+                break
+            except Exception as e:
+                logger.error(f"❌ Health monitor error: {e}")
+                await asyncio.sleep(5)  # Wait before retry
+    
+    async def _telemetry_loop(self) -> None:
+        """Background telemetry streaming loop"""
+        while True:
+            try:
+                if self.fw_client and self.status == FirmwareStatus.CONNECTED:
+                    async for telemetry_data in self.fw_client.get_telemetry_stream():
+                        await self._process_telemetry_data(telemetry_data)
+                else:
+                    # Wait if not connected
+                    await asyncio.sleep(1)
+                    
+            except asyncio.CancelledError:
+                logger.info("🛑 Telemetry task cancelled")
+                break
+            except Exception as e:
+                logger.error(f"❌ Telemetry streaming error: {e}")
+                await asyncio.sleep(1)
+    
+    async def _process_telemetry_data(self, data: Dict[str, Any]) -> None:
+        """Process incoming telemetry data"""
+        try:
+            # Update sensor cache with new data
+            timestamp = datetime.now(timezone.utc)
+            
+            # Process robot position data
+            if "robot_position" in data:
+                position = data["robot_position"]
+                self.sensor_cache["robot_x"] = SensorReading(
+                    sensor_id="robot_x",
+                    value=position.get("x", 0.0),
+                    unit="mm",
+                    quality=1.0,
+                    timestamp=timestamp
+                )
+                self.sensor_cache["robot_y"] = SensorReading(
+                    sensor_id="robot_y",
+                    value=position.get("y", 0.0),
+                    unit="mm",
+                    quality=1.0,
+                    timestamp=timestamp
+                )
+            
+            # Process battery data
+            if "battery_level" in data:
+                self.sensor_cache["battery"] = SensorReading(
+                    sensor_id="battery",
+                    value=float(data["battery_level"]),
+                    unit="%",
+                    quality=1.0,
+                    timestamp=timestamp
+                )
+            
+            # Process temperature data
+            if "temperature" in data:
+                self.sensor_cache["temperature"] = SensorReading(
+                    sensor_id="temperature",
+                    value=float(data["temperature"]),
+                    unit="°C",
+                    quality=1.0,
+                    timestamp=timestamp
+                )
+            
+            logger.debug(f"📊 Telemetry processed: {len(data)} data points")
+            
+        except Exception as e:
+            logger.error(f"❌ Error processing telemetry data: {e}")
+    
+    async def _attempt_reconnection(self) -> None:
+        """Attempt to reconnect to firmware"""
+        try:
+            logger.warning("🔄 Attempting firmware reconnection...")
+            self.status = FirmwareStatus.RECONNECTING
+            
+            # Disconnect current client
+            if self.fw_client:
+                await self.fw_client.disconnect()
+            
+            # Create new client and connect
+            self.fw_client = FWClient(self.fw_config)
+            connected = await self.fw_client.connect()
+            
+            if connected:
                 self.status = FirmwareStatus.CONNECTED
-                self.last_heartbeat = datetime.utcnow()
                 self.connection_errors = 0
-                logger.info("✅ Firmware connection established successfully")
-                return True
+                logger.info("✅ Firmware reconnection successful")
+                
+                # Restart background tasks
+                await self._start_background_tasks()
             else:
                 self.status = FirmwareStatus.ERROR
-                self.connection_errors += 1
-                logger.error("❌ Firmware connection failed: %s", response.error)
-                return False
+                logger.error("❌ Firmware reconnection failed")
                 
         except Exception as e:
+            logger.error(f"❌ Reconnection error: {e}")
             self.status = FirmwareStatus.ERROR
-            self.connection_errors += 1
-            logger.error("❌ Firmware initialization failed: %s", e)
-            return False
     
     async def validate_firmware_connection(self) -> bool:
         """
@@ -136,11 +289,15 @@ class FirmwareIntegrationService:
                 logger.warning("🚨 This should NEVER happen in production!")
                 return False
             
-            # Test real connection
-            response = await self._send_request("GET", "/api/v1/system/status")
+            # Test real firmware connection
+            if not self.fw_client:
+                logger.error("❌ REAL FIRMWARE: Client not initialized")
+                return False
             
-            if response.success:
-                logger.info("✅ REAL FIRMWARE: Successfully connected to firmware at %s", self.firmware_url)
+            # Test connection with health check
+            health_response = await self.fw_client.get_system_health()
+            if health_response.get("success", False):
+                logger.info("✅ REAL FIRMWARE: Connection validated successfully")
                 return True
             else:
                 logger.error("❌ REAL FIRMWARE: Connection failed - %s", response.error)
@@ -152,541 +309,261 @@ class FirmwareIntegrationService:
             logger.warning("🚨 WARNING: Backend may fallback to mock data if firmware unavailable!")
             return False
     
-    async def get_sensor_data(self, sensor_type: SensorType, sensor_id: str = None) -> Optional[SensorReading]:
-        """
-        Get sensor data from firmware
-        
-        Args:
-            sensor_type: Type of sensor
-            sensor_id: Specific sensor ID (optional)
-            
-        Returns:
-            Sensor reading or None if failed
-        """
+    # System API Methods
+    
+    async def get_system_status(self) -> Dict[str, Any]:
+        """Get firmware system status"""
         try:
-            # Check cache first
-            cache_key = f"{sensor_type.value}_{sensor_id or 'default'}"
-            if cache_key in self.sensor_cache:
-                cached_reading = self.sensor_cache[cache_key]
-                if datetime.utcnow() - cached_reading.timestamp < self.cache_timeout:
-                    return cached_reading
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
             
-            # Get data from firmware
-            endpoint = f"/api/v1/sensors/{sensor_type.value}"
-            if sensor_id:
-                endpoint += f"/{sensor_id}"
-            
-            response = await self._send_request("GET", endpoint)
-            
-            if response.success and response.data:
-                # Parse sensor data
-                reading = self._parse_sensor_data(sensor_type, sensor_id, response.data)
-                
-                if reading:
-                    # Cache the reading
-                    self.sensor_cache[cache_key] = reading
-                    return reading
-            
-            return None
+            status = await self.fw_client.get_system_status()
+            return status
             
         except Exception as e:
-            logger.error("❌ Failed to get sensor data for %s: %s", sensor_type.value, e)
-            return None
+            logger.error(f"❌ Failed to get system status: {e}")
+            return {"success": False, "error": str(e)}
     
-    async def get_rfid_data(self, sensor_id: str = None) -> Optional[SensorReading]:
-        """
-        Get RFID sensor data
-        
-        Args:
-            sensor_id: RFID sensor ID
-            
-        Returns:
-            RFID reading or None
-        """
-        return await self.get_sensor_data(SensorType.RFID, sensor_id)
-    
-    async def get_accelerometer_data(self, sensor_id: str = None) -> Optional[SensorReading]:
-        """
-        Get accelerometer sensor data
-        
-        Args:
-            sensor_id: Accelerometer sensor ID
-            
-        Returns:
-            Accelerometer reading or None
-        """
-        return await self.get_sensor_data(SensorType.ACCELEROMETER, sensor_id)
-    
-    async def get_proximity_data(self, sensor_id: str = None) -> Optional[SensorReading]:
-        """
-        Get proximity sensor data
-        
-        Args:
-            sensor_id: Proximity sensor ID
-            
-        Returns:
-            Proximity reading or None
-        """
-        return await self.get_sensor_data(SensorType.PROXIMITY, sensor_id)
-    
-    async def get_lidar_data(self, sensor_id: str = None) -> Optional[SensorReading]:
-        """
-        Get LiDAR sensor data
-        
-        Args:
-            sensor_id: LiDAR sensor ID
-            
-        Returns:
-            LiDAR reading or None
-        """
-        return await self.get_sensor_data(SensorType.LIDAR, sensor_id)
-    
-    async def get_all_sensor_data(self) -> Dict[str, SensorReading]:
-        """
-        Get data from all sensors
-        
-        Returns:
-            Dictionary of sensor readings
-        """
-        readings = {}
-        
+    async def get_system_health(self) -> Dict[str, Any]:
+        """Get firmware system health"""
         try:
-            # Get data from all sensor types
-            tasks = [
-                self.get_rfid_data(),
-                self.get_accelerometer_data(),
-                self.get_proximity_data(),
-                self.get_lidar_data()
-            ]
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
             
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            for i, result in enumerate(results):
-                if isinstance(result, SensorReading):
-                    sensor_type = list(SensorType)[i]
-                    readings[sensor_type.value] = result
-                elif isinstance(result, Exception):
-                    logger.error("❌ Error getting sensor data: %s", result)
-            
-            return readings
+            health = await self.fw_client.get_system_health()
+            return health
             
         except Exception as e:
-            logger.error("❌ Failed to get all sensor data: %s", e)
-            return {}
+            logger.error(f"❌ Failed to get system health: {e}")
+            return {"success": False, "error": str(e)}
     
-    async def send_robot_command(self, command: Dict[str, Any]) -> bool:
-        """
-        Send robot command to firmware
-        
-        Args:
-            command: Robot command data
-            
-        Returns:
-            True if command sent successfully
-        """
+    # Module API Methods
+    
+    async def get_modules(self) -> List[Dict[str, Any]]:
+        """Get list of firmware modules"""
         try:
-            logger.info("🤖 Sending robot command to firmware: %s", command.get("type", "unknown"))
+            if not self.fw_client:
+                return []
             
-            response = await self._send_request("POST", "/api/v1/robot/command", data=command)
+            modules = await self.fw_client.get_modules()
+            return modules
             
-            if response.success:
-                logger.info("✅ Robot command sent successfully")
-                return True
-            else:
-                logger.error("❌ Robot command failed: %s", response.error)
+        except Exception as e:
+            logger.error(f"❌ Failed to get modules: {e}")
+            return []
+    
+    async def get_module_info(self, module_id: int) -> Dict[str, Any]:
+        """Get module information"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            info = await self.fw_client.get_module_info(module_id)
+            return info
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get module {module_id} info: {e}")
+            return {"success": False, "error": str(e)}
+    
+    async def send_module_command(self, module_id: int, command: str, parameters: Dict[str, Any]) -> bool:
+        """Send command to module"""
+        try:
+            if not self.fw_client:
+                logger.error("❌ FW client not initialized")
                 return False
-                
+            
+            success = await self.fw_client.send_module_command(module_id, command, parameters)
+            return success
+            
         except Exception as e:
-            logger.error("❌ Failed to send robot command: %s", e)
+            logger.error(f"❌ Failed to send command to module {module_id}: {e}")
             return False
+    
+    # Safety API Methods
+    
+    async def get_safety_status(self) -> Dict[str, Any]:
+        """Get safety status"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            status = await self.fw_client.get_safety_status()
+            return status
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get safety status: {e}")
+            return {"success": False, "error": str(e)}
     
     async def emergency_stop(self) -> bool:
-        """Emergency stop robot via Firmware API"""
+        """Trigger emergency stop"""
         try:
-            # Send emergency stop command to Firmware
-            command = {
-                "command_type": "emergency_stop",
-                "parameters": {},
-                "priority": "high"
+            if not self.fw_client:
+                logger.error("❌ FW client not initialized")
+                return False
+            
+            success = await self.fw_client.emergency_stop()
+            return success
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to trigger emergency stop: {e}")
+            return False
+    
+    # Configuration API Methods
+    
+    async def get_configuration(self) -> Dict[str, Any]:
+        """Get current configuration"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            config = await self.fw_client.get_configuration()
+            return config
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get configuration: {e}")
+            return {"success": False, "error": str(e)}
+    
+    async def update_configuration(self, config: Dict[str, Any]) -> bool:
+        """Update configuration"""
+        try:
+            if not self.fw_client:
+                logger.error("❌ FW client not initialized")
+                return False
+            
+            success = await self.fw_client.update_configuration(config)
+            return success
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to update configuration: {e}")
+            return False
+    
+    # Diagnostics API Methods
+    
+    async def get_diagnostics(self) -> Dict[str, Any]:
+        """Get system diagnostics"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            diagnostics = await self.fw_client.get_diagnostics()
+            return diagnostics
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get diagnostics: {e}")
+            return {"success": False, "error": str(e)}
+    
+    # Sensor Data Methods
+    
+    async def get_sensor_data(self, sensor_type: str, sensor_id: str = None) -> Optional[Dict[str, Any]]:
+        """Get sensor data from cache"""
+        try:
+            cache_key = sensor_id or sensor_type
+            sensor_reading = self.sensor_cache.get(cache_key)
+            
+            if sensor_reading:
+                # Check if data is still fresh
+                age = datetime.now(timezone.utc) - sensor_reading.timestamp
+                if age <= self.cache_timeout:
+                    return {
+                        "sensor_id": sensor_reading.sensor_id,
+                        "value": sensor_reading.value,
+                        "unit": sensor_reading.unit,
+                        "quality": sensor_reading.quality,
+                        "timestamp": sensor_reading.timestamp.isoformat(),
+                        "is_valid": sensor_reading.is_valid
+                    }
+                else:
+                    logger.warning(f"⚠️ Sensor data for {cache_key} is stale (age: {age})")
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get sensor data for {sensor_type}: {e}")
+            return None
+    
+    async def get_telemetry_data(self) -> Dict[str, Any]:
+        """Get current telemetry data"""
+        try:
+            telemetry = {
+                "success": True,
+                "data": {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "connection_status": self.status.value,
+                    "sensors": {}
+                }
             }
             
-            response = await self._send_request("POST", "/api/v1/robot/emergency", command)
-            
-            if response.success:
-                logger.critical("🚨 Emergency stop executed successfully via Firmware")
-                return True
-            else:
-                logger.error("❌ Emergency stop failed via Firmware: %s", response.error)
-                return False
-                
-        except Exception as e:
-            logger.error("❌ Emergency stop request failed: %s", e)
-            return False
-    
-    async def get_robot_status(self) -> Optional[Dict[str, Any]]:
-        """
-        Get robot status from firmware
-        
-        Returns:
-            Robot status data or None
-        """
-        try:
-            logger.info("🔍 Getting robot status from Firmware...")
-            
-            # Get system status from firmware
-            logger.debug("📡 Calling /api/v1/system/status")
-            system_response = await self._send_request("GET", "/api/v1/system/status")
-            logger.debug(f"📡 System response: success={system_response.success}, data={system_response.data}")
-            
-            logger.debug("📡 Calling /api/v1/motion/state")
-            motion_response = await self._send_request("GET", "/api/v1/motion/state")
-            logger.debug(f"📡 Motion response: success={motion_response.success}, data={motion_response.data}")
-            
-            if system_response.success and motion_response.success:
-                # Validate response data
-                if not self._validate_firmware_response(system_response.data, motion_response.data):
-                    logger.error("❌ Invalid Firmware response data")
-                    return None
-                
-                # Combine system and motion data into robot status format
-                robot_status = {
-                    "robot_id": "OHT-50-001",
-                    "status": "idle" if motion_response.data.get("v", 0) == 0 else "moving",
-                    "mode": "auto",
-                    "position": {
-                        "x": motion_response.data.get("x_est", 0.0),
-                        "y": 0.0,  # Y position not available in motion state
-                        "z": 0.0
-                    },
-                    "speed": motion_response.data.get("v", 0.0),
-                    "target_speed": motion_response.data.get("target_v", 0.0),
-                    "remaining_distance": motion_response.data.get("remaining", 0.0),
-                    "battery_level": None,  # MISSING: Firmware doesn't provide battery level
-                    "temperature": None,     # MISSING: Firmware doesn't provide temperature
-                    "safety": {
-                        "estop": motion_response.data.get("safety", {}).get("estop", False),
-                        "p95": motion_response.data.get("safety", {}).get("p95", 0)
-                    },
-                    "docking": motion_response.data.get("docking", "IDLE"),
-                    "health": motion_response.data.get("health", False),
-                    "freshness_ms": motion_response.data.get("freshness_ms", 0),
-                    "system": system_response.data.get("system", "OHT-50"),
-                    "system_status": system_response.data.get("status", "ok"),
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-                logger.info(f"✅ Successfully got robot status: {robot_status}")
-                return robot_status
-            else:
-                logger.warning(f"⚠️ Failed to get complete robot status: system_success={system_response.success}, motion_success={motion_response.success}")
-                return None
-            
-        except Exception as e:
-            logger.error("❌ Failed to get robot status: %s", e)
-            return None
-    
-    async def configure_sensor(self, sensor_id: str, config: Dict[str, Any]) -> bool:
-        """
-        Configure sensor via firmware
-        
-        Args:
-            sensor_id: Sensor identifier
-            config: Configuration data
-            
-        Returns:
-            True if configuration successful
-        """
-        try:
-            logger.info("⚙️ Configuring sensor %s via firmware", sensor_id)
-            
-            response = await self._send_request("POST", f"/api/v1/sensors/{sensor_id}/configure", data=config)
-            
-            if response.success:
-                logger.info("✅ Sensor %s configured successfully", sensor_id)
-                return True
-            else:
-                logger.error("❌ Sensor configuration failed: %s", response.error)
-                return False
-                
-        except Exception as e:
-            logger.error("❌ Failed to configure sensor %s: %s", sensor_id, e)
-            return False
-    
-    async def calibrate_sensor(self, sensor_id: str, calibration_data: Dict[str, Any]) -> bool:
-        """
-        Calibrate sensor via firmware
-        
-        Args:
-            sensor_id: Sensor identifier
-            calibration_data: Calibration parameters
-            
-        Returns:
-            True if calibration successful
-        """
-        try:
-            logger.info("🔧 Calibrating sensor %s via firmware", sensor_id)
-            
-            response = await self._send_request("POST", f"/api/v1/sensors/{sensor_id}/calibrate", data=calibration_data)
-            
-            if response.success:
-                logger.info("✅ Sensor %s calibrated successfully", sensor_id)
-                return True
-            else:
-                logger.error("❌ Sensor calibration failed: %s", response.error)
-                return False
-                
-        except Exception as e:
-            logger.error("❌ Failed to calibrate sensor %s: %s", sensor_id, e)
-            return False
-    
-    async def heartbeat(self) -> bool:
-        """
-        Send heartbeat to firmware
-        
-        Returns:
-            True if firmware is responsive
-        """
-        try:
-            response = await self._send_request("GET", "/api/v1/system/status")
-            
-            if response.success:
-                self.status = FirmwareStatus.CONNECTED
-                self.last_heartbeat = datetime.utcnow()
-                self.connection_errors = 0
-                return True
-            else:
-                self.status = FirmwareStatus.ERROR
-                self.connection_errors += 1
-                return False
-                
-        except Exception as e:
-            self.status = FirmwareStatus.ERROR
-            self.connection_errors += 1
-            logger.error("❌ Firmware heartbeat failed: %s", e)
-            return False
-    
-    async def get_telemetry_data(self) -> Optional[Dict[str, Any]]:
-        """
-        Get telemetry data from firmware
-        
-        Returns:
-            Telemetry data or None
-        """
-        try:
-            # Get robot status and modules data
-            robot_status = await self.get_robot_status()
-            modules_response = await self._send_request("GET", "/api/v1/modules")
-            
-            if robot_status and modules_response.success:
-                telemetry_data = {
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "robot_status": robot_status,
-                    "modules": modules_response.data.get("modules", []),
-                    "system_health": {
-                        "firmware_connected": True,
-                        "modules_count": len(modules_response.data.get("modules", [])),
-                        "active_modules": len([m for m in modules_response.data.get("modules", []) if m.get("status", 0) > 0])
+            # Add sensor data from cache
+            for sensor_id, sensor_reading in self.sensor_cache.items():
+                age = datetime.now(timezone.utc) - sensor_reading.timestamp
+                if age <= self.cache_timeout:
+                    telemetry["data"]["sensors"][sensor_id] = {
+                        "value": sensor_reading.value,
+                        "unit": sensor_reading.unit,
+                        "quality": sensor_reading.quality,
+                        "timestamp": sensor_reading.timestamp.isoformat()
                     }
-                }
-                return telemetry_data
             
-            return None
+            return telemetry
             
         except Exception as e:
-            logger.error("❌ Failed to get telemetry data: %s", e)
-            return None
+            logger.error(f"❌ Failed to get telemetry data: {e}")
+            return {"success": False, "error": str(e)}
     
-    async def get_connection_status(self) -> Dict[str, Any]:
-        """
-        Get firmware connection status
-        
-        Returns:
-            Connection status information
-        """
+    # Connection Status Methods
+    
+    def get_connection_status(self) -> Dict[str, Any]:
+        """Get connection status"""
         return {
             "status": self.status.value,
             "firmware_url": self.firmware_url,
             "last_heartbeat": self.last_heartbeat.isoformat() if self.last_heartbeat else None,
             "connection_errors": self.connection_errors,
-            "is_healthy": self.connection_errors < self.max_connection_errors
+            "sensor_cache_size": len(self.sensor_cache)
         }
     
-    async def _send_request(self, method: str, endpoint: str, data: Dict[str, Any] = None) -> FirmwareResponse:
-        """
-        Send HTTP request to firmware
-        
-        Args:
-            method: HTTP method
-            endpoint: API endpoint
-            data: Request data
-            
-        Returns:
-            Firmware response
-        """
+    async def get_robot_status(self) -> Optional[Dict[str, Any]]:
+        """Get robot status"""
         try:
-            # Prepare request
-            kwargs = {}
-            if data:
-                kwargs["json"] = data
+            # Try to get from firmware first
+            if self.fw_client and self.status == FirmwareStatus.CONNECTED:
+                system_status = await self.fw_client.get_system_status()
+                if system_status.get("success"):
+                    return system_status
             
-            # Send request
-            response = await self.http_client.request(method, endpoint, **kwargs)
-            
-            # Parse response
-            if response.status_code == 200:
-                try:
-                    response_data = response.json()
-                    return FirmwareResponse(
-                        success=True,
-                        data=response_data,
-                        timestamp=datetime.utcnow()
-                    )
-                except Exception as e:
-                    return FirmwareResponse(
-                        success=False,
-                        error=f"Invalid JSON response: {e}",
-                        timestamp=datetime.utcnow()
-                    )
-            else:
-                return FirmwareResponse(
-                    success=False,
-                    error=f"HTTP {response.status_code}: {response.text}",
-                    timestamp=datetime.utcnow()
-                )
-                
-        except httpx.TimeoutException:
-            self.status = FirmwareStatus.TIMEOUT
-            return FirmwareResponse(
-                success=False,
-                error="Request timeout",
-                timestamp=datetime.utcnow()
-            )
-        except httpx.ConnectError:
-            self.status = FirmwareStatus.DISCONNECTED
-            return FirmwareResponse(
-                success=False,
-                error="Connection error",
-                timestamp=datetime.utcnow()
-            )
-        except Exception as e:
-            self.status = FirmwareStatus.ERROR
-            return FirmwareResponse(
-                success=False,
-                error=str(e),
-                timestamp=datetime.utcnow()
-            )
-    
-    def _parse_sensor_data(self, sensor_type: SensorType, sensor_id: str, data: Dict[str, Any]) -> Optional[SensorReading]:
-        """
-        Parse sensor data from firmware response
-        
-        Args:
-            sensor_type: Type of sensor
-            sensor_id: Sensor identifier
-            data: Raw sensor data
-            
-        Returns:
-            Parsed sensor reading
-        """
-        try:
-            # Extract common fields
-            quality = data.get("quality", 1.0)
-            timestamp_str = data.get("timestamp")
-            
-            if timestamp_str:
-                try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                except:
-                    timestamp = datetime.utcnow()
-            else:
-                timestamp = datetime.utcnow()
-            
-            # Validate data quality
-            is_valid = quality > 0.0 and data.get("is_valid", True)
-            
-            return SensorReading(
-                sensor_type=sensor_type,
-                sensor_id=sensor_id or f"{sensor_type.value}_default",
-                data=data,
-                quality=quality,
-                timestamp=timestamp,
-                is_valid=is_valid
-            )
+            # Fallback to cached sensor data
+            return await self.get_telemetry_data()
             
         except Exception as e:
-            logger.error("❌ Failed to parse sensor data: %s", e)
+            logger.error(f"❌ Failed to get robot status: {e}")
             return None
     
-    async def cleanup(self):
-        """Cleanup resources"""
+    async def send_robot_command(self, command: Dict[str, Any]) -> bool:
+        """Send robot command"""
         try:
-            await self.http_client.aclose()
-            logger.info("✅ Firmware integration service cleaned up")
-        except Exception as e:
-            logger.error("❌ Error during cleanup: %s", e)
-    
-    def _validate_firmware_response(self, system_data: Dict[str, Any], motion_data: Dict[str, Any]) -> bool:
-        """
-        Validate Firmware response data
-        
-        Args:
-            system_data: System status data
-            motion_data: Motion state data
-            
-        Returns:
-            True if data is valid
-        """
-        try:
-            # Validate system data
-            if not system_data or not isinstance(system_data, dict):
-                logger.error("❌ Invalid system data: not a dict or empty")
+            if not self.fw_client:
+                logger.error("❌ FW client not initialized")
                 return False
             
-            # System data is nested in "data" field
-            actual_system_data = system_data.get("data", system_data)
-            if "system" not in actual_system_data or "status" not in actual_system_data:
-                logger.error("❌ Invalid system data: missing required fields")
-                return False
+            command_type = command.get("command_type")
+            parameters = command.get("parameters", {})
             
-            # Validate motion data
-            if not motion_data or not isinstance(motion_data, dict):
-                logger.error("❌ Invalid motion data: not a dict or empty")
-                return False
+            # Route command to appropriate module
+            if command_type == "move":
+                # Send to movement module (assuming module ID 1)
+                success = await self.fw_client.send_module_command(1, "move", parameters)
+            elif command_type == "stop":
+                # Send emergency stop
+                success = await self.fw_client.emergency_stop()
+            else:
+                logger.warning(f"⚠️ Unknown command type: {command_type}")
+                success = False
             
-            # Motion data is nested in "data" field
-            actual_motion_data = motion_data.get("data", motion_data)
-            
-            # Check for required motion fields
-            required_fields = ["x_est", "v", "safety"]
-            for field in required_fields:
-                if field not in actual_motion_data:
-                    logger.error(f"❌ Invalid motion data: missing field '{field}'")
-                    return False
-            
-            # Validate data types
-            if not isinstance(actual_motion_data.get("x_est"), (int, float)):
-                logger.error("❌ Invalid motion data: x_est must be numeric")
-                return False
-            
-            if not isinstance(actual_motion_data.get("v"), (int, float)):
-                logger.error("❌ Invalid motion data: v must be numeric")
-                return False
-            
-            # Validate safety data
-            safety = actual_motion_data.get("safety", {})
-            if not isinstance(safety, dict):
-                logger.error("❌ Invalid motion data: safety must be a dict")
-                return False
-            
-            logger.debug("✅ Firmware response data validation passed")
-            return True
+            return success
             
         except Exception as e:
-            logger.error(f"❌ Data validation error: {e}")
+            logger.error(f"❌ Failed to send robot command: {e}")
             return False
-
-
-# Global firmware integration service instance
-firmware_service = FirmwareIntegrationService()
 
 
 # Mock Firmware Service for Development/Testing ONLY
@@ -709,59 +586,40 @@ class MockFirmwareService:
         # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
         # DO NOT USE IN PRODUCTION
         return {
+            "robot_status": {
+                "robot_id": "OHT-50-001",
+                "status": "idle",
+                "position": {"x": 150.5, "y": 200.3},
+                "battery_level": 87,
+                "temperature": 42.5
+            },
             "rfid": {
-                "sensor_id": "RFID_001",
-                "data": {
-                    "rfid_id": "TAG_001",
-                    "signal_strength": 0.8,
-                    "distance": 150.5,
-                    "angle": 45.0
-                },
+                "sensor_id": "rfid_001",
+                "value": 0.85,
+                "unit": "signal_strength",
                 "quality": 0.9,
-                "timestamp": datetime.utcnow().isoformat(),
-                "is_valid": True
+                "timestamp": datetime.now(timezone.utc).isoformat()
             },
             "accelerometer": {
-                "sensor_id": "ACCEL_001",
-                "data": {
-                    "x": 0.1,
-                    "y": 0.2,
-                    "z": 9.8,
-                    "magnitude": 9.81
-                },
+                "sensor_id": "accel_001",
+                "value": 0.1,
+                "unit": "g",
                 "quality": 0.95,
-                "timestamp": datetime.utcnow().isoformat(),
-                "is_valid": True
+                "timestamp": datetime.now(timezone.utc).isoformat()
             },
             "proximity": {
-                "sensor_id": "PROX_001",
-                "data": {
-                    "distance": 25.0,
-                    "obstacle_detected": False,
-                    "confidence": 0.85
-                },
-                "quality": 0.85,
-                "timestamp": datetime.utcnow().isoformat(),
-                "is_valid": True
+                "sensor_id": "prox_001",
+                "value": 25.5,
+                "unit": "cm",
+                "quality": 0.8,
+                "timestamp": datetime.now(timezone.utc).isoformat()
             },
             "lidar": {
-                "sensor_id": "LIDAR_001",
-                "data": {
-                    "scan_data": [100, 95, 90, 85, 80] * 72,  # 360 points
-                    "resolution": 5.0,
-                    "max_range": 500.0,
-                    "min_range": 10.0
-                },
-                "quality": 0.9,
-                "timestamp": datetime.utcnow().isoformat(),
-                "is_valid": True
-            },
-            "robot_status": {
-                "status": "idle",
-                "position": {"x": 150.5, "y": 200.3, "theta": 1.57},
-                "battery_level": 87,
-                "temperature": 42.5,
-                "speed": 0.0
+                "sensor_id": "lidar_001",
+                "value": 180.0,
+                "unit": "degrees",
+                "quality": 0.85,
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         }
     
@@ -794,7 +652,7 @@ class MockFirmwareService:
                     "proximity": self.mock_data.get("proximity"),
                     "lidar": self.mock_data.get("lidar")
                 },
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         }
     
@@ -816,6 +674,9 @@ def get_firmware_service(use_mock: bool = False) -> FirmwareIntegrationService:
     Returns:
         Firmware service instance
     """
+    firmware_service = FirmwareIntegrationService()
+    
+    # Check environment variables
     import os
     testing_mode = os.getenv("TESTING", "false").lower() == "true"
     use_mock_env = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
@@ -844,7 +705,7 @@ def get_firmware_service(use_mock: bool = False) -> FirmwareIntegrationService:
             mock_instance.get_telemetry_data.return_value = {
                 "timestamp": "2025-01-28T10:30:00Z",
                 "motor_speed": 1500.0,
-                "motor_temperature": 42.5,
+                "motor_temperature": 45.0,
                 "dock_status": "ready",
                 "safety_status": "normal"
             }
@@ -866,3 +727,7 @@ def get_firmware_service(use_mock: bool = False) -> FirmwareIntegrationService:
     else:
         logger.info("🔌 DEVELOPMENT MODE: Using REAL Firmware Service - connecting to actual Firmware")
         return firmware_service
+
+
+# Global firmware service instance
+firmware_service = get_firmware_service()

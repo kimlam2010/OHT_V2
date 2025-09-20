@@ -37,7 +37,7 @@ class RealFirmwareIntegrationService:
     - Comprehensive error handling và logging
     """
     
-    def __init__(self, firmware_url: str = "http://localhost:8081"):
+    def __init__(self, firmware_url: str = "http://localhost:8080"):
         self.firmware_url = firmware_url
         self.http_client = httpx.AsyncClient(
             base_url=firmware_url,

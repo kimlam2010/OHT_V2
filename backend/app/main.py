@@ -18,7 +18,7 @@ from app.core.monitoring_service import monitoring_service
 from app.core.websocket_service import websocket_service
 
 # Import API routers
-from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, sensors, localization, health, dashboard
+from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, sensors, localization, health, dashboard, fw_integration, communication
 from app.api import websocket
 from app.config import Settings
 
@@ -464,6 +464,12 @@ app.include_router(health.router)
 # Include RS485 API router
 from app.api.v1 import rs485
 app.include_router(rs485.router)
+
+# Include Firmware Integration API router
+app.include_router(fw_integration.router)
+
+# Include Communication API router
+app.include_router(communication.router)
 
 # Include WebSocket router
 app.include_router(websocket.router)

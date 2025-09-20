@@ -62,8 +62,8 @@ class Settings(BaseSettings):
     metrics_port: str = "9090"
     
     # Firmware Integration
-    firmware_url: str = "http://localhost:8081"
-    firmware_url_alt: str = "http://localhost:8080"  # Alternative firmware URL
+    firmware_url: str = "http://localhost:8080"  # Primary HTTP API server
+    firmware_url_alt: str = "http://localhost:8081"  # Alternative WebSocket server
     firmware_websocket_url: str = "ws://localhost:8081/ws"
     firmware_timeout: float = 5.0
     firmware_retry_count: int = 3
