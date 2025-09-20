@@ -270,6 +270,29 @@ class FirmwareIntegrationService:
             logger.error("❌ Failed to send robot command: %s", e)
             return False
     
+    async def emergency_stop(self) -> bool:
+        """Emergency stop robot via Firmware API"""
+        try:
+            # Send emergency stop command to Firmware
+            command = {
+                "command_type": "emergency_stop",
+                "parameters": {},
+                "priority": "high"
+            }
+            
+            response = await self._send_request("POST", "/api/v1/robot/emergency", command)
+            
+            if response.success:
+                logger.critical("🚨 Emergency stop executed successfully via Firmware")
+                return True
+            else:
+                logger.error("❌ Emergency stop failed via Firmware: %s", response.error)
+                return False
+                
+        except Exception as e:
+            logger.error("❌ Emergency stop request failed: %s", e)
+            return False
+    
     async def get_robot_status(self) -> Optional[Dict[str, Any]]:
         """
         Get robot status from firmware

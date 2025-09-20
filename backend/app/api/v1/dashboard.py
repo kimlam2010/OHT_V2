@@ -480,3 +480,57 @@ async def resolve_alert(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to resolve alert: {str(e)}"
         )
+
+
+@router.get("/safety")
+async def get_dashboard_safety(
+    current_user: User = Depends(require_permission("dashboard", "read"))
+):
+    """Get dashboard safety overview data"""
+    try:
+        # Get safety status from safety service
+        safety_data = await safety_service.get_safety_status()
+        
+        # Check if firmware is offline (error in safety_data)
+        if "error" in safety_data or safety_data.get("status") == "error":
+            return {
+                "safety_state": "UNAVAILABLE",
+                "emergency_status": "Unknown (FW offline)",
+                "obstacles_present": None,
+                "active_alerts_count": 0
+            }
+        
+        # Map to dashboard safety format
+        safety_state = "SAFE"
+        emergency_status = "Normal"
+        obstacles_present = False
+        
+        if safety_data.get("status") == "emergency":
+            safety_state = "EMERGENCY"
+            emergency_status = "E-STOP"
+        elif safety_data.get("status") == "warning":
+            safety_state = "WARNING"
+            
+        if safety_data.get("obstacles_detected"):
+            obstacles_present = True
+            if safety_state == "SAFE":
+                safety_state = "WARNING"
+        
+        # Get active alerts count (mock for now)
+        active_alerts_count = 0
+        
+        return {
+            "safety_state": safety_state,
+            "emergency_status": emergency_status,
+            "obstacles_present": obstacles_present,
+            "active_alerts_count": active_alerts_count
+        }
+        
+    except Exception as e:
+        # Handle firmware offline case
+        return {
+            "safety_state": "UNAVAILABLE",
+            "emergency_status": "Unknown (FW offline)",
+            "obstacles_present": None,
+            "active_alerts_count": 0
+        }

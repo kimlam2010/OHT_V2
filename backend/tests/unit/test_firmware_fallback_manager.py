@@ -44,6 +44,8 @@ class TestFirmwareFallbackManager:
         assert fallback_manager.total_fallback_time == timedelta(0)
         assert isinstance(fallback_manager.mock_service, MockFirmwareService)
     
+    @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_get_fallback_status_success(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test successful fallback status retrieval"""
         fallback_manager.mock_service = mock_mock_service
@@ -57,6 +59,7 @@ class TestFirmwareFallbackManager:
         assert result["fallback_count"] == 0
         # fallback_enabled is not returned in success response
     
+    @pytest.mark.asyncio
     async def test_get_fallback_status_fallback_mode(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test fallback status in fallback mode"""
         fallback_manager.mock_service = mock_mock_service
@@ -69,6 +72,7 @@ class TestFirmwareFallbackManager:
         assert result["fallback_start_time"] is not None
         assert result["fallback_count"] == 0
     
+    @pytest.mark.asyncio
     async def test_get_fallback_status_fallback_duration_exceeded(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test fallback status when duration is exceeded"""
         fallback_manager.mock_service = mock_mock_service
@@ -81,6 +85,7 @@ class TestFirmwareFallbackManager:
         assert fallback_manager.fallback_start_time is None
         assert result["fallback_mode"] is False
     
+    @pytest.mark.asyncio
     async def test_get_fallback_status_disabled(self, fallback_manager: FirmwareFallbackManager) -> None:
         """Test fallback status when fallback is disabled"""
         fallback_manager.fallback_enabled = False
@@ -88,6 +93,7 @@ class TestFirmwareFallbackManager:
         with pytest.raises(Exception, match="Fallback mode is disabled"):
             await fallback_manager.get_fallback_status()
     
+    @pytest.mark.asyncio
     async def test_get_fallback_status_error(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test fallback status when mock service fails"""
         fallback_manager.mock_service = mock_mock_service
@@ -100,6 +106,7 @@ class TestFirmwareFallbackManager:
         assert result["fallback_mode"] is False
         assert result["fallback_enabled"] is True
     
+    @pytest.mark.asyncio
     async def test_get_fallback_telemetry_success(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test successful fallback telemetry retrieval"""
         fallback_manager.mock_service = mock_mock_service
@@ -112,6 +119,7 @@ class TestFirmwareFallbackManager:
         assert result["fallback_count"] == 0
         # fallback_enabled is not returned in success response
     
+    @pytest.mark.asyncio
     async def test_get_fallback_telemetry_fallback_mode(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test fallback telemetry in fallback mode"""
         fallback_manager.mock_service = mock_mock_service
@@ -124,6 +132,7 @@ class TestFirmwareFallbackManager:
         assert result["fallback_start_time"] is not None
         assert result["fallback_count"] == 0
     
+    @pytest.mark.asyncio
     async def test_get_fallback_telemetry_disabled(self, fallback_manager: FirmwareFallbackManager) -> None:
         """Test fallback telemetry when fallback is disabled"""
         fallback_manager.fallback_enabled = False
@@ -131,6 +140,7 @@ class TestFirmwareFallbackManager:
         with pytest.raises(Exception, match="Fallback mode is disabled"):
             await fallback_manager.get_fallback_telemetry()
     
+    @pytest.mark.asyncio
     async def test_get_fallback_telemetry_error(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test fallback telemetry when mock service fails"""
         fallback_manager.mock_service = mock_mock_service
@@ -142,6 +152,7 @@ class TestFirmwareFallbackManager:
         assert result["fallback_mode"] is False
         assert result["fallback_enabled"] is True
     
+    @pytest.mark.asyncio
     async def test_execute_fallback_command_success(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test successful fallback command execution"""
         fallback_manager.mock_service = mock_mock_service
@@ -152,6 +163,7 @@ class TestFirmwareFallbackManager:
         assert result is True
         mock_mock_service.send_robot_command.assert_called_once_with(command)
     
+    @pytest.mark.asyncio
     async def test_execute_fallback_command_disabled(self, fallback_manager: FirmwareFallbackManager) -> None:
         """Test fallback command when fallback is disabled"""
         fallback_manager.fallback_enabled = False
@@ -159,6 +171,7 @@ class TestFirmwareFallbackManager:
         with pytest.raises(Exception, match="Fallback mode is disabled"):
             await fallback_manager.execute_fallback_command({"command_type": "move"})
     
+    @pytest.mark.asyncio
     async def test_execute_fallback_command_error(self, fallback_manager: FirmwareFallbackManager, mock_mock_service: AsyncMock) -> None:
         """Test fallback command when mock service fails"""
         fallback_manager.mock_service = mock_mock_service

@@ -60,7 +60,7 @@ class UserManagementService:
             user = User(
                 username=user_data.username,
                 email=user_data.email,
-                password_hash=hashed_password,
+                hashed_password=hashed_password,
                 role=user_data.role,
                 is_active=True,
                 created_at=datetime.now(timezone.utc)
@@ -177,7 +177,7 @@ class UserManagementService:
                 
             if user_data.password is not None:
                 # Hash new password
-                update_data["password_hash"] = get_password_hash(user_data.password)
+                update_data["hashed_password"] = get_password_hash(user_data.password)
                 
             # Note: UserUpdate schema doesn't have is_active field
             # This field is handled separately through activate_user/deactivate_user methods
@@ -283,7 +283,7 @@ class UserManagementService:
                 )
                 
             # Verify old password
-            if not verify_password(old_password, user.password_hash):
+            if not verify_password(old_password, user.hashed_password):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Invalid old password"
@@ -295,7 +295,7 @@ class UserManagementService:
             # Update password
             await self.db.execute(
                 update(User).where(User.id == user_id).values(
-                    password_hash=hashed_new_password,
+                    hashed_password=hashed_new_password,
                     updated_at=datetime.utcnow()
                 )
             )
