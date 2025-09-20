@@ -24,9 +24,110 @@ static ssize_t send_all(int fd, const void *buf, size_t len){ const char *p=(con
 
 static int parse_request_line(const char *buf, api_mgr_http_request_t *req){ char m[8]={0}, p[API_MANAGER_MAX_PATH_LENGTH]={0}; if(sscanf(buf, "%7s %255s", m, p)!=2) return -1; if(strcmp(m,"GET")==0) req->method=API_MGR_HTTP_GET; else if(strcmp(m,"POST")==0) req->method=API_MGR_HTTP_POST; else return -1; strncpy(req->path,p,sizeof(req->path)-1); req->path[sizeof(req->path)-1]='\0'; return 0; }
 
+static int parse_http_request(const char *buf, api_mgr_http_request_t *req) {
+    // Validate parameters
+    if (!buf || !req) {
+        printf("[ERROR] API_MANAGER::parse_http_request - Invalid parameters\n");
+        return -1;
+    }
+    
+    // Initialize request structure
+    req->header_count = 0;
+    
+    // Parse request line first
+    if (parse_request_line(buf, req) != 0) {
+        printf("[ERROR] API_MANAGER::parse_http_request - Failed to parse request line\n");
+        return -1;
+    }
+    
+    // Parse headers
+    const char *line_start = strchr(buf, '\n');
+    if (line_start) {
+        line_start++; // Skip first \n
+        
+        while (line_start && *line_start && req->header_count < API_MANAGER_MAX_HEADERS) {
+            const char *line_end = strchr(line_start, '\n');
+            if (!line_end) break;
+            
+            // Check for end of headers (empty line)
+            if (line_end - line_start <= 2) break; // \r\n or just \n
+            
+            // Parse header: "Name: Value"
+            const char *colon = strchr(line_start, ':');
+            if (colon && colon < line_end) {
+                size_t name_len = colon - line_start;
+                size_t value_start = colon + 1 - line_start;
+                
+                // Skip whitespace after colon
+                while (value_start < (size_t)(line_end - line_start) && 
+                       (line_start[value_start] == ' ' || line_start[value_start] == '\t')) {
+                    value_start++;
+                }
+                
+                size_t value_len = line_end - line_start - value_start;
+                if (line_end > line_start && *(line_end-1) == '\r') value_len--; // Remove \r
+                
+                if (name_len < sizeof(req->headers[0].name) && 
+                    value_len < sizeof(req->headers[0].value)) {
+                    strncpy(req->headers[req->header_count].name, line_start, name_len);
+                    req->headers[req->header_count].name[name_len] = '\0';
+                    
+                    strncpy(req->headers[req->header_count].value, line_start + value_start, value_len);
+                    req->headers[req->header_count].value[value_len] = '\0';
+                    
+                    req->header_count++;
+                }
+            }
+            
+            line_start = line_end + 1;
+        }
+    }
+    
+    // Find body for POST requests
+    if (req->method == API_MGR_HTTP_POST) {
+        const char *body_start = strstr(buf, "\r\n\r\n");
+        if (body_start) {
+            body_start += 4; // Skip past \r\n\r\n
+            size_t body_len = strlen(body_start);
+            if (body_len > 0) {
+                req->body = malloc(body_len + 1);
+                if (req->body) {
+                    strncpy(req->body, body_start, body_len);
+                    req->body[body_len] = '\0';
+                    req->body_length = body_len;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static int api_handle_module_status_by_id_router(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){ return api_handle_module_status_by_id(req,res); }
 
 static int route_request(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){
+ // Check authentication for protected endpoints
+ if (req->method == API_MGR_HTTP_POST && 
+     (strstr(req->path, "/config/") || strstr(req->path, "/state/"))) {
+     
+     // Extract Authorization header
+     const char *auth_header = NULL;
+     for (int h = 0; h < req->header_count; h++) {
+         if (strcasecmp(req->headers[h].name, "Authorization") == 0) {
+             auth_header = req->headers[h].value;
+             break;
+         }
+     }
+     
+     // Validate authentication
+     int auth_result = api_manager_validate_auth_header(auth_header);
+     if (auth_result < 0) {
+         return api_manager_create_auth_error_response(res);
+     }
+     
+     printf("[API_SECURITY] ✅ Authenticated request: %s %s\n", 
+            req->method == API_MGR_HTTP_POST ? "POST" : "GET", req->path);
+ }
+ 
  // Compare path ignoring optional query string (anything after '?')
  for(int i=0;i<g_ep_count;i++){
   if(g_eps[i].method!=req->method) continue;
@@ -68,7 +169,7 @@ static void *srv_loop(void *arg){ (void)arg; struct sockaddr_in addr={0}; addr.s
  char buf[2048]={0}; ssize_t r=recv(cfd,buf,sizeof(buf)-1,0); if(r<=0){ close(cfd); continue; }
  struct timespec t0, t1; clock_gettime(CLOCK_MONOTONIC, &t0);
  api_mgr_http_request_t req={0}; api_mgr_http_response_t res={0};
- if(parse_request_line(buf,&req)!=0){ api_manager_create_error_response(&res,API_MGR_RESPONSE_BAD_REQUEST,"Bad Request"); }
+ if(parse_http_request(buf,&req)!=0){ api_manager_create_error_response(&res,API_MGR_RESPONSE_BAD_REQUEST,"Bad Request"); }
  else { route_request(&req,&res); }
  char head[512]; int bl=(int)res.body_length; if(bl<0) bl=0; int n=snprintf(head,sizeof(head),
      "HTTP/1.1 %d OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n",
@@ -77,6 +178,7 @@ static void *srv_loop(void *arg){ (void)arg; struct sockaddr_in addr={0}; addr.s
  if(res.body && res.body_length){ send_all(cfd, res.body, res.body_length); }
  shutdown(cfd, SHUT_WR);
  free(res.body);
+ free(req.body);  // Clean up request body
  close(cfd);
  clock_gettime(CLOCK_MONOTONIC, &t1);
  double ms = (t1.tv_sec - t0.tv_sec) * 1000.0 + (t1.tv_nsec - t0.tv_nsec) / 1.0e6;
@@ -115,6 +217,51 @@ int api_manager_create_error_response(api_mgr_http_response_t *response, api_mgr
     response->status_code = code;
     char buf[256]; snprintf(buf,sizeof(buf),"{\"success\":false,\"message\":\"%s\"}", msg?msg:"error");
     size_t len=strlen(buf); response->body=(char*)malloc(len+1); if(!response->body) return -1; memcpy(response->body,buf,len+1); response->body_length=len; return 0;
+}
+
+// Security function implementations
+int api_manager_validate_auth_header(const char *auth_header) {
+    if (!auth_header) {
+        printf("[API_AUTH] Missing Authorization header\n");
+        return -1;
+    }
+    
+    // Check Bearer token format
+    if (strncmp(auth_header, "Bearer ", 7) != 0) {
+        printf("[API_AUTH] Invalid Authorization format\n");
+        return -1;
+    }
+    
+    const char* token = auth_header + 7;
+    
+    // Simple token validation (same as HTTP server)
+    const char* valid_tokens[] = {
+        "oht50_admin_token_2025",
+        "oht50_operator_token_2025", 
+        "oht50_readonly_token_2025"
+    };
+    
+    for (int i = 0; i < 3; i++) {
+        if (strcmp(token, valid_tokens[i]) == 0) {
+            printf("[API_AUTH] ✅ Token validated: %s\n", 
+                   i == 0 ? "ADMIN" : i == 1 ? "OPERATOR" : "READONLY");
+            return i; // Return role level (0=admin, 1=operator, 2=readonly)
+        }
+    }
+    
+    printf("[API_AUTH] ❌ Invalid or expired token\n");
+    return -1;
+}
+
+int api_manager_create_auth_error_response(api_mgr_http_response_t *response) {
+    const char* auth_error = 
+        "{"
+        "\"success\":false,"
+        "\"error\":\"Authentication required\","
+        "\"message\":\"Please provide valid Bearer token\","
+        "\"example\":\"Authorization: Bearer oht50_admin_token_2025\""
+        "}";
+    return api_manager_create_error_response(response, API_MGR_RESPONSE_UNAUTHORIZED, auth_error);
 }
 
 /* constructor bootstrap removed to avoid double-start conflicts; API is started from main */

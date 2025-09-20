@@ -32,8 +32,74 @@ const char* hal_status_to_string(hal_status_t status) {
         case HAL_STATUS_TIMEOUT: return "TIMEOUT";
         case HAL_STATUS_BUSY: return "BUSY";
         case HAL_STATUS_NOT_SUPPORTED: return "NOT_SUPPORTED";
+        case HAL_STATUS_ALREADY_INITIALIZED: return "ALREADY_INITIALIZED";
+        case HAL_STATUS_ALREADY_ACTIVE: return "ALREADY_ACTIVE";
+        case HAL_STATUS_IO_ERROR: return "IO_ERROR";
+        case HAL_STATUS_AUTHENTICATION_FAILED: return "AUTHENTICATION_FAILED";
+        case HAL_STATUS_INVALID_SESSION: return "INVALID_SESSION";
+        case HAL_STATUS_SESSION_EXPIRED: return "SESSION_EXPIRED";
+        case HAL_STATUS_PERMISSION_DENIED: return "PERMISSION_DENIED";
+        case HAL_STATUS_ALREADY_EXISTS: return "ALREADY_EXISTS";
+        case HAL_STATUS_NO_MEMORY: return "NO_MEMORY";
+        case HAL_STATUS_NOT_FOUND: return "NOT_FOUND";
+        case HAL_STATUS_INVALID_STATE: return "INVALID_STATE";
         default: return "UNKNOWN";
     }
+}
+
+// Enhanced error logging with context
+void hal_log_error_with_context(const char* module, const char* function, int line, 
+                                hal_status_t status, const char* message) {
+    printf("[ERROR] %s::%s():%d - %s (%s)\n", 
+           module ? module : "UNKNOWN",
+           function ? function : "unknown_function", 
+           line,
+           message ? message : "No message",
+           hal_status_to_string(status));
+    
+    // Update global error info using existing structure
+    g_last_error.error_code = status;
+    g_last_error.last_error_time_us = hal_get_timestamp_ms() * 1000; // Convert to microseconds
+    if (g_last_error.error_count == 0) {
+        g_last_error.first_error_time_us = g_last_error.last_error_time_us;
+    }
+    g_last_error.error_count++;
+    
+    // Update error message
+    char full_message[256];
+    snprintf(full_message, sizeof(full_message), "%s::%s():%d - %s", 
+             module ? module : "UNKNOWN",
+             function ? function : "unknown", 
+             line,
+             message ? message : "No message");
+    strncpy(g_last_error.error_message, full_message, sizeof(g_last_error.error_message) - 1);
+    
+    // Update statistics
+    g_statistics.total_operations++; // Track total operations including errors
+}
+
+// Parameter validation helpers
+hal_status_t hal_validate_pointer(const void* ptr, const char* param_name) {
+    if (ptr == NULL) {
+        hal_log_error_with_context("HAL_VALIDATION", "hal_validate_pointer", __LINE__,
+                                  HAL_STATUS_INVALID_PARAMETER, 
+                                  param_name ? param_name : "pointer parameter is NULL");
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    return HAL_STATUS_OK;
+}
+
+hal_status_t hal_validate_range(int value, int min, int max, const char* param_name) {
+    if (value < min || value > max) {
+        char error_msg[128];
+        snprintf(error_msg, sizeof(error_msg), 
+                "%s value %d out of range [%d, %d]", 
+                param_name ? param_name : "parameter", value, min, max);
+        hal_log_error_with_context("HAL_VALIDATION", "hal_validate_range", __LINE__,
+                                  HAL_STATUS_INVALID_PARAMETER, error_msg);
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    return HAL_STATUS_OK;
 }
 
 const char* hal_device_status_to_string(hal_device_status_t status) {

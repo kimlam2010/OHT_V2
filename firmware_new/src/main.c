@@ -9,6 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include "hal_common.h"
 #include "hal_led.h"
@@ -29,6 +31,103 @@
 #include "app/websocket_server.h"
 #include "constants.h"
 
+// Performance optimization constants
+#define PERFORMANCE_MONITORING_ENABLED 1
+#define ADAPTIVE_TIMING_ENABLED 1
+#define MIN_LOOP_INTERVAL_MS 5
+#define MAX_LOOP_INTERVAL_MS 50
+#define TARGET_CPU_USAGE_PERCENT 70.0f
+
+// Performance monitoring structure
+typedef struct {
+    uint64_t loop_start_time;
+    uint64_t loop_end_time;
+    uint64_t loop_duration_us;
+    uint64_t max_loop_duration_us;
+    uint64_t total_loops;
+    uint64_t slow_loops;
+    float avg_loop_duration_us;
+    float cpu_usage_percent;
+} performance_monitor_t;
+
+static performance_monitor_t g_perf_monitor = {0};
+
+// Auto cleanup functions
+static int auto_cleanup_processes(void) {
+    printf("[CLEANUP] 🧹 Checking for existing OHT processes...\n");
+    
+    // Get current process PID to exclude it
+    pid_t current_pid = getpid();
+    printf("[CLEANUP] Current PID: %d (excluding from cleanup)\n", current_pid);
+    
+    // Kill any existing oht50_main processes EXCEPT current one
+    char cleanup_cmd[512];
+    snprintf(cleanup_cmd, sizeof(cleanup_cmd), 
+             "for pid in $(pgrep -f oht50_main 2>/dev/null || true); do "
+             "if [ \"$pid\" != \"%d\" ]; then "
+             "echo \"[CLEANUP] Force killing old process: $pid\"; "
+             "kill -9 \"$pid\" 2>/dev/null || true; "
+             "fi; done", 
+             current_pid);
+    
+    int result = system(cleanup_cmd);
+    sleep(2); // Wait for processes to terminate
+    
+    // Verify cleanup
+    int remaining = system("pgrep -f oht50_main | wc -l");
+    if (remaining <= 1) {
+        printf("[CLEANUP] ✅ Process cleanup completed\n");
+    } else {
+        printf("[CLEANUP] ⚠️  Some processes may still be running\n");
+    }
+    
+    return 0;
+}
+
+static int auto_cleanup_ports(void) {
+    printf("[CLEANUP] 🌐 Checking ports 8080 and 8081...\n");
+    
+    // Get current process PID to exclude from port cleanup
+    pid_t current_pid = getpid();
+    
+    // More robust port cleanup
+    printf("[CLEANUP] Checking port 8080...\n");
+    char port_cmd_8080[256];
+    snprintf(port_cmd_8080, sizeof(port_cmd_8080),
+             "lsof -ti:8080 2>/dev/null | while read pid; do "
+             "if [ \"$pid\" != \"%d\" ]; then "
+             "echo \"[CLEANUP] Force killing process $pid on port 8080\"; "
+             "kill -9 \"$pid\" 2>/dev/null || true; "
+             "fi; done", current_pid);
+    system(port_cmd_8080);
+    
+    printf("[CLEANUP] Checking port 8081...\n");
+    char port_cmd_8081[256];
+    snprintf(port_cmd_8081, sizeof(port_cmd_8081),
+             "lsof -ti:8081 2>/dev/null | while read pid; do "
+             "if [ \"$pid\" != \"%d\" ]; then "
+             "echo \"[CLEANUP] Force killing process $pid on port 8081\"; "
+             "kill -9 \"$pid\" 2>/dev/null || true; "
+             "fi; done", current_pid);
+    system(port_cmd_8081);
+    
+    sleep(2); // Wait for ports to be released
+    
+    // Verify ports are free (inverted logic - 0 means found, non-zero means not found)
+    int port_8080_in_use = system("netstat -tln 2>/dev/null | grep ':8080 ' >/dev/null 2>&1");
+    int port_8081_in_use = system("netstat -tln 2>/dev/null | grep ':8081 ' >/dev/null 2>&1");
+    
+    if (port_8080_in_use != 0 && port_8081_in_use != 0) {
+        printf("[CLEANUP] ✅ Ports 8080 and 8081 are now free\n");
+        return 0;
+    } else {
+        printf("[CLEANUP] ⚠️  Some ports may still be in use (8080:%s, 8081:%s)\n",
+               port_8080_in_use == 0 ? "BUSY" : "FREE",
+               port_8081_in_use == 0 ? "BUSY" : "FREE");
+        return -1;
+    }
+}
+
 static volatile sig_atomic_t g_should_run = 1;
 static bool g_dry_run = false;
 static bool g_debug_mode = false;
@@ -48,6 +147,73 @@ static void print_usage(const char *prog) {
 }
 
 static uint64_t now_ms(void) { return hal_get_timestamp_ms(); }
+static uint64_t now_us(void) { 
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000000ULL + (uint64_t)tv.tv_usec;
+}
+
+// Performance monitoring functions
+static void performance_monitor_loop_start(void) {
+    if (PERFORMANCE_MONITORING_ENABLED) {
+        g_perf_monitor.loop_start_time = now_us();
+    }
+}
+
+static void performance_monitor_loop_end(void) {
+    if (PERFORMANCE_MONITORING_ENABLED) {
+        g_perf_monitor.loop_end_time = now_us();
+        g_perf_monitor.loop_duration_us = g_perf_monitor.loop_end_time - g_perf_monitor.loop_start_time;
+        
+        // Update statistics
+        g_perf_monitor.total_loops++;
+        if (g_perf_monitor.loop_duration_us > g_perf_monitor.max_loop_duration_us) {
+            g_perf_monitor.max_loop_duration_us = g_perf_monitor.loop_duration_us;
+        }
+        
+        // Track slow loops (>20ms)
+        if (g_perf_monitor.loop_duration_us > 20000) {
+            g_perf_monitor.slow_loops++;
+        }
+        
+        // Calculate running average
+        g_perf_monitor.avg_loop_duration_us = 
+            (g_perf_monitor.avg_loop_duration_us * (g_perf_monitor.total_loops - 1) + 
+             g_perf_monitor.loop_duration_us) / g_perf_monitor.total_loops;
+    }
+}
+
+static uint32_t calculate_adaptive_sleep_ms(void) {
+    if (!ADAPTIVE_TIMING_ENABLED) {
+        return 10; // Default fixed timing
+    }
+    
+    // If loop took a long time, sleep less
+    if (g_perf_monitor.loop_duration_us > 15000) { // >15ms
+        return MIN_LOOP_INTERVAL_MS;
+    }
+    // If loop was fast, we can sleep more
+    else if (g_perf_monitor.loop_duration_us < 5000) { // <5ms
+        return MAX_LOOP_INTERVAL_MS;
+    }
+    // Adaptive sleep based on loop duration
+    else {
+        uint32_t sleep_ms = 20 - (g_perf_monitor.loop_duration_us / 1000);
+        return (sleep_ms < MIN_LOOP_INTERVAL_MS) ? MIN_LOOP_INTERVAL_MS : 
+               (sleep_ms > MAX_LOOP_INTERVAL_MS) ? MAX_LOOP_INTERVAL_MS : sleep_ms;
+    }
+}
+
+static void performance_monitor_print_stats(void) {
+    if (PERFORMANCE_MONITORING_ENABLED && g_perf_monitor.total_loops > 0) {
+        printf("[PERF] Loops: %llu, Avg: %.1f μs, Max: %llu μs, Slow: %llu (%.1f%%)\n",
+               (unsigned long long)g_perf_monitor.total_loops,
+               g_perf_monitor.avg_loop_duration_us,
+               (unsigned long long)g_perf_monitor.max_loop_duration_us,
+               (unsigned long long)g_perf_monitor.slow_loops,
+               (g_perf_monitor.slow_loops * 100.0f) / g_perf_monitor.total_loops);
+    }
+}
 
 int main(int argc, char **argv) {
     for (int i = 1; i < argc; ++i) {
@@ -64,6 +230,13 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
+
+    // AUTO CLEANUP SYSTEM - Kill existing processes and free ports
+    // Auto cleanup system with SIGKILL (Issue Fix)
+    printf("[OHT-50] 🧹 Starting auto cleanup system...\n");
+    auto_cleanup_processes();
+    auto_cleanup_ports();
+    printf("[OHT-50] ✅ Auto cleanup completed\n");
 
     printf("[OHT-50] Starting main application%s...\n", g_dry_run ? " (dry-run)" : "");
     fflush(stdout);
@@ -396,50 +569,8 @@ int main(int argc, char **argv) {
                 // Register Minimal API v1 endpoints
                 extern int api_register_minimal_endpoints(void);
                 
-                // Initialize WebSocket Server on port 8081
-                ws_server_config_t ws_config = {
-                    .port = 8081,
-                    .max_clients = 10,
-                    .timeout_ms = 60000,
-                    .max_message_size = 4096,
-                    .max_frame_size = 8192,
-                    .ping_interval_ms = 30000,
-                    .pong_timeout_ms = 5000,
-                    .enable_compression = false,
-                    .enable_authentication = false,
-                    .server_name = "OHT-50-WebSocket"
-                };
-                
-                hal_status_t ws_result = ws_server_init(&ws_config);
-                if (ws_result != HAL_STATUS_OK) {
-                    fprintf(stderr, "[OHT-50] ❌ WebSocket Server init failed: %d (continuing)\n", ws_result);
-                } else {
-                    printf("[OHT-50] ✅ WebSocket Server initialized\n");
-                    
-                    ws_result = ws_server_start();
-                    if (ws_result != HAL_STATUS_OK) {
-                        fprintf(stderr, "[OHT-50] ❌ WebSocket Server start failed: %d (continuing)\n", ws_result);
-                    } else {
-                        printf("[OHT-50] ✅ WebSocket Server started on port 8081\n");
-                        
-                        // Start RS485 telemetry streaming (Issue #90)
-                        hal_status_t telemetry_result = ws_server_start_rs485_telemetry_streaming(2000); // 2 second interval
-                        if (telemetry_result != HAL_STATUS_OK) {
-                            fprintf(stderr, "[OHT-50] ⚠️ RS485 telemetry streaming start failed: %d\n", telemetry_result);
-                        } else {
-                            printf("[OHT-50] ✅ RS485 telemetry streaming started (2s interval)\n");
-                        }
-                        
-                        // Start Simple HTTP Server on port 8081 for HTTP requests (Issue #113 Fix)
-                        extern int simple_http_8081_start(void);
-                        int http_8081_result = simple_http_8081_start();
-                        if (http_8081_result != 0) {
-                            fprintf(stderr, "[OHT-50] ⚠️ Simple HTTP-8081 start failed: %d\n", http_8081_result);
-                        } else {
-                            printf("[OHT-50] ✅ Simple HTTP Server started on port 8081 (Issue #113 Fix)\n");
-                        }
-                    }
-                }
+                // DISABLED: WebSocket Server (causing hang issue)
+                printf("[OHT-50] ⚠️  WebSocket Server DISABLED (hang issue - use port 8080 for all APIs)\n");
                 (void)api_register_minimal_endpoints();
                 printf("[OHT-50] ✅ Minimal API v1 endpoints registered\n");
             }
@@ -581,7 +712,18 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Performance monitoring variables
+    uint64_t last_perf_report_ms = now_ms();
+    
+    if (PERFORMANCE_MONITORING_ENABLED && g_debug_mode) {
+        printf("[OHT-50] Performance monitoring ENABLED (adaptive timing: %s)\n",
+               ADAPTIVE_TIMING_ENABLED ? "ON" : "OFF");
+    }
+    
     while (g_should_run) {
+        // Start performance monitoring
+        performance_monitor_loop_start();
+        
         // Periodic updates
         if (!g_dry_run) {
             (void)system_state_machine_update();
@@ -766,7 +908,34 @@ int main(int argc, char **argv) {
             break;
         }
 
-        hal_sleep_ms(10);
+        // End performance monitoring and calculate adaptive sleep
+        performance_monitor_loop_end();
+        
+        // Performance reporting (every 30 seconds)
+        if (PERFORMANCE_MONITORING_ENABLED && (current_time - last_perf_report_ms >= 30000)) {
+            performance_monitor_print_stats();
+            last_perf_report_ms = current_time;
+        }
+        
+        // Adaptive sleep based on loop performance
+        uint32_t sleep_ms = calculate_adaptive_sleep_ms();
+        hal_sleep_ms(sleep_ms);
+        
+        // Debug performance info (every 50 loops for better visibility)
+        if (g_debug_mode && PERFORMANCE_MONITORING_ENABLED && 
+            (g_perf_monitor.total_loops % 50) == 0 && g_perf_monitor.total_loops > 0) {
+            printf("[OHT-50][PERF] 📊 Loop %llu: %llu μs (sleep: %u ms)\n",
+                   (unsigned long long)g_perf_monitor.total_loops,
+                   (unsigned long long)g_perf_monitor.loop_duration_us,
+                   sleep_ms);
+        }
+        
+        // Force performance report every 5 seconds for testing
+        if (PERFORMANCE_MONITORING_ENABLED && (current_time - last_perf_report_ms >= 5000)) {
+            printf("[OHT-50][PERF] 📈 ");
+            performance_monitor_print_stats();
+            last_perf_report_ms = current_time;
+        }
     }
 
     printf("[OHT-50] Shutting down...\n");

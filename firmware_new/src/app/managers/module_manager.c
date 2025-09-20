@@ -18,6 +18,23 @@
 #include <string.h>
 #include <stdlib.h>
 
+// Dynamic module management state for scalability
+static struct {
+    bool auto_discovery_enabled;
+    uint32_t discovery_interval_ms;
+    uint32_t max_modules_supported;
+    uint32_t current_module_count;
+    bool hot_plug_detection_enabled;
+    uint64_t last_discovery_time_ms;
+} g_scalability_config = {
+    .auto_discovery_enabled = true,
+    .discovery_interval_ms = 10000, // 10 seconds
+    .max_modules_supported = 16,    // Support up to 16 modules
+    .current_module_count = 0,
+    .hot_plug_detection_enabled = true,
+    .last_discovery_time_ms = 0
+};
+
 // Forward declarations for auto-discovery functions
 static hal_status_t discover_module_at_address(uint8_t address);
 static bool is_valid_module_type(uint16_t module_type);
@@ -234,6 +251,9 @@ hal_status_t module_manager_register_module(const module_info_t *info) {
         g_module_manager.modules[index].status.status = MODULE_STATUS_ONLINE;
         g_module_manager.modules[index].last_health_check = hal_get_timestamp_us();
         
+        // Update registry
+        registry_add_or_update(info);
+        
         if (g_module_manager.event_callback) {
             g_module_manager.event_callback(MODULE_EVENT_UPDATED, info->module_id, info);
         }
@@ -248,6 +268,9 @@ hal_status_t module_manager_register_module(const module_info_t *info) {
                 g_module_manager.modules[i].status.status = MODULE_STATUS_ONLINE;
                 g_module_manager.modules[i].last_health_check = hal_get_timestamp_us();
                 g_module_manager.modules[i].discovery_time = hal_get_timestamp_us();
+                
+                // Add to registry
+                registry_add_or_update(info);
                 
                 g_module_manager.statistics.total_modules++;
                 g_module_manager.statistics.online_modules++;

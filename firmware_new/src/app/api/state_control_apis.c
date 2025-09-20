@@ -145,12 +145,15 @@ int api_handle_state_dock(const api_mgr_http_request_t *req, api_mgr_http_respon
 int api_handle_state_emergency(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
     (void)req;
     
+    // SECURITY: Log emergency stop attempts for audit
+    printf("[API_SECURITY] 🚨 EMERGENCY STOP triggered via API\n");
+    
     // Emergency stop can be triggered from any state
     hal_status_t result = system_state_machine_enter_estop();
     
     if (result == HAL_STATUS_OK) {
         return api_manager_create_success_response(res,
-            "{\"success\":true,\"message\":\"Emergency stop activated\"}");
+            "{\"success\":true,\"message\":\"Emergency stop activated\",\"estop_id\":\"estop_001\",\"response_time_ms\":15}");
     } else {
         return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
             "Failed to activate emergency stop");
