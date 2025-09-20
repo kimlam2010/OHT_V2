@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class SafetyService:
     """Safety service"""
     
-    def __init__(self, use_mock: bool = True):
+    def __init__(self, use_mock: bool = False):
         # Honor environment flag for production usage (no mock in production)
         # Default to false to avoid mock in production unless explicitly enabled
         env_use_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
