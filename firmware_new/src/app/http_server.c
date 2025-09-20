@@ -23,6 +23,12 @@
 // Global HTTP Server Instance
 http_server_instance_t g_http_server = {0};
 
+// Memory management and timeout configuration
+#define HTTP_SERVER_SOCKET_TIMEOUT_SEC 30
+#define HTTP_SERVER_MAX_CONNECTIONS 10
+#define HTTP_SERVER_BUFFER_SIZE 8192
+#define HTTP_SERVER_MEMORY_CHECK_INTERVAL 1000
+
 // Private function declarations
 static hal_status_t http_server_initialize_defaults(void);
 static hal_status_t http_server_setup_signal_handlers(void);
@@ -35,6 +41,9 @@ static hal_status_t http_server_parse_body(const char *raw_body, size_t body_len
 static hal_status_t http_server_create_response_header(const http_response_t *response, char *header_buffer, size_t buffer_size);
 static hal_status_t http_server_send_response(int client_socket, const http_response_t *response);
 static hal_status_t http_server_read_request(int client_socket, char *buffer, size_t buffer_size, size_t *received_length);
+static hal_status_t http_server_set_socket_timeout(int socket_fd, int timeout_seconds);
+static hal_status_t http_server_check_memory_usage(void);
+static hal_status_t http_server_cleanup_connection(int client_socket);
 
 // Signal handler for graceful shutdown
 static volatile bool g_http_shutdown_requested = false;
@@ -856,7 +865,7 @@ void* http_server_client_thread(void *arg) {
     if (read_result != HAL_STATUS_OK) {
         hal_log_error("HTTP_SERVER", "http_server_client_thread", __LINE__, 
                      read_result, "Failed to read request from client");
-        close(client_socket);
+        http_server_cleanup_connection(client_socket);
         return NULL;
     }
     
@@ -866,7 +875,7 @@ void* http_server_client_thread(void *arg) {
     if (parse_result != HAL_STATUS_OK) {
         hal_log_error("HTTP_SERVER", "http_server_client_thread", __LINE__, 
                      parse_result, "Failed to parse request");
-        close(client_socket);
+        http_server_cleanup_connection(client_socket);
         return NULL;
     }
     
@@ -876,7 +885,7 @@ void* http_server_client_thread(void *arg) {
     if (handle_result != HAL_STATUS_OK) {
         hal_log_error("HTTP_SERVER", "http_server_client_thread", __LINE__, 
                      handle_result, "Failed to handle request");
-        close(client_socket);
+        http_server_cleanup_connection(client_socket);
         return NULL;
     }
     
@@ -887,7 +896,7 @@ void* http_server_client_thread(void *arg) {
                      send_result, "Failed to send response");
     }
     
-    // Cleanup
+    // Cleanup memory and connection
     if (request.body != NULL) {
         free(request.body);
     }
@@ -895,14 +904,122 @@ void* http_server_client_thread(void *arg) {
         free(response.body);
     }
     
-    close(client_socket);
+    http_server_cleanup_connection(client_socket);
     return NULL;
+}
+
+// Helper functions for timeout and memory management
+/**
+ * @brief Set socket timeout to prevent hanging connections
+ * @param socket_fd Socket file descriptor
+ * @param timeout_seconds Timeout in seconds
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+static hal_status_t http_server_set_socket_timeout(int socket_fd, int timeout_seconds) {
+    struct timeval timeout;
+    timeout.tv_sec = timeout_seconds;
+    timeout.tv_usec = 0;
+    
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        hal_log_error("HTTP_SERVER", "http_server_set_socket_timeout", __LINE__,
+                     HAL_STATUS_ERROR, "Failed to set receive timeout");
+        return HAL_STATUS_ERROR;
+    }
+    
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
+        hal_log_error("HTTP_SERVER", "http_server_set_socket_timeout", __LINE__,
+                     HAL_STATUS_ERROR, "Failed to set send timeout");
+        return HAL_STATUS_ERROR;
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Check memory usage and log warnings if high
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+static hal_status_t http_server_check_memory_usage(void) {
+    FILE *meminfo = fopen("/proc/meminfo", "r");
+    if (meminfo == NULL) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    char line[256];
+    long mem_total = 0, mem_available = 0;
+    
+    while (fgets(line, sizeof(line), meminfo)) {
+        if (sscanf(line, "MemTotal: %ld kB", &mem_total) == 1) {
+            continue;
+        }
+        if (sscanf(line, "MemAvailable: %ld kB", &mem_available) == 1) {
+            break;
+        }
+    }
+    fclose(meminfo);
+    
+    if (mem_total > 0 && mem_available > 0) {
+        double usage_percent = ((double)(mem_total - mem_available) / mem_total) * 100.0;
+        if (usage_percent > 85.0) {
+            hal_log_message(HAL_LOG_LEVEL_WARNING, 
+                           "HTTP Server: High memory usage detected: %.1f%%", usage_percent);
+        }
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Cleanup connection resources properly
+ * @param client_socket Client socket to cleanup
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+static hal_status_t http_server_cleanup_connection(int client_socket) {
+    if (client_socket >= 0) {
+        shutdown(client_socket, SHUT_RDWR);
+        close(client_socket);
+        hal_log_message(HAL_LOG_LEVEL_DEBUG, "HTTP Server: Connection cleaned up");
+    }
+    return HAL_STATUS_OK;
 }
 
 // Placeholder functions for future implementation
 static hal_status_t http_server_read_request(int client_socket, char *buffer, size_t buffer_size, size_t *received_length) {
-    // TODO: Implement request reading
-    *received_length = 0;
+    // Set socket timeout to prevent hanging
+    hal_status_t timeout_result = http_server_set_socket_timeout(client_socket, HTTP_SERVER_SOCKET_TIMEOUT_SEC);
+    if (timeout_result != HAL_STATUS_OK) {
+        hal_log_message(HAL_LOG_LEVEL_WARNING, "HTTP Server: Failed to set socket timeout");
+    }
+    
+    // Check memory usage periodically
+    static uint64_t last_memory_check = 0;
+    uint64_t current_time = hal_get_timestamp_ms();
+    if (current_time - last_memory_check > HTTP_SERVER_MEMORY_CHECK_INTERVAL) {
+        http_server_check_memory_usage();
+        last_memory_check = current_time;
+    }
+    
+    // Read request with proper error handling
+    ssize_t bytes_received = recv(client_socket, buffer, buffer_size - 1, 0);
+    if (bytes_received < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            hal_log_error("HTTP_SERVER", "http_server_read_request", __LINE__,
+                         HAL_STATUS_TIMEOUT, "Socket read timeout");
+            return HAL_STATUS_TIMEOUT;
+        } else {
+            hal_log_error("HTTP_SERVER", "http_server_read_request", __LINE__,
+                         HAL_STATUS_ERROR, "Socket read error: %s", strerror(errno));
+            return HAL_STATUS_ERROR;
+        }
+    } else if (bytes_received == 0) {
+        hal_log_message(HAL_LOG_LEVEL_DEBUG, "HTTP Server: Client disconnected");
+        return HAL_STATUS_ERROR;
+    }
+    
+    buffer[bytes_received] = '\0';
+    *received_length = (size_t)bytes_received;
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "HTTP Server: Read %zd bytes from client", bytes_received);
     return HAL_STATUS_OK;
 }
 
@@ -912,11 +1029,62 @@ static hal_status_t http_server_send_response(int client_socket, const http_resp
 }
 
 hal_status_t http_server_validate_authentication(const http_request_t *request) {
-    // TODO: Implement authentication validation
-    return HAL_STATUS_OK;
+    // Simple API key authentication for OHT-50
+    const char* auth_header = NULL;
+    
+    // Look for Authorization header
+    for (int i = 0; i < (int)request->header_count && i < HTTP_SERVER_MAX_HEADERS; i++) {
+        if (strcasecmp(request->headers[i].name, "Authorization") == 0) {
+            auth_header = request->headers[i].value;
+            break;
+        }
+    }
+    
+    if (!auth_header) {
+        hal_log_error("HTTP_AUTH", "http_server_validate_authentication", __LINE__,
+                     HAL_STATUS_AUTHENTICATION_FAILED, "Missing Authorization header");
+        return HAL_STATUS_AUTHENTICATION_FAILED;
+    }
+    
+    // Check for Bearer token format
+    if (strncmp(auth_header, "Bearer ", 7) != 0) {
+        hal_log_error("HTTP_AUTH", "http_server_validate_authentication", __LINE__,
+                     HAL_STATUS_AUTHENTICATION_FAILED, "Invalid Authorization format");
+        return HAL_STATUS_AUTHENTICATION_FAILED;
+    }
+    
+    const char* token = auth_header + 7; // Skip "Bearer "
+    
+    // Simple token validation (in production, use proper JWT or secure tokens)
+    const char* valid_tokens[] = {
+        "oht50_admin_token_2025",
+        "oht50_operator_token_2025", 
+        "oht50_readonly_token_2025"
+    };
+    
+    for (int i = 0; i < 3; i++) {
+        if (strcmp(token, valid_tokens[i]) == 0) {
+            hal_log_message(HAL_LOG_LEVEL_DEBUG, "[HTTP_AUTH] ✅ Token validated: %s", 
+                           i == 0 ? "ADMIN" : i == 1 ? "OPERATOR" : "READONLY");
+            return HAL_STATUS_OK;
+        }
+    }
+    
+    hal_log_error("HTTP_AUTH", "http_server_validate_authentication", __LINE__,
+                 HAL_STATUS_AUTHENTICATION_FAILED, "Invalid or expired token");
+    return HAL_STATUS_AUTHENTICATION_FAILED;
 }
 
 hal_status_t http_server_require_authentication(http_response_t *response) {
-    // TODO: Implement authentication requirement response
-    return HAL_STATUS_OK;
+    // Return 401 Unauthorized with authentication requirements
+    const char* auth_response = 
+        "{"
+        "\"success\":false,"
+        "\"error\":\"Authentication required\","
+        "\"message\":\"Please provide valid Bearer token in Authorization header\","
+        "\"auth_methods\":[\"Bearer token\"],"
+        "\"example\":\"Authorization: Bearer oht50_admin_token_2025\""
+        "}";
+    
+    return http_server_create_error_response(response, HTTP_STATUS_UNAUTHORIZED, auth_response);
 }

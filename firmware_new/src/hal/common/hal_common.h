@@ -36,6 +36,40 @@ typedef enum {
     HAL_STATUS_INVALID_STATE = -17
 } hal_status_t;
 
+// Error handling and logging functions
+const char* hal_status_to_string(hal_status_t status);
+void hal_log_error_with_context(const char* module, const char* function, int line, 
+                                hal_status_t status, const char* message);
+hal_status_t hal_validate_pointer(const void* ptr, const char* param_name);
+hal_status_t hal_validate_range(int value, int min, int max, const char* param_name);
+
+// Standardized error handling macros
+#define HAL_RETURN_ON_ERROR(status, module, message) \
+    do { \
+        if ((status) != HAL_STATUS_OK) { \
+            hal_log_error_with_context((module), __FUNCTION__, __LINE__, (status), (message)); \
+            return (status); \
+        } \
+    } while(0)
+
+#define HAL_VALIDATE_POINTER_RETURN(ptr, module) \
+    do { \
+        hal_status_t _status = hal_validate_pointer((ptr), #ptr); \
+        HAL_RETURN_ON_ERROR(_status, (module), "Pointer validation failed"); \
+    } while(0)
+
+#define HAL_VALIDATE_RANGE_RETURN(value, min, max, module) \
+    do { \
+        hal_status_t _status = hal_validate_range((value), (min), (max), #value); \
+        HAL_RETURN_ON_ERROR(_status, (module), "Range validation failed"); \
+    } while(0)
+
+#define HAL_LOG_ERROR(module, message) \
+    hal_log_error_with_context((module), __FUNCTION__, __LINE__, HAL_STATUS_ERROR, (message))
+
+#define HAL_LOG_WARNING(module, message) \
+    printf("[WARNING] %s::%s():%d - %s\n", (module), __FUNCTION__, __LINE__, (message))
+
 // GPIO Pin Definitions for Orange Pi 5B
 // Available pins: 54, 35, 28, 29, 58, 59, 131, 132
 
