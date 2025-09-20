@@ -47,7 +47,8 @@ class SafetyService:
                 "status": "normal",
                 "emergency_stop": False,
                 "obstacles_detected": False,
-                # Keep internal fields minimal; API layer will shape response
+                "temperature_normal": True,  # Add required field
+                "timestamp": datetime.now(timezone.utc).isoformat()  # Add required field
             }
             
             # Check for safety issues

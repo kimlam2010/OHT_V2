@@ -429,6 +429,15 @@ int main(int argc, char **argv) {
                         } else {
                             printf("[OHT-50] ✅ RS485 telemetry streaming started (2s interval)\n");
                         }
+                        
+                        // Start Simple HTTP Server on port 8081 for HTTP requests (Issue #113 Fix)
+                        extern int simple_http_8081_start(void);
+                        int http_8081_result = simple_http_8081_start();
+                        if (http_8081_result != 0) {
+                            fprintf(stderr, "[OHT-50] ⚠️ Simple HTTP-8081 start failed: %d\n", http_8081_result);
+                        } else {
+                            printf("[OHT-50] ✅ Simple HTTP Server started on port 8081 (Issue #113 Fix)\n");
+                        }
                     }
                 }
                 (void)api_register_minimal_endpoints();
