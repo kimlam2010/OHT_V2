@@ -218,6 +218,9 @@ hal_status_t ws_server_create_handshake_response(const char *request, char *resp
 hal_status_t ws_server_extract_websocket_key(const char *request, char *key, size_t key_size);
 hal_status_t ws_server_generate_accept_key(const char *websocket_key, char *accept_key, size_t accept_key_size);
 
+// WebSocket Server HTTP Request Handler (Issue #113 Fix)
+hal_status_t ws_server_handle_http_request(int socket_fd, const char *request, size_t request_length);
+
 // WebSocket Server Utility Functions
 hal_status_t ws_server_parse_frame(const uint8_t *data, size_t data_length, ws_frame_t *frame);
 hal_status_t ws_server_create_frame(ws_frame_type_t opcode, const uint8_t *payload, size_t payload_length, 

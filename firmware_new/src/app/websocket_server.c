@@ -169,6 +169,17 @@ hal_status_t ws_server_start(void) {
         return HAL_STATUS_IO_ERROR;
     }
     
+    // Set accept timeout to prevent blocking (Issue #113 Fix)
+    struct timeval accept_timeout;
+    accept_timeout.tv_sec = 1;   // 1 second timeout for accept
+    accept_timeout.tv_usec = 0;
+    
+    if (setsockopt(g_ws_server.server_socket, SOL_SOCKET, SO_RCVTIMEO, &accept_timeout, sizeof(accept_timeout)) < 0) {
+        hal_log_error("WS_SERVER", "ws_server_start", __LINE__, 
+                     HAL_STATUS_ERROR, "Failed to set accept timeout: %s", strerror(errno));
+        // Continue anyway - this is not critical
+    }
+    
     // Bind socket
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -826,6 +837,80 @@ const char* ws_server_get_version_string(void) {
 }
 
 /**
+ * @brief Handle HTTP request on WebSocket port (Issue #113 Fix)
+ * @param socket_fd Client socket file descriptor
+ * @param request HTTP request string
+ * @param request_length Length of request
+ * @return hal_status_t HAL_STATUS_OK on success, error code on failure
+ */
+hal_status_t ws_server_handle_http_request(int socket_fd, const char *request, size_t request_length) {
+    (void)request_length; // Unused parameter
+    
+    // Parse the HTTP request to extract path
+    char method[16] = {0};
+    char path[256] = {0};
+    char version[16] = {0};
+    
+    if (sscanf(request, "%15s %255s %15s", method, path, version) != 3) {
+        // Invalid HTTP request format
+        const char *bad_request_response = 
+            "HTTP/1.1 400 Bad Request\r\n"
+            "Content-Type: application/json\r\n"
+            "Connection: close\r\n"
+            "\r\n"
+            "{\"error\":true,\"message\":\"Invalid HTTP request format\"}";
+        return ws_server_send_http_response(socket_fd, bad_request_response);
+    }
+    
+    // Handle specific endpoints that Backend expects on port 8081
+    if (strcmp(path, "/health") == 0) {
+        const char *health_response = 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+            "Connection: close\r\n"
+            "\r\n"
+            "{\"success\":true,\"status\":\"healthy\",\"service\":\"websocket\",\"port\":8081}";
+        return ws_server_send_http_response(socket_fd, health_response);
+    }
+    
+    if (strcmp(path, "/api/v1/status") == 0) {
+        const char *status_response = 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+            "Connection: close\r\n"
+            "\r\n"
+            "{\"success\":true,\"data\":{\"service\":\"websocket\",\"port\":8081,\"clients_connected\":%u}}";
+        
+        char response_buffer[512];
+        snprintf(response_buffer, sizeof(response_buffer), status_response, g_ws_server.client_count);
+        return ws_server_send_http_response(socket_fd, response_buffer);
+    }
+    
+    if (strcmp(path, "/api/v1/robot/status") == 0) {
+        const char *robot_status_response = 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+            "Connection: close\r\n"
+            "\r\n"
+            "{\"success\":true,\"data\":{\"robot_id\":\"OHT-50-001\",\"status\":\"idle\",\"websocket_service\":true,\"port\":8081}}";
+        return ws_server_send_http_response(socket_fd, robot_status_response);
+    }
+    
+    // For any other path, redirect to port 8080 (HTTP API server)
+    const char *redirect_response = 
+        "HTTP/1.1 302 Found\r\n"
+        "Location: http://localhost:8080%s\r\n"
+        "Content-Type: application/json\r\n"
+        "Connection: close\r\n"
+        "\r\n"
+        "{\"error\":false,\"message\":\"Redirecting to HTTP API server on port 8080\",\"redirect_url\":\"http://localhost:8080%s\"}";
+    
+    char redirect_buffer[512];
+    snprintf(redirect_buffer, sizeof(redirect_buffer), redirect_response, path, path);
+    return ws_server_send_http_response(socket_fd, redirect_buffer);
+}
+
+/**
  * @brief Broadcast RS485 module telemetry (Issue #90)
  * @param module_addr Module address (0x02, 0x03, 0x04, 0x05)
  * @return HAL status
@@ -1426,21 +1511,55 @@ void* ws_server_client_thread(void *arg) {
     char request_buffer[4096];
     size_t received_length;
     
-    // Read handshake request
+    // Read initial request (could be HTTP or WebSocket handshake)
     hal_status_t read_result = ws_server_read_data(client_socket, (uint8_t*)request_buffer, 
                                                   sizeof(request_buffer), &received_length);
     if (read_result != HAL_STATUS_OK) {
         hal_log_error("WS_SERVER", "ws_server_client_thread", __LINE__, 
-                     read_result, "Failed to read handshake request");
+                     read_result, "Failed to read request");
         ws_server_remove_client(client_socket);
         return NULL;
     }
     
-    // Handle handshake
+    // NULL-terminate the request buffer for string operations
+    if (received_length < sizeof(request_buffer)) {
+        request_buffer[received_length] = '\0';
+    } else {
+        request_buffer[sizeof(request_buffer) - 1] = '\0';
+    }
+    
+    // Check if this is an HTTP request (not WebSocket handshake)
+    // Look for HTTP methods and check if it's NOT a WebSocket upgrade
+    bool is_http_request = false;
+    if (strncmp(request_buffer, "GET ", 4) == 0 || 
+        strncmp(request_buffer, "POST ", 5) == 0 ||
+        strncmp(request_buffer, "PUT ", 4) == 0 ||
+        strncmp(request_buffer, "DELETE ", 7) == 0) {
+        
+        // Check if it's NOT a WebSocket upgrade request
+        if (strstr(request_buffer, "Upgrade:") == NULL || 
+            strstr(request_buffer, "websocket") == NULL ||
+            strstr(request_buffer, "Sec-WebSocket-Key:") == NULL) {
+            is_http_request = true;
+        }
+    }
+    
+    if (is_http_request) {
+        // This is a regular HTTP request, handle it
+        hal_status_t http_result = ws_server_handle_http_request(client_socket, request_buffer, received_length);
+        if (http_result != HAL_STATUS_OK) {
+            hal_log_error("WS_SERVER", "ws_server_client_thread", __LINE__, 
+                         http_result, "Failed to handle HTTP request");
+        }
+        ws_server_remove_client(client_socket);
+        return NULL;
+    }
+    
+    // Handle WebSocket handshake
     hal_status_t handshake_result = ws_server_handle_handshake(client_socket, request_buffer, received_length);
     if (handshake_result != HAL_STATUS_OK) {
         hal_log_error("WS_SERVER", "ws_server_client_thread", __LINE__, 
-                     handshake_result, "Failed to handle handshake");
+                     handshake_result, "Failed to handle WebSocket handshake");
         ws_server_remove_client(client_socket);
         return NULL;
     }
@@ -1594,9 +1713,33 @@ hal_status_t ws_server_serialize_frame(const ws_frame_t *frame, uint8_t *buffer,
 
 hal_status_t ws_server_read_data(int socket_fd, uint8_t *buffer, size_t buffer_size, size_t *received_length) {
     if(socket_fd<0||!buffer||buffer_size==0||!received_length) return HAL_STATUS_INVALID_PARAMETER;
+    
+    // Set socket timeout to prevent blocking (Issue #113 Fix)
+    struct timeval timeout;
+    timeout.tv_sec = 5;   // 5 second timeout
+    timeout.tv_usec = 0;
+    
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        hal_log_error("WS_SERVER", "ws_server_read_data", __LINE__, 
+                     HAL_STATUS_ERROR, "Failed to set socket timeout: %s", strerror(errno));
+    }
+    
     ssize_t n = recv(socket_fd, buffer, buffer_size, 0);
-    if(n<=0){ *received_length=0; return HAL_STATUS_IO_ERROR; }
-    *received_length=(size_t)n; return HAL_STATUS_OK;
+    if(n<=0){ 
+        *received_length=0; 
+        if (n == 0) {
+            // Connection closed by client
+            return HAL_STATUS_IO_ERROR;
+        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // Timeout occurred
+            hal_log_error("WS_SERVER", "ws_server_read_data", __LINE__, 
+                         HAL_STATUS_TIMEOUT, "Socket read timeout after 5 seconds");
+            return HAL_STATUS_TIMEOUT;
+        }
+        return HAL_STATUS_IO_ERROR; 
+    }
+    *received_length=(size_t)n; 
+    return HAL_STATUS_OK;
 }
 
 hal_status_t ws_server_write_data(int socket_fd, const uint8_t *data, size_t data_length) {
@@ -2257,3 +2400,4 @@ const char* ws_close_code_to_string(ws_close_code_t close_code) {
         default: return "UNKNOWN";
     }
 }
+
