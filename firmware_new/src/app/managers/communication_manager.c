@@ -93,6 +93,9 @@ static bool verify_crc16(const uint8_t *data, uint16_t length);
 static hal_status_t build_modbus_request(const comm_mgr_modbus_request_t *request, uint8_t *frame, uint16_t *frame_length);
 static hal_status_t parse_modbus_response(const uint8_t *frame, uint16_t frame_length, comm_mgr_modbus_response_t *response);
 static hal_status_t handle_communication_event(comm_mgr_event_t event, const void *data);
+static void update_health_monitoring(bool success);
+static float calculate_health_percentage(void);
+static bool detect_hardware_presence(void);
 
 // Default configuration
 static const comm_mgr_config_t default_config = {
@@ -100,14 +103,24 @@ static const comm_mgr_config_t default_config = {
     .data_bits = 8,
     .stop_bits = 1,
     .parity = 0,  // No parity
-    .timeout_ms = 200,  // Reduced from 1000ms to lower p95 latency
-    .retry_count = 3,    // Keep retries
-    .retry_delay_ms = 50,  // Reduced from 100ms
+    .timeout_ms = 500,   // Increased for better reliability
+    .retry_count = 2,    // Reduced retries for faster failure detection
+    .retry_delay_ms = 100,  // Reasonable delay
     .modbus_slave_id = 1,
     .enable_crc_check = true,
     .enable_echo_suppression = true,
     .buffer_size = 256
 };
+
+// Health monitoring state
+static struct {
+    uint32_t total_attempts;
+    uint32_t successful_responses;
+    uint32_t consecutive_failures;
+    uint64_t last_success_time;
+    bool hardware_detected;
+    float health_percentage;
+} g_health_monitor = {0};
 
 // Communication Manager implementation
 
@@ -525,6 +538,9 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
             g_comm_manager.status.statistics.successful_transmissions++;
             COMM_UNLOCK();
             
+            // Update health monitoring - SUCCESS
+            update_health_monitoring(true);
+            
             // Parse response
             status = parse_modbus_response(response_frame, response_frame_length, response);
             if (status == HAL_STATUS_OK) {
@@ -552,7 +568,19 @@ hal_status_t comm_manager_modbus_send_request(const comm_mgr_modbus_request_t *r
                 printf("[MODBUS] ERROR: parse_modbus_response failed (status=%d)\n", status);
             }
         } else {
-            printf("[MODBUS] ERROR: receive_modbus_frame failed (status=%d)\n", status);
+            printf("[MODBUS] ERROR: receive_modbus_frame failed (status=%d - %s)\n", 
+                   status, hal_status_to_string(status));
+            // Update health monitoring - FAILURE
+            update_health_monitoring(false);
+            
+            // Enhanced error recovery
+            if (status == HAL_STATUS_TIMEOUT) {
+                printf("[MODBUS] RECOVERY: Timeout detected, checking device health\n");
+                // Could add device reset logic here
+            } else if (status == HAL_STATUS_IO_ERROR) {
+                printf("[MODBUS] RECOVERY: I/O error detected, may need device restart\n");
+                // Could add device restart logic here
+            }
         }
         
         retry_count++;
@@ -1349,4 +1377,70 @@ hal_status_t comm_manager_handle_http_request(const uint8_t *request, size_t req
     
     COMM_UNLOCK();
     return HAL_STATUS_OK;
+}
+
+// Health monitoring implementation
+static void update_health_monitoring(bool success) {
+    g_health_monitor.total_attempts++;
+    
+    if (success) {
+        g_health_monitor.successful_responses++;
+        g_health_monitor.consecutive_failures = 0;
+        g_health_monitor.last_success_time = hal_get_timestamp_ms();
+        g_health_monitor.hardware_detected = true;
+        printf("[COMM_HEALTH] ✅ Communication success (consecutive failures reset)\n");
+    } else {
+        g_health_monitor.consecutive_failures++;
+        printf("[COMM_HEALTH] ❌ Communication failure #%u\n", g_health_monitor.consecutive_failures);
+        
+        // After 10 consecutive failures, assume no hardware
+        if (g_health_monitor.consecutive_failures >= 10) {
+            g_health_monitor.hardware_detected = false;
+            printf("[COMM_HEALTH] ⚠️  Hardware presence: NO MODULES DETECTED\n");
+        }
+    }
+    
+    g_health_monitor.health_percentage = calculate_health_percentage();
+    printf("[COMM_HEALTH] System health: %.1f%% (%u/%u success)\n", 
+           g_health_monitor.health_percentage,
+           g_health_monitor.successful_responses,
+           g_health_monitor.total_attempts);
+}
+
+static float calculate_health_percentage(void) {
+    if (g_health_monitor.total_attempts == 0) {
+        return 100.0f;  // No attempts yet, assume healthy
+    }
+    
+    // If no hardware detected, return special health status
+    if (!g_health_monitor.hardware_detected) {
+        // Return 50% to indicate "system working but no modules"
+        return 50.0f;
+    }
+    
+    // Calculate success rate
+    float success_rate = (float)g_health_monitor.successful_responses / g_health_monitor.total_attempts;
+    return success_rate * 100.0f;
+}
+
+static bool detect_hardware_presence(void) {
+    // Simple heuristic: if we have any successful responses, hardware is present
+    // If we haven't had success in last 30 seconds, assume no hardware
+    uint64_t current_time = hal_get_timestamp_ms();
+    uint64_t time_since_success = current_time - g_health_monitor.last_success_time;
+    
+    if (g_health_monitor.successful_responses > 0 && time_since_success < 30000) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Public API for health monitoring
+float comm_manager_get_health_percentage(void) {
+    return g_health_monitor.health_percentage;
+}
+
+bool comm_manager_is_hardware_detected(void) {
+    return g_health_monitor.hardware_detected;
 }

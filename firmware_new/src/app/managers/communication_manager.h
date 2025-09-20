@@ -363,6 +363,10 @@ hal_status_t comm_manager_start_api_server(void);
  */
 hal_status_t comm_manager_stop_api_server(void);
 
+// Health monitoring functions
+float comm_manager_get_health_percentage(void);
+bool comm_manager_is_hardware_detected(void);
+
 /**
  * @brief Send telemetry data via WebSocket
  * @param data Telemetry data buffer

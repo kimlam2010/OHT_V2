@@ -12,6 +12,7 @@ typedef enum { API_MGR_HTTP_GET=0, API_MGR_HTTP_POST } api_mgr_http_method_t;
 typedef enum { 
     API_MGR_RESPONSE_OK=200, 
     API_MGR_RESPONSE_BAD_REQUEST=400, 
+    API_MGR_RESPONSE_UNAUTHORIZED=401,
     API_MGR_RESPONSE_NOT_FOUND=404, 
     API_MGR_RESPONSE_INTERNAL_SERVER_ERROR=500,
     API_MGR_RESPONSE_SERVICE_UNAVAILABLE=503
@@ -23,6 +24,8 @@ typedef struct {
     char path[API_MANAGER_MAX_PATH_LENGTH];
     char *body;
     size_t body_length;
+    api_mgr_http_header_t headers[API_MANAGER_MAX_HEADERS];
+    int header_count;
 } api_mgr_http_request_t;
 
 typedef struct {
@@ -45,3 +48,7 @@ int api_manager_register_endpoint(const char *path, api_mgr_http_method_t method
 
 int api_manager_create_success_response(api_mgr_http_response_t *response, const char *json);
 int api_manager_create_error_response(api_mgr_http_response_t *response, api_mgr_http_response_code_t code, const char *msg);
+
+// Security functions
+int api_manager_validate_auth_header(const char *auth_header);
+int api_manager_create_auth_error_response(api_mgr_http_response_t *response);

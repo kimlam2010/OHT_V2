@@ -24,6 +24,10 @@
 #define RS485_PARITY_EVEN        1  // Even parity
 #define RS485_PARITY_ODD         2  // Odd parity
 
+// RS485 Test and Health Monitoring
+#define RS485_HEALTH_CHECK_INTERVAL_MS  5000  // Check health every 5 seconds
+#define RS485_LOOPBACK_TEST_ENABLED     1     // Enable loopback testing
+
 // Modbus Configuration
 #define MODBUS_SLAVE_ID          1
 #define MODBUS_TIMEOUT_MS        1000

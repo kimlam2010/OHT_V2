@@ -15,6 +15,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/select.h>
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
@@ -1512,9 +1514,13 @@ void* ws_server_client_thread(void *arg) {
     size_t received_length;
     
     // Read initial request (could be HTTP or WebSocket handshake)
+    printf("[WS_DEBUG] Reading data from client socket %d\n", client_socket);
     hal_status_t read_result = ws_server_read_data(client_socket, (uint8_t*)request_buffer, 
                                                   sizeof(request_buffer), &received_length);
+    printf("[WS_DEBUG] Read result: %d, received_length: %zu\n", read_result, received_length);
+    
     if (read_result != HAL_STATUS_OK) {
+        printf("[WS_DEBUG] Read failed, removing client\n");
         hal_log_error("WS_SERVER", "ws_server_client_thread", __LINE__, 
                      read_result, "Failed to read request");
         ws_server_remove_client(client_socket);
@@ -1546,10 +1552,15 @@ void* ws_server_client_thread(void *arg) {
     
     if (is_http_request) {
         // This is a regular HTTP request, handle it
+        printf("[WS_DEBUG] Detected HTTP request, handling...\n");
         hal_status_t http_result = ws_server_handle_http_request(client_socket, request_buffer, received_length);
+        printf("[WS_DEBUG] HTTP result: %d\n", http_result);
         if (http_result != HAL_STATUS_OK) {
+            printf("[WS_DEBUG] HTTP handling failed\n");
             hal_log_error("WS_SERVER", "ws_server_client_thread", __LINE__, 
                          http_result, "Failed to handle HTTP request");
+        } else {
+            printf("[WS_DEBUG] HTTP handling successful\n");
         }
         ws_server_remove_client(client_socket);
         return NULL;
@@ -1714,24 +1725,40 @@ hal_status_t ws_server_serialize_frame(const ws_frame_t *frame, uint8_t *buffer,
 hal_status_t ws_server_read_data(int socket_fd, uint8_t *buffer, size_t buffer_size, size_t *received_length) {
     if(socket_fd<0||!buffer||buffer_size==0||!received_length) return HAL_STATUS_INVALID_PARAMETER;
     
-    // Set socket timeout to prevent blocking (Issue #113 Fix)
+    // Set socket to non-blocking mode to prevent hang
+    int flags = fcntl(socket_fd, F_GETFL, 0);
+    fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
+    
+    // Use select() for timeout instead of socket timeout
+    fd_set readfds;
     struct timeval timeout;
-    timeout.tv_sec = 5;   // 5 second timeout
+    FD_ZERO(&readfds);
+    FD_SET(socket_fd, &readfds);
+    timeout.tv_sec = 1;   // 1 second timeout
     timeout.tv_usec = 0;
     
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-        hal_log_error("WS_SERVER", "ws_server_read_data", __LINE__, 
-                     HAL_STATUS_ERROR, "Failed to set socket timeout: %s", strerror(errno));
+    printf("[WS_DEBUG] Using select() for socket %d\n", socket_fd);
+    int select_result = select(socket_fd + 1, &readfds, NULL, NULL, &timeout);
+    
+    if (select_result <= 0) {
+        printf("[WS_DEBUG] select() timeout or error: %d\n", select_result);
+        *received_length = 0;
+        return HAL_STATUS_TIMEOUT;
     }
     
+    printf("[WS_DEBUG] select() ready, calling recv() on socket %d\n", socket_fd);
     ssize_t n = recv(socket_fd, buffer, buffer_size, 0);
+    printf("[WS_DEBUG] recv() returned: %zd\n", n);
+    
     if(n<=0){ 
         *received_length=0; 
         if (n == 0) {
             // Connection closed by client
+            printf("[WS_DEBUG] Connection closed by client\n");
             return HAL_STATUS_IO_ERROR;
         } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // Timeout occurred
+            printf("[WS_DEBUG] recv() timeout occurred\n");
             hal_log_error("WS_SERVER", "ws_server_read_data", __LINE__, 
                          HAL_STATUS_TIMEOUT, "Socket read timeout after 5 seconds");
             return HAL_STATUS_TIMEOUT;
