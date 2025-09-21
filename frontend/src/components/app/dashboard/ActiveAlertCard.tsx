@@ -1,7 +1,6 @@
 import type { AlertRequest } from '@/api/dashboard'
 import type { AlertItem } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
-import { AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
@@ -32,17 +31,6 @@ function Spinner() {
         // eslint-disable-next-line react/no-array-index-key
         <Skeleton key={`skeleton-row-${index}`} className="w-full h-16" />
       ))}
-    </div>
-  )
-}
-
-function ErrorMessage({ error }: { error: Error }) {
-  return (
-    <div className="flex flex-col gap-2 justify-center items-center w-full text-destructive">
-      <AlertCircle className="size-6" />
-      <p>
-        {error.message}
-      </p>
     </div>
   )
 }
@@ -135,7 +123,6 @@ export default function ActiveAlertCard() {
           success: data => (
             <ActiveAlertList alerts={data.alerts} />
           ),
-          error: error => <ErrorMessage error={error} />,
           loading: () => <Spinner />,
           empty: () => <div className="flex flex-col gap-2 justify-center items-center w-full text-muted-foreground">No alerts</div>,
         })}

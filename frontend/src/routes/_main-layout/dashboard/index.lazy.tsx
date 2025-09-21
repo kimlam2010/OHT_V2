@@ -1,5 +1,4 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
-import { AlertCircle } from 'lucide-react'
 import ActiveAlertCard from '@/components/app/dashboard/ActiveAlertCard'
 import CommunicationCard from '@/components/app/dashboard/CommunicationCard'
 import ManualControlCard from '@/components/app/dashboard/ManualControlCard'
@@ -65,15 +64,6 @@ function PerformanceSpinner() {
   )
 }
 
-function ErrorMessage({ error }: { error: Error }) {
-  return (
-    <div className="flex gap-2 justify-center items-center h-96 text-destructive">
-      <AlertCircle className="size-6" />
-      <p>{error.message}</p>
-    </div>
-  )
-}
-
 function RouteComponent() {
   const dashboardSummaryQuery = useDashboardSummaryQuery()
   const robotModeQuery = useRobotModeQuery()
@@ -85,7 +75,6 @@ function RouteComponent() {
           dashboardSummaryQuery,
           {
             loading: () => <Spinner />,
-            error: error => <ErrorMessage error={error} />,
             success: data => (
               <div className="grid grid-cols-1 gap-4 w-full md:grid-cols-2 lg:grid-cols-4">
                 <SystemStatusCard robot={data.robot} />
@@ -100,7 +89,7 @@ function RouteComponent() {
         {matchQuery(
           robotModeQuery,
           {
-            error: error => <ErrorMessage error={error} />,
+            isShowErrorComponent: false,
             success: data => (
               <>
                 <OperatingModeCard mode={data.mode} />
@@ -118,7 +107,6 @@ function RouteComponent() {
           dashboardSummaryQuery,
           {
             loading: () => <PerformanceSpinner />,
-            error: error => <ErrorMessage error={error} />,
             success: data => (
               <PerformanceMonitoringCard performance={data.performance} />
             ),
