@@ -15,7 +15,7 @@ from app.models.map import Map, MapSession, RobotPosition
 from app.core.database import get_db_context
 # Backward-compat alias for tests expecting get_db symbol in this module
 get_db = get_db_context
-from app.services.hybrid_localization_engine import HybridLocalizationEngine
+# HybridLocalizationEngine removed - no real sensor hardware implementation
 
 
 class MapService:
@@ -26,7 +26,7 @@ class MapService:
         self.current_session: Optional[MapSession] = None
         self.current_map: Optional[Map] = None
         self.mapping_lock = asyncio.Lock()
-        self.localization_engine = HybridLocalizationEngine()
+        # self.localization_engine removed - no real sensor hardware implementation
         
     async def _with_db(self, fn):
         """Compatibility helper to work with real async context manager or test's list mock."""

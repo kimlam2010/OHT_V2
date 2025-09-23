@@ -12,12 +12,12 @@
 ### **Overall Progress:**
 - **Phase 3 Status**: In Development
 - **Week 1 Progress**: 75% Complete
-- **Major Achievement**: Sensor Fusion Position Control System
+- **Major Achievement**: Firmware Integration & Position Control System *(Sensor API removed)*
 - **Next Milestone**: Complete Week 1 deliverables (Speed Control + Testing)
 
 ### **Key Accomplishments:**
 1. ✅ **Motion Planning System**: S-curve và Trapezoid algorithms hoàn thành
-2. ✅ **Position Control Revolution**: Thay thế encoder approach bằng sensor fusion
+2. ✅ **Position Control Revolution**: Firmware-based position control *(no sensor API)*
 3. ✅ **Hardware Integration**: Tận dụng tối đa hardware có sẵn
 4. ⏳ **Speed Control**: Đang implement
 5. ⏳ **Testing**: Đang chuẩn bị
@@ -36,11 +36,11 @@
 
 #### **2. Position Control System (REVOLUTIONARY CHANGE)**
 - **❌ OLD APPROACH**: Encoder-based position control (KHÔNG CÓ ENCODER)
-- **✅ NEW APPROACH**: Sensor Fusion Position Estimation
-  - **LiDAR Integration**: Mapping, obstacle detection, safety monitoring
-  - **RFID System**: Station localization, position referencing
-  - **Acceleration Sensor**: Dead reckoning với drift correction
-  - **Docking Module**: Precise positioning tại stations
+- **✅ NEW APPROACH**: Firmware-based Position Control *(Sensor API removed)*
+  - **Firmware Integration**: Real-time position data từ firmware
+  - **RS485 Communication**: Module telemetry và status
+  - **Hardware Abstraction**: Tận dụng firmware hardware layer
+  - **No Sensor API**: Loại bỏ sensor API không có hardware thực tế
 
 ### **⏳ IN PROGRESS (25%):**
 

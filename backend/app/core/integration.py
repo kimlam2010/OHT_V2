@@ -229,7 +229,7 @@ class FirmwareIntegrationService:
     async def health_check(self) -> bool:
         """Check Firmware health via HTTP API"""
         try:
-            response = await self.http_client.get("/health")
+            response = await self.http_client.get("/api/v1/system/health")
             return response.status_code == 200
         except Exception as e:
             logger.error(f"Firmware health check failed: {e}")

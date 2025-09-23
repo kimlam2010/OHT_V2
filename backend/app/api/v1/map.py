@@ -13,7 +13,7 @@ from app.core.security import require_permission
 from app.core.database import get_db
 from app.models.user import User
 from app.services.map_service import MapService
-from app.services.hybrid_localization_engine import HybridLocalizationEngine
+# HybridLocalizationEngine removed - no real sensor hardware implementation
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/v1/map", tags=["map"])
 
 # Initialize services
 map_service = MapService()
-localization_engine = HybridLocalizationEngine()
+# localization_engine removed - no real sensor hardware implementation
 
 
 # Pydantic models for request/response

@@ -8,8 +8,8 @@ Welcome to the OHT-50 Backend User Guide! This guide will help you understand an
 OHT-50 is an advanced robot control and mapping system that provides:
 - **Real-time robot control** and monitoring
 - **Autonomous mapping** of indoor environments
-- **Hybrid localization** using multiple sensors
-- **Sensor data management** and processing
+- **Firmware-based localization** using hardware modules
+- **Real-time telemetry** data processing
 - **Web-based dashboard** for monitoring and control
 
 ### **Who is this guide for?**
@@ -51,7 +51,7 @@ The main dashboard provides an overview of the robot system:
 ┌─────────────────────────────────────────────────────────────┐
 │  OHT-50 Robot Control System                    [User] [⚙️] │
 ├─────────────────────────────────────────────────────────────┤
-│  [Dashboard] [Map] [Control] [Sensors] [Reports] [Settings] │
+│  [Dashboard] [Map] [Control] [Telemetry] [Reports] [Settings] │
 ├─────────────────────────────────────────────────────────────┤
 │  Robot Status: [🟢 Online]  Battery: [85%]  Temp: [42°C]   │
 │  Position: X:100.5 Y:200.3  Speed: 0.5 m/s  Mode: [AUTO]   │
@@ -66,7 +66,7 @@ The main dashboard provides an overview of the robot system:
 │  │  [Obstacles] [Free Space] [Unknown]                │   │
 │  └─────────────────────────────────────────────────────┘   │
 ├─────────────────────────────────────────────────────────────┤
-│  Sensor Status: [RFID:🟢] [Accel:🟢] [Prox:🟢] [LiDAR:🟢] │
+│  Firmware Status: [RS485:🟢] [WebSocket:🟢] [HTTP:🟢] [Modules:🟢] │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -74,7 +74,7 @@ The main dashboard provides an overview of the robot system:
 - **Dashboard:** Main overview and status
 - **Map:** Map management and visualization
 - **Control:** Robot control and navigation
-- **Sensors:** Sensor configuration and monitoring
+- **Telemetry:** Real-time data monitoring
 - **Reports:** System reports and analytics
 - **Settings:** System configuration
 
@@ -95,7 +95,7 @@ The main dashboard provides an overview of the robot system:
 
 #### **Step 2: Mapping Process**
 During mapping, the system will:
-- Collect sensor data from RFID, accelerometer, proximity, and LiDAR
+- Collect telemetry data from firmware modules via RS485
 - Build an occupancy grid map
 - Track robot position in real-time
 - Display mapping progress

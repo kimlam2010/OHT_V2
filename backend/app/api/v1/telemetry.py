@@ -11,10 +11,11 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.core.security import require_permission
 from app.schemas.user import UserResponse as User
 from app.services.telemetry import telemetry_service
-from app.services.telemetry_data_collector import telemetry_data_collector, DataSource
+# telemetry_data_collector removed - no real sensor hardware implementation
 from app.services.lidar_data_processor import lidar_data_processor
-from app.services.sensor_data_processor import sensor_data_processor
-from app.services.firmware_integration_service import SensorType, MockFirmwareService
+# sensor_data_processor removed - no real sensor hardware implementation
+from app.services.firmware_integration_service import MockFirmwareService
+# SensorType removed - no real sensor hardware implementation
 
 router = APIRouter(
     prefix="/api/v1/telemetry", 
@@ -29,7 +30,7 @@ router = APIRouter(
 
 
 class TelemetryData(BaseModel):
-    """Current telemetry data from robot sensors"""
+    """Current telemetry data from robot systems"""
     timestamp: str = Field(..., description="ISO timestamp of data collection")
     motor_speed: float = Field(..., description="Motor speed in RPM")
     motor_temperature: float = Field(..., description="Motor temperature in Celsius")
@@ -57,7 +58,7 @@ class TelemetrySummary(BaseModel):
 
 class TelemetryCollectionRequest(BaseModel):
     """Request model for starting telemetry collection"""
-    data_sources: List[str] = Field(default=["lidar", "sensors", "motor"], description="List of data sources to collect from")
+    data_sources: List[str] = Field(default=["lidar", "motor"], description="List of data sources to collect from (sensors disabled)")
     collection_rate: int = Field(default=1000, ge=100, le=5000, description="Data collection rate in points per second")
 
 
@@ -76,15 +77,6 @@ class LiDARScanResponse(BaseModel):
     obstacles: List[Dict[str, Any]]
     scan_quality: float
     processing_time_ms: float
-
-
-class SensorStatusResponse(BaseModel):
-    """Response model for sensor status"""
-    sensor_type: str
-    status: str
-    last_update: str
-    data_quality: float
-    error_count: int
 
 
 class PerformanceMetricsResponse(BaseModel):
@@ -126,7 +118,7 @@ async def get_current_telemetry(
     """
     Get current telemetry data
     
-    Returns the latest telemetry data from all sensors including:
+    Returns the latest telemetry data from robot systems (sensors disabled):
     - Motor speed and temperature
     - Dock status
     - Safety status
@@ -313,184 +305,6 @@ async def get_module_status(
         )
 
 
-# New Telemetry System API Endpoints
-
-class TelemetryCollectionRequest(BaseModel):
-    """Request to start/stop telemetry collection"""
-    action: str = Field(..., description="start or stop")
-    sources: Optional[List[str]] = Field(None, description="List of data sources to collect from")
-
-
-class TelemetryCollectionResponse(BaseModel):
-    """Response for telemetry collection operations"""
-    success: bool
-    message: str
-    active_sources: List[str]
-    collection_stats: Dict[str, Any]
-
-
-@router.post("/collection/start", response_model=TelemetryCollectionResponse)
-async def start_telemetry_collection(
-    request: TelemetryCollectionRequest,
-    current_user: User = Depends(require_permission("telemetry", "write"))
-):
-    """
-    Start telemetry data collection
-    
-    Initiates real-time data collection from all configured data sources:
-    - LiDAR sensors
-    - Motor sensors
-    - Safety sensors
-    - Docking sensors
-    
-    **Performance Target**: < 100ms response time
-    **Authentication**: Required (telemetry:write permission)
-    **Data Rate**: 1000+ data points/second
-    """
-    try:
-        success = await telemetry_data_collector.start_collection()
-        
-        if success:
-            stats = telemetry_data_collector.get_collection_stats()
-            return TelemetryCollectionResponse(
-                success=True,
-                message="Telemetry collection started successfully",
-                active_sources=[source.value for source in telemetry_data_collector.source_handlers.keys()],
-                collection_stats=stats
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to start telemetry collection"
-            )
-            
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to start telemetry collection: {str(e)}"
-        )
-
-
-@router.post("/collection/stop", response_model=TelemetryCollectionResponse)
-async def stop_telemetry_collection(
-    current_user: User = Depends(require_permission("telemetry", "write"))
-):
-    """
-    Stop telemetry data collection
-    
-    Stops real-time data collection from all data sources.
-    Preserves collected data and statistics.
-    
-    **Performance Target**: < 50ms response time
-    **Authentication**: Required (telemetry:write permission)
-    """
-    try:
-        success = await telemetry_data_collector.stop_collection()
-        
-        if success:
-            stats = telemetry_data_collector.get_collection_stats()
-            return TelemetryCollectionResponse(
-                success=True,
-                message="Telemetry collection stopped successfully",
-                active_sources=[],
-                collection_stats=stats
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to stop telemetry collection"
-            )
-            
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to stop telemetry collection: {str(e)}"
-        )
-
-
-@router.get("/collection/stats")
-async def get_collection_stats(
-    current_user: User = Depends(require_permission("telemetry", "read"))
-):
-    """
-    Get telemetry collection statistics
-    
-    Returns detailed statistics about data collection including:
-    - Total data points collected
-    - Collection rate (points/second)
-    - Data quality metrics
-    - Active data sources
-    - Error rates
-    
-    **Performance Target**: < 20ms response time
-    **Authentication**: Required (telemetry:read permission)
-    """
-    try:
-        stats = telemetry_data_collector.get_collection_stats()
-        quality_summary = telemetry_data_collector.get_data_quality_summary()
-        
-        return {
-            "success": True,
-            "collection_stats": stats,
-            "data_quality": quality_summary,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get collection stats: {str(e)}"
-        )
-
-
-@router.get("/data/latest")
-async def get_latest_telemetry_data(
-    source: Optional[str] = Query(None, description="Data source filter"),
-    limit: int = Query(100, ge=1, le=1000, description="Number of data points to return"),
-    current_user: User = Depends(require_permission("telemetry", "read"))
-):
-    """Get latest telemetry data"""
-    try:
-        data_source = None
-        if source:
-            try:
-                data_source = DataSource(source)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid data source: {source}"
-                )
-        
-        latest_data = telemetry_data_collector.get_latest_data(data_source, limit)
-        
-        # Convert to serializable format
-        serialized_data = []
-        for data in latest_data:
-            serialized_data.append({
-                "source": data.source.value,
-                "data": data.data,
-                "timestamp": data.timestamp.isoformat(),
-                "quality": data.quality.value,
-                "sequence_id": data.sequence_id,
-                "processing_time_ms": data.processing_time_ms
-            })
-        
-        return {
-            "success": True,
-            "data": serialized_data,
-            "count": len(serialized_data),
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get latest telemetry data: {str(e)}"
-        )
-
-
 @router.get("/lidar/scan", response_model=LiDARScanResponse)
 async def get_lidar_scan(
     current_user: User = Depends(require_permission("telemetry", "read"))
@@ -509,181 +323,21 @@ async def get_lidar_scan(
     **Data Rate**: Real-time 360° scanning
     """
     try:
-        # Get latest LiDAR data
-        lidar_data = telemetry_data_collector.get_latest_data(DataSource.LIDAR, 1)
-        
-        if not lidar_data:
-            return {
-                "success": True,
-                "message": "No LiDAR data available",
-                "scan": None
-            }
-        
-        # Process LiDAR data
-        latest_lidar = lidar_data[0]
-        scan = await lidar_data_processor.process_lidar_data(latest_lidar.data)
-        
-        # Serialize scan data
-        serialized_scan = {
-            "points": [
-                {
-                    "distance": point.distance,
-                    "angle": point.angle,
-                    "intensity": point.intensity,
-                    "timestamp": point.timestamp.isoformat()
-                }
-                for point in scan.points
-            ],
-            "obstacles": [
-                {
-                    "id": obstacle.id,
-                    "type": obstacle.type.value,
-                    "severity": obstacle.severity.value,
-                    "center_x": obstacle.center_x,
-                    "center_y": obstacle.center_y,
-                    "distance": obstacle.distance,
-                    "angle": obstacle.angle,
-                    "width": obstacle.width,
-                    "height": obstacle.height,
-                    "confidence": obstacle.confidence,
-                    "timestamp": obstacle.timestamp.isoformat()
-                }
-                for obstacle in scan.obstacles
-            ],
-            "scan_quality": scan.scan_quality,
-            "processing_time_ms": scan.processing_time_ms,
-            "timestamp": scan.timestamp.isoformat()
+        # Mock LiDAR data since no real hardware
+        mock_scan = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "points": [],
+            "obstacles": [],
+            "scan_quality": 0.0,
+            "processing_time_ms": 0.0
         }
         
-        return {
-            "success": True,
-            "scan": serialized_scan,
-            "stats": lidar_data_processor.get_processing_stats()
-        }
+        return LiDARScanResponse(**mock_scan)
         
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get LiDAR scan: {str(e)}"
-        )
-
-
-@router.get("/sensors/status", response_model=List[SensorStatusResponse])
-async def get_sensor_status(
-    current_user: User = Depends(require_permission("telemetry", "read"))
-):
-    """
-    Get sensor status and statistics
-    
-    Returns the current status of all robot sensors including:
-    - RFID reader status
-    - Accelerometer status
-    - Compass status
-    - Docking sensor status
-    - Battery sensor status
-    
-    **Performance Target**: < 30ms response time
-    **Authentication**: Required (telemetry:read permission)
-    """
-    try:
-        sensor_stats = sensor_data_processor.get_sensor_statistics()
-        
-        return {
-            "success": True,
-            "sensor_statistics": sensor_stats,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get sensor status: {str(e)}"
-        )
-
-
-@router.get("/sensors/{sensor_type}/data")
-async def get_sensor_data(
-    sensor_type: str,
-    limit: int = Query(50, ge=1, le=200, description="Number of data points to return"),
-    current_user: User = Depends(require_permission("telemetry", "read"))
-):
-    """Get sensor data for specific sensor type"""
-    try:
-        try:
-            sensor = SensorType(sensor_type)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid sensor type: {sensor_type}"
-            )
-        
-        sensor_history = sensor_data_processor.get_sensor_history(sensor, limit)
-        
-        # Serialize sensor data
-        serialized_data = []
-        for data in sensor_history:
-            if hasattr(data, '__dict__'):
-                serialized_data.append({
-                    **data.__dict__,
-                    'timestamp': data.timestamp.isoformat() if hasattr(data, 'timestamp') else None
-                })
-            else:
-                serialized_data.append(data)
-        
-        return {
-            "success": True,
-            "sensor_type": sensor_type,
-            "data": serialized_data,
-            "count": len(serialized_data),
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get sensor data: {str(e)}"
-        )
-
-
-@router.post("/sensors/{sensor_type}/calibrate")
-async def calibrate_sensor(
-    sensor_type: str,
-    calibration_data: Dict[str, Any],
-    current_user: User = Depends(require_permission("telemetry", "write"))
-):
-    """Calibrate sensor with provided data"""
-    try:
-        try:
-            sensor = SensorType(sensor_type)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid sensor type: {sensor_type}"
-            )
-        
-        success = sensor_data_processor.calibrate_sensor(sensor, calibration_data)
-        
-        if success:
-            return {
-                "success": True,
-                "message": f"Sensor {sensor_type} calibrated successfully",
-                "calibration_data": calibration_data,
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            }
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to calibrate sensor {sensor_type}"
-            )
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to calibrate sensor: {str(e)}"
         )
 
 
@@ -705,19 +359,14 @@ async def get_telemetry_performance(
     **Authentication**: Required (telemetry:read permission)
     """
     try:
-        collection_stats = telemetry_data_collector.get_collection_stats()
-        lidar_stats = lidar_data_processor.get_processing_stats()
-        sensor_stats = sensor_data_processor.get_sensor_statistics()
-        
-        return {
-            "success": True,
-            "performance_metrics": {
-                "data_collection": collection_stats,
-                "lidar_processing": lidar_stats,
-                "sensor_processing": sensor_stats
-            },
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
+        # Mock performance data since no real hardware
+        return PerformanceMetricsResponse(
+            data_collection={"disabled": "no real hardware"},
+            processing_latency={"disabled": "no real hardware"},
+            system_resources={"disabled": "no real hardware"},
+            error_rates={"disabled": "no real hardware"},
+            throughput={"disabled": "no real hardware"}
+        )
         
     except Exception as e:
         raise HTTPException(
