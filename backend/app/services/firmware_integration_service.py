@@ -32,6 +32,18 @@ class FirmwareStatus(Enum):
     RECONNECTING = "reconnecting"
 
 
+class SensorType(Enum):
+    """Sensor type enumeration"""
+    ACCELEROMETER = "accelerometer"
+    COMPASS = "compass"
+    PROXIMITY = "proximity"
+    NFC_RFID = "nfc_rfid"
+    TEMPERATURE = "temperature"
+    BATTERY = "battery"
+    MOTOR = "motor"
+    LIDAR = "lidar"
+
+
 @dataclass
 class SensorReading:
     """Sensor reading data structure"""
@@ -336,6 +348,33 @@ class FirmwareIntegrationService:
         except Exception as e:
             logger.error(f"❌ Failed to get system health: {e}")
             return {"success": False, "error": str(e)}
+    
+    async def configure_sensor(self, sensor_id: str, sensor_type: str, configuration: Dict[str, Any]) -> bool:
+        """Configure sensor via firmware API"""
+        try:
+            if not self.fw_client:
+                logger.error("❌ FW client not initialized")
+                return False
+            
+            # Send configuration to firmware
+            config_data = {
+                "sensor_id": sensor_id,
+                "sensor_type": sensor_type,
+                "configuration": configuration
+            }
+            
+            response = await self.fw_client.post("/api/v1/sensors/configure", json=config_data)
+            
+            if response.get("success", False):
+                logger.info(f"✅ Sensor {sensor_id} configured successfully")
+                return True
+            else:
+                logger.error(f"❌ Failed to configure sensor {sensor_id}: {response.get('error', 'Unknown error')}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to configure sensor {sensor_id}: {e}")
+            return False
     
     # Module API Methods
     

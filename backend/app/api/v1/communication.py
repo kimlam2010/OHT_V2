@@ -21,7 +21,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.security import get_current_user
 from app.services.firmware_integration_service import firmware_service, FirmwareIntegrationService
-from app.schemas.user import User
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -331,7 +331,7 @@ async def get_communication_diagnostics(
 
 @router.post("/test")
 async def test_communication(
-    test_type: str = Query(..., description="Type of communication test", regex="^(ping|health|modules|full)$"),
+    test_type: str = Query(..., description="Type of communication test", pattern="^(ping|health|modules|full)$"),
     current_user: User = Depends(get_current_user),
     fw_service: FirmwareIntegrationService = Depends(get_firmware_service)
 ):
