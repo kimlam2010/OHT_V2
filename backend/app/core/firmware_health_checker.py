@@ -78,7 +78,7 @@ class FirmwareHealthChecker:
             start_time = datetime.utcnow()
             
             # Basic health endpoint check
-            response = await self.http_client.get(f"{self.firmware_url}/health")
+            response = await self.http_client.get(f"{self.firmware_url}/api/v1/system/health")
             response_time = (datetime.utcnow() - start_time).total_seconds()
             
             # Create health metrics

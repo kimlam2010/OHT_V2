@@ -302,9 +302,8 @@ Lấy dữ liệu telemetry hiện tại.
     "temperature": 42.5
   },
   "sensors": {
-    "lidar": {
-      "scan_count": 360,
-      "obstacles_detected": 3,
+    "status": "disabled",
+    "note": "No real sensor hardware implementation"
       "range_max": 10.0
     },
     "accelerometer": {
@@ -365,18 +364,16 @@ Lấy dữ liệu LiDAR scan mới nhất.
 }
 ```
 
-### **GET /api/v1/telemetry/sensors/status**
-Lấy trạng thái tất cả sensors.
+### **GET /api/v1/telemetry/sensors/status** *(DEPRECATED)*
+**⚠️ Lưu ý:** Endpoint này đã bị loại bỏ do không có hardware sensor thực tế.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Response:**
 ```json
 {
-  "sensors": {
-    "lidar": {
-      "status": "active",
-      "last_scan": "2025-01-28T10:30:00Z",
+  "error": "Sensor API has been removed - no real sensor hardware implementation",
+  "status": "deprecated"
       "error_count": 0
     },
     "accelerometer": {
@@ -766,9 +763,8 @@ Lấy cấu hình robot.
     }
   },
   "sensor_config": {
-    "lidar_enabled": true,
-    "rfid_enabled": true,
-    "accelerometer_enabled": true
+    "status": "disabled",
+    "note": "Sensor API removed - no real hardware"
   }
 }
 ```
@@ -785,8 +781,8 @@ Cập nhật cấu hình robot.
   "battery_threshold": 15,
   "temperature_limit": 65,
   "sensor_config": {
-    "lidar_enabled": true,
-    "rfid_enabled": true
+    "status": "disabled",
+    "note": "Sensor API removed - no real hardware"
   }
 }
 ```

@@ -13,8 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.services.firmware_integration_service import firmware_service
-from app.services.realtime_updates_service import realtime_service
-from app.services.sensor_data_processor import sensor_processor
+# realtime_service removed - no real sensor hardware implementation
+# sensor_processor removed - no real sensor hardware implementation
 
 logger = logging.getLogger(__name__)
 

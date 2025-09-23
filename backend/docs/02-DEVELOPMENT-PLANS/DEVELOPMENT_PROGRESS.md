@@ -145,7 +145,7 @@
 
 - [x] **Models Implementation**
   - [x] `app/models/robot.py` - Robot data model (status, position, battery)
-  - [x] `app/models/telemetry.py` - Telemetry data model (sensors, timestamps)
+  - [x] `app/models/telemetry.py` - Telemetry data model (firmware data, timestamps) *(sensor models removed)*
   - [x] `app/models/safety.py` - Safety events model (alerts, incidents)
   - [x] `app/models/user.py` - User management model (roles, permissions)
 

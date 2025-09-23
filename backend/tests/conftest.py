@@ -16,7 +16,7 @@ from app.main import app
 from app.core.database import Base, get_db_context
 from app.core.security import create_access_token, get_password_hash
 from app.models.user import User
-from app.models.sensors import SensorConfiguration, SensorReading, SensorStatus, SensorCalibration  # Import sensor models
+# Sensor models removed - no real hardware implementation
 from app.models.telemetry import SensorData, TelemetryCurrent, TelemetryHistory, TelemetryAlert  # Import telemetry models
 from app.models.robot import Robot, RobotCommand, RobotConfiguration  # Import robot models
 from app.models.safety import SafetyStatus, SafetyLog, SafetyAlert, SafetyZone  # Import safety models

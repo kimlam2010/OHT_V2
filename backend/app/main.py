@@ -18,7 +18,7 @@ from app.core.monitoring_service import monitoring_service
 from app.core.websocket_service import websocket_service
 
 # Import API routers
-from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, sensors, localization, health, dashboard, fw_integration, communication
+from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, localization, health, dashboard, fw_integration, communication
 from app.api import websocket
 from app.config import Settings
 
@@ -457,7 +457,7 @@ app.include_router(dashboard.router)
 
 # Include Map & Localization API routers
 app.include_router(map.router)
-app.include_router(sensors.router)
+# Sensor API removed - no real hardware implementation
 app.include_router(localization.router)
 app.include_router(health.router)
 

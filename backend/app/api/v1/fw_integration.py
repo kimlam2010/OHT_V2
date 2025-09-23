@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.security import get_current_user
 from app.services.firmware_integration_service import firmware_service, FirmwareIntegrationService
-from app.schemas.user import User
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -601,7 +601,7 @@ async def get_telemetry_data(
     """
     Get telemetry data
     
-    Returns current telemetry data from sensors and robot.
+    Returns current telemetry data from robot (sensors disabled - no real hardware).
     """
     try:
         telemetry = await fw_service.get_telemetry_data()

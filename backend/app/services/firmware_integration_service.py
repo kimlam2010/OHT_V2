@@ -44,15 +44,7 @@ class SensorType(Enum):
     LIDAR = "lidar"
 
 
-@dataclass
-class SensorReading:
-    """Sensor reading data structure"""
-    sensor_id: str
-    value: float
-    unit: str
-    quality: float
-    timestamp: datetime
-    is_valid: bool = True
+# SensorReading removed - no real sensor hardware implementation
 
 
 class FirmwareIntegrationService:
@@ -87,10 +79,10 @@ class FirmwareIntegrationService:
         self.status = FirmwareStatus.DISCONNECTED
         self.last_heartbeat = None
         self.connection_errors = 0
-        self.max_connection_errors = 5
+        self.max_connection_errors = 20  # Increase to reduce reconnection frequency
         
         # Sensor data cache
-        self.sensor_cache: Dict[str, SensorReading] = {}
+        # sensor_cache removed - no real sensor hardware implementation
         self.cache_timeout = timedelta(seconds=1)  # 1 second cache timeout
         
         # Background tasks
@@ -218,40 +210,12 @@ class FirmwareIntegrationService:
             # Process robot position data
             if "robot_position" in data:
                 position = data["robot_position"]
-                self.sensor_cache["robot_x"] = SensorReading(
-                    sensor_id="robot_x",
-                    value=position.get("x", 0.0),
-                    unit="mm",
-                    quality=1.0,
-                    timestamp=timestamp
-                )
-                self.sensor_cache["robot_y"] = SensorReading(
-                    sensor_id="robot_y",
-                    value=position.get("y", 0.0),
-                    unit="mm",
-                    quality=1.0,
-                    timestamp=timestamp
-                )
+                # Sensor cache removed - no real sensor hardware implementation
             
-            # Process battery data
-            if "battery_level" in data:
-                self.sensor_cache["battery"] = SensorReading(
-                    sensor_id="battery",
-                    value=float(data["battery_level"]),
-                    unit="%",
-                    quality=1.0,
-                    timestamp=timestamp
-                )
-            
-            # Process temperature data
-            if "temperature" in data:
-                self.sensor_cache["temperature"] = SensorReading(
-                    sensor_id="temperature",
-                    value=float(data["temperature"]),
-                    unit="°C",
-                    quality=1.0,
-                    timestamp=timestamp
-                )
+            # Process battery and temperature data
+            if "battery_level" in data or "temperature" in data:
+                # Sensor cache removed - no real sensor hardware implementation
+                pass
             
             logger.debug(f"📊 Telemetry processed: {len(data)} data points")
             
@@ -263,6 +227,11 @@ class FirmwareIntegrationService:
         try:
             logger.warning("🔄 Attempting firmware reconnection...")
             self.status = FirmwareStatus.RECONNECTING
+            
+            # Add exponential backoff delay
+            backoff_delay = min(30, 2 ** (self.connection_errors // 5))  # Max 30 seconds
+            logger.info(f"⏳ Waiting {backoff_delay}s before reconnection...")
+            await asyncio.sleep(backoff_delay)
             
             # Disconnect current client
             if self.fw_client:
@@ -493,32 +462,10 @@ class FirmwareIntegrationService:
     
     # Sensor Data Methods
     
-    async def get_sensor_data(self, sensor_type: str, sensor_id: str = None) -> Optional[Dict[str, Any]]:
-        """Get sensor data from cache"""
-        try:
-            cache_key = sensor_id or sensor_type
-            sensor_reading = self.sensor_cache.get(cache_key)
-            
-            if sensor_reading:
-                # Check if data is still fresh
-                age = datetime.now(timezone.utc) - sensor_reading.timestamp
-                if age <= self.cache_timeout:
-                    return {
-                        "sensor_id": sensor_reading.sensor_id,
-                        "value": sensor_reading.value,
-                        "unit": sensor_reading.unit,
-                        "quality": sensor_reading.quality,
-                        "timestamp": sensor_reading.timestamp.isoformat(),
-                        "is_valid": sensor_reading.is_valid
-                    }
-                else:
-                    logger.warning(f"⚠️ Sensor data for {cache_key} is stale (age: {age})")
-            
-            return None
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to get sensor data for {sensor_type}: {e}")
-            return None
+    async def get_sensor_data_mock(self, sensor_type: str, sensor_id: str = None) -> Optional[Dict[str, Any]]:
+        """Get sensor data - DISABLED (no real sensor hardware)"""
+        logger.warning(f"⚠️ Sensor data request ignored - no real sensor hardware: {sensor_type}")
+        return None
     
     async def get_telemetry_data(self) -> Dict[str, Any]:
         """Get current telemetry data"""
@@ -532,16 +479,8 @@ class FirmwareIntegrationService:
                 }
             }
             
-            # Add sensor data from cache
-            for sensor_id, sensor_reading in self.sensor_cache.items():
-                age = datetime.now(timezone.utc) - sensor_reading.timestamp
-                if age <= self.cache_timeout:
-                    telemetry["data"]["sensors"][sensor_id] = {
-                        "value": sensor_reading.value,
-                        "unit": sensor_reading.unit,
-                        "quality": sensor_reading.quality,
-                        "timestamp": sensor_reading.timestamp.isoformat()
-                    }
+            # Sensor data removed - no real sensor hardware implementation
+            telemetry["data"]["sensors"] = {}
             
             return telemetry
             
@@ -558,7 +497,7 @@ class FirmwareIntegrationService:
             "firmware_url": self.firmware_url,
             "last_heartbeat": self.last_heartbeat.isoformat() if self.last_heartbeat else None,
             "connection_errors": self.connection_errors,
-            "sensor_cache_size": len(self.sensor_cache)
+            "sensor_cache_size": 0  # No sensor cache - no real hardware
         }
     
     async def get_robot_status(self) -> Optional[Dict[str, Any]]:
@@ -662,7 +601,7 @@ class MockFirmwareService:
             }
         }
     
-    async def get_sensor_data(self, sensor_type: str, sensor_id: str = None) -> Optional[Dict[str, Any]]:
+    async def get_sensor_data_mock(self, sensor_type: str, sensor_id: str = None) -> Optional[Dict[str, Any]]:
         """Get mock sensor data"""
         # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
         return self.mock_data.get(sensor_type)
