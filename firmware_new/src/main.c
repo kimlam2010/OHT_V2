@@ -569,8 +569,8 @@ int main(int argc, char **argv) {
                 // Register Minimal API v1 endpoints
                 extern int api_register_minimal_endpoints(void);
                 
-                // DISABLED: WebSocket Server (causing hang issue)
-                printf("[OHT-50] ⚠️  WebSocket Server DISABLED (hang issue - use port 8080 for all APIs)\n");
+                // ENABLED: WebSocket Server (fixed hang issue)
+                printf("[OHT-50] ✅ WebSocket Server ENABLED (hang issue fixed)\n");
                 (void)api_register_minimal_endpoints();
                 printf("[OHT-50] ✅ Minimal API v1 endpoints registered\n");
             }

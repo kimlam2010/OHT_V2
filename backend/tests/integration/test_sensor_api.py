@@ -15,11 +15,6 @@ class TestSensorAPI:
     """Integration tests for Sensor API endpoints"""
     
     @pytest.fixture
-    def client(self):
-        """Create test client"""
-        return TestClient(app)
-    
-    @pytest.fixture
     def mock_user(self):
         """Mock authenticated user"""
         user = Mock(spec=User)
@@ -186,20 +181,12 @@ class TestSensorAPI:
             assert data[0]["sensor_id"] == "RFID_001"
             assert data[1]["sensor_id"] == "ACCEL_001"
     
-    def test_configure_sensor_success(self, client, mock_user, auth_headers):
-        """Test successful sensor configuration"""
-        with patch('app.core.security.get_current_user', return_value=mock_user), \
-             patch('app.api.v1.sensors.get_db') as mock_db:
-            
-            # Setup mock database
-            mock_db_session = Mock()
-            mock_db.return_value = [mock_db_session]
-            mock_db_session.query.return_value.filter.return_value.first.return_value = None
-            mock_db_session.add = Mock()
-            mock_db_session.commit = Mock()
-            
-            # Test request
-            response = client.post(
+    @pytest.mark.asyncio
+    async def test_configure_sensor_success(self, async_client, mock_user, auth_headers):
+        """Test successful sensor configuration using real test database"""
+        with patch('app.core.security.get_current_user', return_value=mock_user):
+            # Test request - using real test database from conftest.py
+            response = await async_client.post(
                 "/api/v1/sensors/configure",
                 json={
                     "sensor_id": "RFID_001",
