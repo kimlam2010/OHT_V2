@@ -392,7 +392,9 @@ target_link_libraries(test_end_to_end
     hal_gpio
     hal_peripherals
     hal_safety
+    app_managers
     app_api
+    websocket_server
     unity
     uuid
     m
@@ -535,6 +537,7 @@ target_link_libraries(test_soak
     app_managers
     app_modules
     app_api
+    websocket_server
     unity
     pthread
     m
