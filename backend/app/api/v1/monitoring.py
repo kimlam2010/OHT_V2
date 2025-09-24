@@ -344,3 +344,170 @@ async def get_monitoring_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve monitoring status"
         )
+
+
+# Additional monitoring endpoints for Issue #136
+
+@router.get("/performance")
+async def get_performance_metrics(
+    current_user: User = Depends(require_permission("system", "read"))
+) -> Dict[str, Any]:
+    """Get performance metrics (alias for /metrics)"""
+    try:
+        metrics = await monitoring_service.get_current_metrics()
+        
+        return {
+            "success": True,
+            "data": {
+                "timestamp": metrics.timestamp.isoformat(),
+                "cpu_percent": metrics.cpu_percent,
+                "memory_percent": metrics.memory_percent,
+                "disk_percent": metrics.disk_percent,
+                "network_bytes_sent": metrics.network_bytes_sent,
+                "network_bytes_recv": metrics.network_bytes_recv,
+                "active_connections": metrics.active_connections,
+                "uptime_seconds": metrics.uptime
+            },
+            "message": "Performance metrics retrieved successfully"
+        }
+    except Exception as e:
+        logger.error(f"❌ Performance metrics retrieval failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve performance metrics"
+        )
+
+
+@router.get("/current")
+async def get_current_status(
+    current_user: User = Depends(require_permission("system", "read"))
+) -> Dict[str, Any]:
+    """Get current system status (alias for /health)"""
+    try:
+        health_data = await monitoring_service.get_system_health()
+        return {
+            "success": True,
+            "data": health_data,
+            "message": "Current status retrieved successfully"
+        }
+    except Exception as e:
+        logger.error(f"❌ Current status retrieval failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve current status"
+        )
+
+
+@router.get("/alerts")
+async def get_all_alerts(
+    current_user: User = Depends(require_permission("system", "read"))
+) -> Dict[str, Any]:
+    """Get all alerts (alias for /alerts/active)"""
+    try:
+        alerts = await monitoring_service.get_active_alerts()
+        
+        alerts_data = []
+        for alert in alerts:
+            alerts_data.append({
+                "id": alert.id,
+                "level": alert.level,
+                "message": alert.message,
+                "timestamp": alert.timestamp.isoformat(),
+                "acknowledged": alert.acknowledged,
+                "resolved": alert.resolved
+            })
+        
+        return {
+            "success": True,
+            "data": {
+                "alerts_count": len(alerts_data),
+                "alerts": alerts_data
+            },
+            "message": "All alerts retrieved successfully"
+        }
+    except Exception as e:
+        logger.error(f"❌ All alerts retrieval failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve all alerts"
+        )
+
+
+@router.get("/logs")
+async def get_system_logs(
+    limit: int = 100,
+    level: str = "info",
+    current_user: User = Depends(require_permission("system", "read"))
+) -> Dict[str, Any]:
+    """Get system logs"""
+    try:
+        if limit < 1 or limit > 1000:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Limit must be between 1 and 1000"
+            )
+        
+        if level not in ["debug", "info", "warning", "error", "critical"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Level must be one of: debug, info, warning, error, critical"
+            )
+        
+        # Mock log data for now
+        import random
+        from datetime import datetime, timezone, timedelta
+        
+        log_levels = ["debug", "info", "warning", "error", "critical"]
+        log_messages = [
+            "System started successfully",
+            "Robot status updated",
+            "Battery level normal",
+            "Network connection established",
+            "Emergency stop triggered",
+            "Configuration updated",
+            "User authentication successful",
+            "Telemetry data received",
+            "Firmware communication established",
+            "Safety system active"
+        ]
+        
+        logs_data = []
+        base_time = datetime.now(timezone.utc)
+        
+        for i in range(min(limit, 50)):  # Max 50 mock logs
+            log_level = random.choice(log_levels)
+            if level == "info" and log_level in ["debug"]:
+                continue
+            if level == "warning" and log_level in ["debug", "info"]:
+                continue
+            if level == "error" and log_level in ["debug", "info", "warning"]:
+                continue
+                
+            logs_data.append({
+                "id": f"log_{i}",
+                "level": log_level,
+                "message": random.choice(log_messages),
+                "timestamp": (base_time - timedelta(minutes=i*2)).isoformat(),
+                "source": "backend",
+                "module": random.choice(["robot", "auth", "monitoring", "firmware", "telemetry"])
+            })
+        
+        return {
+            "success": True,
+            "data": {
+                "logs": logs_data,
+                "total_count": len(logs_data),
+                "level_filter": level,
+                "limit": limit
+            },
+            "message": f"System logs retrieved successfully (filtered by {level})"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ System logs retrieval failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve system logs"
+        )
