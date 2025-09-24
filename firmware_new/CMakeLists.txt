@@ -46,6 +46,7 @@ target_link_libraries(oht50_main
     app_managers
     app_modules
     app_api
+    app_storage
     websocket_server
     simple_http_8081
     utils
@@ -63,6 +64,7 @@ target_include_directories(oht50_main PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/core
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/managers
     ${CMAKE_CURRENT_SOURCE_DIR}/src/app/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/app/storage
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hal/communication
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hal/safety

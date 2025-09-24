@@ -524,6 +524,7 @@ target_include_directories(test_soak PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/communication
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/app
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/storage
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
@@ -537,6 +538,7 @@ target_link_libraries(test_soak
     app_managers
     app_modules
     app_api
+    app_storage
     websocket_server
     unity
     pthread

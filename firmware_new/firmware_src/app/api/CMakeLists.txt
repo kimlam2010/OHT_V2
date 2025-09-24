@@ -22,6 +22,7 @@ target_link_libraries(app_api
       hal_peripherals
       app_core
       app_managers
+      app_storage
 )
 
 target_include_directories(app_api PUBLIC
@@ -29,6 +30,7 @@ target_include_directories(app_api PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${CMAKE_CURRENT_SOURCE_DIR}/../managers
     ${CMAKE_CURRENT_SOURCE_DIR}/../core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../storage
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/communication
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/safety

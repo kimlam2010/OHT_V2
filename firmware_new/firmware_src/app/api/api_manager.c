@@ -138,18 +138,37 @@ static int route_request(const api_mgr_http_request_t *req, api_mgr_http_respons
    return g_eps[i].handler(req,res);
   }
  }
- // dynamic path: /api/v1/modules/{id}/status
- if(req->method==API_MGR_HTTP_GET){
+ // dynamic path: /api/v1/modules/{id}/*
+ if(req->method==API_MGR_HTTP_GET || req->method==API_MGR_HTTP_POST){
   const char *prefix = "/api/v1/modules/";
   size_t plen = strlen(prefix);
   if(strncmp(req->path, prefix, plen)==0){
-   const char *rest = req->path + plen; // e.g. "1/status"
+   printf("[API_DEBUG] Found modules prefix, path: %s\n", req->path);
+   const char *rest = req->path + plen; // e.g. "2/telemetry"
    // parse digits for {id}
    const char *p = rest;
    if(*p){
     while(*p && *p>='0' && *p<='9') p++;
-    if(p>rest && strcmp(p, "/status")==0){
-     return api_handle_module_status_by_id_router(req,res);
+    if(p>rest){
+     // Check for different endpoints
+     if(strcmp(p, "/status")==0){
+      return api_handle_module_status_by_id_router(req,res);
+     } else if(strcmp(p, "/telemetry")==0){
+      printf("[API_DEBUG] Routing to module telemetry handler\n");
+      return api_handle_module_telemetry(req,res);
+     } else if(strcmp(p, "/config")==0){
+      if(req->method==API_MGR_HTTP_GET){
+       return api_handle_module_config_get(req,res);
+      } else if(req->method==API_MGR_HTTP_POST){
+       return api_handle_module_config_set(req,res);
+      }
+     } else if(strcmp(p, "/history")==0){
+      return api_handle_module_history(req,res);
+     } else if(strcmp(p, "/health")==0){
+      return api_handle_module_health(req,res);
+     } else if(strcmp(p, "/command")==0 && req->method==API_MGR_HTTP_POST){
+      return api_handle_module_command(req,res);
+     }
     }
    }
   }
