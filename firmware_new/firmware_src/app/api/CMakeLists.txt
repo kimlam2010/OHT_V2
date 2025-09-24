@@ -8,8 +8,10 @@ else()
   add_library(app_api STATIC
       api_manager.c
       api_endpoints.c
+      module_control_apis.c
       state_control_apis.c
       config_stats_apis.c
+      security_auth.c
   )
 endif()
 

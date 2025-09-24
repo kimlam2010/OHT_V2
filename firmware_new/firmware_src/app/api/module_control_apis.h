@@ -45,6 +45,16 @@ int api_handle_modules_start_scan(const api_mgr_http_request_t *req, api_mgr_htt
 int api_handle_modules_stop_scan(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 
 /**
+ * @brief Handle POST /api/v1/modules/pause-scan
+ */
+int api_handle_modules_pause_scan(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+
+/**
+ * @brief Handle POST /api/v1/modules/resume-scan
+ */
+int api_handle_modules_resume_scan(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+
+/**
  * @brief Handle POST /api/v1/modules/discover
  * @param req HTTP request
  * @param res HTTP response
@@ -75,6 +85,11 @@ int api_handle_modules_reset(const api_mgr_http_request_t *req, api_mgr_http_res
  * @return int 0 on success, -1 on error
  */
 int api_handle_modules_health_check(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+
+/**
+ * @brief Handle GET /api/v1/modules/scan-status
+ */
+int api_handle_modules_scan_status(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 
 #ifdef __cplusplus
 }

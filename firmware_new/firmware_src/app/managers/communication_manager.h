@@ -343,6 +343,31 @@ hal_status_t comm_manager_reset(void);
  */
 hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr);
 
+// Scan control APIs (Issue #147)
+/**
+ * @brief Request to stop current RS485 scan as soon as safely possible
+ * @return HAL status
+ */
+hal_status_t comm_manager_stop_scanning(void);
+
+/**
+ * @brief Pause ongoing RS485 scan
+ * @return HAL status
+ */
+hal_status_t comm_manager_pause_scanning(void);
+
+/**
+ * @brief Resume previously paused RS485 scan
+ * @return HAL status
+ */
+hal_status_t comm_manager_resume_scanning(void);
+
+/**
+ * @brief Check if scan is currently active
+ * @return true if active
+ */
+bool comm_manager_is_scanning(void);
+
 // WebSocket/HTTP API Functions
 /**
  * @brief Initialize WebSocket/HTTP API server

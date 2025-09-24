@@ -28,7 +28,7 @@ OHT-50 Firmware cung cấp **25+ REST API endpoints** và **WebSocket real-time 
 | **🤖 Robot Control** | 2 | `/api/v1/robot/status`, `/api/v1/robot/command` | 1/2 |
 | **🛡️ Safety** | 2 | `/api/v1/safety/status`, `/api/v1/safety/estop` | 1/2 |
 | **📊 System** | 2 | `/api/v1/system/status`, `/api/v1/system/state` | ❌ |
-| **🔧 Modules** | 3 | `/api/v1/rs485/modules`, `/api/v1/modules/stats` | ❌ |
+|| **🔧 Modules** | 8 | `/api/v1/rs485/modules`, `/api/v1/modules/stats`, `/api/v1/modules/start-scan` | 4/8 |
 | **🔍 Module Data Access** | 6 | `/api/v1/modules/{id}/telemetry`, `/api/v1/modules/{id}/config` | 3/6 |
 | **⚡ Motion** | 3 | `/api/v1/motion/segment/start`, `/api/v1/motion/state` | 2/3 |
 | **👁️ LiDAR** | 10 | `/api/v1/lidar/scan_data`, `/api/v1/lidar/scan_frame_360` | 2/10 |
@@ -185,6 +185,12 @@ response = await fw_client.post("/api/v1/config/state-machine",
 | GET | `/api/v1/rs485/modules` | Get RS485 modules | ❌ | 8080 |
 | GET | `/api/v1/modules/stats` | Get module statistics | ❌ | 8080 |
 | GET | `/api/v1/modules/{id}/status` | Get module status by ID | ❌ | 8080 |
+| POST | `/api/v1/modules/start-scan` | Start RS485 discovery/scan | ✅ (API-Key/JWT) | 8080 |
+| POST | `/api/v1/modules/pause-scan` | Pause RS485 scan | ✅ (API-Key/JWT) | 8080 |
+| POST | `/api/v1/modules/resume-scan` | Resume paused scan | ✅ (API-Key/JWT) | 8080 |
+| POST | `/api/v1/modules/stop-scan` | Stop RS485 scan | ✅ (API-Key/JWT) | 8080 |
+| POST | `/api/v1/modules/discover` | Quick discovery refresh (lightweight) | ✅ (API-Key/JWT) | 8080 |
+| GET | `/api/v1/modules/scan-status` | Get current RS485 scan status | ❌ | 8080 |
 
 ### **⚡ Motion Control**
 | Method | Endpoint | Description | Auth Required | Port |
@@ -669,6 +675,7 @@ GET /api/v1/modules/{id}/status
 
 **Note:** *Simplified response - detailed module info available via /api/v1/rs485/modules*
 
+|| **🔧 Modules** | 8 | `/api/v1/rs485/modules`, `/api/v1/modules/stats`, `/api/v1/modules/start-scan` | 4/8 |
 ---
 
 ## 🔍 **MODULE DATA ACCESS APIs** *(Issue #140 - NEW)*

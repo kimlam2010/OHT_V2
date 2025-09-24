@@ -4,9 +4,10 @@ API endpoints for RS485 module management and monitoring
 """
 
 import logging
-from datetime import datetime
+import asyncio
+from datetime import datetime, timedelta
 from typing import Dict, Any, List
-from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query, Request
 
 from app.core.security import require_permission
 from app.models.user import User
@@ -16,7 +17,8 @@ from app.schemas.rs485 import (
     RS485DiscoveryResponse, RS485DiscoveryResultsResponse, 
     RS485ModuleActionRequest, RS485ModuleActionResponse,
     RS485BusActionRequest, RS485BusActionResponse,
-    RS485TelemetryResponse, RS485RegisterUpdateRequest, RS485RegisterUpdateResponse
+    RS485TelemetryResponse, RS485RegisterUpdateRequest, RS485RegisterUpdateResponse,
+    RS485ScanControlRequest, RS485ScanStatusResponse, RS485ScanControlResponse
 )
 
 logger = logging.getLogger(__name__)
@@ -443,5 +445,181 @@ async def update_module_register(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update module register: {str(e)}"
+        )
+
+
+# Issue #147 - Module Scan Control Endpoints
+@router.post("/modules/stop-scan", response_model=RS485ScanControlResponse)
+async def stop_module_scan(
+    request: RS485ScanControlRequest = None,
+    current_user: User = Depends(require_permission("system", "control"))
+):
+    """Stop RS485 module scanning - Issue #147"""
+    try:
+        logger.info("🛑 Stopping RS485 module scan")
+        
+        # Call firmware service to stop scan
+        result = await rs485_service.stop_module_scan(
+            reason=request.reason if request else None
+        )
+        
+        # Broadcast scan status change via WebSocket
+        try:
+            from app.services.websocket_rs485_service import websocket_rs485_service
+            await websocket_rs485_service.broadcast_scan_status(
+                status="stopped",
+                reason=request.reason if request else "Manual stop via API",
+                timestamp=datetime.utcnow()
+            )
+        except Exception as ws_error:
+            logger.warning(f"⚠️ Failed to broadcast scan status via WebSocket: {ws_error}")
+        
+        return RS485ScanControlResponse(
+            success=result.get("success", False),
+            data=result,
+            message=result.get("message", "Module scan stopped successfully"),
+            timestamp=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to stop module scan: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to stop module scan: {str(e)}"
+        )
+
+
+@router.post("/modules/pause-scan", response_model=RS485ScanControlResponse)
+async def pause_module_scan(
+    request: RS485ScanControlRequest = None,
+    current_user: User = Depends(require_permission("system", "control"))
+):
+    """Pause RS485 module scanning - Issue #147"""
+    try:
+        logger.info("⏸️ Pausing RS485 module scan")
+        
+        # Call firmware service to pause scan
+        result = await rs485_service.pause_module_scan(
+            reason=request.reason if request else None
+        )
+        
+        # Broadcast scan status change via WebSocket
+        try:
+            from app.services.websocket_rs485_service import websocket_rs485_service
+            await websocket_rs485_service.broadcast_scan_status(
+                status="paused",
+                reason=request.reason if request else "Manual pause via API",
+                timestamp=datetime.utcnow()
+            )
+        except Exception as ws_error:
+            logger.warning(f"⚠️ Failed to broadcast scan status via WebSocket: {ws_error}")
+        
+        return RS485ScanControlResponse(
+            success=result.get("success", False),
+            data=result,
+            message=result.get("message", "Module scan paused successfully"),
+            timestamp=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to pause module scan: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to pause module scan: {str(e)}"
+        )
+
+
+@router.post("/modules/resume-scan", response_model=RS485ScanControlResponse)
+async def resume_module_scan(
+    request: RS485ScanControlRequest = None,
+    current_user: User = Depends(require_permission("system", "control"))
+):
+    """Resume RS485 module scanning - Issue #147"""
+    try:
+        logger.info("▶️ Resuming RS485 module scan")
+        
+        # Call firmware service to resume scan
+        result = await rs485_service.resume_module_scan(
+            reason=request.reason if request else None
+        )
+        
+        # Broadcast scan status change via WebSocket
+        try:
+            from app.services.websocket_rs485_service import websocket_rs485_service
+            await websocket_rs485_service.broadcast_scan_status(
+                status="running",
+                reason=request.reason if request else "Manual resume via API",
+                timestamp=datetime.utcnow()
+            )
+        except Exception as ws_error:
+            logger.warning(f"⚠️ Failed to broadcast scan status via WebSocket: {ws_error}")
+        
+        return RS485ScanControlResponse(
+            success=result.get("success", False),
+            data=result,
+            message=result.get("message", "Module scan resumed successfully"),
+            timestamp=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to resume module scan: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resume module scan: {str(e)}"
+        )
+
+
+
+
+@router.get("/scan-status", response_model=RS485ScanStatusResponse)
+async def get_module_scan_status(
+    current_user: User = Depends(require_permission("monitoring", "read"))
+):
+    """Get current RS485 module scan status - Issue #147"""
+    try:
+        logger.info("📊 Getting RS485 module scan status")
+        
+        # Get scan status from firmware service
+        status_data = await rs485_service.get_module_scan_status()
+        
+        return RS485ScanStatusResponse(
+            success=True,
+            data=status_data,
+            message="Retrieved module scan status successfully",
+            timestamp=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get module scan status: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get module scan status: {str(e)}"
+        )
+
+
+@router.post("/modules/start-scan", response_model=RS485ScanControlResponse)
+async def start_module_scan(
+    request: RS485ScanControlRequest,
+    current_user: User = Depends(require_permission("system", "control"))
+):
+    """Start RS485 module scan - Issue #147"""
+    try:
+        logger.info("🚀 Starting RS485 module scan")
+        
+        # Start module scan via firmware service
+        result = await rs485_service.start_module_scan(request.reason)
+        
+        return RS485ScanControlResponse(
+            success=result.get("success", False),
+            data=result.get("data", {}),
+            message=result.get("message", "Module scan started successfully"),
+            timestamp=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to start module scan: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start module scan: {str(e)}"
         )
 

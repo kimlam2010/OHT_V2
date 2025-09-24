@@ -276,6 +276,138 @@ class RS485Service:
         except Exception as e:
             logger.error(f"❌ Failed to update register {register_address} on module 0x{address:02X}: {e}")
             raise
+            
+    async def stop_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Stop RS485 module scanning - Issue #147"""
+        try:
+            logger.info(f"🛑 Stopping RS485 module scan (reason: {reason or 'No reason provided'})")
+            
+            if self._use_mock:
+                # Use mock service
+                return await self._service.stop_module_scan(reason)
+            else:
+                # Call firmware service directly
+                return await firmware_service.stop_module_scan(reason)
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to stop module scan: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to stop module scan: {str(e)}",
+                "error": str(e)
+            }
+            
+    async def pause_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Pause RS485 module scanning - Issue #147"""
+        try:
+            logger.info(f"⏸️ Pausing RS485 module scan (reason: {reason or 'No reason provided'})")
+            
+            if self._use_mock:
+                # Use mock service
+                return await self._service.pause_module_scan(reason)
+            else:
+                # Call firmware service directly
+                return await firmware_service.pause_module_scan(reason)
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to pause module scan: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to pause module scan: {str(e)}",
+                "error": str(e)
+            }
+            
+    async def resume_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Resume RS485 module scanning - Issue #147"""
+        try:
+            logger.info(f"▶️ Resuming RS485 module scan (reason: {reason or 'No reason provided'})")
+            
+            if self._use_mock:
+                # Use mock service
+                return await self._service.resume_module_scan(reason)
+            else:
+                # Call firmware service directly
+                return await firmware_service.resume_module_scan(reason)
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to resume module scan: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to resume module scan: {str(e)}",
+                "error": str(e)
+            }
+            
+    async def start_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Start RS485 module scan - Issue #147"""
+        try:
+            logger.info("🚀 Starting RS485 module scan")
+            
+            if self._use_mock:
+                # Use mock service
+                return await self._service.start_module_scan(reason)
+            else:
+                # Call firmware API
+                response = await firmware_service.post("/api/v1/modules/start-scan", {
+                    "reason": reason or "Backend triggered start scan",
+                    "timestamp": datetime.now().isoformat()
+                })
+                
+                if response and response.get("success"):
+                    return {
+                        "success": True,
+                        "message": "Module scan started successfully",
+                        "data": response.get("data", {}),
+                        "reason": reason,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": "Failed to start module scan",
+                        "error": response.get("message", "Unknown error") if response else "No response from firmware"
+                    }
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to start module scan: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to start module scan: {str(e)}",
+                "error": str(e)
+            }
+
+    async def get_module_scan_status(self) -> Dict[str, Any]:
+        """Get current RS485 module scan status - Issue #147"""
+        try:
+            logger.info("📊 Getting RS485 module scan status")
+            
+            if self._use_mock:
+                # Use mock service
+                return await self._service.get_module_scan_status()
+            else:
+                # Call firmware API via FirmwareIntegrationService
+                response = await firmware_service.get_module_scan_status()
+                
+                if response and response.get("success"):
+                    return {
+                        "success": True,
+                        "data": response.get("data", {}),
+                        "message": "Module scan status retrieved successfully",
+                        "timestamp": response.get("timestamp", "2025-01-28T10:30:00Z")
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": "Failed to get module scan status",
+                        "error": response.get("message", "Unknown error") if response else "No response from firmware"
+                    }
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to get module scan status: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to get module scan status: {str(e)}",
+                "error": str(e)
+            }
 
 
 # Global RS485 service instance

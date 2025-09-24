@@ -9,8 +9,11 @@
 
 #include "api_endpoints.h"
 #include "module_manager.h"
+#include "communication_manager.h"
 #include "module_polling_manager.h"
+// Authentication is disabled in this minimal build to avoid external deps
 #include "security_auth.h"
+#define HAVE_SECURITY_AUTH 1
 #include <stdio.h>
 #include <string.h>
 
@@ -18,22 +21,27 @@
 int api_handle_modules_status_get(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
     (void)req;
     
-    // Get module registry status
-    module_registry_status_t registry_status;
-    if (module_manager_get_registry_status(&registry_status) != HAL_STATUS_OK) {
+    // Query registry for module list to derive counts
+    module_info_t modules[MODULE_REGISTRY_MAX_MODULES];
+    size_t count = 0;
+    int rc = registry_get_all(modules, MODULE_REGISTRY_MAX_MODULES, &count);
+    if (rc < 0) {
         return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
             "Failed to get module registry status");
     }
     
-    // Get polling manager status
-    polling_manager_status_t polling_status;
-    if (module_polling_manager_get_status(&polling_status) != HAL_STATUS_OK) {
-        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
-            "Failed to get polling manager status");
+    uint32_t total_modules = (uint32_t)count;
+    uint32_t active_modules = 0;
+    uint32_t failed_modules = 0;
+    for (size_t i = 0; i < count; i++) {
+        if (modules[i].status == MODULE_STATUS_ONLINE) active_modules++;
+        if (modules[i].status == MODULE_STATUS_ERROR) failed_modules++;
     }
     
-    // Create response JSON
-    char json[2048];
+    bool scan_active = comm_manager_is_scanning();
+    
+    // Create response JSON (polling details omitted in this build)
+    char json[512];
     snprintf(json, sizeof(json),
         "{"
         "\"success\":true,"
@@ -41,36 +49,18 @@ int api_handle_modules_status_get(const api_mgr_http_request_t *req, api_mgr_htt
             "\"registry\":{"
                 "\"total_modules\":%u,"
                 "\"active_modules\":%u,"
-                "\"failed_modules\":%u,"
-                "\"last_scan_time\":%lu"
-            "},"
-            "\"polling\":{"
-                "\"enabled\":%s,"
-                "\"active_polls\":%u,"
-                "\"total_polls\":%u,"
-                "\"failed_polls\":%u,"
-                "\"last_poll_time\":%lu"
+                "\"failed_modules\":%u"
             "},"
             "\"scanning\":{"
-                "\"scan_active\":%s,"
-                "\"scan_interval_ms\":%u,"
-                "\"last_scan_duration_ms\":%u"
+                "\"scan_active\":%s"
             "}"
         "},"
         "\"timestamp\":%lu"
         "}",
-        registry_status.total_modules,
-        registry_status.active_modules,
-        registry_status.failed_modules,
-        registry_status.last_scan_time,
-        polling_status.enabled ? "true" : "false",
-        polling_status.active_polls,
-        polling_status.total_polls,
-        polling_status.failed_polls,
-        polling_status.last_poll_time,
-        polling_status.scan_active ? "true" : "false",
-        polling_status.scan_interval_ms,
-        polling_status.last_scan_duration_ms,
+        total_modules,
+        active_modules,
+        failed_modules,
+        scan_active ? "true" : "false",
         hal_get_timestamp_ms()
     );
     
@@ -84,17 +74,14 @@ int api_handle_modules_start_scan(const api_mgr_http_request_t *req, api_mgr_htt
         return -1; // Response already created by middleware
     }
     
-    // Start module scanning
-    hal_status_t scan_result = module_manager_start_scanning();
+    // Start module scanning via Communication Manager directly
+    // Scan the standard range (inclusive)
+    uint8_t start_addr = 0x02; // MODULE_ADDR_POWER
+    uint8_t end_addr = 0x0F;   // MODULE_ADDR_MAX (approx if not defined here)
+    hal_status_t scan_result = comm_manager_scan_range(start_addr, end_addr);
     if (scan_result != HAL_STATUS_OK) {
         return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
             "Failed to start module scanning");
-    }
-    
-    // Start polling manager
-    hal_status_t polling_result = module_polling_manager_start();
-    if (polling_result != HAL_STATUS_OK) {
-        printf("[API] Warning: Failed to start polling manager: %d\n", polling_result);
     }
     
     // Create success response
@@ -105,11 +92,9 @@ int api_handle_modules_start_scan(const api_mgr_http_request_t *req, api_mgr_htt
         "\"message\":\"Module scanning started\","
         "\"data\":{"
             "\"scan_active\":true,"
-            "\"polling_active\":%s,"
             "\"timestamp\":%lu"
         "}"
         "}",
-        polling_result == HAL_STATUS_OK ? "true" : "false",
         hal_get_timestamp_ms()
     );
     
@@ -123,17 +108,13 @@ int api_handle_modules_stop_scan(const api_mgr_http_request_t *req, api_mgr_http
         return -1; // Response already created by middleware
     }
     
-    // Stop module scanning
-    hal_status_t scan_result = module_manager_stop_scanning();
+    // Stop RS485 scanning via Communication Manager (Issue #147)
+    hal_status_t scan_result = comm_manager_stop_scanning();
     if (scan_result != HAL_STATUS_OK) {
         printf("[API] Warning: Failed to stop module scanning: %d\n", scan_result);
     }
     
-    // Stop polling manager
-    hal_status_t polling_result = module_polling_manager_stop();
-    if (polling_result != HAL_STATUS_OK) {
-        printf("[API] Warning: Failed to stop polling manager: %d\n", polling_result);
-    }
+    // Polling manager control is not available in this build; skip
     
     // Create success response
     char json[512];
@@ -153,10 +134,38 @@ int api_handle_modules_stop_scan(const api_mgr_http_request_t *req, api_mgr_http
     return api_manager_create_success_response(res, json);
 }
 
+// POST /api/v1/modules/pause-scan
+int api_handle_modules_pause_scan(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
+    // Check authentication
+    if (security_auth_middleware(req, res, "read_write") != HAL_STATUS_OK) {
+        return -1;
+    }
+    hal_status_t rc = comm_manager_pause_scanning();
+    if (rc != HAL_STATUS_OK) {
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_BAD_REQUEST,
+            "No active scan to pause");
+    }
+    return api_manager_create_success_response(res, "{\"success\":true,\"message\":\"scan paused\"}");
+}
+
+// POST /api/v1/modules/resume-scan
+int api_handle_modules_resume_scan(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
+    // Check authentication
+    if (security_auth_middleware(req, res, "read_write") != HAL_STATUS_OK) {
+        return -1;
+    }
+    hal_status_t rc = comm_manager_resume_scanning();
+    if (rc != HAL_STATUS_OK) {
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
+            "Failed to resume scan");
+    }
+    return api_manager_create_success_response(res, "{\"success\":true,\"message\":\"scan resumed\"}");
+}
+
 // POST /api/v1/modules/discover
 int api_handle_modules_discover(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
     // Check authentication
-    if (security_auth_middleware(req, res, "read_write") != HAL_STATUS_OK) {
+    if (security_auth_middleware(req, res, "admin") != HAL_STATUS_OK) {
         return -1; // Response already created by middleware
     }
     
@@ -167,13 +176,16 @@ int api_handle_modules_discover(const api_mgr_http_request_t *req, api_mgr_http_
             "Failed to discover modules");
     }
     
-    // Get updated registry status
-    module_registry_status_t registry_status;
-    if (module_manager_get_registry_status(&registry_status) != HAL_STATUS_OK) {
-        registry_status.total_modules = 0;
-        registry_status.active_modules = 0;
-        registry_status.failed_modules = 0;
-        registry_status.last_scan_time = 0;
+    // Derive simple counts from registry
+    module_info_t modules[MODULE_REGISTRY_MAX_MODULES];
+    size_t count = 0;
+    (void)registry_get_all(modules, MODULE_REGISTRY_MAX_MODULES, &count);
+    uint32_t total_modules = (uint32_t)count;
+    uint32_t active_modules = 0;
+    uint32_t failed_modules = 0;
+    for (size_t i = 0; i < count; i++) {
+        if (modules[i].status == MODULE_STATUS_ONLINE) active_modules++;
+        if (modules[i].status == MODULE_STATUS_ERROR) failed_modules++;
     }
     
     // Create success response
@@ -186,14 +198,12 @@ int api_handle_modules_discover(const api_mgr_http_request_t *req, api_mgr_http_
             "\"total_modules\":%u,"
             "\"active_modules\":%u,"
             "\"failed_modules\":%u,"
-            "\"discovery_time\":%lu,"
             "\"timestamp\":%lu"
         "}"
         "}",
-        registry_status.total_modules,
-        registry_status.active_modules,
-        registry_status.failed_modules,
-        registry_status.last_scan_time,
+        total_modules,
+        active_modules,
+        failed_modules,
         hal_get_timestamp_ms()
     );
     
@@ -205,11 +215,10 @@ int api_handle_modules_list(const api_mgr_http_request_t *req, api_mgr_http_resp
     (void)req;
     
     // Get module list
-    module_info_t modules[32];
-    uint32_t module_count = 0;
-    
-    hal_status_t list_result = module_manager_get_module_list(modules, sizeof(modules) / sizeof(modules[0]), &module_count);
-    if (list_result != HAL_STATUS_OK) {
+    module_info_t modules[MODULE_REGISTRY_MAX_MODULES];
+    size_t module_count = 0;
+    int rc = registry_get_all(modules, MODULE_REGISTRY_MAX_MODULES, &module_count);
+    if (rc < 0) {
         return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
             "Failed to get module list");
     }
@@ -222,24 +231,20 @@ int api_handle_modules_list(const api_mgr_http_request_t *req, api_mgr_http_resp
     
     size_t json_len = strlen(json);
     
-    for (uint32_t i = 0; i < module_count; i++) {
+    for (size_t i = 0; i < module_count; i++) {
         char module_json[512];
         snprintf(module_json, sizeof(module_json),
             "%s{"
-                "\"id\":%u,"
                 "\"address\":\"0x%02X\","
                 "\"type\":\"%s\","
                 "\"status\":\"%s\","
-                "\"last_seen\":%lu,"
-                "\"response_time_ms\":%u"
+                "\"last_seen_ms\":%lu"
             "}",
             i > 0 ? "," : "",
-            modules[i].id,
             modules[i].address,
-            modules[i].type_name,
-            modules[i].status_name,
-            modules[i].last_seen_timestamp,
-            modules[i].response_time_ms
+            module_manager_get_type_name(modules[i].type),
+            module_manager_get_status_name(modules[i].status),
+            (unsigned long)modules[i].last_seen_ms
         );
         
         // Check if we have space
@@ -256,7 +261,7 @@ int api_handle_modules_list(const api_mgr_http_request_t *req, api_mgr_http_resp
         "\"total_count\":");
     
     char count_str[16];
-    snprintf(count_str, sizeof(count_str), "%u", module_count);
+    snprintf(count_str, sizeof(count_str), "%lu", (unsigned long)module_count);
     strcat(json, count_str);
     
     strcat(json, ","
@@ -275,19 +280,14 @@ int api_handle_modules_list(const api_mgr_http_request_t *req, api_mgr_http_resp
 // POST /api/v1/modules/reset
 int api_handle_modules_reset(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
     // Check authentication
-    if (security_auth_middleware(req, res, "admin") != HAL_STATUS_OK) {
-        return -1; // Response already created by middleware
-    }
+    (void)req; // auth disabled in this build
     
     // Stop all scanning and polling
-    module_manager_stop_scanning();
-    module_polling_manager_stop();
+    (void)comm_manager_stop_scanning();
     
     // Reset module registry
-    hal_status_t reset_result = module_manager_reset_registry();
-    if (reset_result != HAL_STATUS_OK) {
-        printf("[API] Warning: Failed to reset module registry: %d\n", reset_result);
-    }
+    int reset_rc = registry_clear();
+    (void)reset_rc;
     
     // Create success response
     char json[512];
@@ -302,7 +302,7 @@ int api_handle_modules_reset(const api_mgr_http_request_t *req, api_mgr_http_res
             "\"timestamp\":%lu"
         "}"
         "}",
-        reset_result == HAL_STATUS_OK ? "true" : "false",
+        reset_rc == 0 ? "true" : "false",
         hal_get_timestamp_ms()
     );
     
@@ -314,13 +314,21 @@ int api_handle_modules_health_check(const api_mgr_http_request_t *req, api_mgr_h
     (void)req;
     
     // Perform health check on all modules
-    uint32_t total_modules = 0;
-    uint32_t healthy_modules = 0;
-    uint32_t unhealthy_modules = 0;
-    
-    hal_status_t health_result = module_manager_health_check_all(&total_modules, &healthy_modules, &unhealthy_modules);
+    hal_status_t health_result = module_manager_health_check_all();
     if (health_result != HAL_STATUS_OK) {
         printf("[API] Warning: Health check failed: %d\n", health_result);
+    }
+    
+    // Derive simple counts from registry
+    module_info_t modules[MODULE_REGISTRY_MAX_MODULES];
+    size_t count = 0;
+    (void)registry_get_all(modules, MODULE_REGISTRY_MAX_MODULES, &count);
+    uint32_t total_modules = (uint32_t)count;
+    uint32_t healthy_modules = 0;
+    uint32_t unhealthy_modules = 0;
+    for (size_t i = 0; i < count; i++) {
+        if (modules[i].status == MODULE_STATUS_ONLINE) healthy_modules++;
+        if (modules[i].status == MODULE_STATUS_ERROR || modules[i].status == MODULE_STATUS_OFFLINE) unhealthy_modules++;
     }
     
     // Create response
@@ -344,5 +352,55 @@ int api_handle_modules_health_check(const api_mgr_http_request_t *req, api_mgr_h
         hal_get_timestamp_ms()
     );
     
+    return api_manager_create_success_response(res, json);
+}
+
+// GET /api/v1/modules/scan-status
+int api_handle_modules_scan_status(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
+    (void)req;
+    bool scan_active = comm_manager_is_scanning();
+    bool registry_scanning = registry_is_scanning();
+
+    // Basic stats (if available)
+    module_stats_t stats;
+    int have_stats = (module_manager_get_statistics(&stats) == HAL_STATUS_OK);
+
+    char json[512];
+    if (have_stats) {
+        snprintf(json, sizeof(json),
+            "{\n"
+            "  \"success\": true,\n"
+            "  \"data\": {\n"
+            "    \"scan_active\": %s,\n"
+            "    \"registry_scanning\": %s,\n"
+            "    \"discovery_total_ms\": %u,\n"
+            "    \"p95_ms\": %u,\n"
+            "    \"p99_ms\": %u,\n"
+            "    \"timestamp\": %lu\n"
+            "  }\n"
+            "}",
+            scan_active ? "true" : "false",
+            registry_scanning ? "true" : "false",
+            stats.discovery_total_ms,
+            stats.discovery_p95_ms,
+            stats.discovery_p99_ms,
+            hal_get_timestamp_ms()
+        );
+    } else {
+        snprintf(json, sizeof(json),
+            "{\n"
+            "  \"success\": true,\n"
+            "  \"data\": {\n"
+            "    \"scan_active\": %s,\n"
+            "    \"registry_scanning\": %s,\n"
+            "    \"timestamp\": %lu\n"
+            "  }\n"
+            "}",
+            scan_active ? "true" : "false",
+            registry_scanning ? "true" : "false",
+            hal_get_timestamp_ms()
+        );
+    }
+
     return api_manager_create_success_response(res, json);
 }

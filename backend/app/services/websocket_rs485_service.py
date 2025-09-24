@@ -287,6 +287,31 @@ class WebSocketRS485Service:
         except Exception as e:
             logger.error(f"❌ Failed to broadcast register update: {e}")
             
+    async def broadcast_scan_status(self, status: str, reason: str = None, timestamp: datetime = None) -> None:
+        """Broadcast module scan status update to all clients - Issue #147"""
+        try:
+            message = WebSocketMessage(
+                type="rs485_scan_status",
+                data={
+                    "status": status,
+                    "reason": reason or "Status change",
+                    "timestamp": (timestamp or datetime.now()).isoformat()
+                },
+                timestamp=timestamp or datetime.now()
+            )
+            
+            # Send to all connections
+            for websocket in self.connections:
+                try:
+                    await websocket.send_text(message.json())
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to send scan status to client: {e}")
+                    
+            logger.info(f"📡 Broadcasted scan status update: {status}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to broadcast scan status: {e}")
+            
     async def broadcast_module_discovery(self, module_addr: int, discovery_data: Dict[str, Any]) -> None:
         """Broadcast module discovery notification to all clients - Issue #90"""
         try:

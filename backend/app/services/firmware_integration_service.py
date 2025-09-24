@@ -55,7 +55,7 @@ class FirmwareIntegrationService:
     DO NOT use mock data in production
     """
     
-    def __init__(self, firmware_url: str = None):
+    def __init__(self, firmware_url=None):
         """
         Initialize firmware integration service
         
@@ -281,7 +281,7 @@ class FirmwareIntegrationService:
                 logger.info("✅ REAL FIRMWARE: Connection validated successfully")
                 return True
             else:
-                logger.error("❌ REAL FIRMWARE: Connection failed - %s", response.error)
+                logger.error("❌ REAL FIRMWARE: Connection failed - %s", health_response.get("error", "Unknown error"))
                 logger.warning("🚨 WARNING: Backend may fallback to mock data if firmware unavailable!")
                 return False
                 
@@ -542,6 +542,160 @@ class FirmwareIntegrationService:
         except Exception as e:
             logger.error(f"❌ Failed to send robot command: {e}")
             return False
+    
+    # Module Scan Control API Methods - Issue #147
+    
+    async def stop_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Stop RS485 module scanning - Issue #147"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            logger.info(f"🛑 Stopping RS485 module scan (reason: {reason or 'No reason provided'})")
+            
+            # Call firmware API to stop scan
+            response = await self.fw_client.post("/api/v1/modules/stop-scan", {
+                "reason": reason,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+            
+            if response and response.get("success"):
+                logger.info("✅ RS485 module scan stopped successfully")
+                return {
+                    "success": True,
+                    "message": "Module scan stopped successfully",
+                    "reason": reason,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            else:
+                error_msg = response.get("error", "Unknown error") if response else "No response from firmware"
+                logger.error(f"❌ Failed to stop module scan: {error_msg}")
+                return {
+                    "success": False,
+                    "message": "Failed to stop module scan",
+                    "error": error_msg
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to stop module scan: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to stop module scan: {str(e)}",
+                "error": str(e)
+            }
+    
+    async def pause_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Pause RS485 module scanning - Issue #147"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            logger.info(f"⏸️ Pausing RS485 module scan (reason: {reason or 'No reason provided'})")
+            
+            # Call firmware API to pause scan
+            response = await self.fw_client.post("/api/v1/modules/pause-scan", {
+                "reason": reason,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+            
+            if response and response.get("success"):
+                logger.info("✅ RS485 module scan paused successfully")
+                return {
+                    "success": True,
+                    "message": "Module scan paused successfully",
+                    "reason": reason,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            else:
+                error_msg = response.get("error", "Unknown error") if response else "No response from firmware"
+                logger.error(f"❌ Failed to pause module scan: {error_msg}")
+                return {
+                    "success": False,
+                    "message": "Failed to pause module scan",
+                    "error": error_msg
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to pause module scan: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to pause module scan: {str(e)}",
+                "error": str(e)
+            }
+    
+    async def resume_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Resume RS485 module scanning - Issue #147"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            logger.info(f"▶️ Resuming RS485 module scan (reason: {reason or 'No reason provided'})")
+            
+            # Call firmware API to resume scan
+            response = await self.fw_client.post("/api/v1/modules/resume-scan", {
+                "reason": reason,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+            
+            if response and response.get("success"):
+                logger.info("✅ RS485 module scan resumed successfully")
+                return {
+                    "success": True,
+                    "message": "Module scan resumed successfully",
+                    "reason": reason,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            else:
+                error_msg = response.get("error", "Unknown error") if response else "No response from firmware"
+                logger.error(f"❌ Failed to resume module scan: {error_msg}")
+                return {
+                    "success": False,
+                    "message": "Failed to resume module scan",
+                    "error": error_msg
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to resume module scan: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to resume module scan: {str(e)}",
+                "error": str(e)
+            }
+    
+    async def get_module_scan_status(self) -> Dict[str, Any]:
+        """Get current RS485 module scan status - Issue #147"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            logger.info("📊 Getting RS485 module scan status")
+            
+            # Call firmware API to get scan status
+            response = await self.fw_client.get("/api/v1/modules/scan-status")
+            
+            if response and response.get("success"):
+                logger.info("✅ RS485 module scan status retrieved successfully")
+                return {
+                    "success": True,
+                    "data": response.get("data", {}),
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            else:
+                error_msg = response.get("error", "Unknown error") if response else "No response from firmware"
+                logger.error(f"❌ Failed to get module scan status: {error_msg}")
+                return {
+                    "success": False,
+                    "message": "Failed to get module scan status",
+                    "error": error_msg
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to get module scan status: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to get module scan status: {str(e)}",
+                "error": str(e)
+            }
 
 
 # Mock Firmware Service for Development/Testing ONLY
@@ -639,6 +793,61 @@ class MockFirmwareService:
         # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
         logger.info("🧪 MOCK: Emergency stop executed")
         return True
+    
+    # Mock Module Scan Control Methods - Issue #147
+    
+    async def stop_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Mock stop module scan - Issue #147"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning(f"🧪 MOCK: Stop module scan (reason: {reason or 'No reason provided'})")
+        return {
+            "success": True,
+            "message": "Mock: Module scan stopped successfully",
+            "reason": reason,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    
+    async def pause_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Mock pause module scan - Issue #147"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning(f"🧪 MOCK: Pause module scan (reason: {reason or 'No reason provided'})")
+        return {
+            "success": True,
+            "message": "Mock: Module scan paused successfully",
+            "reason": reason,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    
+    async def resume_module_scan(self, reason: str = None) -> Dict[str, Any]:
+        """Mock resume module scan - Issue #147"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning(f"🧪 MOCK: Resume module scan (reason: {reason or 'No reason provided'})")
+        return {
+            "success": True,
+            "message": "Mock: Module scan resumed successfully",
+            "reason": reason,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    
+    async def get_module_scan_status(self) -> Dict[str, Any]:
+        """Mock get module scan status - Issue #147"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning("🧪 MOCK: Get module scan status")
+        return {
+            "success": True,
+            "data": {
+                "scan_active": False,
+                "scan_paused": False,
+                "current_address": 0,
+                "total_addresses": 15,
+                "progress_percent": 0,
+                "modules_found": 3,
+                "scan_start_time": None,
+                "scan_end_time": None,
+                "status": "idle"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
 
 
 # Factory function to get firmware service

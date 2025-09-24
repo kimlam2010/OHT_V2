@@ -84,6 +84,11 @@ static inline bool comm_is_valid_quantity_coils(uint16_t quantity) {
 	return quantity >= 1 && quantity <= 2000;
 }
 
+// --- Scan control state (Issue #147) ---
+static volatile bool g_scan_interrupt_requested = false;
+static volatile bool g_scan_paused = false;
+static volatile bool g_scan_active = false;
+
 // Forward declarations
 static hal_status_t init_rs485(void);
 static hal_status_t init_modbus(void);
@@ -259,6 +264,8 @@ static module_type_t probe_module_type(uint8_t addr) {
 }
 
 hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr) {
+    g_scan_interrupt_requested = false;
+    g_scan_active = true;
     registry_set_scanning(true);
     printf("[SCAN] Starting scan range 0x%02X-0x%02X\n", start_addr, end_addr);
     
@@ -274,22 +281,38 @@ hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr) {
     }
     
     for (uint8_t addr = start_addr; addr <= end_addr; ++addr) {
+        if (g_scan_interrupt_requested) {
+            printf("[SCAN] Interrupt requested - stopping at addr 0x%02X\n", addr);
+            break;
+        }
+        // Pause gate (100ms sleep to avoid busy-wait)
+        while (g_scan_paused && !g_scan_interrupt_requested) {
+            hal_sleep_ms(100);
+        }
         printf("[SCAN] Probing 0x%02X...\n", addr);
         bool found = false;
         
         // Retry logic: 3 attempts with exponential backoff
         for (int retry = 0; retry < 3; ++retry) {
+            if (g_scan_interrupt_requested) { break; }
             uint32_t backoff_ms = 50 * (1 << retry); // 50, 100, 200ms
             
             if (retry > 0) {
                 printf("[SCAN] 0x%02X retry %d/%d (backoff %ums)\n", addr, retry + 1, 3, backoff_ms);
-                hal_sleep_ms(backoff_ms);
+                // Allow pause/interrupt during backoff
+                uint32_t elapsed = 0;
+                while (elapsed < backoff_ms) {
+                    if (g_scan_interrupt_requested) { break; }
+                    while (g_scan_paused && !g_scan_interrupt_requested) { hal_sleep_ms(50); }
+                    hal_sleep_ms(10);
+                    elapsed += 10;
+                }
             }
             
             // Try to read Device ID register (0x0100) first - this is what EMBED team tested
             uint16_t device_id = 0;
             hal_status_t st = comm_manager_modbus_read_holding_registers(addr, 0x0100, 1, &device_id);
-            if (st == HAL_STATUS_OK) {
+            if (!g_scan_interrupt_requested && st == HAL_STATUS_OK) {
                 printf("[SCAN] 0x%02X ONLINE (Device ID=0x%04X)\n", addr, device_id);
                 
                 // Try to read Module Type register (0x0104) as well
@@ -312,7 +335,7 @@ hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr) {
                 // Fallback: try the original register 0x0000
                 uint16_t reg = 0;
                 hal_status_t st_fallback = comm_manager_modbus_read_holding_registers(addr, 0x0000, 1, &reg);
-                if (st_fallback == HAL_STATUS_OK) {
+                if (!g_scan_interrupt_requested && st_fallback == HAL_STATUS_OK) {
                     printf("[SCAN] 0x%02X ONLINE (reg0=0x%04X) - fallback\n", addr, reg);
                     module_type_t t = probe_module_type(addr);
                     registry_mark_online(addr, t, "");
@@ -324,7 +347,7 @@ hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr) {
         }
         
         // Debounce logic: mark offline only after 2 consecutive misses
-        if (!found) {
+        if (!found && !g_scan_interrupt_requested) {
             miss_count[addr - start_addr]++;
             printf("[SCAN] 0x%02X miss count: %u/2\n", addr, miss_count[addr - start_addr]);
             
@@ -342,9 +365,16 @@ hal_status_t comm_manager_scan_range(uint8_t start_addr, uint8_t end_addr) {
         }
         
         // Small delay between addresses
-        hal_sleep_ms(20);
+        // Inter-address delay, honor pause/interrupt
+        uint32_t gap_ms = 20, e = 0;
+        while (e < gap_ms && !g_scan_interrupt_requested) {
+            while (g_scan_paused && !g_scan_interrupt_requested) { hal_sleep_ms(50); }
+            hal_sleep_ms(5);
+            e += 5;
+        }
     }
     
+    g_scan_active = false;
     registry_set_scanning(false);
     printf("[SCAN] Scan complete. Saving to modules.yaml\n");
     (void)registry_save_yaml("modules.yaml");
@@ -1467,4 +1497,25 @@ float comm_manager_get_health_percentage(void) {
 
 bool comm_manager_is_hardware_detected(void) {
     return g_health_monitor.hardware_detected;
+}
+
+// ================= Scan control public APIs (Issue #147) =================
+hal_status_t comm_manager_stop_scanning(void) {
+    g_scan_interrupt_requested = true;
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_pause_scanning(void) {
+    if (!g_scan_active) return HAL_STATUS_INVALID_STATE;
+    g_scan_paused = true;
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_resume_scanning(void) {
+    g_scan_paused = false;
+    return HAL_STATUS_OK;
+}
+
+bool comm_manager_is_scanning(void) {
+    return g_scan_active;
 }
