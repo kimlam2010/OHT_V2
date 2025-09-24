@@ -10,7 +10,6 @@
 #include "estimator_1d.h"
 #include "dock_module_handler.h"
 #include "storage/module_data_storage.h"
-#include "module_control_apis.h"
 
 int api_register_minimal_endpoints(void){
     // CRITICAL ENDPOINTS - Issue #112 Fix
@@ -22,13 +21,6 @@ int api_register_minimal_endpoints(void){
     api_manager_register_endpoint("/api/v1/safety/estop", API_MGR_HTTP_POST, api_handle_safety_estop);
     // ESSENTIAL MODULE ENDPOINTS ONLY
     api_manager_register_endpoint("/api/v1/modules/stats", API_MGR_HTTP_GET, api_handle_modules_stats);
-    // RS485 scan control (Issue #147)
-    api_manager_register_endpoint("/api/v1/modules/start-scan", API_MGR_HTTP_POST, api_handle_modules_start_scan);
-    api_manager_register_endpoint("/api/v1/modules/discover", API_MGR_HTTP_POST, api_handle_modules_discover);
-    api_manager_register_endpoint("/api/v1/modules/stop-scan", API_MGR_HTTP_POST, api_handle_modules_stop_scan);
-    api_manager_register_endpoint("/api/v1/modules/pause-scan", API_MGR_HTTP_POST, api_handle_modules_pause_scan);
-    api_manager_register_endpoint("/api/v1/modules/resume-scan", API_MGR_HTTP_POST, api_handle_modules_resume_scan);
-    api_manager_register_endpoint("/api/v1/modules/scan-status", API_MGR_HTTP_GET, api_handle_modules_scan_status);
     // REMOVED: /api/v1/modules - Duplicate với rs485/modules
     // REMOVED: /api/v1/modules/scan - Over-engineered 
     // REMOVED: /api/v1/modules/config - Over-complex
@@ -93,9 +85,7 @@ int api_handle_safety_estop(const api_mgr_http_request_t *req, api_mgr_http_resp
     return api_manager_create_success_response(res, json);
 }
 
-// NOTE: Duplicate implementation moved to module_control_apis.c for v1 module list
-// Keep this symbol out to avoid multiple definition
-/*int api_handle_modules_list(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){
+int api_handle_modules_list(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){
     (void)req;
     
     // Get modules from registry
@@ -159,7 +149,7 @@ int api_handle_safety_estop(const api_mgr_http_request_t *req, api_mgr_http_resp
     pos += snprintf(buffer + pos, sizeof(buffer) - pos, "]}}");
     
     return api_manager_create_success_response(res, buffer);
-}*/
+}
 
 
 int api_handle_module_status_by_id(const api_mgr_http_request_t *req, api_mgr_http_response_t *res){
