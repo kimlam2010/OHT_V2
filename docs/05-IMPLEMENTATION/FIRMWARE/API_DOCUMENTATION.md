@@ -1635,10 +1635,15 @@ POST /api/v1/state/reset
 
 ### **WebSocket Connection:**
 ```python
-import websockets
+import websockets, json
 
-# Connect to WebSocket
-ws = await websockets.connect("ws://localhost:8081/ws")
+# Connect to WebSocket (do NOT pass unsupported 'timeout' param)
+ws = await websockets.connect(
+    "ws://localhost:8081/ws",
+    ping_interval=30.0,
+    ping_timeout=10.0,
+    close_timeout=10.0
+)
 
 # Listen for messages
 async for message in ws:
@@ -1646,13 +1651,12 @@ async for message in ws:
     print(f"Received: {data}")
 ```
 
-### **HTTP Fallback (Limited):**
-Port 8081 có limited HTTP support cho một số endpoints cơ bản:
-- `GET /health` - Health check (có thể không stable)
-- `GET /api/v1/status` - Basic status
-- `GET /api/v1/robot/status` - Robot status
+Note:
+- Do not use `timeout=` with `websockets.connect(...)` (not supported).
+- Use `ping_interval`, `ping_timeout`, and `close_timeout` instead.
 
-**Note:** *Chủ yếu sử dụng WebSocket cho real-time communication*
+### **HTTP Fallback (Limited):**
+Port 8081 là WebSocket server. Không relied on HTTP tại 8081. Nếu firmware cung cấp HTTP tạm thời trên 8081, chỉ dùng cho debug nội bộ và không bảo đảm ổn định.
 
 ---
 
@@ -1981,7 +1985,6 @@ class OHT50FirmwareClient:
     def __init__(self):
         self.http_url = "http://localhost:8080"
         self.ws_url = "ws://localhost:8081/ws"
-        self.backup_url = "http://localhost:8081"
         self.session = None
         self.ws_connection = None
         
@@ -1996,7 +1999,12 @@ class OHT50FirmwareClient:
             
         # Connect WebSocket
         try:
-            self.ws_connection = await websockets.connect(self.ws_url)
+            self.ws_connection = await websockets.connect(
+                self.ws_url,
+                ping_interval=30.0,
+                ping_timeout=10.0,
+                close_timeout=10.0
+            )
         except Exception as e:
             print(f"WebSocket connection failed: {e}")
             
