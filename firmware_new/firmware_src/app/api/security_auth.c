@@ -14,7 +14,18 @@
 #include <time.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
-#include <jwt/jwt.h>
+
+// Make libjwt optional to allow builds on minimal systems
+#if defined(__has_include)
+#  if __has_include(<jwt/jwt.h>)
+#    include <jwt/jwt.h>
+#    define HAVE_LIBJWT 1
+#  else
+#    define HAVE_LIBJWT 0
+#  endif
+#else
+#  define HAVE_LIBJWT 0
+#endif
 
 // Security configuration
 static security_config_t g_security_config = {
@@ -89,6 +100,7 @@ hal_status_t security_auth_validate_api_key(const char *api_key, client_info_t *
  * @return hal_status_t HAL_STATUS_OK if valid
  */
 hal_status_t security_auth_validate_jwt(const char *token, client_info_t *client_info) {
+#if HAVE_LIBJWT
     if (!token || !client_info) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
@@ -129,6 +141,11 @@ hal_status_t security_auth_validate_jwt(const char *token, client_info_t *client
     jwt_free(jwt);
     printf("[SECURITY] ✅ JWT token validated\n");
     return HAL_STATUS_OK;
+#else
+    (void)token; (void)client_info;
+    printf("[SECURITY] ⚠️ JWT not available at build time - reject token\n");
+    return HAL_STATUS_UNAUTHORIZED;
+#endif
 }
 
 /**
@@ -211,6 +228,7 @@ hal_status_t security_auth_check_permission(const client_info_t *client_info, co
  * @return hal_status_t HAL_STATUS_OK on success
  */
 hal_status_t security_auth_generate_jwt(const client_info_t *client_info, char *token_buffer, size_t buffer_size) {
+#if HAVE_LIBJWT
     if (!client_info || !token_buffer || buffer_size == 0) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
@@ -240,6 +258,10 @@ hal_status_t security_auth_generate_jwt(const client_info_t *client_info, char *
     
     printf("[SECURITY] ✅ JWT token generated for client: %s\n", client_info->client_type);
     return HAL_STATUS_OK;
+#else
+    (void)client_info; (void)token_buffer; (void)buffer_size;
+    return HAL_STATUS_ERROR;
+#endif
 }
 
 /**
@@ -256,18 +278,18 @@ hal_status_t security_auth_extract_client_ip(const api_mgr_http_request_t *reque
     
     // Try to get IP from X-Forwarded-For header first
     const char *forwarded_for = NULL;
-    for (size_t i = 0; i < request->header_count; i++) {
+    for (size_t i = 0; i < (size_t)request->header_count; i++) {
         if (strcasecmp(request->headers[i].name, "X-Forwarded-For") == 0) {
             forwarded_for = request->headers[i].value;
             break;
         }
     }
     
-    if (forwarded_for) {
+    if (forwarded_for && *forwarded_for) {
         strncpy(client_ip, forwarded_for, buffer_size - 1);
     } else {
-        // Use remote address
-        strncpy(client_ip, request->remote_addr, buffer_size - 1);
+        // Fallback when remote address is not tracked in minimal HTTP server
+        strncpy(client_ip, "127.0.0.1", buffer_size - 1);
     }
     
     client_ip[buffer_size - 1] = '\0';
@@ -304,7 +326,7 @@ hal_status_t security_auth_middleware(const api_mgr_http_request_t *request, api
     const char *api_key = NULL;
     
     // Look for Authorization header
-    for (size_t i = 0; i < request->header_count; i++) {
+    for (size_t i = 0; i < (size_t)request->header_count; i++) {
         if (strcasecmp(request->headers[i].name, "Authorization") == 0) {
             auth_header = request->headers[i].value;
             break;
