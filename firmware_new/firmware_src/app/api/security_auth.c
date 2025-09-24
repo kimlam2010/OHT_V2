@@ -171,15 +171,17 @@ hal_status_t security_auth_check_rate_limit(const char *client_ip) {
     }
     
     // Check if within limit
-    if (request_count >= g_security_config.max_requests_per_minute) {
+    if ((uint32_t)request_count >= g_security_config.max_requests_per_minute) {
         printf("[SECURITY] ❌ Rate limit exceeded for IP: %s\n", client_ip);
         return HAL_STATUS_RATE_LIMIT_EXCEEDED;
     }
     
     // Add new request record
     if (g_rate_limit_count < sizeof(g_rate_limits) / sizeof(g_rate_limits[0])) {
-        strncpy(g_rate_limits[g_rate_limit_count].client_ip, client_ip, sizeof(g_rate_limits[g_rate_limit_count].client_ip) - 1);
-        g_rate_limits[g_rate_limit_count].client_ip[sizeof(g_rate_limits[g_rate_limit_count].client_ip) - 1] = '\0';
+        // Use snprintf to avoid truncation warning
+        snprintf(g_rate_limits[g_rate_limit_count].client_ip,
+                 sizeof(g_rate_limits[g_rate_limit_count].client_ip),
+                 "%s", client_ip);
         g_rate_limits[g_rate_limit_count].timestamp = now;
         g_rate_limit_count++;
     }

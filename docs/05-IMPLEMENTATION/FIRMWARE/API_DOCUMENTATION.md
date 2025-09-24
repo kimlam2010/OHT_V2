@@ -28,7 +28,7 @@ OHT-50 Firmware cung cấp **25+ REST API endpoints** và **WebSocket real-time 
 | **🤖 Robot Control** | 2 | `/api/v1/robot/status`, `/api/v1/robot/command` | 1/2 |
 | **🛡️ Safety** | 2 | `/api/v1/safety/status`, `/api/v1/safety/estop` | 1/2 |
 | **📊 System** | 2 | `/api/v1/system/status`, `/api/v1/system/state` | ❌ |
-|| **🔧 Modules** | 8 | `/api/v1/rs485/modules`, `/api/v1/modules/stats`, `/api/v1/modules/start-scan` | 4/8 |
+| **🔧 Modules** | 8 | `/api/v1/rs485/modules`, `/api/v1/modules/stats`, `/api/v1/modules/start-scan` | 4/8 |
 | **🔍 Module Data Access** | 6 | `/api/v1/modules/{id}/telemetry`, `/api/v1/modules/{id}/config` | 3/6 |
 | **⚡ Motion** | 3 | `/api/v1/motion/segment/start`, `/api/v1/motion/state` | 2/3 |
 | **👁️ LiDAR** | 10 | `/api/v1/lidar/scan_data`, `/api/v1/lidar/scan_frame_360` | 2/10 |
@@ -675,7 +675,86 @@ GET /api/v1/modules/{id}/status
 
 **Note:** *Simplified response - detailed module info available via /api/v1/rs485/modules*
 
-|| **🔧 Modules** | 8 | `/api/v1/rs485/modules`, `/api/v1/modules/stats`, `/api/v1/modules/start-scan` | 4/8 |
+### RS485 Scan Control APIs (Issue #147 - NEW)
+
+#### Start RS485 Scan
+```http
+POST /api/v1/modules/start-scan
+X-API-Key: OHT-50-API-KEY-001
+```
+Response:
+```json
+{
+  "success": true,
+  "message": "Module scanning started",
+  "data": {"scan_active": true, "timestamp": 1706441400}
+}
+```
+
+#### Pause/Resume RS485 Scan
+```http
+POST /api/v1/modules/pause-scan
+POST /api/v1/modules/resume-scan
+X-API-Key: OHT-50-API-KEY-001
+```
+Responses:
+```json
+{ "success": true, "message": "scan paused" }
+```
+```json
+{ "success": true, "message": "scan resumed" }
+```
+
+#### Stop RS485 Scan
+```http
+POST /api/v1/modules/stop-scan
+X-API-Key: OHT-50-API-KEY-001
+```
+Response:
+```json
+{
+  "success": true,
+  "message": "Module scanning stopped",
+  "data": {"scan_active": false, "polling_active": false, "timestamp": 1706441400}
+}
+```
+
+#### Quick Discover (Refresh nhẹ)
+```http
+POST /api/v1/modules/discover
+X-API-Key: OHT-50-API-KEY-001
+```
+Response:
+```json
+{
+  "success": true,
+  "message": "Module discovery completed",
+  "data": {"total_modules": 6, "active_modules": 5, "failed_modules": 1, "timestamp": 1706441400}
+}
+```
+
+#### Get RS485 Scan Status
+```http
+GET /api/v1/modules/scan-status
+```
+
+**Description:** Trả về trạng thái vòng quét RS485 hiện tại (đang quét hay không) và số liệu thời gian quét gần nhất.
+
+**Response (example):**
+```json
+{
+  "success": true,
+  "data": {
+    "scan_active": false,
+    "registry_scanning": false,
+    "discovery_total_ms": 4988,
+    "p95_ms": 4316,
+    "p99_ms": 4316,
+    "timestamp": 1758699240857
+  }
+}
+```
+
 ---
 
 ## 🔍 **MODULE DATA ACCESS APIs** *(Issue #140 - NEW)*
@@ -687,7 +766,7 @@ GET /api/v1/modules/{id}/telemetry
 
 **Example:** `GET /api/v1/modules/2/telemetry`
 
-**Response:**
+**Response (đã bao gồm value + range + unit + description):**
 ```json
 {
   "success": true,
@@ -695,18 +774,22 @@ GET /api/v1/modules/{id}/telemetry
     "module_id": 2,
     "module_name": "Power Module",
     "telemetry": {
-      "voltage": 24.1,
-      "current": 2.5,
-      "power": 60.25,
-      "temperature": 38.5,
-      "efficiency": 94.2,
-      "load_percentage": 75.0
+      "voltage": { "value": 24.1, "range": {"min": 0, "max": 30}, "unit": "V", "description": "Supply voltage" },
+      "current": { "value": 2.5, "range": {"min": 0, "max": 10}, "unit": "A", "description": "Load current" },
+      "power": { "value": 60.25, "range": {"min": 0, "max": 300}, "unit": "W", "description": "Power consumption" },
+      "temperature": { "value": 38.5, "range": {"min": -20, "max": 80}, "unit": "°C", "description": "Operating temperature" },
+      "efficiency": { "value": 94.2, "range": {"min": 0, "max": 100}, "unit": "%", "description": "Conversion efficiency" },
+      "load_percentage": { "value": 75.0, "range": {"min": 0, "max": 100}, "unit": "%", "description": "Load percentage" }
     },
     "timestamp": 1758688044,
     "data_freshness_ms": 50
   }
 }
 ```
+**Ghi chú:**
+- Dải giá trị (min/max) là module‑specific: Power, Safety, Travel Motor, Dock có biên khác nhau.
+- Các trường threshold_warning/threshold_critical đã loại bỏ khỏi API.
+- FE có thể dùng `range.min` và `range.max` để kiểm tra đầu vào UI; BE có thể tái sử dụng dải này khi validate các API POST cấu hình/command.
 
 ### **2. Get Module Configuration**
 ```http

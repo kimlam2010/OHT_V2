@@ -24,6 +24,29 @@ typedef struct {
     int data_freshness_ms;
 } api_module_telemetry_t;
 
+// Enhanced telemetry field with value ranges (Issue #143)
+typedef struct {
+    float value;
+    float min_value;
+    float max_value;
+    char unit[16];
+    char description[64];
+} telemetry_field_t;
+
+// Enhanced module telemetry with ranges (Issue #143)
+typedef struct {
+    int module_id;
+    char module_name[32];
+    telemetry_field_t voltage;
+    telemetry_field_t current;
+    telemetry_field_t power;
+    telemetry_field_t temperature;
+    telemetry_field_t efficiency;
+    telemetry_field_t load_percentage;
+    unsigned long timestamp;
+    unsigned int data_freshness_ms;
+} api_module_telemetry_with_range_t;
+
 typedef struct {
     bool emergency_stop_enabled;
     int response_time_ms;
@@ -128,4 +151,5 @@ int api_handle_module_health(const api_mgr_http_request_t *req, api_mgr_http_res
 // Helper functions for WebSocket streaming
 const char* get_module_name_by_id(int module_id);
 int get_module_telemetry_data(int module_id, api_module_telemetry_t *telemetry);
+int get_module_telemetry_data_with_ranges(int module_id, api_module_telemetry_with_range_t *telemetry);
 int get_module_config_data(int module_id, api_module_config_t *config);
