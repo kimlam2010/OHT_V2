@@ -38,6 +38,14 @@ class RS485BusStatus(str, Enum):
     OFFLINE = "offline"
 
 
+class RS485ScanStatus(str, Enum):
+    """RS485 Module Scan Status - Issue #147"""
+    STOPPED = "stopped"
+    RUNNING = "running"
+    PAUSED = "paused"
+    ERROR = "error"
+
+
 class RS485ModuleRealTime(BaseModel):
     """Real-time telemetry data from RS485 module"""
     battery: float = Field(..., description="Battery level (%)")
@@ -208,5 +216,28 @@ class RS485BusActionResponse(BaseModel):
     """Response for bus actions"""
     success: bool = Field(..., description="Action success")
     data: Dict[str, Any] = Field(..., description="Action result data")
+    message: str = Field(..., description="Response message")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+# Issue #147 - Module Scan Control Schemas
+class RS485ScanControlRequest(BaseModel):
+    """Request for RS485 module scan control"""
+    reason: Optional[str] = Field(None, description="Reason for scan control action")
+    timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
+
+
+class RS485ScanStatusResponse(BaseModel):
+    """Response for RS485 module scan status"""
+    success: bool = Field(..., description="Operation success status")
+    data: Dict[str, Any] = Field(..., description="Scan status data")
+    message: str = Field(..., description="Response message")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class RS485ScanControlResponse(BaseModel):
+    """Response for RS485 module scan control actions"""
+    success: bool = Field(..., description="Operation success status")
+    data: Dict[str, Any] = Field(..., description="Scan control result data")
     message: str = Field(..., description="Response message")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
