@@ -562,3 +562,102 @@ async def get_websocket_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve WebSocket status"
         )
+
+
+@router.websocket("/ws/status")
+async def websocket_status_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for status updates"""
+    try:
+        # Accept connection without authentication for now
+        await websocket.accept()
+        logger.info("📡 Status WebSocket connection accepted")
+        
+        # Send initial status data
+        try:
+            from app.core.monitoring_service import monitoring_service
+            
+            # Get system health
+            health_data = await monitoring_service.get_system_health()
+            
+            # Get current metrics
+            metrics = await monitoring_service.get_current_metrics()
+            
+            # Create status message
+            status_message = {
+                "type": "status_update",
+                "data": {
+                    "system_health": health_data,
+                    "metrics": {
+                        "cpu_percent": metrics.cpu_percent,
+                        "memory_percent": metrics.memory_percent,
+                        "disk_percent": metrics.disk_percent,
+                        "uptime_seconds": metrics.uptime,
+                        "active_connections": metrics.active_connections
+                    },
+                    "timestamp": datetime.now().isoformat()
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            await websocket.send_text(json.dumps(status_message, default=str))
+            logger.info("📨 Sent initial status data to client")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to send initial status data: {e}")
+        
+        # Handle WebSocket communication
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                logger.info(f"📡 Received status WebSocket message: {data}")
+                
+                # Parse and handle message
+                try:
+                    message = json.loads(data)
+                    message_type = message.get('type')
+                    
+                    if message_type == 'ping':
+                        # Send pong response
+                        pong_message = {
+                            "type": "pong",
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        await websocket.send_text(json.dumps(pong_message, default=str))
+                        
+                    elif message_type == 'get_status':
+                        # Send current status
+                        try:
+                            health_data = await monitoring_service.get_system_health()
+                            metrics = await monitoring_service.get_current_metrics()
+                            
+                            status_response = {
+                                "type": "status_response",
+                                "data": {
+                                    "system_health": health_data,
+                                    "metrics": {
+                                        "cpu_percent": metrics.cpu_percent,
+                                        "memory_percent": metrics.memory_percent,
+                                        "disk_percent": metrics.disk_percent,
+                                        "uptime_seconds": metrics.uptime,
+                                        "active_connections": metrics.active_connections
+                                    }
+                                },
+                                "timestamp": datetime.now().isoformat()
+                            }
+                            await websocket.send_text(json.dumps(status_response, default=str))
+                        except Exception as e:
+                            logger.error(f"❌ Failed to get status data: {e}")
+                        
+                except json.JSONDecodeError:
+                    logger.warning(f"⚠️ Invalid JSON received: {data}")
+                
+        except WebSocketDisconnect:
+            logger.info("🔌 Status WebSocket client disconnected")
+        except Exception as e:
+            logger.error(f"❌ Status WebSocket communication error: {e}")
+            
+    except Exception as e:
+        logger.error(f"❌ Status WebSocket endpoint error: {e}")
+    finally:
+        logger.info("🔌 Status WebSocket connection closed")

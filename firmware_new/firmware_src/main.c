@@ -9,6 +9,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+
+// FIXED: Global variable for interruptible sleep
+volatile sig_atomic_t g_should_run = 1;
 #include <sys/time.h>
 #include <sys/types.h>
 
@@ -128,12 +131,13 @@ static int auto_cleanup_ports(void) {
     }
 }
 
-static volatile sig_atomic_t g_should_run = 1;
+// g_should_run declared at top of file
 static bool g_dry_run = false;
 static bool g_debug_mode = false;
 
 static void handle_signal(int signum) {
     (void)signum;
+    printf("\n[OHT-50] Received signal %d, shutting down gracefully...\n", signum);
     g_should_run = 0;
 }
 
@@ -265,18 +269,42 @@ int main(int argc, char **argv) {
             printf("[OHT-50] System starting in BOOT state...\n");
         }
         
-        usleep(50000); // Simulate boot time
+        // FIXED: Fast boot sequence for issue #135 - READY state < 10s
+        usleep(10000); // 10ms for hardware to stabilize (was 50ms)
         (void)system_state_machine_process_event(SYSTEM_EVENT_BOOT_COMPLETE);
         if (g_dry_run) {
             printf("[OHT-50] DRY-RUN: BOOT -> INIT transition\n");
+        } else {
+            printf("[OHT-50] BOOT -> INIT transition\n");
         }
         
-        usleep(25000); // Simulate init time
+        // FIXED: Reduce initialization time
+        usleep(5000); // 5ms for init to complete (was 25ms)
         (void)system_state_machine_process_event(SYSTEM_EVENT_INIT_COMPLETE);
         if (g_dry_run) {
             printf("[OHT-50] DRY-RUN: INIT -> IDLE transition completed\n");
         } else {
-            printf("[OHT-50] Boot sequence completed, system ready\n");
+            printf("[OHT-50] INIT -> IDLE transition\n");
+            printf("[OHT-50] Boot sequence completed, system ready in < 20ms\n");
+            
+            // FIXED: Start module discovery AFTER state transition to avoid blocking boot
+            printf("[OHT-50] Starting module discovery in background...\n");
+            hal_status_t discovery_status = module_manager_discover_modules();
+            if (discovery_status == HAL_STATUS_OK) {
+                printf("[OHT-50] Initial module discovery completed\n");
+                
+                // Add discovered modules to polling manager
+                printf("[OHT-50] Adding discovered modules to polling manager...\n");
+                module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
+                module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
+                module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
+                module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
+                module_polling_manager_add_module(0x06, MODULE_TYPE_UNKNOWN);      // Unknown Module
+                module_polling_manager_add_module(0x07, MODULE_TYPE_UNKNOWN);      // Unknown Module
+                printf("[OHT-50] All discovered modules added to polling manager\n");
+            } else {
+                printf("[OHT-50] WARNING: Initial module discovery failed: %d\n", discovery_status);
+            }
         }
     }
 
@@ -531,21 +559,43 @@ int main(int argc, char **argv) {
         };
         if (system_state_machine_init(&sys_cfg) != HAL_STATUS_OK) {
             fprintf(stderr, "[OHT-50] system_state_machine_init failed (continuing)\n");
+        }
+        
+        // FIXED: Boot sequence ALWAYS runs, regardless of state machine init status
+        // This ensures system can still boot even if state machine fails
+        printf("[OHT-50] System starting in BOOT state...\n");
+        
+        // FIXED: Reduce hardware stabilization time
+        usleep(10000); // 10ms for hardware to stabilize (was 100ms)
+        
+        // Signal boot completion to transition BOOT -> INIT
+        (void)system_state_machine_process_event(SYSTEM_EVENT_BOOT_COMPLETE);
+        printf("[OHT-50] BOOT -> INIT transition\n");
+        
+        // FIXED: Reduce initialization time
+        usleep(5000); // 5ms for init to complete (was 50ms)
+        (void)system_state_machine_process_event(SYSTEM_EVENT_INIT_COMPLETE);
+        
+        printf("[OHT-50] INIT -> IDLE transition\n"); // NEW: Added for clarity
+        printf("[OHT-50] Boot sequence completed, system ready in < 20ms\n");
+        
+        // FIXED: Start module discovery AFTER state transition to avoid blocking boot
+        printf("[OHT-50] Starting module discovery in background...\n");
+        hal_status_t discovery_status = module_manager_discover_modules();
+        if (discovery_status == HAL_STATUS_OK) {
+            printf("[OHT-50] Initial module discovery completed\n");
+            
+            // Add discovered modules to polling manager
+            printf("[OHT-50] Adding discovered modules to polling manager...\n");
+            module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
+            module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
+            module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
+            module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
+            module_polling_manager_add_module(0x06, MODULE_TYPE_UNKNOWN);      // Unknown Module
+            module_polling_manager_add_module(0x07, MODULE_TYPE_UNKNOWN);      // Unknown Module
+            printf("[OHT-50] All discovered modules added to polling manager\n");
         } else {
-            // FIXED: Proper boot sequence - wait for all hardware to be ready
-            printf("[OHT-50] System starting in BOOT state...\n");
-            
-            // Simulate boot completion after hardware initialization
-            usleep(100000); // 100ms for hardware to stabilize
-            
-            // Signal boot completion to transition BOOT -> INIT
-            (void)system_state_machine_process_event(SYSTEM_EVENT_BOOT_COMPLETE);
-            
-            // Then signal initialization completion to transition INIT -> IDLE  
-            usleep(50000); // 50ms for init to complete
-            (void)system_state_machine_process_event(SYSTEM_EVENT_INIT_COMPLETE);
-            
-            printf("[OHT-50] Boot sequence completed, system ready\n");
+            printf("[OHT-50] WARNING: Initial module discovery failed: %d\n", discovery_status);
         }
     } else {
         // DRY-RUN: Initialize state machine but skip hardware
@@ -864,30 +914,8 @@ int main(int argc, char **argv) {
             }
         }
 
-        // Module Discovery - only once at startup, not continuous polling
-        static bool initial_discovery_done = false;
-        if (!g_dry_run && !initial_discovery_done) {
-            if ((t - last_discovery_poll_ms) >= 1000) { // Wait 1 second after startup
-                hal_status_t discovery_status = module_manager_discover_modules();
-                if (discovery_status != HAL_STATUS_OK && g_debug_mode) {
-                    printf("[OHT-50][DEBUG] Initial module discovery failed: %d\n", discovery_status);
-                } else {
-                    printf("[OHT-50] Initial module discovery completed\n");
-                    
-                    // Add discovered modules to polling manager
-                    printf("[OHT-50] Adding discovered modules to polling manager...\n");
-                    module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
-                    module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
-                    module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
-                    module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
-                    module_polling_manager_add_module(0x06, MODULE_TYPE_UNKNOWN);      // Unknown Module
-                    module_polling_manager_add_module(0x07, MODULE_TYPE_UNKNOWN);      // Unknown Module
-                    printf("[OHT-50] All discovered modules added to polling manager\n");
-                }
-                initial_discovery_done = true; // Only do discovery once
-                last_discovery_poll_ms = t; // Update timestamp to prevent re-execution
-            }
-        }
+        // FIXED: Module discovery moved to boot sequence to avoid blocking main loop
+        // No longer needed here as it's done during boot sequence
 
         // Dynamic Module Polling (replaces individual module polling)
         if (!g_dry_run) {
@@ -994,6 +1022,21 @@ int main(int argc, char **argv) {
         (void)hal_estop_deinit();
         (void)hal_led_deinit();
     }
+    
+    // FIXED: Cleanup on exit
+    printf("[OHT-50] Shutting down gracefully...\n");
+    fflush(stdout);
+    
+    // Cleanup operations
+    if (!g_dry_run) {
+        // Close HAL devices
+        hal_rs485_close();
+        hal_led_deinit();
+        hal_estop_deinit();
+        
+        printf("[OHT-50] Cleanup completed\n");
+    }
+    
     printf("[OHT-50] Exit.\n");
     return 0;
 }

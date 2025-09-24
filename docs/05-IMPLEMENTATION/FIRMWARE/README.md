@@ -1,102 +1,47 @@
-# Firmware Documentation Index - OHT-50
+# OHT-50 Firmware
 
-**Phiên bản:** 3.0  
-**Ngày cập nhật:** 2025-01-28  
-**Mục tiêu:** Master index cho firmware documentation - CLEANED UP & OPTIMIZED
+ISO/IEC 12207 Compliant Firmware for OHT-50 Master Module
 
----
+## Overview
 
-## 📋 **Tài liệu chính (Sau khi dọn dẹp & sắp xếp lại)**
+This firmware implements the Master Module functionality for the OHT-50 system, following ISO/IEC 12207 software lifecycle processes and MISRA C:2012 coding standards.
 
-### **🎯 Quản lý chất lượng:**
-- [01-QMS](01-QMS/) - Quality Management System cho firmware
+## Features
 
-### **🔧 Hardware Abstraction Layer:**
-- [02-HAL](02-HAL/) - Hardware Abstraction Layer documentation
+- Hardware Abstraction Layer (HAL)
+- Safety-critical systems
+- Real-time communication
+- Module management
+- Configuration persistence
+- API interface
 
-### **📝 Yêu cầu firmware:**
-- [03-REQUIREMENTS](03-REQUIREMENTS/) - Firmware requirements và specifications
+## Building
 
-### **🔄 Vòng đời hệ thống:**
-- [04-SLC](04-SLC/) - System Life Cycle planning và implementation
+```bash
+# Build in Release mode
+./scripts/build.sh Release
 
-### **🛡️ Hệ thống an toàn:**
-- [05-SAFETY](05-SAFETY/) - Safety systems và configuration
+# Build in Debug mode
+./scripts/build.sh Debug
+```
 
-### **✅ Đảm bảo chất lượng:**
-- [06-QUALITY](06-QUALITY/) - Quality assurance và testing
+## Testing
 
----
+```bash
+# Run all tests
+./scripts/test.sh
+```
 
-## 🎯 **Current Status (Sau khi dọn dẹp)**
+## Documentation
 
-### **✅ COMPLETED:**
-- ✅ Xóa tất cả thư mục không liên quan đến firmware
-- ✅ Xóa các file công việc đã hoàn thành
-- ✅ Xóa các file có tên cú pháp sai
-- ✅ Cấu trúc documentation được tối ưu hóa
-- ✅ Chỉ giữ lại các tài liệu cần thiết cho firmware
+- [API Documentation](docs/API_DOCUMENTATION.md)
+- [Design Documentation](docs/design/)
+- [User Guide](docs/user_guide/)
+- [Developer Guide](docs/developer_guide/)
+- [Migration Guide](docs/MIGRATION_GUIDE.md)
+- [Reports](docs/reports/)
+- [Archive](docs/archive/)
 
-### **📊 STATISTICS:**
-- **Total Directories:** 6 main directories (giảm từ 10)
-- **Focus:** Chỉ firmware-related documentation
-- **Status:** Clean, organized, và optimized
+## License
 
----
-
-## 🔗 **Integration**
-
-### **Project Integration:**
-- **Main Location:** `/firmware_new/docs/` (cleaned up)
-- **Project SLC:** Integrated with main project architecture
-- **ISO Standards:** ISO12207 compliance maintained
-
-### **Team Access:**
-- **FW Team:** Use `/firmware_new/docs/` (optimized structure)
-- **Other Teams:** Access through main project docs
-- **PM/CTO:** Use consolidated documentation structure
-
----
-
-## 📚 **Key Documents (Sau khi dọn dẹp)**
-
-### **Planning & Implementation:**
-- [API Integration Implementation Plan](04-SLC/API_INTEGRATION_IMPLEMENTATION_PLAN.md)
-- [Firmware Implementation Plan](04-SLC/OHT50_FIRMWARE_IMPLEMENTATION_PLAN.md)
-
-### **Requirements & Specifications:**
-- [RS485 HAL Specification](03-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_RS485_HAL_SPECIFICATION.md)
-- [Module Discovery Specification](03-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_MODULE_DISCOVERY_SPECIFICATION.md)
-- [Module Management Specification](03-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/04-IMPLEMENTED-MODULES/REQ_MODULE_MANAGEMENT_SPECIFICATION.md)
-- [API Integration Specification](03-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/REQ_API_INTEGRATION_SPECIFICATION.md)
-
-### **Quality & Safety:**
-- [Quality Policy](01-QMS/01-policies/quality_policy.md)
-- [Safety Configuration Guide](05-SAFETY/03-safety-configuration/SAFETY_CONFIGURATION_GUIDE.md)
-- [QA/QC Firmware Report](06-QUALITY/01-qa-reports/QA_QC_FIRMWARE_REPORT.md)
-
-### **ISO Standards:**
-- [ISO12207 Inventory](ISO12207_INVENTORY.md)
-- [ISO12207 Mapping](ISO12207_MAPPING.md)
-
----
-
-## 🚀 **Next Steps**
-
-1. **FW Team:** Continue implementation using optimized documentation structure
-2. **PM:** Monitor progress using clean và focused documentation
-3. **CTO:** Review architecture decisions using streamlined documentation
-4. **All Teams:** Use clean và organized firmware documentation
-
----
-
-**Changelog v3.0:**
-- ✅ Xóa tất cả thư mục không liên quan đến firmware
-- ✅ Xóa các file công việc đã hoàn thành
-- ✅ Xóa các file có tên cú pháp sai
-- ✅ Tối ưu hóa cấu trúc documentation
-- ✅ Chỉ giữ lại các tài liệu cần thiết cho firmware
-- ✅ Sắp xếp lại thư mục theo thứ tự logic (01-06)
-- ✅ Cập nhật README với cấu trúc mới
-
-**🚨 Lưu ý:** Documentation structure đã được dọn dẹp và tối ưu hóa. Chỉ giữ lại các tài liệu liên quan đến firmware development.
+[License information here]

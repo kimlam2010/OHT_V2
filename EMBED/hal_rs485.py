@@ -43,9 +43,11 @@ class RS485Config:
     dsrdtr: bool = False
     xonxoff: bool = False
     
-    # Timing
-    de_delay: float = 0.001  # 1ms delay after DE assertion
-    re_delay: float = 0.001  # 1ms delay after RE assertion
+    # Timing - FIXED for issue #135
+    de_delay: float = 0.003  # 3ms delay after DE assertion (3.5 chars at 9600 baud)
+    re_delay: float = 0.002  # 2ms delay after RE assertion
+    inter_frame_delay: float = 0.050  # 50ms minimum between frames
+    turnaround_delay: float = 0.002   # 2ms TX->RX turnaround
 
 @dataclass
 class RS485Stats:
@@ -248,28 +250,41 @@ class HAL_RS485:
             raise RS485Error(f"Receive failed: {e}")
     
     def send_receive(self, data: bytes, timeout: float = None) -> bytes:
-        """Send data and wait for response"""
+        """Send data and wait for response with improved timing for issue #135"""
         try:
-            # Send data
-            self.send(data)
-            
-            # Wait for response
-            if timeout is None:
-                timeout = self.config.timeout
-            
-            start_time = time.time()
-            response = b""
-            
-            while time.time() - start_time < timeout:
-                chunk = self.receive(1)
-                if chunk:
-                    response += chunk
-                else:
-                    time.sleep(0.001)  # 1ms delay
-            
-            return response
-            
+            with self.lock:
+                # Send data
+                self.send(data)
+                
+                # FIXED: Add proper turnaround delay before receiving
+                time.sleep(self.config.turnaround_delay)
+                
+                # Wait for response
+                if timeout is None:
+                    timeout = self.config.timeout
+                
+                start_time = time.time()
+                response = b""
+                
+                while time.time() - start_time < timeout:
+                    chunk = self.receive(1)
+                    if chunk:
+                        response += chunk
+                        # Check if we have a complete frame (basic check)
+                        if len(response) >= 3:  # Minimum frame size
+                            # Try to detect frame end (simplified)
+                            if len(response) >= 8:  # Typical Modbus response size
+                                break
+                    else:
+                        time.sleep(0.001)  # 1ms delay
+                
+                # FIXED: Add inter-frame delay after communication
+                time.sleep(self.config.inter_frame_delay)
+                
+                return response
+                
         except Exception as e:
+            self.stats.errors += 1
             raise RS485Error(f"Send/receive failed: {e}")
     
     def flush(self):

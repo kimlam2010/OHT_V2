@@ -1,125 +1,50 @@
-# OHT-50 Documentation - Master Index
+# 📚 **OHT-50 DOCUMENTATION**
 
-**Phiên bản:** 2.0  
-**Ngày cập nhật:** 2025-01-28  
-**Mục tiêu:** Master documentation index cho OHT-50 project
+**Cấu trúc tài liệu chuẩn cho dự án OHT-50**
 
 ---
 
-## 📋 **Quick Navigation**
+## 📁 **CẤU TRÚC THƯ MỤC**
 
-### **Core Documentation:**
-- [System Requirements](02-REQUIREMENTS/01-SYSTEM-REQUIREMENTS/) - System-level requirements
-- [Hardware Requirements](02-REQUIREMENTS/02-HARDWARE-REQUIREMENTS/) - Hardware specifications
-- [Firmware Requirements](02-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/) - Firmware specifications
-- [Backend Requirements](02-REQUIREMENTS/04-BACKEND-REQUIREMENTS/) - Backend API requirements
-- [Frontend Requirements](02-REQUIREMENTS/05-FRONTEND-REQUIREMENTS/) - Frontend UI requirements
-- [Integration Requirements](02-REQUIREMENTS/06-INTEGRATION-REQUIREMENTS/) - System integration
-- [UI/UX Design Requirements](02-REQUIREMENTS/07-UI-UX-DESIGN-REQUIREMENTS/) - Design specifications
+### **📊 `reports/` - Báo cáo**
+- `BACKEND_FIRMWARE_INTEGRATION_REPORT.md` - Báo cáo tích hợp Backend-Firmware
+- `BACKEND_INSTALLATION_REPORT.md` - Báo cáo cài đặt Backend
+- `FIRMWARE_ISSUES_IMPLEMENTATION_REPORT.md` - Báo cáo triển khai Firmware Issues
+- `github_issues_summary.md` - Tổng hợp GitHub Issues
+- `SAFETY_MONITOR_IMPLEMENTATION_SUCCESS_REPORT.md` - Báo cáo triển khai Safety Monitor
 
-### **Architecture & Design:**
-- [System Architecture](03-ARCHITECTURE/) - Overall system architecture
-- [Architecture Decisions](03-ARCHITECTURE/architecture/decisions/) - ADR documents
-- [SLC Planning](03-ARCHITECTURE/architecture/SLC_PLANNING_OHT-50.md) - System Life Cycle planning
+### **📋 `orders/` - Lệnh Implementation**
+- `FW_PHASE2_IMPLEMENTATION_ORDERS.md` - Lệnh triển khai Phase 2
+- `FW_SAFETY_IMPLEMENTATION_ORDERS.md` - Lệnh triển khai Safety
+- `FW_TEAM_CRITICAL_IMPLEMENTATION_PROMPT.md` - Prompt triển khai quan trọng
 
-### **Implementation:**
-- [Firmware Implementation](05-IMPLEMENTATION/FIRMWARE/) - Firmware development
-- [Frontend Implementation](05-IMPLEMENTATION/frontend/) - Frontend development
-- [Hardware Implementation](05-IMPLEMENTATION/dev_radxa/) - Hardware development
+### **📖 `guides/` - Hướng dẫn**
+- `FW_TEAM_SIMPLE_COMMANDS.md` - Hướng dẫn commands đơn giản
+- `STATE_MACHINE_API_IMPLEMENTATION_GUIDE.md` - Hướng dẫn triển khai State Machine API
 
-### **Specifications:**
-- [Technical Specifications](02-REQUIREMENTS/technical/) - Technical specs
-- [System Specifications](02-REQUIREMENTS/specs/) - System specs
+### **🐛 `issues/` - Issues**
+- `NEW_FW_ISSUE_111.md` - Issue mới #111
 
----
+### **🎨 `design/` - Thiết kế**
+- `PHASE_2_2_INTEGRATION_DESIGN.md` - Thiết kế tích hợp Phase 2.2
 
-## 🎯 **Current Status**
+### **📋 `plans/` - Kế hoạch**
+- `SAFETY_MONITOR_IMPROVEMENT_PLAN.md` - Kế hoạch cải thiện Safety Monitor
 
-### **✅ COMPLETED:**
-- Documentation structure cleaned up
-- Firmware documentation consolidated
-- Single source of truth established
-- Integration with SLC planning
-
-### **📊 STATISTICS:**
-- **Total Documentation:** 100+ files
-- **Main Categories:** 7 requirement categories
-- **Implementation:** 3 main implementation areas
-- **Status:** Clean and organized
+### **📊 `analysis/` - Phân tích**
+- `SYSTEM_STATE_MACHINE_ANALYSIS.md` - Phân tích System State Machine
 
 ---
 
-## 🔗 **Integration**
+## 🔄 **QUY TẮC QUẢN LÝ TÀI LIỆU**
 
-### **Project Integration:**
-- **Firmware Docs:** `/docs/05-IMPLEMENTATION/FIRMWARE/`
-- **Firmware Access:** `/firmware_new/docs/` (symlink)
-- **SLC Planning:** Integrated with architecture decisions
-- **Requirements:** Comprehensive coverage
-
-### **Team Access:**
-- **FW Team:** Use `/firmware_new/docs/` (symlink)
-- **Backend Team:** Use `/docs/02-REQUIREMENTS/04-BACKEND-REQUIREMENTS/`
-- **Frontend Team:** Use `/docs/02-REQUIREMENTS/05-FRONTEND-REQUIREMENTS/`
-- **PM/CTO:** Use main project docs structure
+1. **📝 Cập nhật:** Mọi thay đổi phải có changelog
+2. **🏷️ Phiên bản:** Sử dụng semantic versioning
+3. **📁 Phân loại:** Đặt file vào đúng thư mục theo loại
+4. **🔍 Tìm kiếm:** Sử dụng naming convention rõ ràng
+5. **🗑️ Dọn dẹp:** Xóa file cũ không cần thiết
 
 ---
 
-## 📚 **Key Documents**
-
-### **Planning & Architecture:**
-- [SLC Planning](03-ARCHITECTURE/architecture/SLC_PLANNING_OHT-50.md)
-- [System Architecture](03-ARCHITECTURE/architecture/)
-- [Architecture Decisions](03-ARCHITECTURE/architecture/decisions/)
-
-### **Requirements:**
-- [System Requirements](02-REQUIREMENTS/01-SYSTEM-REQUIREMENTS/)
-- [Firmware Requirements](02-REQUIREMENTS/03-FIRMWARE-REQUIREMENTS/)
-- [Backend Requirements](02-REQUIREMENTS/04-BACKEND-REQUIREMENTS/)
-- [Frontend Requirements](02-REQUIREMENTS/05-FRONTEND-REQUIREMENTS/)
-
-### **Implementation:**
-- [Firmware Implementation](05-IMPLEMENTATION/FIRMWARE/)
-- [Frontend Implementation](05-IMPLEMENTATION/frontend/)
-- [Hardware Implementation](05-IMPLEMENTATION/dev_radxa/)
-
----
-
-## 🚀 **Next Steps**
-
-1. **FW Team:** Continue implementation using consolidated documentation
-2. **Backend Team:** Follow backend requirements and specifications
-3. **Frontend Team:** Follow frontend requirements and UI/UX design
-4. **PM:** Monitor progress using integrated SLC planning
-5. **CTO:** Review architecture decisions and system integration
-
----
-
-## 📋 **Documentation Standards**
-
-### **File Naming:**
-- Use kebab-case for file names
-- Include version numbers in document headers
-- Maintain changelog for all documents
-
-### **Structure:**
-- Follow consistent directory structure
-- Use README.md for navigation
-- Include cross-references between documents
-
-### **Content:**
-- Use clear, concise language
-- Include code examples where appropriate
-- Maintain technical accuracy
-
----
-
-**Changelog v2.0:**
-- ✅ Updated master documentation index
-- ✅ Integrated firmware documentation cleanup
-- ✅ Added comprehensive navigation
-- ✅ Established single source of truth
-- ✅ Updated team access guidelines
-- ✅ Added documentation standards
-
-**🚨 Lưu ý:** Tất cả documentation đã được cleaned up và consolidated. Teams sử dụng single source of truth cho tất cả project documentation.
+**📅 Cập nhật lần cuối:** 2025-01-28  
+**👥 Quản lý bởi:** PM Team
