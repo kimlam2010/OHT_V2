@@ -7,6 +7,7 @@ add_subdirectory(managers)
 add_subdirectory(modules)
 add_subdirectory(api)
 add_subdirectory(validation)
+add_subdirectory(storage)
 
 # WebSocket server library
 add_library(websocket_server websocket_server.c)
@@ -18,7 +19,7 @@ target_include_directories(websocket_server PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../hal/communication
 )
-target_link_libraries(websocket_server hal_common hal_communication app_core app_managers app_modules pthread ssl crypto)
+target_link_libraries(websocket_server hal_common hal_communication app_core app_managers app_modules app_api pthread ssl crypto)
 
 # Simple HTTP server for port 8081 (Issue #113 Fix)
 add_library(simple_http_8081 simple_http_8081.c)

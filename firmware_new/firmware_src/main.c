@@ -28,6 +28,7 @@ volatile sig_atomic_t g_should_run = 1;
 #include "module_manager.h"
 #include "module_polling_manager.h"
 #include "power_module_handler.h"
+#include "storage/module_data_storage.h"
 #include "travel_motor_module_handler.h"
 #include "api_manager.h"
 #include "api_endpoints.h"
@@ -416,6 +417,14 @@ int main(int argc, char **argv) {
             printf("[MAIN] WARNING: comm_manager_init failed (status=%d), continuing...\n", comm_status);
         } else {
             printf("[MAIN] Communication manager initialized successfully\n");
+            
+            // Initialize Module Data Storage
+            hal_status_t storage_status = module_data_storage_init();
+            if (storage_status != HAL_STATUS_OK) {
+                printf("[MAIN] WARNING: module_data_storage_init failed (status=%d), continuing...\n", storage_status);
+            } else {
+                printf("[MAIN] Module data storage initialized successfully\n");
+            }
             
             // Initialize API server (WebSocket + HTTP servers)
             comm_mgr_api_config_t api_cfg = {

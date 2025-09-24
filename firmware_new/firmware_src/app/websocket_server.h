@@ -251,6 +251,15 @@ hal_status_t ws_server_set_telemetry_callback(ws_telemetry_callback_t callback);
 hal_status_t ws_server_broadcast_rs485_telemetry(uint8_t module_addr);
 hal_status_t ws_server_start_rs485_telemetry_streaming(uint32_t interval_ms);
 
+// Module-Specific WebSocket Streaming Functions (Issue #140)
+hal_status_t ws_server_broadcast_module_telemetry(int module_id);
+hal_status_t ws_server_broadcast_module_config(int module_id);
+hal_status_t ws_server_broadcast_module_health(int module_id);
+hal_status_t ws_server_broadcast_module_status(int module_id);
+hal_status_t ws_server_start_module_streaming(int module_id, uint32_t interval_ms);
+hal_status_t ws_server_stop_module_streaming(int module_id);
+hal_status_t ws_server_broadcast_module_command_result(int module_id, const char *command, bool success, const char *message);
+
 // WebSocket Server Thread Functions
 void* ws_server_thread(void *arg);
 void* ws_server_client_thread(void *arg);
