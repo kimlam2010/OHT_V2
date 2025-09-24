@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <stdlib.h>  // For abs() function
 
 // ============================================================================
 // PRIVATE FUNCTIONS
@@ -130,33 +131,67 @@ static void update_docking_state_machine(dock_module_handler_t *handler) {
     // Update uptime
     handler->data.uptime = get_current_timestamp_s();
     
-    // Simulate docking progress (in real implementation, this would read from sensors)
+    // REAL SENSOR DATA READING - IMPLEMENTATION FOR ISSUE #138
+    // Read all sensor data from dock module via RS485
+    hal_status_t sensor_status = HAL_STATUS_OK;
+    
+    // Read RFID data
+    uint32_t rfid_tag_id = 0;
+    uint8_t rfid_signal_strength = 0;
+    uint8_t rfid_read_status = 0;
+    
+    sensor_status = dock_module_get_rfid_tag_id(handler, &rfid_tag_id);
+    if (sensor_status == HAL_STATUS_OK) {
+        dock_module_get_rfid_signal_strength(handler, &rfid_signal_strength);
+        dock_module_get_rfid_read_status(handler, &rfid_read_status);
+    }
+    
+    // Read accelerometer data
+    int16_t accel_x = 0, accel_y = 0, accel_z = 0;
+    int16_t accel_temp = 0;
+    uint8_t accel_status = 0;
+    
+    sensor_status = dock_module_get_accelerometer(handler, &accel_x, &accel_y, &accel_z);
+    if (sensor_status == HAL_STATUS_OK) {
+        dock_module_get_accelerometer_temperature(handler, &accel_temp);
+        dock_module_get_accelerometer_status(handler, &accel_status);
+    }
+    
+    // Read proximity sensors data
+    uint8_t prox_sensor_1 = 0, prox_sensor_2 = 0;
+    uint16_t prox_distance_1 = 0, prox_distance_2 = 0;
+    uint8_t dock_confirmed = 0;
+    
+    sensor_status = dock_module_get_proximity_sensor_1(handler, &prox_sensor_1);
+    if (sensor_status == HAL_STATUS_OK) {
+        dock_module_get_proximity_sensor_2(handler, &prox_sensor_2);
+        dock_module_get_proximity_distances(handler, &prox_distance_1, &prox_distance_2);
+        dock_module_get_dock_confirmed(handler, &dock_confirmed);
+    }
+    
+    // Update docking status based on real sensor data
     switch (handler->data.status) {
         case DOCK_STATUS_APPROACHING:
-            // Simulate approaching to dock
-            if (handler->data.distance_to_dock > handler->config.approach_distance) {
-                handler->data.distance_to_dock -= handler->data.approach_speed / 10; // Simulate movement
-            } else {
+            // Check proximity sensors to determine approach progress
+            if (prox_distance_1 < handler->config.approach_distance && 
+                prox_distance_2 < handler->config.approach_distance) {
                 handler->data.status = DOCK_STATUS_ALIGNING;
                 dock_module_trigger_event(handler, DOCK_EVENT_ALIGNING);
             }
             break;
             
         case DOCK_STATUS_ALIGNING:
-            // Simulate alignment process
-            if (handler->data.alignment_angle > handler->config.alignment_tolerance) {
-                handler->data.alignment_angle -= 10; // Simulate alignment correction
-            } else {
+            // Check accelerometer for alignment
+            if (abs(accel_x) < handler->config.alignment_tolerance && 
+                abs(accel_y) < handler->config.alignment_tolerance) {
                 handler->data.status = DOCK_STATUS_DOCKING;
                 dock_module_trigger_event(handler, DOCK_EVENT_DOCKING);
             }
             break;
             
         case DOCK_STATUS_DOCKING:
-            // Simulate final docking
-            if (handler->data.distance_to_dock > handler->data.accuracy_threshold) {
-                handler->data.distance_to_dock -= handler->data.final_speed / 10; // Simulate final approach
-            } else {
+            // Check dock confirmation from proximity sensors
+            if (dock_confirmed == 1 && prox_sensor_1 == 1 && prox_sensor_2 == 1) {
                 handler->data.status = DOCK_STATUS_DOCKED;
                 handler->data.docking_count++;
                 handler->data.last_docking_time = current_time - handler->docking_start_time;
@@ -166,21 +201,21 @@ static void update_docking_state_machine(dock_module_handler_t *handler) {
             break;
             
         case DOCK_STATUS_UNDOCKING:
-            // Simulate undocking process
-            if (handler->data.distance_to_dock < handler->config.approach_distance) {
-                handler->data.distance_to_dock += handler->data.approach_speed / 10; // Simulate undocking
-            } else {
+            // Check if undocking is complete
+            if (dock_confirmed == 0 && prox_sensor_1 == 0 && prox_sensor_2 == 0) {
                 handler->data.status = DOCK_STATUS_IDLE;
                 dock_module_trigger_event(handler, DOCK_EVENT_UNDOCKED);
             }
             break;
             
         case DOCK_STATUS_CALIBRATING:
-            // Simulate calibration process
-            // In real implementation, this would perform actual calibration
-            handler->data.status = DOCK_STATUS_IDLE;
-            handler->calibration_start_time = 0;
-            dock_module_trigger_event(handler, DOCK_EVENT_CALIBRATION_COMPLETED);
+            // Perform real calibration using sensor data
+            // Calibration complete when sensors are stable
+            if (accel_status == 1 && rfid_read_status == 1) {
+                handler->data.status = DOCK_STATUS_IDLE;
+                handler->calibration_start_time = 0;
+                dock_module_trigger_event(handler, DOCK_EVENT_CALIBRATION_COMPLETED);
+            }
             break;
             
         default:
@@ -1160,5 +1195,350 @@ hal_status_t dock_module_get_info(dock_module_handler_t *handler, void *info) {
     
     // In real implementation, this would populate an info structure
     // For now, just return success
+    return HAL_STATUS_OK;
+}
+
+// ============================================================================
+// REAL SENSOR FUNCTIONS - IMPLEMENTATION FOR ISSUE #138
+// ============================================================================
+
+/**
+ * @brief Get RFID tag ID from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param tag_id Pointer to store RFID tag ID
+ * @return HAL status
+ */
+hal_status_t dock_module_get_rfid_tag_id(dock_module_handler_t *handler, uint32_t *tag_id) {
+    if (handler == NULL || tag_id == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t tag_id_low = 0, tag_id_high = 0;
+    hal_status_t status;
+    
+    // Read RFID tag ID low word from register 0x7100
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_RFID_TAG_ID_LOW_REG, 1, &tag_id_low);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read RFID tag ID low: %d\n", status);
+        return status;
+    }
+    
+    // Read RFID tag ID high word from register 0x7101
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_RFID_TAG_ID_HIGH_REG, 1, &tag_id_high);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read RFID tag ID high: %d\n", status);
+        return status;
+    }
+    
+    // Combine low and high words to form 32-bit tag ID
+    *tag_id = ((uint32_t)tag_id_high << 16) | tag_id_low;
+    
+    // Update handler data
+    handler->data.rfid.tag_id = *tag_id;
+    handler->data.rfid.last_read_time = get_current_timestamp_ms();
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get RFID signal strength from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param signal_strength Pointer to store signal strength (0-100)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_rfid_signal_strength(dock_module_handler_t *handler, uint8_t *signal_strength) {
+    if (handler == NULL || signal_strength == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t status;
+    
+    // Read RFID signal strength from register 0x7102
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_RFID_SIGNAL_STRENGTH_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read RFID signal strength: %d\n", status);
+        return status;
+    }
+    
+    *signal_strength = (uint8_t)(reg_value & 0xFF);
+    
+    // Update handler data
+    handler->data.rfid.signal_strength = *signal_strength;
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get RFID read status from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param read_status Pointer to store read status (0=no tag, 1=tag detected)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_rfid_read_status(dock_module_handler_t *handler, uint8_t *read_status) {
+    if (handler == NULL || read_status == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t status;
+    
+    // Read RFID read status from register 0x7103
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_RFID_READ_STATUS_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read RFID read status: %d\n", status);
+        return status;
+    }
+    
+    *read_status = (uint8_t)(reg_value & 0xFF);
+    
+    // Update handler data
+    handler->data.rfid.read_status = *read_status;
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get accelerometer data from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param accel_x Pointer to store X-axis acceleration (mg)
+ * @param accel_y Pointer to store Y-axis acceleration (mg)
+ * @param accel_z Pointer to store Z-axis acceleration (mg)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_accelerometer(dock_module_handler_t *handler, int16_t *accel_x, int16_t *accel_y, int16_t *accel_z) {
+    if (handler == NULL || accel_x == NULL || accel_y == NULL || accel_z == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t status;
+    
+    // Read accelerometer X-axis from register 0x7200
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_ACCEL_X_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read accelerometer X: %d\n", status);
+        return status;
+    }
+    *accel_x = (int16_t)reg_value;
+    
+    // Read accelerometer Y-axis from register 0x7201
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_ACCEL_Y_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read accelerometer Y: %d\n", status);
+        return status;
+    }
+    *accel_y = (int16_t)reg_value;
+    
+    // Read accelerometer Z-axis from register 0x7202
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_ACCEL_Z_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read accelerometer Z: %d\n", status);
+        return status;
+    }
+    *accel_z = (int16_t)reg_value;
+    
+    // Update handler data
+    handler->data.accelerometer.accel_x = *accel_x;
+    handler->data.accelerometer.accel_y = *accel_y;
+    handler->data.accelerometer.accel_z = *accel_z;
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get accelerometer temperature from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param temperature Pointer to store temperature (°C)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_accelerometer_temperature(dock_module_handler_t *handler, int16_t *temperature) {
+    if (handler == NULL || temperature == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t status;
+    
+    // Read accelerometer temperature from register 0x7203
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_ACCEL_TEMPERATURE_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read accelerometer temperature: %d\n", status);
+        return status;
+    }
+    
+    *temperature = (int16_t)reg_value;
+    
+    // Update handler data
+    handler->data.accelerometer.temperature = *temperature;
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get accelerometer status from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param status Pointer to store status (0=error, 1=ok)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_accelerometer_status(dock_module_handler_t *handler, uint8_t *status) {
+    if (handler == NULL || status == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t hal_status;
+    
+    // Read accelerometer status from register 0x7204
+    hal_status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                          DOCK_ACCEL_STATUS_REG, 1, &reg_value);
+    if (hal_status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read accelerometer status: %d\n", hal_status);
+        return hal_status;
+    }
+    
+    *status = (uint8_t)(reg_value & 0xFF);
+    
+    // Update handler data
+    handler->data.accelerometer.status = *status;
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get proximity sensor 1 status from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param status Pointer to store status (0=no object, 1=object detected)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_proximity_sensor_1(dock_module_handler_t *handler, uint8_t *status) {
+    if (handler == NULL || status == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t hal_status;
+    
+    // Read proximity sensor 1 from register 0x7300
+    hal_status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                          DOCK_PROX_SENSOR_1_REG, 1, &reg_value);
+    if (hal_status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read proximity sensor 1: %d\n", hal_status);
+        return hal_status;
+    }
+    
+    *status = (uint8_t)(reg_value & 0xFF);
+    
+    // Update handler data
+    handler->data.proximity.sensor_1_status = *status;
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get proximity sensor 2 status from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param status Pointer to store status (0=no object, 1=object detected)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_proximity_sensor_2(dock_module_handler_t *handler, uint8_t *status) {
+    if (handler == NULL || status == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t hal_status;
+    
+    // Read proximity sensor 2 from register 0x7301
+    hal_status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                          DOCK_PROX_SENSOR_2_REG, 1, &reg_value);
+    if (hal_status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read proximity sensor 2: %d\n", hal_status);
+        return hal_status;
+    }
+    
+    *status = (uint8_t)(reg_value & 0xFF);
+    
+    // Update handler data
+    handler->data.proximity.sensor_2_status = *status;
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get proximity sensor distances from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param distance_1 Pointer to store sensor 1 distance (mm)
+ * @param distance_2 Pointer to store sensor 2 distance (mm)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_proximity_distances(dock_module_handler_t *handler, uint16_t *distance_1, uint16_t *distance_2) {
+    if (handler == NULL || distance_1 == NULL || distance_2 == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t status;
+    
+    // Read proximity sensor 1 distance from register 0x7302
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_PROX_SENSOR_1_DISTANCE_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read proximity sensor 1 distance: %d\n", status);
+        return status;
+    }
+    *distance_1 = reg_value;
+    
+    // Read proximity sensor 2 distance from register 0x7303
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_PROX_SENSOR_2_DISTANCE_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read proximity sensor 2 distance: %d\n", status);
+        return status;
+    }
+    *distance_2 = reg_value;
+    
+    // Update handler data
+    handler->data.proximity.sensor_1_distance = *distance_1;
+    handler->data.proximity.sensor_2_distance = *distance_2;
+    
+    return HAL_STATUS_OK;
+}
+
+/**
+ * @brief Get dock confirmed status from dock module via RS485
+ * @param handler Pointer to dock module handler
+ * @param confirmed Pointer to store confirmed status (0=not docked, 1=docked)
+ * @return HAL status
+ */
+hal_status_t dock_module_get_dock_confirmed(dock_module_handler_t *handler, uint8_t *confirmed) {
+    if (handler == NULL || confirmed == NULL || !handler->initialized) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    uint16_t reg_value = 0;
+    hal_status_t status;
+    
+    // Read dock confirmed status from register 0x7304
+    status = comm_manager_modbus_read_holding_registers(handler->address, 
+                                                      DOCK_DOCK_CONFIRMED_REG, 1, &reg_value);
+    if (status != HAL_STATUS_OK) {
+        printf("[DOCK] Failed to read dock confirmed status: %d\n", status);
+        return status;
+    }
+    
+    *confirmed = (uint8_t)(reg_value & 0xFF);
+    
+    // Update handler data
+    handler->data.proximity.dock_confirmed = *confirmed;
+    
     return HAL_STATUS_OK;
 }

@@ -55,7 +55,7 @@ hal_status_t module_polling_manager_get_module_info(uint8_t address, module_poll
 hal_status_t module_polling_power_module(uint8_t address);
 hal_status_t module_polling_motor_module(uint8_t address);
 hal_status_t module_polling_sensor_module(uint8_t address);
-hal_status_t module_polling_lidar_module(uint8_t address);
+hal_status_t module_polling_dock_module(uint8_t address);
 hal_status_t module_polling_unknown_module(uint8_t address);
 
 // Utility functions
