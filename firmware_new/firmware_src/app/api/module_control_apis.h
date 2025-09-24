@@ -86,6 +86,11 @@ int api_handle_modules_reset(const api_mgr_http_request_t *req, api_mgr_http_res
  */
 int api_handle_modules_health_check(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 
+/**
+ * @brief Handle GET /api/v1/modules/scan-status
+ */
+int api_handle_modules_scan_status(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+
 #ifdef __cplusplus
 }
 #endif

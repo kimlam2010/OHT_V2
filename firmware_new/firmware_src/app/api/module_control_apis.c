@@ -354,3 +354,53 @@ int api_handle_modules_health_check(const api_mgr_http_request_t *req, api_mgr_h
     
     return api_manager_create_success_response(res, json);
 }
+
+// GET /api/v1/modules/scan-status
+int api_handle_modules_scan_status(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
+    (void)req;
+    bool scan_active = comm_manager_is_scanning();
+    bool registry_scanning = registry_is_scanning();
+
+    // Basic stats (if available)
+    module_stats_t stats;
+    int have_stats = (module_manager_get_statistics(&stats) == HAL_STATUS_OK);
+
+    char json[512];
+    if (have_stats) {
+        snprintf(json, sizeof(json),
+            "{\n"
+            "  \"success\": true,\n"
+            "  \"data\": {\n"
+            "    \"scan_active\": %s,\n"
+            "    \"registry_scanning\": %s,\n"
+            "    \"discovery_total_ms\": %u,\n"
+            "    \"p95_ms\": %u,\n"
+            "    \"p99_ms\": %u,\n"
+            "    \"timestamp\": %lu\n"
+            "  }\n"
+            "}",
+            scan_active ? "true" : "false",
+            registry_scanning ? "true" : "false",
+            stats.discovery_total_ms,
+            stats.discovery_p95_ms,
+            stats.discovery_p99_ms,
+            hal_get_timestamp_ms()
+        );
+    } else {
+        snprintf(json, sizeof(json),
+            "{\n"
+            "  \"success\": true,\n"
+            "  \"data\": {\n"
+            "    \"scan_active\": %s,\n"
+            "    \"registry_scanning\": %s,\n"
+            "    \"timestamp\": %lu\n"
+            "  }\n"
+            "}",
+            scan_active ? "true" : "false",
+            registry_scanning ? "true" : "false",
+            hal_get_timestamp_ms()
+        );
+    }
+
+    return api_manager_create_success_response(res, json);
+}

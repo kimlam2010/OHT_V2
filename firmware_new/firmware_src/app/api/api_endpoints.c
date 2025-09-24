@@ -28,6 +28,7 @@ int api_register_minimal_endpoints(void){
     api_manager_register_endpoint("/api/v1/modules/stop-scan", API_MGR_HTTP_POST, api_handle_modules_stop_scan);
     api_manager_register_endpoint("/api/v1/modules/pause-scan", API_MGR_HTTP_POST, api_handle_modules_pause_scan);
     api_manager_register_endpoint("/api/v1/modules/resume-scan", API_MGR_HTTP_POST, api_handle_modules_resume_scan);
+    api_manager_register_endpoint("/api/v1/modules/scan-status", API_MGR_HTTP_GET, api_handle_modules_scan_status);
     // REMOVED: /api/v1/modules - Duplicate với rs485/modules
     // REMOVED: /api/v1/modules/scan - Over-engineered 
     // REMOVED: /api/v1/modules/config - Over-complex
