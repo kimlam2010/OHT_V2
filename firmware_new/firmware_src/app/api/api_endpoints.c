@@ -61,6 +61,7 @@ int api_register_minimal_endpoints(void){
     
     // CRITICAL: Module Data Access APIs - Issue #140
     api_manager_register_endpoint("/api/v1/modules/{id}/telemetry", API_MGR_HTTP_GET, api_handle_module_telemetry);
+    // Removed enhanced-specific endpoints; basic telemetry now includes ranges (Issue #143)
     api_manager_register_endpoint("/api/v1/modules/{id}/config", API_MGR_HTTP_GET, api_handle_module_config_get);
     api_manager_register_endpoint("/api/v1/modules/{id}/config", API_MGR_HTTP_POST, api_handle_module_config_set);
     api_manager_register_endpoint("/api/v1/modules/{id}/command", API_MGR_HTTP_POST, api_handle_module_command);
@@ -1531,6 +1532,85 @@ int get_module_telemetry_data(int module_id, api_module_telemetry_t *telemetry) 
     return 0;
 }
 
+// Get module telemetry data with value ranges (Issue #143)
+int get_module_telemetry_data_with_ranges(int module_id, api_module_telemetry_with_range_t *telemetry) {
+    if (!telemetry) return -1;
+
+    memset(telemetry, 0, sizeof(api_module_telemetry_with_range_t));
+    telemetry->module_id = module_id;
+    strncpy(telemetry->module_name, get_module_name_by_id(module_id), sizeof(telemetry->module_name) - 1);
+    telemetry->timestamp = (unsigned long)time(NULL);
+    telemetry->data_freshness_ms = 50;
+
+    // Base units/descriptions
+    strcpy(telemetry->voltage.unit, "V");
+    strcpy(telemetry->voltage.description, "Supply voltage");
+    strcpy(telemetry->current.unit, "A");
+    strcpy(telemetry->current.description, "Load current");
+    strcpy(telemetry->power.unit, "W");
+    strcpy(telemetry->power.description, "Power consumption");
+    // Use split hex escapes to avoid \x consuming following hex digits
+    strcpy(telemetry->temperature.unit, "\xC2\xB0" "C");
+    strcpy(telemetry->temperature.description, "Operating temperature");
+    strcpy(telemetry->efficiency.unit, "%");
+    strcpy(telemetry->efficiency.description, "Conversion efficiency");
+    strcpy(telemetry->load_percentage.unit, "%");
+    strcpy(telemetry->load_percentage.description, "Load percentage");
+
+    // Fetch base values from existing API to avoid duplication
+    api_module_telemetry_t base;
+    if (get_module_telemetry_data(module_id, &base) != 0) {
+        return -1;
+    }
+
+    telemetry->voltage.value = base.voltage;
+    telemetry->current.value = base.current;
+    telemetry->power.value = base.power;
+    telemetry->temperature.value = base.temperature;
+    telemetry->efficiency.value = base.efficiency;
+    telemetry->load_percentage.value = base.load_percentage;
+
+    // Apply module-specific ranges
+    switch (module_id) {
+        case 2: // Power Module
+            telemetry->voltage.min_value = 0.0f; telemetry->voltage.max_value = 30.0f;
+            telemetry->current.min_value = 0.0f; telemetry->current.max_value = 10.0f;
+            telemetry->power.min_value = 0.0f; telemetry->power.max_value = 300.0f;
+            telemetry->temperature.min_value = -20.0f; telemetry->temperature.max_value = 80.0f;
+            telemetry->efficiency.min_value = 0.0f; telemetry->efficiency.max_value = 100.0f;
+            telemetry->load_percentage.min_value = 0.0f; telemetry->load_percentage.max_value = 100.0f;
+            break;
+        case 3: // Safety Module
+            telemetry->voltage.min_value = 0.0f; telemetry->voltage.max_value = 24.0f;
+            telemetry->current.min_value = 0.0f; telemetry->current.max_value = 2.0f;
+            telemetry->power.min_value = 0.0f; telemetry->power.max_value = 50.0f;
+            telemetry->temperature.min_value = -20.0f; telemetry->temperature.max_value = 70.0f;
+            telemetry->efficiency.min_value = 0.0f; telemetry->efficiency.max_value = 100.0f;
+            telemetry->load_percentage.min_value = 0.0f; telemetry->load_percentage.max_value = 100.0f;
+            break;
+        case 4: // Travel Motor
+            telemetry->voltage.min_value = 0.0f; telemetry->voltage.max_value = 24.0f;
+            telemetry->current.min_value = 0.0f; telemetry->current.max_value = 20.0f;
+            telemetry->power.min_value = 0.0f; telemetry->power.max_value = 500.0f;
+            telemetry->temperature.min_value = -20.0f; telemetry->temperature.max_value = 100.0f;
+            telemetry->efficiency.min_value = 0.0f; telemetry->efficiency.max_value = 100.0f;
+            telemetry->load_percentage.min_value = 0.0f; telemetry->load_percentage.max_value = 100.0f;
+            break;
+        case 5: // Dock Module
+            telemetry->voltage.min_value = 0.0f; telemetry->voltage.max_value = 24.0f;
+            telemetry->current.min_value = 0.0f; telemetry->current.max_value = 5.0f;
+            telemetry->power.min_value = 0.0f; telemetry->power.max_value = 150.0f;
+            telemetry->temperature.min_value = -20.0f; telemetry->temperature.max_value = 80.0f;
+            telemetry->efficiency.min_value = 0.0f; telemetry->efficiency.max_value = 100.0f;
+            telemetry->load_percentage.min_value = 0.0f; telemetry->load_percentage.max_value = 100.0f;
+            break;
+        default:
+            return -1;
+    }
+
+    return 0;
+}
+
 // GET /api/v1/modules/{id}/telemetry
 int api_handle_module_telemetry(const api_mgr_http_request_t *req, api_mgr_http_response_t *res) {
     if (!req || !res) {
@@ -1544,48 +1624,63 @@ int api_handle_module_telemetry(const api_mgr_http_request_t *req, api_mgr_http_
             "Invalid module ID");
     }
     
-    // Get telemetry data
-    api_module_telemetry_t telemetry;
-    hal_status_t status = get_module_telemetry_data(module_id, &telemetry);
-    if (status != HAL_STATUS_OK) {
-        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR, 
-            "Failed to get module telemetry data");
+    // If query contains ranges=1, return enhanced response with ranges (Issue #143)
+    const char *q = strchr(req->path, '?');
+    if (q && strstr(q, "ranges=1")) {
+        api_module_telemetry_with_range_t tr;
+        if (get_module_telemetry_data_with_ranges(module_id, &tr) != 0) {
+            return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
+                "Failed to get module telemetry data");
+        }
+        char j[2048];
+        snprintf(j, sizeof(j),
+            "{\"success\":true,\"data\":{\"module_id\":%d,\"module_name\":\"%s\",\"telemetry\":{"
+            "\"voltage\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+            "\"current\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+            "\"power\":{\"value\":%.2f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+            "\"temperature\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+            "\"efficiency\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+            "\"load_percentage\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"}"
+            "},\"timestamp\":%lu,\"data_freshness_ms\":%u}}",
+            tr.module_id, tr.module_name,
+            tr.voltage.value, tr.voltage.min_value, tr.voltage.max_value, tr.voltage.unit, tr.voltage.description,
+            tr.current.value, tr.current.min_value, tr.current.max_value, tr.current.unit, tr.current.description,
+            tr.power.value, tr.power.min_value, tr.power.max_value, tr.power.unit, tr.power.description,
+            tr.temperature.value, tr.temperature.min_value, tr.temperature.max_value, tr.temperature.unit, tr.temperature.description,
+            tr.efficiency.value, tr.efficiency.min_value, tr.efficiency.max_value, tr.efficiency.unit, tr.efficiency.description,
+            tr.load_percentage.value, tr.load_percentage.min_value, tr.load_percentage.max_value, tr.load_percentage.unit, tr.load_percentage.description,
+            tr.timestamp, tr.data_freshness_ms);
+        return api_manager_create_success_response(res, j);
     }
     
-    // Build JSON response
-    char json[1024];
-    snprintf(json, sizeof(json),
-        "{"
-        "\"success\":true,"
-        "\"data\":{"
-            "\"module_id\":%d,"
-            "\"module_name\":\"%s\","
-            "\"telemetry\":{"
-                "\"voltage\":%.1f,"
-                "\"current\":%.1f,"
-                "\"power\":%.2f,"
-                "\"temperature\":%.1f,"
-                "\"efficiency\":%.1f,"
-                "\"load_percentage\":%.1f"
-            "},"
-            "\"timestamp\":%lu,"
-            "\"data_freshness_ms\":%u"
-        "}"
-        "}",
-        telemetry.module_id,
-        telemetry.module_name,
-        telemetry.voltage,
-        telemetry.current,
-        telemetry.power,
-        telemetry.temperature,
-        telemetry.efficiency,
-        telemetry.load_percentage,
-        telemetry.timestamp,
-        telemetry.data_freshness_ms
-    );
-    
-    return api_manager_create_success_response(res, json);
+    // Return enhanced telemetry with ranges by default (Issue #143)
+    api_module_telemetry_with_range_t tr;
+    if (get_module_telemetry_data_with_ranges(module_id, &tr) != 0) {
+        return api_manager_create_error_response(res, API_MGR_RESPONSE_INTERNAL_SERVER_ERROR,
+            "Failed to get module telemetry data");
+    }
+    char j[2048];
+    snprintf(j, sizeof(j),
+        "{\"success\":true,\"data\":{\"module_id\":%d,\"module_name\":\"%s\",\"telemetry\":{"
+        "\"voltage\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+        "\"current\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+        "\"power\":{\"value\":%.2f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+        "\"temperature\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+        "\"efficiency\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"},"
+        "\"load_percentage\":{\"value\":%.1f,\"range\":{\"min\":%.1f,\"max\":%.1f},\"unit\":\"%s\",\"description\":\"%s\"}"
+        "},\"timestamp\":%lu,\"data_freshness_ms\":%u}}",
+        tr.module_id, tr.module_name,
+        tr.voltage.value, tr.voltage.min_value, tr.voltage.max_value, tr.voltage.unit, tr.voltage.description,
+        tr.current.value, tr.current.min_value, tr.current.max_value, tr.current.unit, tr.current.description,
+        tr.power.value, tr.power.min_value, tr.power.max_value, tr.power.unit, tr.power.description,
+        tr.temperature.value, tr.temperature.min_value, tr.temperature.max_value, tr.temperature.unit, tr.temperature.description,
+        tr.efficiency.value, tr.efficiency.min_value, tr.efficiency.max_value, tr.efficiency.unit, tr.efficiency.description,
+        tr.load_percentage.value, tr.load_percentage.min_value, tr.load_percentage.max_value, tr.load_percentage.unit, tr.load_percentage.description,
+        tr.timestamp, tr.data_freshness_ms);
+    return api_manager_create_success_response(res, j);
 }
+
+// GET /api/v1/rs485/modules/{id}/telemetry - Enhanced with value ranges (Issue #143)
 
 // Helper function to get module configuration data
 int get_module_config_data(int module_id, api_module_config_t *config) {
@@ -1605,7 +1700,7 @@ int get_module_config_data(int module_id, api_module_config_t *config) {
         config->emergency_stop_enabled = storage_config.emergency_stop_enabled;
         config->response_time_ms = storage_config.response_time_ms;
         config->auto_recovery = storage_config.auto_recovery;
-        strncpy(config->config_version, storage_config.config_version, sizeof(config->config_version) - 1);
+        snprintf(config->config_version, sizeof(config->config_version), "%s", storage_config.config_version);
         config->last_updated = storage_config.last_updated;
     } else {
         // Fallback to simulated data if no real data available
