@@ -178,7 +178,7 @@ hal_status_t module_polling_manager_poll_module(uint8_t address)
             return module_polling_sensor_module(address);
             
         case MODULE_TYPE_DOCK:  // Use MODULE_TYPE_DOCK instead of MODULE_TYPE_LIDAR
-            return module_polling_lidar_module(address);
+            return module_polling_dock_module(address);
             
         case MODULE_TYPE_UNKNOWN:
         default:
@@ -462,13 +462,13 @@ hal_status_t module_polling_sensor_module(uint8_t address)
 }
 
 /**
- * @brief Poll Dock Module (Type 5) with fallback strategy
+ * @brief Poll Dock Module (Type 5) with real sensor data - IMPLEMENTATION FOR ISSUE #138
  * @param address Module address
  * @return HAL status
  */
-hal_status_t module_polling_lidar_module(uint8_t address)
+hal_status_t module_polling_dock_module(uint8_t address)
 {
-    printf("[POLLING-DOCK] Polling Dock Module 0x%02X\n", address);
+    printf("[POLLING-DOCK] Polling Dock Module 0x%02X with real sensor data\n", address);
     
     // Strategy 1: Try to read system registers first (0x0100-0x0107)
     uint16_t system_data[8];
@@ -478,16 +478,50 @@ hal_status_t module_polling_lidar_module(uint8_t address)
         printf("[POLLING-DOCK] 0x%02X: DeviceID=0x%04X, Type=0x%04X, Status=0x%04X, Version=0x%04X\n",
                address, system_data[0], system_data[7], system_data[2], system_data[1]);
         
-        // Strategy 2: Try to read dock-specific registers (0x0000-0x004F)
-        uint16_t dock_data[8];
-        hal_status_t dock_status = comm_manager_modbus_read_holding_registers(address, 0x0000, 8, dock_data);
+        // Strategy 2: Poll RFID data every 100ms (registers 0x0108-0x010C) - REAL HARDWARE ADDRESSES
+        uint16_t rfid_data[5];
+        hal_status_t rfid_status = comm_manager_modbus_read_holding_registers(address, 0x0108, 5, rfid_data);
+        
+        if (rfid_status == HAL_STATUS_OK) {
+            uint32_t tag_id = ((uint32_t)rfid_data[1] << 16) | rfid_data[0];
+            printf("[POLLING-DOCK] 0x%02X: RFID TagID=0x%08X, Signal=%d%%, Status=%d, Time=%d\n",
+                   address, tag_id, rfid_data[2], rfid_data[3], rfid_data[4]);
+        } else {
+            printf("[POLLING-DOCK] 0x%02X: RFID data read failed (status: %d)\n", address, rfid_status);
+        }
+        
+        // Strategy 3: Poll accelerometer data every 50ms (registers 0x010D-0x0111) - REAL HARDWARE ADDRESSES
+        uint16_t accel_data[5];
+        hal_status_t accel_status = comm_manager_modbus_read_holding_registers(address, 0x010D, 5, accel_data);
+        
+        if (accel_status == HAL_STATUS_OK) {
+            printf("[POLLING-DOCK] 0x%02X: Accel X=%d, Y=%d, Z=%d mg, Temp=%d°C, Status=%d\n",
+                   address, (int16_t)accel_data[0], (int16_t)accel_data[1], (int16_t)accel_data[2], 
+                   (int16_t)accel_data[3], accel_data[4]);
+        } else {
+            printf("[POLLING-DOCK] 0x%02X: Accelerometer data read failed (status: %d)\n", address, accel_status);
+        }
+        
+        // Strategy 4: Poll proximity sensors every 50ms (registers 0x0112-0x0116) - REAL HARDWARE ADDRESSES
+        uint16_t prox_data[5];
+        hal_status_t prox_status = comm_manager_modbus_read_holding_registers(address, 0x0112, 5, prox_data);
+        
+        if (prox_status == HAL_STATUS_OK) {
+            printf("[POLLING-DOCK] 0x%02X: Prox1=%d (digital), Prox2=%d (digital), Dist1=%dmm, Dist2=%dmm, DockConfirmed=%d\n",
+                   address, prox_data[0], prox_data[1], prox_data[2], prox_data[3], prox_data[4]);
+        } else {
+            printf("[POLLING-DOCK] 0x%02X: Proximity sensors data read failed (status: %d)\n", address, prox_status);
+        }
+        
+        // Strategy 5: Read dock status and position (registers 0x0104-0x0107)
+        uint16_t dock_data[4];
+        hal_status_t dock_status = comm_manager_modbus_read_holding_registers(address, 0x0104, 4, dock_data);
         
         if (dock_status == HAL_STATUS_OK) {
-            printf("[POLLING-DOCK] 0x%02X: Position=%d, Target=%d, Status=%d, Accuracy=%d, Timeout=%d, Retry=%d, Debounce=%d, Tolerance=%d\n",
-                   address, dock_data[0], dock_data[1], dock_data[2], dock_data[3], 
-                   dock_data[4], dock_data[5], dock_data[6], dock_data[7]);
+            printf("[POLLING-DOCK] 0x%02X: Position=%d, Target=%d, Status=%d, Accuracy=%d\n",
+                   address, dock_data[0], dock_data[1], dock_data[2], dock_data[3]);
         } else {
-            printf("[POLLING-DOCK] 0x%02X: Dock data read failed, using system data only\n", address);
+            printf("[POLLING-DOCK] 0x%02X: Dock status data read failed (status: %d)\n", address, dock_status);
         }
         
         return HAL_STATUS_OK;
@@ -548,7 +582,7 @@ uint32_t module_polling_get_interval(module_polling_type_t type)
         case MODULE_TYPE_POWER:        return POLLING_INTERVAL_POWER_MS;
         case MODULE_TYPE_TRAVEL_MOTOR: return POLLING_INTERVAL_MOTOR_MS;
         case MODULE_TYPE_SAFETY:       return POLLING_INTERVAL_SENSOR_MS;
-        case MODULE_TYPE_DOCK:         return POLLING_INTERVAL_LIDAR_MS;
+        case MODULE_TYPE_DOCK:         return 50;  // 50ms for real-time sensor data
         case MODULE_TYPE_UNKNOWN:      return POLLING_INTERVAL_UNKNOWN_MS;
         default:                       return POLLING_INTERVAL_UNKNOWN_MS;
     }
