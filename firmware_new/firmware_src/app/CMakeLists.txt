@@ -9,7 +9,7 @@ add_subdirectory(api)
 add_subdirectory(validation)
 add_subdirectory(storage)
 
-# WebSocket server library
+# WebSocket server library (Original - DEPRECATED)
 add_library(websocket_server websocket_server.c)
 target_include_directories(websocket_server PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -20,6 +20,30 @@ target_include_directories(websocket_server PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../hal/communication
 )
 target_link_libraries(websocket_server hal_common hal_communication app_core app_managers app_modules app_api pthread ssl crypto)
+
+# WebSocket server library with libwebsockets (Issue #153 Fix)
+add_library(websocket_server_lws websocket_server_lws.c)
+target_include_directories(websocket_server_lws PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/api
+    ${CMAKE_CURRENT_SOURCE_DIR}/../hal/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../hal/communication
+)
+target_link_libraries(websocket_server_lws 
+    hal_common 
+    hal_communication 
+    app_core 
+    app_managers 
+    app_modules 
+    app_api 
+    pthread 
+    ssl 
+    crypto
+    websockets
+)
 
 # Simple HTTP server for port 8081 (Issue #113 Fix) - REMOVED (duplicate functionality)
 
