@@ -1,5 +1,5 @@
 # OHT-50 Module Registry Configuration
-# Generated on: Sep 24 2025 14:30:13
+# Generated on: Sep 25 2025 11:47:46
 schema_version: 1
 
 module_0:
@@ -7,7 +7,7 @@ module_0:
   type: 2
   name: "module"
   status: 1
-  last_seen_ms: 1758715155755
+  last_seen_ms: 1758772085793
   capabilities: 0
   version: ""
 
@@ -16,7 +16,7 @@ module_1:
   type: 3
   name: "module"
   status: 1
-  last_seen_ms: 1758715155876
+  last_seen_ms: 1758772085914
   capabilities: 0
   version: ""
 
@@ -25,7 +25,7 @@ module_2:
   type: 4
   name: "module"
   status: 1
-  last_seen_ms: 1758715155997
+  last_seen_ms: 1758772086035
   capabilities: 0
   version: ""
 
@@ -34,7 +34,7 @@ module_3:
   type: 5
   name: "module"
   status: 1
-  last_seen_ms: 1758715156115
+  last_seen_ms: 1758772086156
   capabilities: 0
   version: ""
 
@@ -43,7 +43,7 @@ module_4:
   type: 0
   name: "module"
   status: 1
-  last_seen_ms: 1758715156235
+  last_seen_ms: 1758772086276
   capabilities: 0
   version: ""
 
@@ -52,7 +52,7 @@ module_5:
   type: 0
   name: "module"
   status: 1
-  last_seen_ms: 1758715156353
+  last_seen_ms: 1758772086396
   capabilities: 0
   version: ""
 
@@ -61,7 +61,7 @@ module_6:
   type: 0
   name: "module"
   status: 1
-  last_seen_ms: 1758715156474
+  last_seen_ms: 1758772086516
   capabilities: 0
   version: ""
 

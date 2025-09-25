@@ -181,6 +181,8 @@ hal_status_t ws_server_start(void);
 hal_status_t ws_server_stop(void);
 hal_status_t ws_server_deinit(void);
 hal_status_t ws_server_get_status(ws_server_status_t *status);
+hal_status_t ws_server_health_check(void);
+hal_status_t ws_server_restart(void);
 
 // WebSocket Server Configuration Functions
 hal_status_t ws_server_set_config(const ws_server_config_t *config);

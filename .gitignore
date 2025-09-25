@@ -80,3 +80,4 @@ build/
 *.bak
 *.backup
 *~
+backend/test_env/

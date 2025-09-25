@@ -27,3 +27,26 @@ coverage/
 # Documentation
 docs/html/
 docs/latex/
+
+# Test artifacts
+*.o
+*.a
+*.so
+*.dylib
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Test results
+test_results/
+coverage/
