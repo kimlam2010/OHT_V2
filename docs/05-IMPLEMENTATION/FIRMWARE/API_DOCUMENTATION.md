@@ -36,8 +36,8 @@ OHT-50 Firmware cung cấp **25+ REST API endpoints** và **WebSocket real-time 
 | **⚙️ Config** | 3 | `/api/v1/config/state-machine`, `/api/v1/config/timeouts` | 2/3 |
 | **📊 Statistics** | 1 | `/api/v1/state/statistics` | ❌ |
 | **🚦 State** | 4 | `/api/v1/state/move`, `/api/v1/state/stop` | ✅ |
-| **🌊 WebSocket** | 1 | `/ws` | ❌ |
-| **TOTAL** | **40** | **31 REST + 1 WebSocket** | **15/31 (48%)** |
+| **🌊 WebSocket** | 3 | `/health`, `/api/v1/status`, `/api/v1/robot/status` | ❌ |
+| **TOTAL** | **43** | **31 REST + 3 WebSocket** | **15/31 (48%)** |
 
 ### **✅ Backend Integration Status**
 - ✅ **HTTP API Integration:** Port 8080 - REST endpoints ready
@@ -129,6 +129,28 @@ Authorization: Bearer oht50_readonly_token_2025
   "example": "Authorization: Bearer oht50_admin_token_2025"
 }
 ```
+
+### WebSocket Authentication (bắt buộc)
+
+- Kênh WebSocket (port 8081) yêu cầu xác thực trước khi nâng cấp kết nối.
+- Hỗ trợ các cách truyền thông tin xác thực:
+  - Header `Authorization: Bearer <token>`
+  - Header `X-API-Key: <key>`
+  - Subprotocol `Sec-WebSocket-Protocol: bearer, <token>`
+  - Query `GET /ws?token=<token>`
+
+Nếu xác thực thất bại: trả `401 Unauthorized` và không nâng cấp WebSocket.
+
+Ví dụ (JavaScript):
+```javascript
+const token = "oht50_admin_token_2025";
+// Subprotocol
+const ws1 = new WebSocket("ws://localhost:8081/ws", ["bearer", token]);
+// Query token
+const ws2 = new WebSocket(`ws://localhost:8081/ws?token=${encodeURIComponent(token)}`);
+```
+
+Sau handshake: client chưa xác thực gửi TEXT/BINARY sẽ bị đóng với mã 1008 (POLICY_VIOLATION).
 
 **Security Audit Logging:**
 ```bash
@@ -241,6 +263,9 @@ response = await fw_client.post("/api/v1/config/state-machine",
 ### **🌊 WebSocket Real-time**
 | Method | Endpoint | Description | Auth Required | Port |
 |--------|----------|-------------|---------------|------|
+| GET | `/health` | WebSocket server health | ❌ | 8081 |
+| GET | `/api/v1/status` | WebSocket server status | ❌ | 8081 |
+| GET | `/api/v1/robot/status` | Robot status via WebSocket | ❌ | 8081 |
 | WS | `/ws` | WebSocket connection | ❌ | 8081 |
 
 ---
@@ -248,11 +273,11 @@ response = await fw_client.post("/api/v1/config/state-machine",
 ## 📊 **API ENDPOINTS SUMMARY**
 
 ### **📈 Statistics:**
-- **Total Endpoints:** 25+ REST API endpoints
-- **WebSocket:** 1 real-time streaming endpoint
-- **Authentication Required:** 12 endpoints (48%)
-- **Public Access:** 13 endpoints (52%)
-- **Ports:** 8080 (HTTP), 8081 (WebSocket)
+- **Total Endpoints:** 31 REST API endpoints
+- **WebSocket:** 3 direct HTTP endpoints + 1 WebSocket streaming
+- **Authentication Required:** 15 endpoints (48%)
+- **Public Access:** 16 endpoints (52%)
+- **Ports:** 8080 (HTTP), 8081 (WebSocket + HTTP backup)
 
 ### **🔒 Authentication Levels:**
 - **Admin Token:** `oht50_admin_token_2025` - Full access
@@ -1631,7 +1656,19 @@ POST /api/v1/state/reset
 
 ## 🔌 **WEBSOCKET ON PORT 8081**
 
-**⚠️ IMPORTANT:** Port 8081 là WebSocket server, không phải HTTP backup.
+**⚠️ IMPORTANT:** Port 8081 là WebSocket server với HTTP backup endpoints.
+
+### **WebSocket Server HTTP Endpoints:**
+```bash
+# Test WebSocket server health
+curl http://localhost:8081/health
+
+# Test WebSocket server status  
+curl http://localhost:8081/api/v1/status
+
+# Test robot status via WebSocket server
+curl http://localhost:8081/api/v1/robot/status
+```
 
 ### **WebSocket Connection:**
 ```python
@@ -1655,8 +1692,13 @@ Note:
 - Do not use `timeout=` with `websockets.connect(...)` (not supported).
 - Use `ping_interval`, `ping_timeout`, and `close_timeout` instead.
 
-### **HTTP Fallback (Limited):**
-Port 8081 là WebSocket server. Không relied on HTTP tại 8081. Nếu firmware cung cấp HTTP tạm thời trên 8081, chỉ dùng cho debug nội bộ và không bảo đảm ổn định.
+### **HTTP Fallback (Available):**
+Port 8081 WebSocket server cung cấp 3 HTTP endpoints chính:
+- `/health` - WebSocket server health check
+- `/api/v1/status` - WebSocket server status và client count
+- `/api/v1/robot/status` - Robot status qua WebSocket server
+
+Các endpoint khác sẽ redirect (302) về HTTP server trên port 8080.
 
 ---
 
@@ -2413,12 +2455,12 @@ if __name__ == "__main__":
 ## 🎯 **SUMMARY**
 
 ### **✅ Available for Backend**
-- **25+ REST API endpoints** on port 8080
+- **31 REST API endpoints** on port 8080
 - **WebSocket real-time streaming** on port 8081  
-- **HTTP backup** on port 8081 for fallback
+- **3 HTTP backup endpoints** on port 8081
 - **Complete robot control** (status, motion, safety)
 - **Module management** (RS485 modules, statistics)
-- **LiDAR integration** (11 specialized endpoints)
+- **LiDAR integration** (10 specialized endpoints)
 - **System monitoring** (health, state, diagnostics)
 - **Real-time telemetry** (WebSocket streaming)
 
@@ -2529,18 +2571,19 @@ if __name__ == "__main__":
 
 #### **🧪 Testing & Quality:**
 - ✅ **Comprehensive Testing:** Security, performance, và integration tests
-- ✅ **API Validation:** All 25+ endpoints tested và verified
+- ✅ **API Validation:** All 31+ endpoints tested và verified
 - ✅ **Error Scenario Testing:** Timeout, authentication, validation tests
 - ✅ **Performance Benchmarking:** Response time và throughput metrics
 
 ### **v1.0.0 (2025-01-27) - Initial Release**
-- ✅ **25+ REST API Endpoints** on port 8080
+- ✅ **31 REST API Endpoints** on port 8080
 - ✅ **WebSocket Real-time Streaming** on port 8081
+- ✅ **3 WebSocket HTTP Backup Endpoints** on port 8081
 - ✅ **Robot Control APIs** (status, motion, safety)
 - ✅ **Module Management** (RS485 modules, statistics)
 - ✅ **Module Data Access APIs** (telemetry, config, commands, history, health)
 - ✅ **Module-Specific WebSocket Streaming** (real-time module data)
-- ✅ **LiDAR Integration** (11 specialized endpoints)
+- ✅ **LiDAR Integration** (10 specialized endpoints)
 - ✅ **System Monitoring** (health, state, diagnostics)
 
 ---
@@ -2570,7 +2613,7 @@ if __name__ == "__main__":
   - Complete Module Data Access APIs documentation
   - WebSocket streaming examples and handlers
   - Backend integration examples
-  - Updated API endpoint count (40 total endpoints)
+  - Updated API endpoint count (43 total endpoints: 31 REST + 3 WebSocket HTTP + 1 WebSocket streaming)
 
 ### **v2.2.0 - 2025-01-28** *(Previous Version)*
 - ✅ **WebSocket Real-time Streaming** on port 8081

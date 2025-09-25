@@ -117,9 +117,9 @@ class FirmwareWebSocketClient:
             # Connect to firmware WebSocket server
             self.websocket = await websockets.connect(
                 self.firmware_url,
-                timeout=10.0,
                 ping_interval=30.0,
-                ping_timeout=10.0
+                ping_timeout=10.0,
+                close_timeout=10.0
             )
             
             self.is_connected = True

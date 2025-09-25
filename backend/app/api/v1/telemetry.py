@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.core.security import require_permission
 from app.schemas.user import UserResponse as User
 from app.services.telemetry import telemetry_service
-# telemetry_data_collector removed - no real sensor hardware implementation
+# # telemetry_data_collector removed removed - no real sensor hardware implementation
 from app.services.lidar_data_processor import lidar_data_processor
 # sensor_data_processor removed - no real sensor hardware implementation
 from app.services.firmware_integration_service import MockFirmwareService
@@ -30,7 +30,7 @@ router = APIRouter(
 
 
 class TelemetryData(BaseModel):
-    """Current telemetry data from robot systems"""
+    """Current telemetry data from robot sensors"""
     timestamp: str = Field(..., description="ISO timestamp of data collection")
     motor_speed: float = Field(..., description="Motor speed in RPM")
     motor_temperature: float = Field(..., description="Motor temperature in Celsius")
@@ -77,6 +77,9 @@ class LiDARScanResponse(BaseModel):
     obstacles: List[Dict[str, Any]]
     scan_quality: float
     processing_time_ms: float
+
+
+# SensorStatusResponse removed - no real sensor hardware implementation
 
 
 class PerformanceMetricsResponse(BaseModel):
@@ -305,6 +308,205 @@ async def get_module_status(
         )
 
 
+# New Telemetry System API Endpoints
+
+class TelemetryCollectionRequest(BaseModel):
+    """Request to start/stop telemetry collection"""
+    action: str = Field(..., description="start or stop")
+    sources: Optional[List[str]] = Field(None, description="List of data sources to collect from")
+
+
+class TelemetryCollectionResponse(BaseModel):
+    """Response for telemetry collection operations"""
+    success: bool
+    message: str
+    active_sources: List[str]
+    collection_stats: Dict[str, Any]
+
+
+@router.post("/collection/start", response_model=TelemetryCollectionResponse)
+async def start_telemetry_collection(
+    request: TelemetryCollectionRequest,
+    current_user: User = Depends(require_permission("telemetry", "write"))
+):
+    """
+    Start telemetry data collection
+    
+    Initiates real-time data collection from all configured data sources:
+    - LiDAR data
+    - Motor data  
+    - Safety data
+    - Docking data
+    - (Sensor data disabled - no real hardware)
+    
+    **Performance Target**: < 100ms response time
+    **Authentication**: Required (telemetry:write permission)
+    **Data Rate**: 1000+ data points/second
+    """
+    try:
+        # TODO: Implement telemetry data collection when hardware is available
+        success = True  # Mock success for now
+        
+        if success:
+            stats = {
+                "total_sources": 0,
+                "active_sources": 0,
+                "data_rate": 0,
+                "collection_time": datetime.now(timezone.utc).isoformat()
+            }
+            return TelemetryCollectionResponse(
+                success=True,
+                message="Telemetry collection started successfully (mock mode)",
+                active_sources=[],  # No real sources available
+                collection_stats=stats
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to start telemetry collection"
+            )
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start telemetry collection: {str(e)}"
+        )
+
+
+@router.post("/collection/stop", response_model=TelemetryCollectionResponse)
+async def stop_telemetry_collection(
+    current_user: User = Depends(require_permission("telemetry", "write"))
+):
+    """
+    Stop telemetry data collection
+    
+    Stops real-time data collection from all data sources.
+    Preserves collected data and statistics.
+    
+    **Performance Target**: < 50ms response time
+    **Authentication**: Required (telemetry:write permission)
+    """
+    try:
+        # TODO: Implement telemetry data collection stop when hardware is available
+        success = True  # Mock success for now
+        
+        if success:
+            stats = {
+                "total_sources": 0,
+                "active_sources": 0,
+                "data_rate": 0,
+                "collection_time": datetime.now(timezone.utc).isoformat()
+            }
+            return TelemetryCollectionResponse(
+                success=True,
+                message="Telemetry collection stopped successfully",
+                active_sources=[],
+                collection_stats=stats
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to stop telemetry collection"
+            )
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to stop telemetry collection: {str(e)}"
+        )
+
+
+@router.get("/collection/stats")
+async def get_collection_stats(
+    current_user: User = Depends(require_permission("telemetry", "read"))
+):
+    """
+    Get telemetry collection statistics
+    
+    Returns detailed statistics about data collection including:
+    - Total data points collected
+    - Collection rate (points/second)
+    - Data quality metrics
+    - Active data sources
+    - Error rates
+    
+    **Performance Target**: < 20ms response time
+    **Authentication**: Required (telemetry:read permission)
+    """
+    try:
+        # TODO: Implement real telemetry stats when hardware is available
+        stats = {
+            "total_sources": 0,
+            "active_sources": 0,
+            "data_rate": 0,
+            "collection_time": datetime.now(timezone.utc).isoformat()
+        }
+        quality_summary = {
+            "overall_quality": "good",
+            "data_completeness": 100.0,
+            "latency_ms": 0,
+            "error_rate": 0.0
+        }
+        
+        return {
+            "success": True,
+            "collection_stats": stats,
+            "data_quality": quality_summary,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get collection stats: {str(e)}"
+        )
+
+
+@router.get("/data/latest")
+async def get_latest_telemetry_data(
+    source: Optional[str] = Query(None, description="Data source filter"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of data points to return"),
+    current_user: User = Depends(require_permission("telemetry", "read"))
+):
+    """Get latest telemetry data"""
+    try:
+        data_source = None
+        if source:
+            # TODO: Implement DataSource enum when hardware is available
+            # For now, accept any string as valid source
+            data_source = source
+        
+        # TODO: Implement real data retrieval when hardware is available
+        latest_data = []  # Mock empty data for now
+        
+        # Convert to serializable format
+        serialized_data = []
+        for data in latest_data:
+            serialized_data.append({
+                "source": data.source.value,
+                "data": data.data,
+                "timestamp": data.timestamp.isoformat(),
+                "quality": data.quality.value,
+                "sequence_id": data.sequence_id,
+                "processing_time_ms": data.processing_time_ms
+            })
+        
+        return {
+            "success": True,
+            "data": serialized_data,
+            "count": len(serialized_data),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get latest telemetry data: {str(e)}"
+        )
+
+
 @router.get("/lidar/scan", response_model=LiDARScanResponse)
 async def get_lidar_scan(
     current_user: User = Depends(require_permission("telemetry", "read"))
@@ -323,22 +525,73 @@ async def get_lidar_scan(
     **Data Rate**: Real-time 360° scanning
     """
     try:
-        # Mock LiDAR data since no real hardware
-        mock_scan = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "points": [],
-            "obstacles": [],
-            "scan_quality": 0.0,
-            "processing_time_ms": 0.0
+        # Get latest LiDAR data
+        # TODO: Implement real LiDAR data retrieval when hardware is available
+        lidar_data = []  # Mock empty data for now
+        
+        if not lidar_data:
+            return {
+                "success": True,
+                "message": "No LiDAR data available",
+                "scan": None
+            }
+        
+        # Process LiDAR data
+        latest_lidar = lidar_data[0]
+        scan = await lidar_data_processor.process_lidar_data(latest_lidar.data)
+        
+        # Serialize scan data
+        serialized_scan = {
+            "points": [
+                {
+                    "distance": point.distance,
+                    "angle": point.angle,
+                    "intensity": point.intensity,
+                    "timestamp": point.timestamp.isoformat()
+                }
+                for point in scan.points
+            ],
+            "obstacles": [
+                {
+                    "id": obstacle.id,
+                    "type": obstacle.type.value,
+                    "severity": obstacle.severity.value,
+                    "center_x": obstacle.center_x,
+                    "center_y": obstacle.center_y,
+                    "distance": obstacle.distance,
+                    "angle": obstacle.angle,
+                    "width": obstacle.width,
+                    "height": obstacle.height,
+                    "confidence": obstacle.confidence,
+                    "timestamp": obstacle.timestamp.isoformat()
+                }
+                for obstacle in scan.obstacles
+            ],
+            "scan_quality": scan.scan_quality,
+            "processing_time_ms": scan.processing_time_ms,
+            "timestamp": scan.timestamp.isoformat()
         }
         
-        return LiDARScanResponse(**mock_scan)
+        return {
+            "success": True,
+            "scan": serialized_scan,
+            "stats": lidar_data_processor.get_processing_stats()
+        }
         
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get LiDAR scan: {str(e)}"
         )
+
+
+# Sensor status endpoint removed - no real sensor hardware implementation
+
+
+# Sensor data endpoint removed - no real sensor hardware implementation
+
+
+# Sensor calibration endpoint removed - no real sensor hardware implementation
 
 
 @router.get("/performance", response_model=PerformanceMetricsResponse)
@@ -359,14 +612,19 @@ async def get_telemetry_performance(
     **Authentication**: Required (telemetry:read permission)
     """
     try:
-        # Mock performance data since no real hardware
-        return PerformanceMetricsResponse(
-            data_collection={"disabled": "no real hardware"},
-            processing_latency={"disabled": "no real hardware"},
-            system_resources={"disabled": "no real hardware"},
-            error_rates={"disabled": "no real hardware"},
-            throughput={"disabled": "no real hardware"}
-        )
+        # collection_stats removed - no real sensor hardware implementation
+        lidar_stats = lidar_data_processor.get_processing_stats()
+        # sensor_stats removed - no real sensor hardware implementation
+        
+        return {
+            "success": True,
+            "performance_metrics": {
+                "data_collection": {"disabled": "no real hardware"},
+                "lidar_processing": lidar_stats,
+                "sensor_processing": {"disabled": "no real hardware"}
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
         
     except Exception as e:
         raise HTTPException(

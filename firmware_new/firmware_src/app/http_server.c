@@ -30,7 +30,6 @@ http_server_instance_t g_http_server = {0};
 #define HTTP_SERVER_MEMORY_CHECK_INTERVAL 1000
 
 // Private function declarations
-static hal_status_t http_server_initialize_defaults(void);
 static hal_status_t http_server_setup_signal_handlers(void);
 static hal_status_t http_server_cleanup_resources(void);
 static hal_status_t http_server_validate_config(const http_server_config_t *config);
@@ -38,7 +37,6 @@ static hal_status_t http_server_find_route(const char *path, http_method_t metho
 static hal_status_t http_server_parse_request_line(const char *line, http_request_t *request);
 static hal_status_t http_server_parse_headers(const char *raw_headers, http_request_t *request);
 static hal_status_t http_server_parse_body(const char *raw_body, size_t body_length, http_request_t *request);
-static hal_status_t http_server_create_response_header(const http_response_t *response, char *header_buffer, size_t buffer_size);
 static hal_status_t http_server_send_response(int client_socket, const http_response_t *response);
 static hal_status_t http_server_read_request(int client_socket, char *buffer, size_t buffer_size, size_t *received_length);
 static hal_status_t http_server_set_socket_timeout(int socket_fd, int timeout_seconds);
@@ -348,6 +346,11 @@ hal_status_t http_server_handle_request(const http_request_t *request, http_resp
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
+    // Handle OPTIONS preflight requests
+    if (request->method == HTTP_METHOD_OPTIONS) {
+        return http_server_handle_cors_preflight(request, response);
+    }
+    
     // Find matching route
     http_route_t *route;
     hal_status_t find_result = http_server_find_route(request->path, request->method, &route);
@@ -440,10 +443,25 @@ hal_status_t http_server_parse_request(const char *raw_request, http_request_t *
         return headers_result;
     }
     
-    // Parse body if present
+    // Parse body if present - use Content-Length header instead of strlen
     const char *body_start = headers_end + 4;
-    size_t body_length = strlen(body_start);
+    size_t body_length = 0;
+    
+    // Find Content-Length header
+    for (int i = 0; i < (int)request->header_count && i < HTTP_SERVER_MAX_HEADERS; i++) {
+        if (strcasecmp(request->headers[i].name, "Content-Length") == 0) {
+            body_length = (size_t)strtoul(request->headers[i].value, NULL, 10);
+            break;
+        }
+    }
+    
+    // Validate body length
     if (body_length > 0) {
+        if (body_length > HTTP_SERVER_MAX_REQUEST_SIZE) {
+            hal_log_message(HAL_LOG_LEVEL_ERROR, "HTTP Server: Body too large: %zu bytes", body_length);
+            return HAL_STATUS_ERROR;
+        }
+        
         hal_status_t body_result = http_server_parse_body(body_start, body_length, request);
         if (body_result != HAL_STATUS_OK) {
             return body_result;
@@ -983,7 +1001,28 @@ static hal_status_t http_server_cleanup_connection(int client_socket) {
     return HAL_STATUS_OK;
 }
 
-// Placeholder functions for future implementation
+static const char* http_server_get_status_text(int status_code) {
+    switch (status_code) {
+        case 200: return "OK";
+        case 201: return "Created";
+        case 204: return "No Content";
+        case 400: return "Bad Request";
+        case 401: return "Unauthorized";
+        case 403: return "Forbidden";
+        case 404: return "Not Found";
+        case 405: return "Method Not Allowed";
+        case 408: return "Request Timeout";
+        case 413: return "Payload Too Large";
+        case 429: return "Too Many Requests";
+        case 500: return "Internal Server Error";
+        case 501: return "Not Implemented";
+        case 502: return "Bad Gateway";
+        case 503: return "Service Unavailable";
+        default: return "Unknown";
+    }
+}
+
+// Enhanced request reading with Content-Length support
 static hal_status_t http_server_read_request(int client_socket, char *buffer, size_t buffer_size, size_t *received_length) {
     // Set socket timeout to prevent hanging
     hal_status_t timeout_result = http_server_set_socket_timeout(client_socket, HTTP_SERVER_SOCKET_TIMEOUT_SEC);
@@ -999,8 +1038,18 @@ static hal_status_t http_server_read_request(int client_socket, char *buffer, si
         last_memory_check = current_time;
     }
     
-    // Read request with proper error handling
-    ssize_t bytes_received = recv(client_socket, buffer, buffer_size - 1, 0);
+    size_t total_received = 0;
+    size_t headers_end_pos = 0;
+    size_t expected_body_length = 0;
+    bool headers_complete = false;
+    
+    // Read in chunks until we have complete request
+    while (total_received < buffer_size - 1) {
+        ssize_t bytes_received = recv(client_socket, 
+                                     buffer + total_received, 
+                                     buffer_size - total_received - 1, 
+                                     0);
+        
     if (bytes_received < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             hal_log_error("HTTP_SERVER", "http_server_read_request", __LINE__,
@@ -1016,15 +1065,255 @@ static hal_status_t http_server_read_request(int client_socket, char *buffer, si
         return HAL_STATUS_ERROR;
     }
     
-    buffer[bytes_received] = '\0';
-    *received_length = (size_t)bytes_received;
+        total_received += bytes_received;
+        buffer[total_received] = '\0';
+        
+        // Check if headers are complete
+        if (!headers_complete) {
+            const char *headers_end = strstr(buffer, "\r\n\r\n");
+            if (headers_end != NULL) {
+                headers_complete = true;
+                headers_end_pos = (headers_end - buffer) + 4;
+                
+                // Parse Content-Length from headers
+                const char *content_length_start = strstr(buffer, "Content-Length:");
+                if (content_length_start != NULL) {
+                    content_length_start += 15; // Skip "Content-Length:"
+                    while (*content_length_start == ' ' || *content_length_start == '\t') {
+                        content_length_start++;
+                    }
+                    expected_body_length = (size_t)strtoul(content_length_start, NULL, 10);
+                }
+            }
+        }
+        
+        // Check if we have complete request
+        if (headers_complete) {
+            size_t current_body_length = total_received - headers_end_pos;
+            if (current_body_length >= expected_body_length) {
+                break; // Complete request received
+            }
+        }
+        
+        // Prevent infinite loop for requests without body
+        if (headers_complete && expected_body_length == 0) {
+            break;
+        }
+    }
     
-    hal_log_message(HAL_LOG_LEVEL_DEBUG, "HTTP Server: Read %zd bytes from client", bytes_received);
+    *received_length = total_received;
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "HTTP Server: Read %zu bytes from client (headers: %zu, body: %zu)", 
+                    total_received, headers_end_pos, total_received - headers_end_pos);
+    
     return HAL_STATUS_OK;
 }
 
 static hal_status_t http_server_send_response(int client_socket, const http_response_t *response) {
-    // TODO: Implement response sending
+    if (!response || client_socket < 0) {
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Serialize response to buffer
+    char response_buffer[HTTP_SERVER_MAX_RESPONSE_SIZE];
+    size_t buffer_used = 0;
+    
+    // Build status line
+    int status_line_len = snprintf(response_buffer + buffer_used, 
+                                   sizeof(response_buffer) - buffer_used,
+                                   "HTTP/1.1 %d %s\r\n",
+                                   response->status_code,
+                                   http_server_get_status_text(response->status_code));
+    if (status_line_len < 0 || status_line_len >= (int)(sizeof(response_buffer) - buffer_used)) {
+        hal_log_message(HAL_LOG_LEVEL_ERROR, "HTTP Server: Response buffer too small for status line");
+        return HAL_STATUS_ERROR;
+    }
+    buffer_used += status_line_len;
+    
+    // Add headers
+    for (int i = 0; i < (int)response->header_count && i < HTTP_SERVER_MAX_HEADERS; i++) {
+        int header_len = snprintf(response_buffer + buffer_used,
+                                  sizeof(response_buffer) - buffer_used,
+                                  "%s: %s\r\n",
+                                  response->headers[i].name,
+                                  response->headers[i].value);
+        if (header_len < 0 || header_len >= (int)(sizeof(response_buffer) - buffer_used)) {
+            hal_log_message(HAL_LOG_LEVEL_ERROR, "HTTP Server: Response buffer too small for headers");
+            return HAL_STATUS_ERROR;
+        }
+        buffer_used += header_len;
+    }
+    
+    // Add Content-Length header if body exists
+    if (response->body && response->body_length > 0) {
+        int content_len_header = snprintf(response_buffer + buffer_used,
+                                          sizeof(response_buffer) - buffer_used,
+                                          "Content-Length: %zu\r\n",
+                                          response->body_length);
+        if (content_len_header < 0 || content_len_header >= (int)(sizeof(response_buffer) - buffer_used)) {
+            hal_log_message(HAL_LOG_LEVEL_ERROR, "HTTP Server: Response buffer too small for Content-Length");
+            return HAL_STATUS_ERROR;
+        }
+        buffer_used += content_len_header;
+    }
+    
+    // End headers
+    if (buffer_used + 2 >= sizeof(response_buffer)) {
+        hal_log_message(HAL_LOG_LEVEL_ERROR, "HTTP Server: Response buffer too small for header end");
+        return HAL_STATUS_ERROR;
+    }
+    strcpy(response_buffer + buffer_used, "\r\n");
+    buffer_used += 2;
+    
+    // Send headers
+    ssize_t bytes_sent = send(client_socket, response_buffer, buffer_used, 0);
+    if (bytes_sent < 0 || (size_t)bytes_sent != buffer_used) {
+        hal_log_message(HAL_LOG_LEVEL_ERROR, "HTTP Server: Failed to send response headers");
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Send body if exists
+    if (response->body && response->body_length > 0) {
+        bytes_sent = send(client_socket, response->body, response->body_length, 0);
+        if (bytes_sent < 0 || (size_t)bytes_sent != response->body_length) {
+            hal_log_message(HAL_LOG_LEVEL_ERROR, "HTTP Server: Failed to send response body");
+            return HAL_STATUS_ERROR;
+        }
+    }
+    
+    hal_log_message(HAL_LOG_LEVEL_DEBUG, "HTTP Server: Sent response %d, %zu bytes", 
+                    response->status_code, buffer_used + (response->body ? response->body_length : 0));
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t http_server_serialize_response(const http_response_t *response, char *buffer, size_t buffer_size) {
+    if (!response || !buffer || buffer_size == 0) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    size_t buffer_used = 0;
+    
+    // Build status line
+    int status_line_len = snprintf(buffer + buffer_used, 
+                                   buffer_size - buffer_used,
+                                   "HTTP/1.1 %d %s\r\n",
+                                   response->status_code,
+                                   http_server_get_status_text(response->status_code));
+    if (status_line_len < 0 || status_line_len >= (int)(buffer_size - buffer_used)) {
+        return HAL_STATUS_ERROR;
+    }
+    buffer_used += status_line_len;
+    
+    // Add headers
+    for (int i = 0; i < (int)response->header_count && i < HTTP_SERVER_MAX_HEADERS; i++) {
+        int header_len = snprintf(buffer + buffer_used,
+                                  buffer_size - buffer_used,
+                                  "%s: %s\r\n",
+                                  response->headers[i].name,
+                                  response->headers[i].value);
+        if (header_len < 0 || header_len >= (int)(buffer_size - buffer_used)) {
+            return HAL_STATUS_ERROR;
+        }
+        buffer_used += header_len;
+    }
+    
+    // Add Content-Length header if body exists
+    if (response->body && response->body_length > 0) {
+        int content_len_header = snprintf(buffer + buffer_used,
+                                          buffer_size - buffer_used,
+                                          "Content-Length: %zu\r\n",
+                                          response->body_length);
+        if (content_len_header < 0 || content_len_header >= (int)(buffer_size - buffer_used)) {
+            return HAL_STATUS_ERROR;
+        }
+        buffer_used += content_len_header;
+    }
+    
+    // End headers
+    if (buffer_used + 2 >= buffer_size) {
+        return HAL_STATUS_ERROR;
+    }
+    strcpy(buffer + buffer_used, "\r\n");
+    buffer_used += 2;
+    
+    // Add body if exists
+    if (response->body && response->body_length > 0) {
+        if (buffer_used + response->body_length >= buffer_size) {
+            return HAL_STATUS_ERROR;
+        }
+        memcpy(buffer + buffer_used, response->body, response->body_length);
+        buffer_used += response->body_length;
+    }
+    
+    // Null terminate
+    if (buffer_used < buffer_size) {
+        buffer[buffer_used] = '\0';
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t http_server_create_html_response(http_response_t *response, const char *html_content) {
+    if (!response || !html_content) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Initialize response
+    memset(response, 0, sizeof(http_response_t));
+    response->status_code = 200;
+    
+    // Add Content-Type header
+    http_server_add_header(response, "Content-Type", "text/html; charset=utf-8");
+    
+    // Add CORS headers if configured
+    if (g_http_server.config.cors_origin && strlen(g_http_server.config.cors_origin) > 0) {
+        http_server_add_cors_headers(response);
+    }
+    
+    // Set body
+    response->body = (char*)html_content;
+    response->body_length = strlen(html_content);
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t http_server_handle_cors_preflight(const http_request_t *request, http_response_t *response) {
+    if (!request || !response) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Initialize response
+    memset(response, 0, sizeof(http_response_t));
+    response->status_code = 204; // No Content
+    
+    // Add CORS headers
+    http_server_add_cors_headers(response);
+    
+    // Add Allow header with supported methods
+    http_server_add_header(response, "Allow", "GET, POST, PUT, DELETE, OPTIONS");
+    
+    // Add Access-Control-Allow-Methods
+    http_server_add_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    
+    // Add Access-Control-Allow-Headers if requested
+    const char *request_headers = NULL;
+    for (int i = 0; i < (int)request->header_count && i < HTTP_SERVER_MAX_HEADERS; i++) {
+        if (strcasecmp(request->headers[i].name, "Access-Control-Request-Headers") == 0) {
+            request_headers = request->headers[i].value;
+            break;
+        }
+    }
+    
+    if (request_headers) {
+        char allow_headers[512];
+        snprintf(allow_headers, sizeof(allow_headers), "Content-Type, Authorization, X-Requested-With");
+        http_server_add_header(response, "Access-Control-Allow-Headers", allow_headers);
+    }
+    
+    // Add Access-Control-Max-Age
+    http_server_add_header(response, "Access-Control-Max-Age", "86400"); // 24 hours
+    
     return HAL_STATUS_OK;
 }
 
@@ -1055,19 +1344,26 @@ hal_status_t http_server_validate_authentication(const http_request_t *request) 
     
     const char* token = auth_header + 7; // Skip "Bearer "
     
-    // Simple token validation (in production, use proper JWT or secure tokens)
-    const char* valid_tokens[] = {
-        "oht50_admin_token_2025",
-        "oht50_operator_token_2025", 
-        "oht50_readonly_token_2025"
-    };
+    // Token validation using environment variables (more secure than hardcoded tokens)
+    const char* admin_token = getenv("OHT50_ADMIN_TOKEN");
+    const char* operator_token = getenv("OHT50_OPERATOR_TOKEN");
+    const char* readonly_token = getenv("OHT50_READONLY_TOKEN");
     
-    for (int i = 0; i < 3; i++) {
-        if (strcmp(token, valid_tokens[i]) == 0) {
-            hal_log_message(HAL_LOG_LEVEL_DEBUG, "[HTTP_AUTH] ✅ Token validated: %s", 
-                           i == 0 ? "ADMIN" : i == 1 ? "OPERATOR" : "READONLY");
+    // Fallback to default tokens if environment variables not set (for development only)
+    if (!admin_token) admin_token = "oht50_admin_token_2025";
+    if (!operator_token) operator_token = "oht50_operator_token_2025";
+    if (!readonly_token) readonly_token = "oht50_readonly_token_2025";
+    
+    // Validate token
+    if (strcmp(token, admin_token) == 0) {
+        hal_log_message(HAL_LOG_LEVEL_DEBUG, "[HTTP_AUTH] ✅ Admin token validated");
+        return HAL_STATUS_OK;
+    } else if (strcmp(token, operator_token) == 0) {
+        hal_log_message(HAL_LOG_LEVEL_DEBUG, "[HTTP_AUTH] ✅ Operator token validated");
+        return HAL_STATUS_OK;
+    } else if (strcmp(token, readonly_token) == 0) {
+        hal_log_message(HAL_LOG_LEVEL_DEBUG, "[HTTP_AUTH] ✅ Readonly token validated");
             return HAL_STATUS_OK;
-        }
     }
     
     hal_log_error("HTTP_AUTH", "http_server_validate_authentication", __LINE__,

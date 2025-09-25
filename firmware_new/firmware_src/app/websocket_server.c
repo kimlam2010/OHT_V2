@@ -9,6 +9,7 @@
 
 #include "websocket_server.h"
 #include "api/api_endpoints.h"  // For get_module_name_by_id, get_module_telemetry_data, etc.
+#include "api/security_auth.h"  // Auth: API-Key/JWT validation for WS handshake
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +40,17 @@ static hal_status_t ws_server_calculate_accept_key(const char *websocket_key, ch
 static hal_status_t ws_server_send_http_response(int socket_fd, const char *response);
 static hal_status_t ws_server_read_data(int socket_fd, uint8_t *buffer, size_t buffer_size, size_t *received_length);
 static hal_status_t ws_server_write_data(int socket_fd, const uint8_t *data, size_t data_length);
+// Specialized: read HTTP headers for handshake without toggling socket flags
+static hal_status_t ws_server_read_http_headers(int socket_fd, char *buffer, size_t buffer_size, size_t *received_length, uint32_t overall_timeout_ms);
+// Utility: case-insensitive substring search
+static const char* ws_strcasestr(const char *haystack, const char *needle) {
+    if (!haystack || !needle || !*needle) return haystack;
+    size_t nlen = strlen(needle);
+    for (const char *p = haystack; *p; ++p) {
+        if (strncasecmp(p, needle, nlen) == 0) return p;
+    }
+    return NULL;
+}
 
 // Signal handler for graceful shutdown
 static volatile bool g_ws_shutdown_requested = false;
@@ -129,9 +141,14 @@ hal_status_t ws_server_init(const ws_server_config_t *config) {
         ws_server_deinit();
         return signal_result;
     }
+
+    // Initialize security/auth system (idempotent)
+    (void)security_auth_init();
     
     hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Initialized successfully");
     g_ws_server.status.overall_status = HAL_DEVICE_STATUS_OK;
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Config{port=%d, max_clients=%u, timeout_ms=%u}",
+                    g_ws_server.config.port, g_ws_server.config.max_clients, g_ws_server.config.timeout_ms);
     
     return HAL_STATUS_OK;
 }
@@ -526,6 +543,11 @@ hal_status_t ws_server_send_message(int socket_fd, const char *message, size_t m
     // Send frame
     hal_status_t send_result = ws_server_send_frame(socket_fd, &frame);
     
+    // Free frame payload memory
+    if (frame.payload) {
+        free(frame.payload);
+    }
+    
     // Update client statistics
     if (send_result == HAL_STATUS_OK) {
         pthread_mutex_lock(&client->mutex);
@@ -639,6 +661,11 @@ hal_status_t ws_server_send_binary(int socket_fd, const uint8_t *data, size_t da
     // Send frame
     hal_status_t send_result = ws_server_send_frame(socket_fd, &frame);
     
+    // Free frame payload memory
+    if (frame.payload) {
+        free(frame.payload);
+    }
+    
     // Update client statistics
     if (send_result == HAL_STATUS_OK) {
         pthread_mutex_lock(&client->mutex);
@@ -738,6 +765,11 @@ hal_status_t ws_server_send_ping(int socket_fd) {
     // Send frame
     hal_status_t send_result = ws_server_send_frame(socket_fd, &frame);
     
+    // Free frame payload memory
+    if (frame.payload) {
+        free(frame.payload);
+    }
+    
     // Update statistics
     if (send_result == HAL_STATUS_OK) {
         pthread_mutex_lock(&g_ws_server.mutex);
@@ -766,7 +798,14 @@ hal_status_t ws_server_send_pong(int socket_fd) {
     }
     
     // Send frame
-    return ws_server_send_frame(socket_fd, &frame);
+    hal_status_t send_result = ws_server_send_frame(socket_fd, &frame);
+    
+    // Free frame payload memory
+    if (frame.payload) {
+        free(frame.payload);
+    }
+    
+    return send_result;
 }
 
 /**
@@ -811,6 +850,11 @@ hal_status_t ws_server_send_close(int socket_fd, ws_close_code_t code, const cha
     
     // Send frame
     hal_status_t send_result = ws_server_send_frame(socket_fd, &frame);
+    
+    // Free frame payload memory
+    if (frame.payload) {
+        free(frame.payload);
+    }
     
     // Update statistics
     if (send_result == HAL_STATUS_OK) {
@@ -1496,18 +1540,7 @@ static hal_status_t ws_server_parse_http_headers(const char *request, char *webs
     
     // Extract Sec-WebSocket-Key (case-insensitive)
     const char *needle = "sec-websocket-key:";
-    const char *kpos = NULL;
-    size_t nlen = strlen(needle);
-    
-    // Search for the key header
-    const char *p = request;
-    while (*p) {
-        if (strncasecmp(p, needle, nlen) == 0) {
-            kpos = p;
-            break;
-        }
-        p++;
-    }
+    const char *kpos = ws_strcasestr(request, needle);
     
     if (!kpos) {
         hal_log_error("WS_SERVER", "ws_server_parse_http_headers", __LINE__, 
@@ -1516,9 +1549,9 @@ static hal_status_t ws_server_parse_http_headers(const char *request, char *webs
     }
     
     // Skip past the header name
-    kpos += nlen;
+    kpos += strlen(needle);
     
-    // Skip whitespace
+    // Skip whitespace and optional colon if not consumed
     while (*kpos == ' ' || *kpos == '\t') {
         kpos++;
     }
@@ -1530,6 +1563,11 @@ static hal_status_t ws_server_parse_http_headers(const char *request, char *webs
     }
     websocket_key[i] = '\0';
     
+    // Trim trailing spaces
+    while (i > 0 && (websocket_key[i-1] == ' ' || websocket_key[i-1] == '\t')) {
+        websocket_key[--i] = '\0';
+    }
+
     if (i == 0) {
         hal_log_error("WS_SERVER", "ws_server_parse_http_headers", __LINE__, 
                      HAL_STATUS_INVALID_PARAMETER, "Empty WebSocket key");
@@ -1863,6 +1901,11 @@ void* ws_server_thread(void *arg) {
             continue;
         }
         
+        // Log new client and current count
+        hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Accepted client socket=%d from %s:%u", 
+                        client_socket, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+        hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Current clients(before add)=%u", g_ws_server.client_count);
+        
         // Get client IP and port
         char client_ip[16];
         inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
@@ -1901,22 +1944,30 @@ void* ws_server_client_thread(void *arg) {
     int client_socket = *(int*)arg;
     free(arg);
     
-    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Client thread started for socket %d", client_socket);
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Client thread started for socket %d", client_socket);
     
     char request_buffer[4096];
-    size_t received_length;
-    
-    // Read initial request (could be HTTP or WebSocket handshake)
-    hal_log_message(HAL_LOG_LEVEL_DEBUG, "WebSocket Server: Reading request from client %d", client_socket);
-    hal_status_t read_result = ws_server_read_data(client_socket, (uint8_t*)request_buffer, 
-                                                  sizeof(request_buffer), &received_length);
-    
-    if (read_result != HAL_STATUS_OK) {
-        hal_log_error("WS_SERVER", "ws_server_client_thread", __LINE__, 
-                     read_result, "Failed to read request");
+    size_t received_length = 0;
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WebSocket Server: Reading request from client %d", client_socket);
+    hal_status_t hdr_result = ws_server_read_http_headers(client_socket, request_buffer, sizeof(request_buffer), &received_length, 8000);
+    if (hdr_result != HAL_STATUS_OK) {
+        hal_log_error("WS_SERVER", "ws_server_client_thread", __LINE__, hdr_result, "Failed to read HTTP headers");
         ws_server_remove_client(client_socket);
         return NULL;
     }
+
+    // Log the request line and presence of key headers for diagnostics
+    const char *line_end = strstr(request_buffer, "\r\n");
+    size_t line_len = line_end ? (size_t)(line_end - request_buffer) : received_length;
+    char first_line[160];
+    if (line_len >= sizeof(first_line)) line_len = sizeof(first_line) - 1;
+    memcpy(first_line, request_buffer, line_len);
+    first_line[line_len] = '\0';
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WS: Request: %s", first_line);
+    hal_log_message(HAL_LOG_LEVEL_INFO, "WS: Has Upgrade=%d, Has websocket=%d, Has Key=%d",
+                    ws_strcasestr(request_buffer, "upgrade:")!=NULL,
+                    ws_strcasestr(request_buffer, "websocket")!=NULL,
+                    ws_strcasestr(request_buffer, "sec-websocket-key:")!=NULL);
     
     // NULL-terminate the request buffer for string operations
     if (received_length < sizeof(request_buffer)) {
@@ -1933,10 +1984,10 @@ void* ws_server_client_thread(void *arg) {
         strncmp(request_buffer, "PUT ", 4) == 0 ||
         strncmp(request_buffer, "DELETE ", 7) == 0) {
         
-        // Check if it's NOT a WebSocket upgrade request
-        if (strstr(request_buffer, "Upgrade:") == NULL || 
-            strstr(request_buffer, "websocket") == NULL ||
-            strstr(request_buffer, "Sec-WebSocket-Key:") == NULL) {
+        // Check if it's NOT a WebSocket upgrade request (case-insensitive, tolerant)
+        if (ws_strcasestr(request_buffer, "upgrade:") == NULL || 
+            ws_strcasestr(request_buffer, "websocket") == NULL ||
+            ws_strcasestr(request_buffer, "sec-websocket-key:") == NULL) {
             is_http_request = true;
         }
     }
@@ -1970,6 +2021,8 @@ void* ws_server_client_thread(void *arg) {
         client->handshake_complete = true;
         // Send a ready message immediately after handshake
         ws_server_send_text(client_socket, "{\"type\":\"ready\"}");
+        // Send immediate heartbeat to establish periodic cadence
+        ws_server_broadcast_heartbeat();
     }
     
     // Main message loop
@@ -1988,6 +2041,16 @@ void* ws_server_client_thread(void *arg) {
         if (client == NULL) {
             ws_server_find_client(client_socket, &client);
         }
+        // Enforce authentication for application messages
+        if (client && g_ws_server.config.enable_authentication && !client->authenticated) {
+            // Only allow ping/pong/close prior to auth
+            if (frame.opcode == WS_FRAME_TEXT || frame.opcode == WS_FRAME_BINARY) {
+                ws_server_send_close(client_socket, WS_CLOSE_POLICY_VIOLATION, "auth required");
+                if (frame.payload) free(frame.payload);
+                goto cleanup;
+            }
+        }
+
         switch (frame.opcode) {
             case WS_FRAME_TEXT:
             case WS_FRAME_BINARY:
@@ -2032,6 +2095,45 @@ cleanup:
     ws_server_remove_client(client_socket);
     return NULL;
 }
+static hal_status_t ws_server_read_http_headers(int socket_fd, char *buffer, size_t buffer_size, size_t *received_length, uint32_t overall_timeout_ms) {
+    if (socket_fd < 0 || buffer == NULL || buffer_size < 8 || received_length == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    *received_length = 0;
+    uint64_t start_ms = hal_get_timestamp_ms();
+    while (*received_length < buffer_size - 1) {
+        // Wait up to 500 ms per chunk
+        fd_set rfds; FD_ZERO(&rfds); FD_SET(socket_fd, &rfds);
+        struct timeval tv; tv.tv_sec = 0; tv.tv_usec = 500*1000;
+        int sr = select(socket_fd + 1, &rfds, NULL, NULL, &tv);
+        if (sr < 0) {
+            if (errno == EINTR) continue;
+            return HAL_STATUS_IO_ERROR;
+        }
+        if (sr == 0) {
+            if (hal_get_timestamp_ms() - start_ms > overall_timeout_ms) {
+                return HAL_STATUS_TIMEOUT;
+            }
+            continue;
+        }
+        ssize_t n = recv(socket_fd, buffer + *received_length, buffer_size - 1 - *received_length, 0);
+        if (n <= 0) {
+            if (n == 0) return HAL_STATUS_IO_ERROR;
+            if (errno == EINTR) continue;
+            if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
+            return HAL_STATUS_IO_ERROR;
+        }
+        *received_length += (size_t)n;
+        buffer[*received_length] = '\0';
+        if (strstr(buffer, "\r\n\r\n") != NULL) {
+            return HAL_STATUS_OK;
+        }
+        if (hal_get_timestamp_ms() - start_ms > overall_timeout_ms) {
+            return HAL_STATUS_TIMEOUT;
+        }
+    }
+    return HAL_STATUS_NO_MEMORY; // header too large
+}
 
 // Placeholder implementations (minimal)
 hal_status_t ws_server_handle_handshake(int socket_fd, const char *request, size_t request_length) {
@@ -2066,14 +2168,131 @@ hal_status_t ws_server_handle_handshake(int socket_fd, const char *request, size
         return HAL_STATUS_ERROR;
     }
 
-    char response[512];
+    // Optional authentication: support Authorization: Bearer, X-API-Key, Sec-WebSocket-Protocol: bearer,<token>, and URL ?token=
+    bool authenticated = true; // default if auth disabled
+    bool auth_required = g_ws_server.config.enable_authentication;
+    client_info_t client_info; memset(&client_info, 0, sizeof(client_info));
+
+    if (auth_required) {
+        authenticated = false;
+        const char *auth_hdr = NULL;
+        const char *api_key_hdr = NULL;
+        const char *proto_hdr = NULL;
+
+        // Case-insensitive header scans
+        const char *p = request;
+        while (*p) {
+            if (!auth_hdr && strncasecmp(p, "authorization:", 14) == 0) auth_hdr = p + 14;
+            if (!api_key_hdr && strncasecmp(p, "x-api-key:", 11) == 0) api_key_hdr = p + 11;
+            if (!proto_hdr && strncasecmp(p, "sec-websocket-protocol:", 24) == 0) proto_hdr = p + 24;
+            // next line
+            const char *nl = strchr(p, '\n');
+            if (!nl) break; p = nl + 1;
+        }
+
+        // 1) Authorization: Bearer <token>
+        if (auth_hdr) {
+            while (*auth_hdr==' '||*auth_hdr=='\t') auth_hdr++;
+            const char *bear = NULL; // start of Bearer
+            if (strncasecmp(auth_hdr, "Bearer ", 7) == 0) {
+                bear = auth_hdr + 7;
+                const char *end = bear;
+                while (*end && *end!='\r' && *end!='\n') end++;
+                char token[512]; size_t len = (size_t)(end - bear); if (len >= sizeof(token)) len = sizeof(token)-1; 
+                memcpy(token, bear, len); token[len]='\0';
+                if (security_auth_validate_jwt(token, &client_info) == HAL_STATUS_OK) authenticated = true;
+            }
+        }
+
+        // 2) X-API-Key: <key>
+        if (!authenticated && api_key_hdr) {
+            while (*api_key_hdr==' '||*api_key_hdr=='\t') api_key_hdr++;
+            const char *end = api_key_hdr; while (*end && *end!='\r' && *end!='\n') end++;
+            char api_key[128]; size_t len = (size_t)(end - api_key_hdr); if (len >= sizeof(api_key)) len = sizeof(api_key)-1;
+            memcpy(api_key, api_key_hdr, len); api_key[len]='\0';
+            if (security_auth_validate_api_key(api_key, &client_info) == HAL_STATUS_OK) authenticated = true;
+        }
+
+        // 3) Sec-WebSocket-Protocol: bearer, <token>
+        bool echo_bearer_subprotocol = false;
+        char chosen_subprotocol[64]={0};
+        if (!authenticated && proto_hdr) {
+            // parse list
+            const char *line = proto_hdr; while (*line==' '||*line=='\t') line++;
+            // Copy line to buffer up to CRLF to safely tokenize
+            const char *lend = line; while (*lend && *lend!='\r' && *lend!='\n') lend++;
+            char buf[512]; size_t l = (size_t)(lend-line); if (l>=sizeof(buf)) l=sizeof(buf)-1; memcpy(buf, line, l); buf[l]='\0';
+            // tokenize by comma
+            char *saveptr=NULL; char *tok = strtok_r(buf, ",", &saveptr);
+            while (tok) {
+                while (*tok==' '||*tok=='\t') tok++;
+                if (strncasecmp(tok, "bearer", 6)==0) { echo_bearer_subprotocol = true; strncpy(chosen_subprotocol, "bearer", sizeof(chosen_subprotocol)-1); }
+                else if (strlen(tok) > 10) {
+                    // assume token value following bearer
+                    char token[512]; strncpy(token, tok, sizeof(token)-1); token[sizeof(token)-1]='\0';
+                    if (security_auth_validate_jwt(token, &client_info) == HAL_STATUS_OK) { authenticated = true; }
+                }
+                tok = strtok_r(NULL, ",", &saveptr);
+            }
+        }
+
+        // 4) URL query: GET /ws?token=...
+        if (!authenticated) {
+            // Extract request line and path
+            char method[16]={0}; char path[256]={0}; char ver[16]={0};
+            if (sscanf(request, "%15s %255s %15s", method, path, ver) == 3) {
+                char *q = strchr(path, '?');
+                if (q) {
+                    char *token_param = strstr(q+1, "token=");
+                    if (token_param) {
+                        token_param += 6; // skip token=
+                        char *amp = strchr(token_param, '&');
+                        size_t len = amp ? (size_t)(amp - token_param) : strlen(token_param);
+                        char token[512]; if (len >= sizeof(token)) len = sizeof(token)-1; memcpy(token, token_param, len); token[len]='\0';
+                        if (security_auth_validate_jwt(token, &client_info) == HAL_STATUS_OK) authenticated = true;
+                    }
+                }
+            }
+        }
+
+        if (!authenticated) {
+            // Reject before switching protocols to avoid upgrading unauthenticated
+            const char *unauth =
+                "HTTP/1.1 401 Unauthorized\r\n"
+                "Connection: close\r\n"
+                "Content-Type: application/json\r\n\r\n"
+                "{\"success\":false,\"error\":\"Authentication required\"}";
+            (void)ws_server_send_http_response(socket_fd, unauth);
+            return HAL_STATUS_UNAUTHORIZED;
+        }
+    }
+
+    char response[640];
+    // Build 101 response; optionally echo subprotocol if provided 'bearer'
     int n = snprintf(response, sizeof(response),
         "HTTP/1.1 101 Switching Protocols\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
-        "Sec-WebSocket-Accept: %s\r\n\r\n", accept_b64);
+        "Sec-WebSocket-Accept: %s\r\n",
+        accept_b64);
     if(n<0 || (size_t)n>=sizeof(response)) return HAL_STATUS_ERROR;
-    return ws_server_send_http_response(socket_fd, response);
+
+    // If client requested bearer subprotocol, echo it back
+    if (ws_strcasestr(request, "sec-websocket-protocol:") && ws_strcasestr(request, "bearer")) {
+        strncat(response, "Sec-WebSocket-Protocol: bearer\r\n", sizeof(response)-strlen(response)-1);
+    }
+    // End headers
+    strncat(response, "\r\n", sizeof(response)-strlen(response)-1);
+
+    hal_status_t send_res = ws_server_send_http_response(socket_fd, response);
+    if (send_res != HAL_STATUS_OK) return send_res;
+
+    // Mark client authenticated if applicable
+    ws_client_t *client = NULL;
+    if (ws_server_find_client(socket_fd, &client) == HAL_STATUS_OK) {
+        client->authenticated = true; // if auth disabled, it's already true from default path
+    }
+    return HAL_STATUS_OK;
 }
 
 hal_status_t ws_server_receive_frame(int socket_fd, ws_frame_t *frame) {
@@ -2130,6 +2349,8 @@ hal_status_t ws_server_read_data(int socket_fd, uint8_t *buffer, size_t buffer_s
     
     if (select_result <= 0) {
         *received_length = 0;
+        hal_log_error("WS_SERVER", "ws_server_read_data", __LINE__, HAL_STATUS_TIMEOUT,
+                      "Select timeout waiting for data (timeout=%lds)", (long)timeout.tv_sec);
         return HAL_STATUS_TIMEOUT;
     }
     
@@ -2143,7 +2364,7 @@ hal_status_t ws_server_read_data(int socket_fd, uint8_t *buffer, size_t buffer_s
         } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // Timeout occurred
             hal_log_error("WS_SERVER", "ws_server_read_data", __LINE__, 
-                         HAL_STATUS_TIMEOUT, "Socket read timeout after 1 second");
+                         HAL_STATUS_TIMEOUT, "Socket read timeout after %lds", (long)timeout.tv_sec);
             return HAL_STATUS_TIMEOUT;
         }
         return HAL_STATUS_IO_ERROR; 
@@ -2546,10 +2767,8 @@ hal_status_t ws_server_broadcast_telemetry(const char *telemetry_data, size_t da
         return result;
     }
     
-    // Update statistics
+    // Update statistics (no double-counting since ws_server_send_message already updates per-client stats)
     pthread_mutex_lock(&g_ws_server.mutex);
-    g_ws_server.status.statistics.total_messages_sent += g_ws_server.client_count;
-    g_ws_server.status.statistics.total_bytes_sent += data_length * g_ws_server.client_count;
     g_ws_server.status.statistics.last_activity = hal_get_timestamp_ms();
     pthread_mutex_unlock(&g_ws_server.mutex);
     
