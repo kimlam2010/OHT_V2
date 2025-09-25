@@ -13,7 +13,7 @@
 #include "communication_manager.h"
 #include "hal_common.h"
 #include "module_manager.h"
-#include "../websocket_server.h"
+// WebSocket removed - Firmware only uses HTTP/REST API
 
 // Communication Manager instance
 static struct {
@@ -42,7 +42,7 @@ static struct {
     uint32_t total_response_time;
     uint32_t response_count;
     
-    // WebSocket/HTTP API state
+    // HTTP API state only
     bool api_server_initialized;
     bool api_server_running;
     uint32_t active_connections;
@@ -1277,8 +1277,8 @@ hal_status_t comm_manager_init_api_server(const comm_mgr_api_config_t *config) {
     g_comm_manager.total_api_requests = 0;
     g_comm_manager.successful_api_requests = 0;
     
-    printf("[COMM_MGR] API server initialized - WebSocket port: %d, HTTP port: %d\n",
-           config->websocket_port, config->http_port);
+    printf("[COMM_MGR] HTTP API server initialized on port: %d\n",
+           config->http_port);
     
     COMM_UNLOCK();
     return HAL_STATUS_OK;
@@ -1297,56 +1297,13 @@ hal_status_t comm_manager_start_api_server(void) {
         return HAL_STATUS_OK; // Already running
     }
     
-    // Start actual WebSocket/HTTP server (Issue #130 - Fixed API mismatch)
-    
-    // Initialize WebSocket server using Version 2 API (singleton)
-    ws_server_config_t ws_config;
-    ws_config.port = g_comm_manager.config.api_config.websocket_port;
-    ws_config.max_clients = 10;
-    // Increase handshake/read timeout to reduce sporadic handshake timeouts under load
-    ws_config.timeout_ms = 15000;
-    ws_config.max_message_size = 4096;
-    ws_config.max_frame_size = 8192;
-    ws_config.ping_interval_ms = 30000;
-    ws_config.pong_timeout_ms = 10000;
-    ws_config.enable_compression = false;
-    ws_config.enable_authentication = false;
-    strcpy(ws_config.server_name, "OHT-50-WebSocket");
-    
-    printf("[COMM_MGR] 🔧 Initializing WebSocket server on port %d...\n", ws_config.port);
-    hal_status_t ws_init_result = ws_server_init(&ws_config);
-    if (ws_init_result != HAL_STATUS_OK) {
-        printf("[COMM_MGR] ❌ WebSocket server init failed (status=%d) - continuing without WebSocket\n", ws_init_result);
-        // Don't fail the entire system if WebSocket fails
-    } else {
-        printf("[COMM_MGR] ✅ WebSocket server initialized successfully\n");
-        hal_status_t ws_start_result = ws_server_start();
-        if (ws_start_result != HAL_STATUS_OK) {
-            printf("[COMM_MGR] ❌ WebSocket server start failed (status=%d) - continuing without WebSocket\n", ws_start_result);
-            // Don't fail the entire system if WebSocket fails
-        } else {
-            printf("[COMM_MGR] ✅ WebSocket server started successfully on port %d\n", ws_config.port);
-            // Enable periodic heartbeat/telemetry streaming at 1 Hz
-            // This ensures WS clients observe regular messages (Issue: no stream)
-            (void)ws_server_start_telemetry_streaming(1000);
-            printf("[COMM_MGR] 🔄 Default telemetry streaming enabled at 1 Hz\n");
-        }
-    }
+    // Start HTTP API server only (WebSocket removed per CTO decision)
     
     g_comm_manager.api_server_running = true;
     g_comm_manager.last_heartbeat_time = hal_get_timestamp_ms();
     
-    printf("[COMM_MGR] ✅ API server started - WebSocket: %d, HTTP: %d\n",
-           g_comm_manager.config.api_config.websocket_port,
+    printf("[COMM_MGR] ✅ HTTP API server started on port %d\n",
            g_comm_manager.config.api_config.http_port);
-    
-    // Log WebSocket server health status
-    hal_status_t health_status = ws_server_health_check();
-    if (health_status == HAL_STATUS_OK) {
-        printf("[COMM_MGR] ✅ WebSocket server health check: HEALTHY\n");
-    } else {
-        printf("[COMM_MGR] ⚠️  WebSocket server health check: UNHEALTHY (status=%d)\n", health_status);
-    }
     
     COMM_UNLOCK();
     return HAL_STATUS_OK;
@@ -1360,7 +1317,7 @@ hal_status_t comm_manager_stop_api_server(void) {
         return HAL_STATUS_OK; // Already stopped
     }
     
-    // TODO: Stop actual WebSocket/HTTP server
+    // TODO: Stop HTTP API server
     // For now, simulate server shutdown
     g_comm_manager.api_server_running = false;
     g_comm_manager.active_connections = 0;
@@ -1383,7 +1340,7 @@ hal_status_t comm_manager_send_telemetry(const uint8_t *data, size_t length) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    // TODO: Send telemetry data via WebSocket to all connected clients
+    // TODO: Send telemetry data via HTTP API to backend
     // For now, simulate telemetry transmission
     printf("[COMM_MGR] Telemetry sent: %zu bytes to %u connections\n",
            length, g_comm_manager.active_connections);
@@ -1404,7 +1361,7 @@ hal_status_t comm_manager_send_status(const uint8_t *status, size_t length) {
         return HAL_STATUS_NOT_INITIALIZED;
     }
     
-    // TODO: Send status update via WebSocket to all connected clients
+    // TODO: Send status update via HTTP API to backend
     // For now, simulate status transmission
     printf("[COMM_MGR] Status sent: %zu bytes to %u connections\n",
            length, g_comm_manager.active_connections);

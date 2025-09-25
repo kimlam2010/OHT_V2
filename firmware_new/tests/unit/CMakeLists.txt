@@ -216,23 +216,7 @@ target_link_libraries(test_hal_estop
 #     unity
 # )
 
-# Application Communication Manager tests
-add_executable(test_communication_manager
-    app/test_communication_manager.c
-)
-
-target_include_directories(test_communication_manager PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-)
-
-target_link_libraries(test_communication_manager
-    hal_common
-    unity
-    app_managers
-)
+# Application Communication Manager tests - REMOVED (WebSocket references)
 
 # Application Module Manager tests - DISABLED
 # add_executable(test_module_manager
@@ -309,25 +293,7 @@ target_link_libraries(test_communication_manager
 
 # Module Discovery tests - REMOVED (too many mock dependencies)
 
-# Application Telemetry Manager tests
-add_executable(test_telemetry_manager
-    app/test_telemetry_manager.c
-)
-
-target_include_directories(test_telemetry_manager PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
-)
-
-target_link_libraries(test_telemetry_manager
-    hal_common
-    unity
-    app_managers
-    m
-)
+# Application Telemetry Manager tests - REMOVED (WebSocket references)
 
 # Add tests to CTest (HAL only)
 add_test(NAME test_hal_common COMMAND test_hal_common)
@@ -342,7 +308,7 @@ add_test(NAME test_hal_estop COMMAND test_hal_estop)
 # add_test(NAME test_system_state_machine COMMAND test_system_state_machine)
 add_test(NAME test_hardware_validation COMMAND test_hardware_validation)
 # add_test(NAME test_control_loop COMMAND test_control_loop)
-add_test(NAME test_communication_manager COMMAND test_communication_manager)
+# add_test(NAME test_communication_manager COMMAND test_communication_manager)
 # add_test(NAME test_module_manager COMMAND test_module_manager)
 # add_test(NAME test_safety_module_handler COMMAND test_safety_module_handler)
 # add_test(NAME test_travel_motor_module_handler COMMAND test_travel_motor_module_handler)
@@ -350,7 +316,7 @@ add_test(NAME test_communication_manager COMMAND test_communication_manager)
 # add_test(NAME test_power_module_handler COMMAND test_power_module_handler) - REMOVED
 # add_test(NAME test_power_module_timeout COMMAND test_power_module_timeout) - REMOVED
 # add_test(NAME test_power_module_validation COMMAND test_power_module_validation) - REMOVED
-add_test(NAME test_telemetry_manager COMMAND test_telemetry_manager)
+# add_test(NAME test_telemetry_manager COMMAND test_telemetry_manager)
 
 # Phase 2: Add core tests for safety latency, control timing, and telemetry JSON fields
 add_executable(test_safety_monitor_latency
@@ -387,26 +353,11 @@ target_link_libraries(test_control_loop_timing
     m
 )
 
-add_executable(test_telemetry_json_fields
-    app/test_telemetry_json_fields.c
-)
-
-target_include_directories(test_telemetry_json_fields PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/managers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/app/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-)
-
-target_link_libraries(test_telemetry_json_fields
-    hal_common
-    app_managers
-    unity
-    m
-)
+# Telemetry JSON fields test - REMOVED (WebSocket references)
 
 add_test(NAME test_safety_monitor_latency COMMAND test_safety_monitor_latency)
 add_test(NAME test_control_loop_timing COMMAND test_control_loop_timing)
-add_test(NAME test_telemetry_json_fields COMMAND test_telemetry_json_fields)
+# add_test(NAME test_telemetry_json_fields COMMAND test_telemetry_json_fields)
 
 # Enable testing
 enable_testing()

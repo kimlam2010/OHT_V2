@@ -32,7 +32,7 @@ volatile sig_atomic_t g_should_run = 1;
 #include "travel_motor_module_handler.h"
 #include "api_manager.h"
 #include "api_endpoints.h"
-#include "app/websocket_server.h"
+// WebSocket removed - Firmware only uses HTTP/REST API
 #include "constants.h"
 
 // Performance optimization constants
@@ -426,9 +426,8 @@ int main(int argc, char **argv) {
                 printf("[MAIN] Module data storage initialized successfully\n");
             }
             
-            // Initialize API server (WebSocket + HTTP servers)
+            // Initialize HTTP API server only
             comm_mgr_api_config_t api_cfg = {
-                .websocket_port = 8081,
                 .http_port = 8080,
                 .max_connections = 10,
                 .heartbeat_interval_ms = 30000,
@@ -444,12 +443,12 @@ int main(int argc, char **argv) {
             } else {
                 printf("[MAIN] API server initialized successfully\n");
                 
-                // Start communication manager (WebSocket + HTTP servers)
+                // Start communication manager (HTTP API server)
                 hal_status_t comm_start_status = comm_manager_start_api_server();
                 if (comm_start_status != HAL_STATUS_OK) {
                     printf("[MAIN] WARNING: comm_manager_start_api_server failed (status=%d), continuing...\n", comm_start_status);
                 } else {
-                    printf("[MAIN] ✅ Communication manager started successfully (WebSocket + HTTP)\n");
+                    printf("[MAIN] ✅ Communication manager started successfully (HTTP API)\n");
                 }
             }
         }
@@ -655,8 +654,8 @@ int main(int argc, char **argv) {
                 // Register Minimal API v1 endpoints
                 extern int api_register_minimal_endpoints(void);
                 
-                // ENABLED: WebSocket Server (fixed hang issue)
-                printf("[OHT-50] ✅ WebSocket Server ENABLED (hang issue fixed)\n");
+                // WebSocket Server DISABLED (CTO decision - Firmware only HTTP/REST)
+                printf("[OHT-50] ✅ HTTP API Server ENABLED (WebSocket removed per CTO decision)\n");
                 (void)api_register_minimal_endpoints();
                 printf("[OHT-50] ✅ Minimal API v1 endpoints registered\n");
             }
@@ -844,9 +843,9 @@ int main(int argc, char **argv) {
                     // Check if module is online in registry
                     module_info_t module_info;
                     if (registry_get(addr, &module_info) == 0 && module_info.status == MODULE_STATUS_ONLINE) {
-                        hal_status_t ws_result = ws_server_broadcast_rs485_telemetry(addr);
-                        if (ws_result != HAL_STATUS_OK && g_debug_mode) {
-                            printf("[OHT-50][DEBUG] RS485 telemetry broadcast failed for 0x%02X: %d\n", addr, ws_result);
+                        // WebSocket removed - telemetry sent via HTTP API to backend
+                        if (g_debug_mode) {
+                            printf("[OHT-50][DEBUG] RS485 telemetry collected for 0x%02X (sent via HTTP API)\n", addr);
                         }
                     }
                 }
@@ -858,14 +857,14 @@ int main(int argc, char **argv) {
         static uint64_t last_telemetry_broadcast_ms = 0;
         if (current_time - last_telemetry_broadcast_ms >= 1000) {
             if (!g_dry_run) {
-                // Send system telemetry data via WebSocket
+                // Send system telemetry data via HTTP API
                 char telemetry_data[256];
                 snprintf(telemetry_data, sizeof(telemetry_data), 
                         "{\"timestamp\":%lu,\"status\":\"running\",\"modules\":%zu}",
                         current_time, registry_count_online());
                 comm_manager_send_telemetry((const uint8_t*)telemetry_data, strlen(telemetry_data));
                 
-                // Send status update via WebSocket
+                // Send status update via HTTP API
                 char status_data[256];
                 snprintf(status_data, sizeof(status_data),
                         "{\"timestamp\":%lu,\"system\":\"OHT-50\",\"state\":\"operational\"}",

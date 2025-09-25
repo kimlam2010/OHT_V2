@@ -59,9 +59,8 @@ typedef enum {
     MODBUS_EXCEPTION_GATEWAY_TARGET_DEVICE_FAILED = 0x0B
 } modbus_exception_code_t;
 
-// WebSocket/HTTP API Configuration
+// HTTP API Configuration
 typedef struct {
-    uint16_t websocket_port;               // WebSocket server port
     uint16_t http_port;                    // HTTP server port
     uint32_t max_connections;              // Maximum connections
     uint32_t heartbeat_interval_ms;        // Heartbeat interval
@@ -84,7 +83,7 @@ typedef struct {
     bool enable_crc_check;                 // Enable CRC checking
     bool enable_echo_suppression;          // Enable echo suppression
     uint32_t buffer_size;                  // Communication buffer size
-    comm_mgr_api_config_t api_config;      // WebSocket/HTTP API configuration
+    comm_mgr_api_config_t api_config;      // HTTP API configuration
 } comm_mgr_config_t;
 
 // Communication Manager Statistics
@@ -368,22 +367,22 @@ hal_status_t comm_manager_resume_scanning(void);
  */
 bool comm_manager_is_scanning(void);
 
-// WebSocket/HTTP API Functions
+// HTTP API Functions
 /**
- * @brief Initialize WebSocket/HTTP API server
+ * @brief Initialize HTTP API server
  * @param config API configuration
  * @return HAL status
  */
 hal_status_t comm_manager_init_api_server(const comm_mgr_api_config_t *config);
 
 /**
- * @brief Start WebSocket/HTTP API server
+ * @brief Start HTTP API server
  * @return HAL status
  */
 hal_status_t comm_manager_start_api_server(void);
 
 /**
- * @brief Stop WebSocket/HTTP API server
+ * @brief Stop HTTP API server
  * @return HAL status
  */
 hal_status_t comm_manager_stop_api_server(void);
@@ -393,7 +392,7 @@ float comm_manager_get_health_percentage(void);
 bool comm_manager_is_hardware_detected(void);
 
 /**
- * @brief Send telemetry data via WebSocket
+ * @brief Send telemetry data via HTTP API
  * @param data Telemetry data buffer
  * @param length Data length
  * @return HAL status
@@ -401,7 +400,7 @@ bool comm_manager_is_hardware_detected(void);
 hal_status_t comm_manager_send_telemetry(const uint8_t *data, size_t length);
 
 /**
- * @brief Send status update via WebSocket
+ * @brief Send status update via HTTP API
  * @param status Status data buffer
  * @param length Data length
  * @return HAL status
