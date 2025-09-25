@@ -45,6 +45,32 @@ target_link_libraries(websocket_server_lws
     websockets
 )
 
+# WebSocket Integration library (Issue #153 Fix)
+add_library(websocket_integration websocket_integration.c)
+target_include_directories(websocket_integration PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/managers
+    ${CMAKE_CURRENT_SOURCE_DIR}/modules
+    ${CMAKE_CURRENT_SOURCE_DIR}/api
+    ${CMAKE_CURRENT_SOURCE_DIR}/../hal/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../hal/communication
+)
+target_link_libraries(websocket_integration 
+    hal_common 
+    hal_communication 
+    app_core 
+    app_managers 
+    app_modules 
+    app_api 
+    websocket_server
+    websocket_server_lws
+    pthread 
+    ssl 
+    crypto
+    websockets
+)
+
 # Simple HTTP server for port 8081 (Issue #113 Fix) - REMOVED (duplicate functionality)
 
 # HTTP server library (Issue #113, #98 Fix)
