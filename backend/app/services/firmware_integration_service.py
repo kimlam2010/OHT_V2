@@ -71,8 +71,8 @@ class FirmwareIntegrationService:
             host="localhost",
             http_port=8080,
             ws_port=8081,
-            timeout=settings.firmware_timeout,
-            max_retries=settings.firmware_retry_count
+            timeout=getattr(settings, 'firmware_timeout', 10.0),
+            max_retries=getattr(settings, 'firmware_retry_count', 3)
         )
         
         # Connection status

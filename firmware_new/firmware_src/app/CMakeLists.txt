@@ -21,10 +21,7 @@ target_include_directories(websocket_server PUBLIC
 )
 target_link_libraries(websocket_server hal_common hal_communication app_core app_managers app_modules app_api pthread ssl crypto)
 
-# Simple HTTP server for port 8081 (Issue #113 Fix)
-add_library(simple_http_8081 simple_http_8081.c)
-target_include_directories(simple_http_8081 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(simple_http_8081 pthread)
+# Simple HTTP server for port 8081 (Issue #113 Fix) - REMOVED (duplicate functionality)
 
 # HTTP server library (Issue #113, #98 Fix)
 add_library(http_server http_server.c)

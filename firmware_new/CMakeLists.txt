@@ -48,7 +48,6 @@ target_link_libraries(oht50_main
     app_api
     app_storage
     websocket_server
-    simple_http_8081
     utils
     pthread
     ssl

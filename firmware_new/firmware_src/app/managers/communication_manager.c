@@ -1303,7 +1303,8 @@ hal_status_t comm_manager_start_api_server(void) {
     ws_server_config_t ws_config;
     ws_config.port = g_comm_manager.config.api_config.websocket_port;
     ws_config.max_clients = 10;
-    ws_config.timeout_ms = 5000;
+    // Increase handshake/read timeout to reduce sporadic handshake timeouts under load
+    ws_config.timeout_ms = 15000;
     ws_config.max_message_size = 4096;
     ws_config.max_frame_size = 8192;
     ws_config.ping_interval_ms = 30000;
@@ -1319,6 +1320,10 @@ hal_status_t comm_manager_start_api_server(void) {
             printf("[COMM_MGR] WARNING: WebSocket server start failed (status=%d)\n", ws_start_result);
         } else {
             printf("[COMM_MGR] ✅ WebSocket server started successfully on port %d\n", ws_config.port);
+            // Enable periodic heartbeat/telemetry streaming at 1 Hz
+            // This ensures WS clients observe regular messages (Issue: no stream)
+            (void)ws_server_start_telemetry_streaming(1000);
+            printf("[COMM_MGR] 🔄 Default telemetry streaming enabled at 1 Hz\n");
         }
     }
     
