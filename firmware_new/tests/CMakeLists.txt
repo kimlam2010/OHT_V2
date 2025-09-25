@@ -5,52 +5,7 @@
 # Include unit tests - ENABLED for HAL testing
 add_subdirectory(unit)
 
-# WebSocket Server Unit Test
-add_executable(test_websocket_server
-    unit/test_websocket_server.c
-)
-
-target_include_directories(test_websocket_server PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-)
-
-target_link_libraries(test_websocket_server
-    hal_common
-    websocket_server
-    unity
-    pthread
-    ssl
-    crypto
-    m
-)
-
-# Add WebSocket test to CTest
-add_test(NAME test_websocket_server COMMAND test_websocket_server)
-
-# WebSocket Integration Test
-add_executable(test_websocket_integration
-    integration/test_websocket_integration.c
-)
-
-target_include_directories(test_websocket_integration PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hal/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/app
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-)
-
-target_link_libraries(test_websocket_integration
-    hal_common
-    websocket_server
-    pthread
-    ssl
-    crypto
-    m
-)
-
-# Add WebSocket integration test to CTest
-add_test(NAME test_websocket_integration COMMAND test_websocket_integration)
+# WebSocket tests REMOVED (CTO decision - Firmware only HTTP/REST)
 
 # Basic integration test - ENABLED (simplified)
 add_executable(test_basic_integration
@@ -394,7 +349,7 @@ target_link_libraries(test_end_to_end
     hal_safety
     app_managers
     app_api
-    websocket_server
+    http_server
     unity
     uuid
     m
@@ -539,7 +494,7 @@ target_link_libraries(test_soak
     app_modules
     app_api
     app_storage
-    websocket_server
+    http_server
     unity
     pthread
     m

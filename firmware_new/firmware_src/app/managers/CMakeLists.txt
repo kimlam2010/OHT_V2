@@ -26,6 +26,6 @@ target_link_libraries(app_managers
     hal_communication
     hal_safety
     hal_peripherals
-    websocket_server
+    http_server
     m
 )
