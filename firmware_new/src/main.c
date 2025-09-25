@@ -307,15 +307,16 @@ int main(int argc, char **argv) {
 
     // 1) Initialize HAL subsystems
     if (!g_dry_run) {
-        // LED subsystem
+        // LED subsystem - Non-blocking initialization
         if (hal_led_init() != HAL_STATUS_OK) {
-            fprintf(stderr, "[OHT-50] hal_led_init failed\n");
+            fprintf(stderr, "[OHT-50] ⚠️  hal_led_init failed - continuing without LEDs\n");
         } else {
             // Turn on Power LED
             (void)hal_led_power_set(LED_STATE_ON);
+            printf("[OHT-50] ✅ LED subsystem initialized\n");
         }
 
-        // E-Stop subsystem
+        // E-Stop subsystem - Non-blocking initialization
         estop_config_t estop_cfg = {
             .pin = ESTOP_PIN,
             .response_timeout_ms = 100,
@@ -323,11 +324,12 @@ int main(int argc, char **argv) {
             .auto_reset_enabled = false
         };
         if (hal_estop_init(&estop_cfg) != HAL_STATUS_OK) {
-            fprintf(stderr, "[OHT-50] hal_estop_init failed\n");
+            fprintf(stderr, "[OHT-50] ⚠️  hal_estop_init failed - continuing without E-Stop\n");
         } else {
             // Register callback and run self-test
             (void)hal_estop_set_callback(NULL);
             (void)hal_estop_self_test();
+            printf("[OHT-50] ✅ E-Stop subsystem initialized\n");
         }
 
         // RS485 subsystem (best-effort init)
@@ -341,7 +343,9 @@ int main(int argc, char **argv) {
         rs485_cfg.timeout_ms = MODBUS_TIMEOUT_MS;
         rs485_cfg.retry_count = MODBUS_RETRY_COUNT;
         if (hal_rs485_init(&rs485_cfg) != HAL_STATUS_OK) {
-            fprintf(stderr, "[OHT-50] hal_rs485_init failed (continuing)\n");
+            fprintf(stderr, "[OHT-50] ⚠️  hal_rs485_init failed - continuing without RS485\n");
+        } else {
+            printf("[OHT-50] ✅ RS485 subsystem initialized\n");
         }
 
         // Communication manager init (for scan)
@@ -571,6 +575,33 @@ int main(int argc, char **argv) {
                 
                 // ENABLED: WebSocket Server (fixed hang issue)
                 printf("[OHT-50] ✅ WebSocket Server ENABLED (hang issue fixed)\n");
+                
+                // Initialize WebSocket server directly
+                ws_server_config_t ws_config;
+                ws_config.port = 8081;
+                ws_config.max_clients = 10;
+                ws_config.timeout_ms = 15000;
+                ws_config.max_message_size = 4096;
+                ws_config.max_frame_size = 8192;
+                ws_config.ping_interval_ms = 30000;
+                ws_config.pong_timeout_ms = 10000;
+                ws_config.enable_compression = false;
+                ws_config.enable_authentication = false;
+                strcpy(ws_config.server_name, "OHT-50-WebSocket");
+                
+                printf("[OHT-50] 🔧 Initializing WebSocket server on port %d...\n", ws_config.port);
+                hal_status_t ws_init_result = ws_server_init(&ws_config);
+                if (ws_init_result != HAL_STATUS_OK) {
+                    printf("[OHT-50] ⚠️  WebSocket server init failed (status=%d) - continuing\n", ws_init_result);
+                } else {
+                    hal_status_t ws_start_result = ws_server_start();
+                    if (ws_start_result != HAL_STATUS_OK) {
+                        printf("[OHT-50] ⚠️  WebSocket server start failed (status=%d) - continuing\n", ws_start_result);
+                    } else {
+                        printf("[OHT-50] ✅ WebSocket server started successfully on port %d\n", ws_config.port);
+                    }
+                }
+                
                 (void)api_register_minimal_endpoints();
                 printf("[OHT-50] ✅ Minimal API v1 endpoints registered\n");
             }
@@ -772,18 +803,24 @@ int main(int argc, char **argv) {
         static uint64_t last_telemetry_broadcast_ms = 0;
         if (current_time - last_telemetry_broadcast_ms >= 1000) {
             if (!g_dry_run) {
+                // Check WebSocket server health
+                hal_status_t ws_health = ws_server_health_check();
+                if (ws_health != HAL_STATUS_OK && g_debug_mode) {
+                    printf("[OHT-50][DEBUG] WebSocket server health check failed: %d\n", ws_health);
+                }
+                
                 // Send system telemetry data via WebSocket
                 char telemetry_data[256];
                 snprintf(telemetry_data, sizeof(telemetry_data), 
-                        "{\"timestamp\":%lu,\"status\":\"running\",\"modules\":%zu}",
-                        current_time, registry_count_online());
+                        "{\"timestamp\":%lu,\"status\":\"running\",\"modules\":%zu,\"ws_health\":%d}",
+                        current_time, registry_count_online(), ws_health);
                 comm_manager_send_telemetry((const uint8_t*)telemetry_data, strlen(telemetry_data));
                 
                 // Send status update via WebSocket
                 char status_data[256];
                 snprintf(status_data, sizeof(status_data),
-                        "{\"timestamp\":%lu,\"system\":\"OHT-50\",\"state\":\"operational\"}",
-                        current_time);
+                        "{\"timestamp\":%lu,\"system\":\"OHT-50\",\"state\":\"operational\",\"ws_health\":%d}",
+                        current_time, ws_health);
                 comm_manager_send_status((const uint8_t*)status_data, strlen(status_data));
             }
             last_telemetry_broadcast_ms = current_time;
@@ -941,6 +978,11 @@ int main(int argc, char **argv) {
     printf("[OHT-50] Shutting down...\n");
     // Graceful shutdown
     if (!g_dry_run) {
+        // Stop WebSocket Server
+        printf("[OHT-50] Stopping WebSocket Server...\n");
+        (void)ws_server_stop();
+        (void)ws_server_deinit();
+        
         // Stop Communication Manager API Server
         printf("[OHT-50] Stopping API Manager...\n");
         // Minimal API does not allocate endpoint resources; no-op

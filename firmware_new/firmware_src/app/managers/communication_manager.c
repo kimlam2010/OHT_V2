@@ -1309,15 +1309,21 @@ hal_status_t comm_manager_start_api_server(void) {
     ws_config.max_frame_size = 8192;
     ws_config.ping_interval_ms = 30000;
     ws_config.pong_timeout_ms = 10000;
+    ws_config.enable_compression = false;
+    ws_config.enable_authentication = false;
     strcpy(ws_config.server_name, "OHT-50-WebSocket");
     
+    printf("[COMM_MGR] 🔧 Initializing WebSocket server on port %d...\n", ws_config.port);
     hal_status_t ws_init_result = ws_server_init(&ws_config);
     if (ws_init_result != HAL_STATUS_OK) {
-        printf("[COMM_MGR] WARNING: WebSocket server init failed (status=%d)\n", ws_init_result);
+        printf("[COMM_MGR] ❌ WebSocket server init failed (status=%d) - continuing without WebSocket\n", ws_init_result);
+        // Don't fail the entire system if WebSocket fails
     } else {
+        printf("[COMM_MGR] ✅ WebSocket server initialized successfully\n");
         hal_status_t ws_start_result = ws_server_start();
         if (ws_start_result != HAL_STATUS_OK) {
-            printf("[COMM_MGR] WARNING: WebSocket server start failed (status=%d)\n", ws_start_result);
+            printf("[COMM_MGR] ❌ WebSocket server start failed (status=%d) - continuing without WebSocket\n", ws_start_result);
+            // Don't fail the entire system if WebSocket fails
         } else {
             printf("[COMM_MGR] ✅ WebSocket server started successfully on port %d\n", ws_config.port);
             // Enable periodic heartbeat/telemetry streaming at 1 Hz
@@ -1330,9 +1336,17 @@ hal_status_t comm_manager_start_api_server(void) {
     g_comm_manager.api_server_running = true;
     g_comm_manager.last_heartbeat_time = hal_get_timestamp_ms();
     
-    printf("[COMM_MGR] API server started - WebSocket: %d, HTTP: %d\n",
+    printf("[COMM_MGR] ✅ API server started - WebSocket: %d, HTTP: %d\n",
            g_comm_manager.config.api_config.websocket_port,
            g_comm_manager.config.api_config.http_port);
+    
+    // Log WebSocket server health status
+    hal_status_t health_status = ws_server_health_check();
+    if (health_status == HAL_STATUS_OK) {
+        printf("[COMM_MGR] ✅ WebSocket server health check: HEALTHY\n");
+    } else {
+        printf("[COMM_MGR] ⚠️  WebSocket server health check: UNHEALTHY (status=%d)\n", health_status);
+    }
     
     COMM_UNLOCK();
     return HAL_STATUS_OK;
