@@ -27,10 +27,21 @@ PARITY = os.environ.get("RS485_PARITY", "N")
 STOPBITS = int(os.environ.get("RS485_STOPBITS", "1"))
 BYTESIZE = int(os.environ.get("RS485_BYTESIZE", "8"))
 
-UNIT_MOTOR = int(os.environ.get("UNIT_MOTOR", "1"), 0)
-UNIT_POWER = int(os.environ.get("UNIT_POWER", "2"), 0)
-UNIT_SAFETY = int(os.environ.get("UNIT_SAFETY", "3"), 0)
-UNIT_DOCK = int(os.environ.get("UNIT_DOCK", "5"), 0)
+# Default unit IDs aligned with firmware expectation:
+# 0x02 Power, 0x03 Safety, 0x04 Travel Motor, 0x05 Dock
+UNIT_MOTOR = int(os.environ.get("UNIT_MOTOR", "0x04"), 0)
+UNIT_POWER = int(os.environ.get("UNIT_POWER", "0x02"), 0)
+UNIT_SAFETY = int(os.environ.get("UNIT_SAFETY", "0x03"), 0)
+UNIT_DOCK = int(os.environ.get("UNIT_DOCK", "0x05"), 0)
+
+# Optional extra motor-like responders for firmware scans (comma-separated hex or dec)
+EXTRA_MOTOR_UNITS_RAW = os.environ.get("EXTRA_MOTOR_UNITS", "0x06,0x07,0x08")
+EXTRA_MOTOR_UNITS = []
+for token in [t.strip() for t in EXTRA_MOTOR_UNITS_RAW.split(",") if t.strip()]:
+    try:
+        EXTRA_MOTOR_UNITS.append(int(token, 0))
+    except ValueError:
+        logger.warning(f"Ignoring invalid EXTRA_MOTOR_UNITS entry: {token}")
 
 random.seed()
 
@@ -48,6 +59,16 @@ def make_context() -> ModbusServerContext:
         UNIT_SAFETY: safety,
         UNIT_DOCK: dock,
     }
+
+    # Add extra motor responders (clone contexts) for addresses like 0x06/0x07/0x08
+    for addr in EXTRA_MOTOR_UNITS:
+        if addr in slaves:
+            continue
+        try:
+            slaves[addr] = build_motor_slave()
+            logger.info(f"Added extra motor responder at 0x{addr:02X}")
+        except Exception as e:
+            logger.warning(f"Failed to add extra motor responder at 0x{addr:02X}: {e}")
     return ModbusServerContext(slaves=slaves, single=False)
 
 

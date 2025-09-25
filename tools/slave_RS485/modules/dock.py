@@ -55,6 +55,10 @@ def build_dock_slave() -> ModbusSlaveContext:
     hr[DOCK_MODULE_TYPE_REG] = 0x0005
     hr[DOCK_FIRMWARE_VERSION_REG] = 0x0101
     hr[DOCK_HARDWARE_VERSION_REG] = 0x0101
+    # Provide non-zero module name/version markers at 0x00F8.. to satisfy FW readers
+    # Two 16-bit words could encode ASCII like 'Y0' 'S0' or any non-zero signature
+    hr[0x00F8] = 0x5930  # 'Y0'
+    hr[0x00F9] = 0x5330  # 'S0'
     # Defaults for config
     hr[DOCK_CONFIG_APPROACH_DISTANCE_REG] = 500
     hr[DOCK_CONFIG_FINAL_SPEED_REG] = 50
