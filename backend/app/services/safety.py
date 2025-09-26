@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 from datetime import datetime, timezone
 
 import os
-from app.services.firmware_integration_service import FirmwareIntegrationService, MockFirmwareService
+from app.services.unified_firmware_service import get_firmware_service
 from app.core.monitoring import alert_manager, metrics_collector
 
 logger = logging.getLogger(__name__)
@@ -17,49 +17,27 @@ class SafetyService:
     """Safety service"""
     
     def __init__(self, use_mock: bool = False):
-        # Honor environment flag for production usage (no mock in production)
-        # Default to false to avoid mock in production unless explicitly enabled
-        env_use_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
-        testing_mode = os.getenv("TESTING", "false").lower() == "true"
-        
-        # Use mock if testing mode OR both flags are true
-        effective_use_mock = testing_mode or (use_mock and env_use_mock)
-        
-        if effective_use_mock:
-            self.firmware_service = MockFirmwareService()
-            logger.info("🧪 SafetyService: Using MockFirmwareService (testing_mode=%s, use_mock=%s, env_use_mock=%s)", 
-                       testing_mode, use_mock, env_use_mock)
-        else:
-            self.firmware_service = FirmwareIntegrationService()
-            logger.info("🔌 SafetyService: Using FirmwareIntegrationService (testing_mode=%s, use_mock=%s, env_use_mock=%s)", 
-                       testing_mode, use_mock, env_use_mock)
-        
         self.safety_alerts = []
         self.max_alerts = 100
         
     async def get_safety_status(self) -> Dict[str, Any]:
         """Get current safety status"""
         try:
-            # Get robot status to check safety
-            robot_status = await self.firmware_service.get_robot_status()
+            service = await get_firmware_service()
+            response = await service.get_robot_status()
+            data = response.data if response.success and response.data else {}
             
             safety_status = {
                 "status": "normal",
-                "emergency_stop": False,
+                "emergency_stop": data.get("status") == "emergency_stop",
                 "obstacles_detected": False,
-                "temperature_normal": True,  # Add required field
-                "timestamp": datetime.now(timezone.utc).isoformat()  # Add required field
+                "temperature_normal": True,
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
-            # Check for safety issues
-            if robot_status.get("status") == "emergency_stop":
+            if safety_status["emergency_stop"]:
                 safety_status["status"] = "emergency"
-                safety_status["emergency_stop"] = True
                 await self._create_safety_alert("emergency_stop", "critical", "Emergency stop activated")
-            
-            # Optional: warning conditions derived from robot_status without temperature
-            if robot_status.get("status") == "warning":
-                safety_status["status"] = "warning"
             
             return safety_status
             
@@ -78,13 +56,14 @@ class SafetyService:
     async def emergency_stop(self) -> Dict[str, Any]:
         """Execute emergency stop"""
         try:
-            success = await self.firmware_service.emergency_stop()
+            service = await get_firmware_service()
+            response = await service.emergency_stop()
             
-            if success:
+            if response.success:
                 await self._create_safety_alert("emergency_stop", "critical", "Emergency stop executed")
                 return {"success": True, "status": "emergency_stop"}
             else:
-                return {"success": False, "error": "Emergency stop failed"}
+                return {"success": False, "error": response.error or "Emergency stop failed"}
                 
         except Exception as e:
             logger.error(f"Emergency stop failed: {e}")
@@ -93,15 +72,12 @@ class SafetyService:
     async def acknowledge_alert(self, alert_id: str) -> Dict[str, Any]:
         """Acknowledge safety alert"""
         try:
-            # Find and update alert
             for alert in self.safety_alerts:
                 if alert.get("id") == alert_id:
                     alert["acknowledged"] = True
                     alert["acknowledged_at"] = datetime.now(timezone.utc).isoformat()
                     return {"success": True, "alert": alert}
-            
             return {"success": False, "error": "Alert not found"}
-            
         except Exception as e:
             logger.error(f"Failed to acknowledge alert: {e}")
             return {"success": False, "error": str(e)}
@@ -122,14 +98,10 @@ class SafetyService:
         }
         
         self.safety_alerts.append(alert)
-        
-        # Limit alerts
         if len(self.safety_alerts) > self.max_alerts:
             self.safety_alerts = self.safety_alerts[-self.max_alerts:]
         
-        # Send to alert manager
         await alert_manager.create_alert(alert_type, severity, message)
-        
         logger.warning(f"Safety alert: {severity.upper()} - {message}")
 
 

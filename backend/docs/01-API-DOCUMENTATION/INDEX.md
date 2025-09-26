@@ -44,3 +44,15 @@ Tài liệu API cho OHT-50 Backend System, bao gồm tài liệu API, kết qu�
 **📅 Last Updated:** 2025-01-28  
 **📁 Location:** `backend/docs/01-API-DOCUMENTATION/`  
 **🔗 Related:** [Backend README](../../README.md)
+
+## Firmware Health & Metrics
+
+### Endpoint: GET /api/v1/firmware/health
+- Mô tả: Trả về tình trạng kết nối firmware, trạng thái circuit breaker, last heartbeat
+- Yêu cầu: Auth
+- Performance: < 50ms
+
+### Endpoint: GET /api/v1/firmware/metrics
+- Mô tả: Xuất metrics ở định dạng Prometheus cho firmware integration
+- Yêu cầu: Auth (hoặc giới hạn IP nội bộ)
+- Performance: < 50ms

@@ -14,7 +14,7 @@ from app.models.module_telemetry import (
     TelemetryUpdateRequest, TelemetryUpdateResponse
 )
 from app.services.validation_service import validation_service
-from app.services.firmware_integration_service import firmware_service
+from app.services.unified_firmware_service import get_firmware_service
 from app.services.database_service import db_service
 
 logger = logging.getLogger(__name__)
@@ -32,16 +32,14 @@ async def get_module_telemetry(module_id: int):
     try:
         logger.info(f"📊 Getting telemetry for module {module_id}")
         
-        # Get raw data from firmware
-        raw_data = await firmware_service.get_module_telemetry(module_id)
+        service = await get_firmware_service()
+        resp = await service.get_module_telemetry(module_id)
+        raw_data = resp.data if resp.success and resp.data else None
         
         if not raw_data:
             raise HTTPException(status_code=404, detail=f"Module {module_id} not found")
         
-        # Enhance data with validation
         enhanced_data = await validation_service.enhance_telemetry_data(raw_data)
-        
-        # Create response model
         telemetry_response = ModuleTelemetry(**enhanced_data)
         
         return {
@@ -68,7 +66,6 @@ async def validate_module_telemetry(module_id: int, telemetry_data: ModuleTeleme
     try:
         logger.info(f"🔍 Validating telemetry for module {module_id}")
         
-        # Validate telemetry data
         validation_result = await validation_service.validate_telemetry_data(telemetry_data)
         
         return {
@@ -102,10 +99,8 @@ async def update_module_telemetry(module_id: int, request: TelemetryUpdateReques
     try:
         logger.info(f"✏️ Updating telemetry for module {module_id}")
         
-        # Validate the telemetry data
         validation_result = await validation_service.validate_telemetry_data(request.telemetry_data)
         
-        # Check if validation passes or force update is requested
         if not validation_result.valid and not request.force:
             return {
                 "success": False,
@@ -118,7 +113,6 @@ async def update_module_telemetry(module_id: int, request: TelemetryUpdateReques
                 "timestamp": datetime.utcnow().isoformat()
             }
         
-        # Update database
         update_success = await db_service.update_module_telemetry(
             module_id, 
             request.telemetry_data
@@ -127,15 +121,14 @@ async def update_module_telemetry(module_id: int, request: TelemetryUpdateReques
         if not update_success:
             raise HTTPException(status_code=500, detail="Failed to update telemetry data")
         
-        # Send to firmware if validation passed
         if validation_result.valid:
-            firmware_success = await firmware_service.update_module_telemetry(
+            service = await get_firmware_service()
+            fw_resp = await service.update_module_telemetry(
                 module_id,
                 request.telemetry_data.dict()
             )
-            
-            if not firmware_success:
-                logger.warning(f"⚠️ Failed to update firmware for module {module_id}")
+            if not fw_resp.success:
+                logger.warning(f"⚠️ Failed to update firmware for module {module_id}: {fw_resp.error}")
         
         return {
             "success": True,

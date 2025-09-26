@@ -61,10 +61,8 @@ class Settings(BaseSettings):
     # Metrics
     metrics_port: str = "9090"
     
-    # Firmware Integration
-    firmware_url: str = "http://localhost:8080"  # Primary HTTP API server
-    firmware_url_alt: str = "http://localhost:8081"  # Alternative WebSocket server
-    firmware_websocket_url: str = "ws://localhost:8081/ws"
+    # Firmware Integration (HTTP-only per Architecture Issue #156)
+    firmware_url: str = "http://localhost:8080"
     firmware_timeout: float = 5.0
     firmware_retry_count: int = 3
     use_mock_firmware: bool = False  # Use mock firmware (includes RS485 mock) - Only allowed in non-production

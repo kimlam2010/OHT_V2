@@ -55,18 +55,15 @@ async def startup_event():
     """Initialize firmware service on startup"""
     global firmware_service
     try:
-        from app.services.firmware_integration_service import FirmwareIntegrationService
-        
+        from app.services.unified_firmware_service import UnifiedFirmwareService
         logger.info("🚀 Starting FW Integration Server...")
-        firmware_service = FirmwareIntegrationService()
-        
-        # Initialize firmware service
-        success = await firmware_service.initialize()
-        if success:
-            logger.info("✅ Firmware Integration Service initialized")
+        firmware_service = UnifiedFirmwareService()
+        # Probe once
+        resp = await firmware_service.get_robot_status()
+        if resp.success:
+            logger.info("✅ Firmware Unified Service probe OK")
         else:
-            logger.warning("⚠️ Firmware Integration Service initialization failed")
-            
+            logger.warning("⚠️ Firmware Unified Service probe failed: %s", resp.error)
     except Exception as e:
         logger.error(f"❌ Startup error: {e}")
 
@@ -75,8 +72,8 @@ async def shutdown_event():
     """Cleanup on shutdown"""
     global firmware_service
     if firmware_service:
-        await firmware_service.shutdown()
-        logger.info("✅ Firmware Integration Service shutdown")
+        await firmware_service.close()
+        logger.info("✅ Firmware Unified Service shutdown")
 
 @app.get("/")
 async def root():
@@ -90,10 +87,13 @@ async def root():
 @app.get("/health")
 async def health():
     """Health check endpoint"""
+    ok = False
+    if firmware_service:
+        ok = firmware_service.is_connected()
     return {
-        "status": "healthy",
+        "status": "healthy" if ok else "degraded",
         "service": "fw-integration-server",
-        "firmware_connected": firmware_service is not None
+        "firmware_connected": ok
     }
 
 @app.get("/api/v1/fw/system/status")
@@ -101,10 +101,9 @@ async def get_firmware_system_status():
     """Get firmware system status"""
     if not firmware_service:
         raise HTTPException(status_code=503, detail="Firmware service not available")
-    
     try:
-        status = await firmware_service.get_system_status()
-        return status
+        resp = await firmware_service.get_robot_status()
+        return resp.data or {"error": resp.error}
     except Exception as e:
         logger.error(f"❌ Failed to get system status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -114,10 +113,8 @@ async def get_firmware_system_health():
     """Get firmware system health"""
     if not firmware_service:
         raise HTTPException(status_code=503, detail="Firmware service not available")
-    
     try:
-        health = await firmware_service.get_system_health()
-        return health
+        return firmware_service.get_health_status()
     except Exception as e:
         logger.error(f"❌ Failed to get system health: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -127,14 +124,10 @@ async def get_firmware_modules():
     """Get firmware modules"""
     if not firmware_service:
         raise HTTPException(status_code=503, detail="Firmware service not available")
-    
     try:
-        modules = await firmware_service.get_modules()
-        return {
-            "success": True,
-            "data": modules,
-            "count": len(modules)
-        }
+        resp = await firmware_service.get_modules_status()
+        modules = resp.data.get("modules", []) if resp.success and resp.data else []
+        return {"success": True, "data": modules, "count": len(modules)}
     except Exception as e:
         logger.error(f"❌ Failed to get modules: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -143,56 +136,30 @@ async def get_firmware_modules():
 async def get_firmware_connection_status():
     """Get firmware connection status"""
     if not firmware_service:
-        return {
-            "status": "disconnected",
-            "message": "Firmware service not initialized"
-        }
-    
+        return {"status": "disconnected", "message": "Firmware service not initialized"}
     try:
-        status = firmware_service.get_connection_status()
-        return {
-            "success": True,
-            "data": status
-        }
+        return {"success": True, "data": firmware_service.get_health_status()}
     except Exception as e:
         logger.error(f"❌ Failed to get connection status: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 @app.get("/api/v1/communication/status")
 async def get_communication_status():
     """Get communication status"""
     if not firmware_service:
-        return {
-            "success": False,
-            "error": "Firmware service not available"
-        }
-    
+        return {"success": False, "error": "Firmware service not available"}
     try:
-        # Get firmware connection status
-        fw_status = firmware_service.get_connection_status()
-        
-        # Get system health
-        system_health = await firmware_service.get_system_health()
-        
+        fw_status = firmware_service.get_health_status()
         return {
             "success": True,
             "data": {
-                "overall_status": "healthy" if fw_status["status"] == "connected" else "degraded",
+                "overall_status": "healthy" if fw_status.get("firmware_connected") else "degraded",
                 "firmware_connection": fw_status,
-                "system_health": system_health,
                 "communication_channels": {
                     "http_api": {
-                        "status": "active" if fw_status["status"] == "connected" else "inactive",
-                        "protocol": "HTTP/1.1",
+                        "status": "active" if fw_status.get("firmware_connected") else "inactive",
+                        "protocol": "HTTP",
                         "port": 8080
-                    },
-                    "websocket": {
-                        "status": "active" if fw_status["status"] == "connected" else "inactive",
-                        "protocol": "WebSocket",
-                        "port": 8081
                     }
                 }
             }
@@ -203,7 +170,6 @@ async def get_communication_status():
 
 if __name__ == "__main__":
     import uvicorn
-    
     logger.info("🚀 Starting Simple FW Integration Server on port 8000...")
     uvicorn.run(
         "simple_server:app",
