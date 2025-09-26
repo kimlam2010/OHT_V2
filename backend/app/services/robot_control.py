@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from app.core.database import get_db_context
 from app.models.robot import Robot
 from app.models.telemetry import TelemetryCurrent
-from app.services.firmware_integration_service import FirmwareIntegrationService, MockFirmwareService
+from app.services.unified_firmware_service import UnifiedFirmwareService
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +29,9 @@ class RobotControlService:
         from app.config import settings
         allow_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true" or settings.use_mock_firmware
         is_production = settings.environment.lower() == "production"
-        if allow_mock and not is_production:
-            self._firmware_service = MockFirmwareService()
-            logger.warning("🧪 MOCK ENABLED: Using MockFirmwareService (non-production only)")
-        else:
-            self._firmware_service = FirmwareIntegrationService()
-            logger.info("Using Real FirmwareIntegrationService")
+        # Unified service handles protection, retry, caching
+        self._firmware_service = UnifiedFirmwareService()
+        logger.info("Using UnifiedFirmwareService")
         
         # No dynamic flipping in runtime; mock selection is at init time only
         self._force_mock = allow_mock and not is_production or os.getenv("TESTING") == "true"
@@ -226,7 +223,8 @@ class RobotControlService:
         """Fetch real-time status from Firmware via HTTP API"""
         try:
             # Get real-time data from Firmware HTTP API
-            firmware_data = await self._firmware_service.get_robot_status()
+            resp = await self._firmware_service.get_robot_status()
+            firmware_data = resp.data if resp and resp.success else {}
             return firmware_data
         except Exception as e:
             logger.error(f"Firmware communication failed: {e}")

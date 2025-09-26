@@ -12,7 +12,7 @@ from app.schemas.rs485 import (
     RS485ModuleInfo, RS485BusHealth, RS485DiscoveryStatus, 
     RS485DiscoveryResult, RS485ModuleTelemetry
 )
-from app.services.firmware_integration_service import firmware_service
+from app.services.unified_firmware_service import get_firmware_service
 from app.services.mock_rs485_service import mock_rs485_service
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,9 @@ class RS485Service:
             self._service = mock_rs485_service
         else:
             logger.info("🔌 RS485 Service: Using Real Firmware Integration Service")
-            self._service = firmware_service
+            # Unified service instance
+            # Lazy init because get_firmware_service is async
+            self._service = None
             
     def _should_use_mock(self) -> bool:
         """Determine if should use mock service"""
@@ -64,6 +66,8 @@ class RS485Service:
     async def initialize(self) -> bool:
         """Initialize RS485 service"""
         try:
+            if self._service is None:
+                self._service = await get_firmware_service()
             if hasattr(self._service, 'initialize'):
                 return await self._service.initialize()
             return True
@@ -287,7 +291,9 @@ class RS485Service:
                 return await self._service.stop_module_scan(reason)
             else:
                 # Call firmware service directly
-                return await firmware_service.stop_module_scan(reason)
+                if self._service is None:
+                    self._service = await get_firmware_service()
+                return await self._service.stop_module_scan(reason)
                 
         except Exception as e:
             logger.error(f"❌ Failed to stop module scan: {e}")
@@ -307,7 +313,9 @@ class RS485Service:
                 return await self._service.pause_module_scan(reason)
             else:
                 # Call firmware service directly
-                return await firmware_service.pause_module_scan(reason)
+                if self._service is None:
+                    self._service = await get_firmware_service()
+                return await self._service.pause_module_scan(reason)
                 
         except Exception as e:
             logger.error(f"❌ Failed to pause module scan: {e}")
@@ -327,7 +335,9 @@ class RS485Service:
                 return await self._service.resume_module_scan(reason)
             else:
                 # Call firmware service directly
-                return await firmware_service.resume_module_scan(reason)
+                if self._service is None:
+                    self._service = await get_firmware_service()
+                return await self._service.resume_module_scan(reason)
                 
         except Exception as e:
             logger.error(f"❌ Failed to resume module scan: {e}")
@@ -347,7 +357,9 @@ class RS485Service:
                 return await self._service.start_module_scan(reason)
             else:
                 # Call firmware API
-                response = await firmware_service.post("/api/v1/modules/start-scan", {
+                if self._service is None:
+                    self._service = await get_firmware_service()
+                response = await self._service._http_post("/api/v1/modules/start-scan", {
                     "reason": reason or "Backend triggered start scan",
                     "timestamp": datetime.now().isoformat()
                 })
@@ -385,7 +397,9 @@ class RS485Service:
                 return await self._service.get_module_scan_status()
             else:
                 # Call firmware API via FirmwareIntegrationService
-                response = await firmware_service.get_module_scan_status()
+                if self._service is None:
+                    self._service = await get_firmware_service()
+                response = await self._service.get_module_scan_status()
                 
                 if response and response.get("success"):
                     return {

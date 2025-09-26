@@ -20,92 +20,50 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
 
 from app.core.security import get_current_user
-from app.services.firmware_integration_service import firmware_service, FirmwareIntegrationService
 from app.models.user import User
+from app.services.unified_firmware_service import get_firmware_service, UnifiedFirmwareService
 
 logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter(prefix="/communication", tags=["Communication"])
+router = APIRouter(prefix="/api/v1/communication", tags=["communication"])
 
 
-# Dependency to get firmware service
-async def get_firmware_service() -> FirmwareIntegrationService:
-    """Get firmware service instance"""
-    return firmware_service
+async def _get_fw() -> UnifiedFirmwareService:
+    return await get_firmware_service()
 
 
 @router.get("/status")
 async def get_communication_status(
     current_user: User = Depends(get_current_user),
-    fw_service: FirmwareIntegrationService = Depends(get_firmware_service)
+    fw: UnifiedFirmwareService = Depends(_get_fw)
 ):
-    """
-    Get communication status
-    
-    Returns overall communication system status including
-    firmware connection, protocols, and channels.
-    """
     try:
-        # Get firmware connection status
-        fw_status = fw_service.get_connection_status()
-        
-        # Get system health
-        system_health = await fw_service.get_system_health()
-        
-        # Get modules for communication channels
-        modules = await fw_service.get_modules()
-        
-        communication_status = {
+        fw_status = fw.get_health_status()
+        http_active = bool(fw_status.get("firmware_connected"))
+        return {
             "success": True,
             "data": {
-                "overall_status": "healthy" if fw_status["status"] == "connected" else "degraded",
+                "overall_status": "healthy" if http_active else "degraded",
                 "firmware_connection": fw_status,
-                "system_health": system_health,
                 "communication_channels": {
                     "http_api": {
-                        "status": "active" if fw_status["status"] == "connected" else "inactive",
-                        "protocol": "HTTP/1.1",
-                        "port": 8080,
-                        "endpoints": len(modules) if modules else 0
-                    },
-                    "websocket": {
-                        "status": "active" if fw_status["status"] == "connected" else "inactive",
-                        "protocol": "WebSocket",
-                        "port": 8081,
-                        "real_time": True
-                    },
-                    "rs485": {
-                        "status": "active" if modules else "inactive",
-                        "protocol": "RS485/Modbus",
-                        "modules": len(modules) if modules else 0,
-                        "baud_rate": "115200"
+                        "status": "active" if http_active else "inactive",
+                        "protocol": "HTTP",
+                        "port": 8080
                     }
-                },
-                "modules": modules,
-                "last_heartbeat": fw_status.get("last_heartbeat"),
-                "error_count": fw_status.get("connection_errors", 0)
-            },
-            "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            }
         }
-        
-        return JSONResponse(
-            status_code=200,
-            content=communication_status
-        )
-        
     except Exception as e:
         logger.error(f"❌ Failed to get communication status: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get communication status: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/protocols")
 async def get_communication_protocols(
     current_user: User = Depends(get_current_user),
-    fw_service: FirmwareIntegrationService = Depends(get_firmware_service)
+    fw_service: UnifiedFirmwareService = Depends(get_firmware_service)
 ):
     """
     Get available communication protocols
@@ -173,7 +131,7 @@ async def get_communication_protocols(
 @router.get("/channels")
 async def get_communication_channels(
     current_user: User = Depends(get_current_user),
-    fw_service: FirmwareIntegrationService = Depends(get_firmware_service)
+    fw_service: UnifiedFirmwareService = Depends(get_firmware_service)
 ):
     """
     Get communication channels
@@ -245,7 +203,7 @@ async def get_communication_channels(
 @router.get("/diagnostics")
 async def get_communication_diagnostics(
     current_user: User = Depends(get_current_user),
-    fw_service: FirmwareIntegrationService = Depends(get_firmware_service)
+    fw_service: UnifiedFirmwareService = Depends(get_firmware_service)
 ):
     """
     Get communication diagnostics
@@ -333,7 +291,7 @@ async def get_communication_diagnostics(
 async def test_communication(
     test_type: str = Query(..., description="Type of communication test", pattern="^(ping|health|modules|full)$"),
     current_user: User = Depends(get_current_user),
-    fw_service: FirmwareIntegrationService = Depends(get_firmware_service)
+    fw_service: UnifiedFirmwareService = Depends(get_firmware_service)
 ):
     """
     Test communication system
@@ -412,7 +370,7 @@ async def test_communication(
 @router.get("/metrics")
 async def get_communication_metrics(
     current_user: User = Depends(get_current_user),
-    fw_service: FirmwareIntegrationService = Depends(get_firmware_service)
+    fw_service: UnifiedFirmwareService = Depends(get_firmware_service)
 ):
     """
     Get communication metrics

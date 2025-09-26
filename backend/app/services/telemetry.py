@@ -6,7 +6,7 @@ import logging
 from typing import Dict, Any, List
 from datetime import datetime, timezone, timedelta
 
-from app.services.firmware_integration_service import FirmwareIntegrationService, MockFirmwareService
+from app.services.unified_firmware_service import get_firmware_service
 from app.core.monitoring import metrics_collector
 
 logger = logging.getLogger(__name__)
@@ -16,19 +16,6 @@ class TelemetryService:
     """Telemetry service"""
     
     def __init__(self, use_mock: bool = False):
-        from app.config import settings
-        import os
-        testing_mode = os.getenv("TESTING", "false").lower() == "true"
-        allow_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true" or settings.use_mock_firmware or use_mock or testing_mode
-        is_production = settings.environment.lower() == "production"
-        
-        if allow_mock and not is_production:
-            self.firmware_service = MockFirmwareService()
-            logger.warning("🧪 MOCK ENABLED: TelemetryService using MockFirmwareService (non-production)")
-        else:
-            self.firmware_service = FirmwareIntegrationService()
-            logger.info("🔌 REAL FIRMWARE: TelemetryService using FirmwareIntegrationService")
-        
         self.telemetry_history = []
         # Add validation flag
         self._validated_connection = False
@@ -37,33 +24,26 @@ class TelemetryService:
     async def validate_firmware_connection(self) -> bool:
         """Validate firmware connection and warn if using mock data"""
         if not self._validated_connection:
-            # Check if firmware service has validation method
-            if hasattr(self.firmware_service, 'validate_firmware_connection'):
-                self._validated_connection = await self.firmware_service.validate_firmware_connection()
-            else:
-                # For mock service, always return False and warn
-                if isinstance(self.firmware_service, MockFirmwareService):
-                    logger.warning("🚨 TELEMETRY MOCK WARNING: Using MockFirmwareService - NOT real firmware data!")
-                    self._validated_connection = False
-                else:
-                    self._validated_connection = True
-        
+            service = await get_firmware_service()
+            self._validated_connection = service.is_connected()
         return self._validated_connection
     
     async def get_current_telemetry(self) -> Dict[str, Any]:
         """Get current telemetry data"""
         try:
-            # Validate firmware connection first
             await self.validate_firmware_connection()
-            telemetry = await self.firmware_service.get_telemetry_data()
+            service = await get_firmware_service()
+            response = await service.get_telemetry_data()
             
-            # Add timestamp
+            telemetry: Dict[str, Any] = {}
+            if response.success and response.data:
+                telemetry = response.data
+            else:
+                telemetry = {"error": response.error or "firmware_unavailable"}
+            
             telemetry["timestamp"] = datetime.now(timezone.utc).isoformat()
             
-            # Store in history
             self._store_telemetry(telemetry)
-            
-            # Record metrics
             metrics_collector.record_telemetry_point("current")
             
             return telemetry
@@ -91,17 +71,23 @@ class TelemetryService:
     async def get_module_status(self, module_id: str) -> Dict[str, Any]:
         """Get specific module status"""
         try:
-            status = await self.firmware_service.get_module_status(module_id)
-            return status
+            service = await get_firmware_service()
+            response = await service.get_modules_status()
+            data = response.data if response.success and response.data else {}
+            return next((m for m in data.get("modules", []) if str(m.get("module_id")) == str(module_id)), {"status": "unknown"})
         except Exception as e:
             logger.error(f"Failed to get module status for {module_id}: {e}")
             return {"status": "error", "error": str(e)}
     
     async def discover_modules(self) -> List[Dict[str, Any]]:
-        """Discover available modules"""
+        """Discover available modules (best-effort from modules status)"""
         try:
-            modules = await self.firmware_service.discover_modules()
-            return modules
+            service = await get_firmware_service()
+            response = await service.get_modules_status()
+            if response.success and response.data:
+                modules = response.data.get("modules", [])
+                return modules
+            return []
         except Exception as e:
             logger.error(f"Failed to discover modules: {e}")
             return []

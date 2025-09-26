@@ -14,7 +14,7 @@ from app.services.telemetry import telemetry_service
 # # telemetry_data_collector removed removed - no real sensor hardware implementation
 from app.services.lidar_data_processor import lidar_data_processor
 # sensor_data_processor removed - no real sensor hardware implementation
-from app.services.firmware_integration_service import MockFirmwareService
+from app.services.unified_firmware_service import get_firmware_service
 # SensorType removed - no real sensor hardware implementation
 
 router = APIRouter(

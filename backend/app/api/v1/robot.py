@@ -12,7 +12,7 @@ from app.core.security import require_permission
 from app.models.user import User
 from app.services.robot_control import robot_control_service
 from app.schemas.dashboard import RobotStatus, RobotMode
-from app.services.firmware_integration_service import firmware_service
+from app.services.unified_firmware_service import get_firmware_service
 from app.schemas.robot_control import (
     RobotModeRequest,
     RobotModeResponse,
@@ -45,17 +45,15 @@ async def get_robot_status(
 ):
     """Get current robot status"""
     try:
-        # Use mock service in testing mode
-        import os
-        if os.getenv("TESTING", "false").lower() == "true":
-            from app.services.firmware_integration_service import MockFirmwareService
-            mock_service = MockFirmwareService()
-            data = cast(Dict[str, Any], await mock_service.get_robot_status())
-        else:
-            data = cast(Dict[str, Any], await firmware_service.get_robot_status())
+        # Use unified firmware service
+        firmware_service = await get_firmware_service()
+        response = await firmware_service.get_robot_status()
         
-        # Ensure data is not None
-        if not data:
+        if response.success and response.data:
+            data = response.data
+        else:
+            # Fallback to mock data if firmware unavailable
+            logger.warning(f"Firmware unavailable, using fallback data: {response.error}")
             data = {
                 "robot_id": "OHT-50-001",
                 "status": "idle",
@@ -63,6 +61,7 @@ async def get_robot_status(
                 "battery_level": 87,
                 "temperature": 42.5
             }
+        
 
         # Map firmware fields to schema with safe defaults
         robot_id = data.get("robot_id", "OHT-50-001")
@@ -247,8 +246,9 @@ async def emergency_stop(
                     "timeout": 1.0
                 }
                 
-                # Try firmware service
-                firmware_result = await firmware_service.send_robot_command(emergency_command)
+                # Try unified firmware service
+                firmware_service = await get_firmware_service()
+                firmware_result = await firmware_service.emergency_stop()
                 
                 return {
                     "success": True,
@@ -716,15 +716,15 @@ async def get_robot_battery(
 ):
     """Get robot battery information"""
     try:
-        # Try to get battery data from firmware service
+        # Try to get battery data from unified firmware service
         try:
-            import os
-            if os.getenv("TESTING", "false").lower() == "true":
-                from app.services.firmware_integration_service import MockFirmwareService
-                mock_service = MockFirmwareService()
-                firmware_data = cast(Dict[str, Any], await mock_service.get_robot_status())
+            firmware_service = await get_firmware_service()
+            response = await firmware_service.get_robot_status()
+            
+            if response.success and response.data:
+                firmware_data = response.data
             else:
-                firmware_data = cast(Dict[str, Any], await firmware_service.get_robot_status())
+                raise Exception(f"Firmware unavailable: {response.error}")
             
             battery_level = firmware_data.get("battery_level", 87)
             battery_voltage = firmware_data.get("battery_voltage", 24.5)

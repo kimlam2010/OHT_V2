@@ -2,11 +2,10 @@
 FW Client Library - OHT-50 Firmware Communication
 
 This module provides a comprehensive client library for communicating
-with the OHT-50 Firmware via HTTP REST API and WebSocket.
+with the OHT-50 Firmware via HTTP REST API.
 
 Features:
 - HTTP REST API client
-- WebSocket real-time communication
 - Connection management and health monitoring
 - Authentication support
 - Error handling and recovery
@@ -22,8 +21,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import aiohttp
-import websockets
-from websockets.exceptions import ConnectionClosed, WebSocketException
+# WebSocket client support REMOVED per Architecture Issue #156 (FW is HTTP-only)
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +31,6 @@ class FWConfig:
     """Firmware client configuration"""
     host: str = "localhost"
     http_port: int = 8080
-    ws_port: int = 8081
     auth_token: Optional[str] = None
     timeout: float = 10.0
     max_retries: int = 3
@@ -66,10 +63,10 @@ class FWProtocolError(FWClientError):
 
 class FWClient:
     """
-    Firmware client for HTTP and WebSocket communication
+    Firmware client for HTTP communication (HTTP-only)
     
     This client provides a unified interface for communicating with
-    the OHT-50 Firmware via both HTTP REST API and WebSocket.
+    the OHT-50 Firmware via HTTP REST API.
     """
     
     def __init__(self, config: FWConfig):
@@ -81,12 +78,10 @@ class FWClient:
         """
         self.config = config
         self.http_session: Optional[aiohttp.ClientSession] = None
-        self.ws_connection: Optional[websockets.WebSocketServerProtocol] = None
         self.status = FWConnectionStatus()
         
         # Connection URLs
         self.http_url = f"http://{config.host}:{config.http_port}"
-        self.ws_url = f"ws://{config.host}:{config.ws_port}/ws"
         
         # Authentication headers
         self.headers = {
@@ -96,7 +91,7 @@ class FWClient:
         if config.auth_token:
             self.headers["Authorization"] = f"Bearer {config.auth_token}"
         
-        logger.info(f"🔌 FW Client initialized: HTTP={self.http_url}, WS={self.ws_url}")
+        logger.info(f"🔌 FW Client initialized: HTTP={self.http_url} (WS disabled)")
     
     async def __aenter__(self):
         """Async context manager entry"""
@@ -131,9 +126,6 @@ class FWClient:
                 logger.error("❌ HTTP connection test failed")
                 return False
             
-            # Connect WebSocket
-            await self._connect_websocket()
-            
             self.status.connected = True
             self.status.last_heartbeat = datetime.now(timezone.utc)
             
@@ -149,15 +141,6 @@ class FWClient:
         """Close connection to firmware"""
         logger.info("🔌 Disconnecting from firmware...")
         
-        # Close WebSocket
-        if self.ws_connection:
-            try:
-                await self.ws_connection.close()
-            except Exception as e:
-                logger.warning(f"Warning closing WebSocket: {e}")
-            finally:
-                self.ws_connection = None
-        
         # Close HTTP session
         if self.http_session:
             try:
@@ -171,26 +154,6 @@ class FWClient:
         
         self.status.connected = False
         logger.info("✅ Firmware connection closed")
-    
-    async def _connect_websocket(self) -> None:
-        """Connect to WebSocket server"""
-        try:
-            # Add auth token to WebSocket URL if provided
-            ws_url = self.ws_url
-            if self.config.auth_token:
-                ws_url += f"?token={self.config.auth_token}"
-            
-            self.ws_connection = await websockets.connect(
-                ws_url,
-                ping_interval=30,
-                ping_timeout=10
-            )
-            
-            logger.info("✅ WebSocket connection established")
-            
-        except Exception as e:
-            logger.warning(f"⚠️ WebSocket connection failed: {e}")
-            # WebSocket failure is not critical for basic functionality
     
     # HTTP API Methods
     
@@ -399,70 +362,7 @@ class FWClient:
             logger.error(f"❌ Failed to get diagnostics: {e}")
             return {"success": False, "error": str(e)}
     
-    # WebSocket Methods
-    
-    async def websocket_send(self, message: Dict[str, Any]) -> None:
-        """
-        Send WebSocket message
-        
-        Args:
-            message: Message to send
-            
-        Raises:
-            FWConnectionError: WebSocket not connected
-        """
-        if not self.ws_connection:
-            raise FWConnectionError("WebSocket not connected")
-        
-        try:
-            message_json = json.dumps(message)
-            await self.ws_connection.send(message_json)
-            logger.debug(f"📤 WebSocket message sent: {message['type']}")
-            
-        except ConnectionClosed:
-            raise FWConnectionError("WebSocket connection closed")
-        except WebSocketException as e:
-            raise FWConnectionError(f"WebSocket error: {e}")
-    
-    async def websocket_receive(self) -> AsyncGenerator[Dict[str, Any], None]:
-        """
-        Receive WebSocket messages
-        
-        Yields:
-            Received messages
-            
-        Raises:
-            FWConnectionError: WebSocket not connected
-        """
-        if not self.ws_connection:
-            raise FWConnectionError("WebSocket not connected")
-        
-        try:
-            async for message in self.ws_connection:
-                try:
-                    data = json.loads(message)
-                    logger.debug(f"📥 WebSocket message received: {data.get('type', 'unknown')}")
-                    yield data
-                    
-                except json.JSONDecodeError as e:
-                    logger.warning(f"⚠️ Invalid JSON in WebSocket message: {e}")
-                    continue
-                    
-        except ConnectionClosed:
-            logger.warning("⚠️ WebSocket connection closed")
-        except WebSocketException as e:
-            logger.error(f"❌ WebSocket error: {e}")
-    
-    async def get_telemetry_stream(self) -> AsyncGenerator[Dict[str, Any], None]:
-        """
-        Get real-time telemetry stream
-        
-        Yields:
-            Telemetry data messages
-        """
-        async for message in self.websocket_receive():
-            if message.get("type") == "telemetry":
-                yield message.get("data", {})
+    # WebSocket methods REMOVED per Architecture Issue #156
     
     # Health Monitoring
     
@@ -473,10 +373,8 @@ class FWClient:
             health = await self.get_system_health()
             http_ok = health.get("success", False)
             
-            # Test WebSocket connection
-            ws_ok = self.ws_connection is not None and not self.ws_connection.closed
-            
-            is_healthy = http_ok and ws_ok
+            # WebSocket is disabled; health depends on HTTP only
+            is_healthy = http_ok
             
             if is_healthy:
                 self.status.last_heartbeat = datetime.now(timezone.utc)
@@ -500,7 +398,6 @@ class FWClient:
 def create_fw_client(
     host: str = "localhost",
     http_port: int = 8080,
-    ws_port: int = 8081,
     auth_token: Optional[str] = None
 ) -> FWClient:
     """
@@ -509,7 +406,6 @@ def create_fw_client(
     Args:
         host: Firmware host address
         http_port: HTTP API port
-        ws_port: WebSocket port
         auth_token: Authentication token
         
     Returns:
@@ -518,7 +414,6 @@ def create_fw_client(
     config = FWConfig(
         host=host,
         http_port=http_port,
-        ws_port=ws_port,
         auth_token=auth_token
     )
     
@@ -546,11 +441,9 @@ if __name__ == "__main__":
             modules = await client.get_modules()
             print(f"Modules: {len(modules)} found")
             
-            # Listen to telemetry
-            print("Listening to telemetry...")
-            async for telemetry in client.get_telemetry_stream():
-                print(f"Telemetry: {telemetry}")
-                break  # Just one message for example
+            # Telemetry streaming via WebSocket disabled; poll HTTP endpoints instead
+            telemetry = await client.get("/api/v1/telemetry/current")
+            print(f"Telemetry (HTTP): {telemetry}")
             
         except Exception as e:
             print(f"❌ Error: {e}")

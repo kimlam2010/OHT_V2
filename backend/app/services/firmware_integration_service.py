@@ -2,8 +2,7 @@
 Firmware Integration Service - OHT-50 Backend
 
 This service provides high-level integration with the OHT-50 Firmware,
-handling HTTP API communication, WebSocket real-time updates, and
-connection management.
+handling HTTP API communication and connection management.
 
 WARNING: This service MUST connect to real Firmware via HTTP API
 DO NOT use mock data in production
@@ -63,14 +62,13 @@ class FirmwareIntegrationService:
             firmware_url: Firmware HTTP API URL
         """
         self.firmware_url = firmware_url or getattr(settings, 'firmware_url', 'http://localhost:8080')
-        self.firmware_ws_url = getattr(settings, 'firmware_websocket_url', 'ws://localhost:8081/ws')
+        # Firmware WebSocket URL deprecated per Architecture Issue #156
         
         # Initialize FW client
         self.fw_client: Optional[FWClient] = None
         self.fw_config = FWConfig(
             host="localhost",
             http_port=8080,
-            ws_port=8081,
             timeout=getattr(settings, 'firmware_timeout', 10.0),
             max_retries=getattr(settings, 'firmware_retry_count', 3)
         )
@@ -150,8 +148,8 @@ class FirmwareIntegrationService:
         # Health monitoring task
         self._health_monitor_task = asyncio.create_task(self._health_monitor_loop())
         
-        # Telemetry streaming task
-        self._telemetry_task = asyncio.create_task(self._telemetry_loop())
+        # Telemetry polling task (HTTP-only)
+        self._telemetry_task = asyncio.create_task(self._telemetry_poll_loop())
         
         logger.info("✅ Background monitoring tasks started")
     
@@ -183,23 +181,26 @@ class FirmwareIntegrationService:
                 logger.error(f"❌ Health monitor error: {e}")
                 await asyncio.sleep(5)  # Wait before retry
     
-    async def _telemetry_loop(self) -> None:
-        """Background telemetry streaming loop"""
+    async def _telemetry_poll_loop(self) -> None:
+        """Background telemetry polling loop (HTTP-only)"""
+        poll_interval = 0.5  # seconds
         while True:
             try:
                 if self.fw_client and self.status == FirmwareStatus.CONNECTED:
-                    async for telemetry_data in self.fw_client.get_telemetry_stream():
-                        await self._process_telemetry_data(telemetry_data)
-                else:
-                    # Wait if not connected
-                    await asyncio.sleep(1)
-                    
+                    # Poll telemetry via HTTP
+                    telemetry_resp = await self.fw_client.get("/api/v1/telemetry/current")
+                    if isinstance(telemetry_resp, dict):
+                        data = telemetry_resp.get("data") or telemetry_resp
+                        await self._process_telemetry_data(data)
+                
+                await asyncio.sleep(poll_interval)
+                
             except asyncio.CancelledError:
                 logger.info("🛑 Telemetry task cancelled")
                 break
             except Exception as e:
-                logger.error(f"❌ Telemetry streaming error: {e}")
-                await asyncio.sleep(1)
+                logger.error(f"❌ Telemetry polling error: {e}")
+                await asyncio.sleep(poll_interval)
     
     async def _process_telemetry_data(self, data: Dict[str, Any]) -> None:
         """Process incoming telemetry data"""

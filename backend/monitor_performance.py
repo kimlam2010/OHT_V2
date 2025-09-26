@@ -142,7 +142,6 @@ async def test_firmware_client():
     config = FWConfig(
         host="localhost",
         http_port=8080,
-        ws_port=8081,
         timeout=5.0
     )
     
