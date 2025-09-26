@@ -85,38 +85,54 @@ class ValidationService:
         
         Args:
             field_name: Name of the telemetry field
-            field_value: Raw field value
+            field_value: Raw field value (can be simple value or FW object with value + range)
             
         Returns:
             Enhanced field data with validation
         """
         try:
-            # Get field configuration
-            config = self.field_configs.get(field_name, {
-                "min_value": 0.0,
-                "max_value": 1000.0,
-                "unit": "unit",
-                "description": f"{field_name} value"
-            })
-            
-            # Convert value to float if possible
-            try:
-                value = float(field_value)
-            except (ValueError, TypeError):
-                logger.warning(f"⚠️ Cannot convert {field_name} value {field_value} to float")
-                value = 0.0
+            # Handle FW schema: {value: X, range: {min: Y, max: Z}, unit: "V", description: "..."}
+            if isinstance(field_value, dict) and "value" in field_value and "range" in field_value:
+                # Map FW schema to BE schema
+                value = float(field_value.get("value", 0))
+                range_data = field_value.get("range", {})
+                min_val = float(range_data.get("min", 0))
+                max_val = float(range_data.get("max", 1000))
+                unit = field_value.get("unit", "unit")
+                description = field_value.get("description", f"{field_name} value")
+                
+                logger.debug(f"🔄 Mapped FW field {field_name}: value={value}, range=[{min_val}, {max_val}], unit={unit}")
+                
+            else:
+                # Handle simple value or get from config
+                config = self.field_configs.get(field_name, {
+                    "min_value": 0.0,
+                    "max_value": 1000.0,
+                    "unit": "unit",
+                    "description": f"{field_name} value"
+                })
+                
+                # Convert value to float if possible
+                try:
+                    value = float(field_value)
+                except (ValueError, TypeError):
+                    logger.warning(f"⚠️ Cannot convert {field_name} value {field_value} to float")
+                    value = 0.0
+                
+                min_val = config["min_value"]
+                max_val = config["max_value"]
+                unit = config["unit"]
+                description = config["description"]
             
             # Check if value is within range
-            min_val = config["min_value"]
-            max_val = config["max_value"]
             is_valid = min_val <= value <= max_val
             
             enhanced_field = {
                 "value": value,
                 "min_value": min_val,
                 "max_value": max_val,
-                "unit": config["unit"],
-                "description": config["description"],
+                "unit": unit,
+                "description": description,
                 "valid": is_valid
             }
             

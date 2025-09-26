@@ -99,7 +99,12 @@ class DatabaseService:
             cursor = conn.cursor()
             
             # Prepare data for storage
-            telemetry_json = json.dumps(telemetry_data.dict())
+            # Support both Pydantic v1 and v2
+            try:
+                telemetry_dict = telemetry_data.model_dump()
+            except Exception:
+                telemetry_dict = telemetry_data.dict()
+            telemetry_json = json.dumps(telemetry_dict)
             validation_errors = None
             
             if telemetry_data.validation_status == "invalid":
@@ -179,7 +184,7 @@ class DatabaseService:
             logger.error(f"❌ Failed to get telemetry data: {e}")
             return None
     
-    async def get_telemetry_validation_status(self) -> Dict[str, Any]:
+    async def get_validation_status(self) -> Dict[str, Any]:
         """
         Get overall telemetry validation status
         

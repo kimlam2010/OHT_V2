@@ -2349,6 +2349,23 @@
         
         // Global RS485 API client instance
         const rs485API = new RS485APIClient();
+
+        // Telemetry Validation API (Backend)
+        const TELEMETRY_API_BASE = 'http://localhost:8000/api/v1/modules';
+        async function fetchModuleTelemetry(addr) {
+            // addr: number (e.g., 1) → backend expects integer path param
+            const token = localStorage.getItem('jwt_token') || '';
+            const res = await fetch(`${TELEMETRY_API_BASE}/${addr}/telemetry`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            });
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            return await res.json();
+        }
         
         // RS485 WebSocket Client
         class RS485WebSocketClient {
@@ -2427,6 +2444,14 @@
                     case 'rs485_initial':
                     case 'rs485_update':
                         this.updateModulesData(message.data);
+                        break;
+                    case 'telemetry_validation':
+                        try {
+                            // message.data should conform to ModuleTelemetry
+                            renderTelemetryInModal(message.data);
+                        } catch (e) {
+                            console.error('Failed to render telemetry_validation:', e);
+                        }
                         break;
                     case 'rs485_module_action':
                         this.handleModuleAction(message.data);
@@ -3144,6 +3169,9 @@
                 console.log('📊 Telemetry tab after modal open:', telemetryTab);
                 console.log('📊 Telemetry tab classes:', telemetryTab?.className);
             }, 100);
+
+            // Load validated telemetry from Backend and render into Telemetry tab
+            loadModuleTelemetry(addr);
         }
         
         function closeModuleDetail() {
@@ -4598,6 +4626,51 @@
             
             // Update last update time
             document.getElementById('last-update-time').textContent = '0s ago';
+        }
+
+        // === Validated Telemetry (Backend) Rendering ===
+        async function loadModuleTelemetry(addr) {
+            try {
+                const resp = await fetchModuleTelemetry(addr);
+                if (resp && resp.success && resp.data) {
+                    renderTelemetryInModal(resp.data);
+                } else {
+                    console.warn('No validated telemetry returned');
+                }
+            } catch (e) {
+                console.error('Telemetry load error:', e);
+            }
+        }
+
+        function renderTelemetryInModal(moduleTelemetry) {
+            const tbody = document.getElementById('telemetry-table-body');
+            if (!tbody || !moduleTelemetry || !moduleTelemetry.telemetry) return;
+
+            const rows = [];
+            Object.entries(moduleTelemetry.telemetry).forEach(([name, f]) => {
+                const ok = !!f.valid;
+                const statusText = ok ? '🟢 Normal' : '🔴 Out of Range';
+                const statusClass = ok ? '' : 'bg-red-50 text-red-700';
+                rows.push(
+                    `<tr data-mode="r">
+                        <td class="address-cell">—</td>
+                        <td>${name}</td>
+                        <td class="value-cell ${ok ? '' : 'updated'}">${f.value}</td>
+                        <td>${f.unit}</td>
+                        <td class="mode-cell r">R</td>
+                        <td class="status-cell ${statusClass}" title="Range: [${f.min_value}, ${f.max_value}]">
+                            ${statusText}
+                        </td>
+                    </tr>`
+                );
+            });
+
+            tbody.innerHTML = rows.join('');
+
+            const footerStats = document.getElementById('telemetry-stats');
+            if (footerStats) {
+                footerStats.textContent = `${Object.keys(moduleTelemetry.telemetry).length} registers total • status: ${moduleTelemetry.validation_status}`;
+            }
         }
 
         /**

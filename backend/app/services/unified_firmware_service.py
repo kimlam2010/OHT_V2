@@ -42,13 +42,13 @@ class UnifiedFirmwareService:
         # Optimized HTTP client với connection pooling
         self.http_client = httpx.AsyncClient(
             base_url=self.firmware_url,
-            timeout=httpx.Timeout(connect=5.0, read=10.0, write=5.0),
+            timeout=httpx.Timeout(10.0),
             limits=httpx.Limits(
                 max_connections=20,
                 max_keepalive_connections=10,
                 keepalive_expiry=30.0
             ),
-            http2=True
+            http2=False
         )
         
         # Circuit breaker
