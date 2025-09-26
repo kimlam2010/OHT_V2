@@ -19,18 +19,11 @@ class TelemetryField(BaseModel):
     valid: bool = Field(default=True, description="Field validation status")
     
     @validator("value")
-    def validate_value_range(cls, v, values):
-        """Validate value is within min/max range"""
-        if "min_value" in values and "max_value" in values:
-            min_val = values["min_value"]
-            max_val = values["max_value"]
-            if not (min_val <= v <= max_val):
-                raise ValueError(
-                    f"Value {v} is out of range [{min_val}, {max_val}]"
-                )
+    def passthrough_value(cls, v):
+        """Do not raise on out-of-range; validity is computed in `valid`."""
         return v
     
-    @validator("valid")
+    @validator("valid", always=True)
     def validate_field_validity(cls, v, values):
         """Auto-calculate validity based on value range"""
         if "value" in values and "min_value" in values and "max_value" in values:
@@ -46,7 +39,7 @@ class ModuleTelemetry(BaseModel):
     timestamp: int = Field(..., description="Timestamp")
     validation_status: str = Field(default="valid", description="Overall validation status")
     
-    @validator("validation_status")
+    @validator("validation_status", always=True)
     def validate_overall_status(cls, v, values):
         """Calculate overall validation status"""
         if "telemetry" in values:

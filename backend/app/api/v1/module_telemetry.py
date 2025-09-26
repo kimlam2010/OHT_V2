@@ -16,6 +16,7 @@ from app.models.module_telemetry import (
 from app.services.validation_service import validation_service
 from app.services.unified_firmware_service import get_firmware_service
 from app.services.database_service import db_service
+from app.core.websocket_service import websocket_service, WebSocketMessage
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,13 @@ async def get_module_telemetry(module_id: int):
         
         service = await get_firmware_service()
         resp = await service.get_module_telemetry(module_id)
-        raw_data = resp.data if resp.success and resp.data else None
+        raw_data = None
+        if resp.success and resp.data:
+            # Unwrap firmware envelope if present
+            if isinstance(resp.data, dict) and "success" in resp.data and "data" in resp.data:
+                raw_data = resp.data.get("data")
+            else:
+                raw_data = resp.data
         
         if not raw_data:
             raise HTTPException(status_code=404, detail=f"Module {module_id} not found")
@@ -42,9 +49,22 @@ async def get_module_telemetry(module_id: int):
         enhanced_data = await validation_service.enhance_telemetry_data(raw_data)
         telemetry_response = ModuleTelemetry(**enhanced_data)
         
+        # Broadcast validation snapshot via WebSocket
+        try:
+            await websocket_service.broadcast_message(
+                WebSocketMessage(
+                    type="telemetry_validation",
+                    data=telemetry_response.model_dump(),
+                    timestamp=datetime.utcnow()
+                )
+            )
+        except Exception as _:
+            # Non-fatal for API path
+            pass
+
         return {
             "success": True,
-            "data": telemetry_response.dict(),
+            "data": telemetry_response.model_dump(),
             "message": "Module telemetry retrieved successfully",
             "timestamp": datetime.utcnow().isoformat()
         }
@@ -67,6 +87,25 @@ async def validate_module_telemetry(module_id: int, telemetry_data: ModuleTeleme
         logger.info(f"🔍 Validating telemetry for module {module_id}")
         
         validation_result = await validation_service.validate_telemetry_data(telemetry_data)
+
+        # Broadcast validation result snapshot
+        try:
+            await websocket_service.broadcast_message(
+                WebSocketMessage(
+                    type="telemetry_validation",
+                    data={
+                        "module_id": telemetry_data.module_id,
+                        "module_name": telemetry_data.module_name,
+                        "telemetry": {k: v.dict() for k, v in telemetry_data.telemetry.items()},
+                        "timestamp": telemetry_data.timestamp,
+                        "validation_status": "valid" if validation_result.valid else "invalid",
+                        "validation_errors": validation_result.errors,
+                    },
+                    timestamp=datetime.utcnow()
+                )
+            )
+        except Exception as _:
+            pass
         
         return {
             "success": True,
