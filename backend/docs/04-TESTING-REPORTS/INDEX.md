@@ -13,10 +13,11 @@ Báo cáo kiểm thử và QA/QC cho OHT-50 Backend System, bao gồm test resul
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 Testing Reports**
-- **[COMPREHENSIVE_TEST_REPORT.md](./COMPREHENSIVE_TEST_REPORT.md)** - Báo cáo test toàn diện
-- **[TEST_SUMMARY_REPORT.md](./TEST_SUMMARY_REPORT.md)** - Tóm tắt kết quả test
-- **[WEEK_2_QA_QC_REPORT.md](./WEEK_2_QA_QC_REPORT.md)** - Báo cáo QA/QC tuần 2
-- **[QA_QC_API_TESTING_COMMAND.md](./QA_QC_API_TESTING_COMMAND.md)** - Lệnh test API
+- **[comprehensive-test-report.md](./comprehensive-test-report.md)** - Báo cáo test toàn diện
+- **[test-summary-report.md](./test-summary-report.md)** - Tóm tắt kết quả test
+- **[week-2-qa-qc-report.md](./week-2-qa-qc-report.md)** - Báo cáo QA/QC tuần 2
+- **[qa-qc-api-testing-command.md](./qa-qc-api-testing-command.md)** - Lệnh test API
+- **[jwt-authentication-fix-report.md](./jwt-authentication-fix-report.md)** - Báo cáo fix JWT Authentication
 
 ## 📊 **TEST STATISTICS**
 

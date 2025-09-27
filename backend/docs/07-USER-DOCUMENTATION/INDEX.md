@@ -13,8 +13,9 @@ Tài liệu hướng dẫn người dùng cho OHT-50 Backend System, bao gồm u
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 User Documentation**
-- **[USER_GUIDE.md](./USER_GUIDE.md)** - Hướng dẫn sử dụng hệ thống
-- **[TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md)** - Tài liệu kỹ thuật
+- **[user-guide.md](./user-guide.md)** - Hướng dẫn sử dụng hệ thống
+- **[technical-documentation.md](./technical-documentation.md)** - Tài liệu kỹ thuật
+- **[security-setup.md](./security-setup.md)** - Hướng dẫn cấu hình bảo mật JWT
 
 ## 👥 **TARGET AUDIENCE**
 

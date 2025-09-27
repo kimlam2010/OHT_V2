@@ -13,9 +13,9 @@ Tài liệu giao tiếp với stakeholders, bao gồm templates, meeting schedul
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 Stakeholder Communication**
-- **[STAKEHOLDER_COMMUNICATION_TEMPLATES.md](./STAKEHOLDER_COMMUNICATION_TEMPLATES.md)** - Templates giao tiếp
-- **[STAKEHOLDER_MEETING_SCHEDULE.md](./STAKEHOLDER_MEETING_SCHEDULE.md)** - Lịch họp stakeholders
-- **[STAKEHOLDER_REVIEW_PHASE_2.md](./STAKEHOLDER_REVIEW_PHASE_2.md)** - Review Phase 2
+- **[stakeholder-communication-templates.md](./stakeholder-communication-templates.md)** - Templates giao tiếp
+- **[stakeholder-meeting-schedule.md](./stakeholder-meeting-schedule.md)** - Lịch họp stakeholders
+- **[stakeholder-review-phase-2.md](./stakeholder-review-phase-2.md)** - Review Phase 2
 
 ## 👥 **STAKEHOLDER GROUPS**
 

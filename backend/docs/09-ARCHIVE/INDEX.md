@@ -13,8 +13,8 @@ Lưu trữ các tài liệu cũ, deprecated và backup cho OHT-50 Backend System
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 Archived Documents**
-- **[QA_QC_REPORT_ACTUAL_STATUS.md](./QA_QC_REPORT_ACTUAL_STATUS.md)** - Báo cáo QA/QC status (deprecated)
-- **[WEEK_3_QA_QC_FINAL_REPORT.md](./WEEK_3_QA_QC_FINAL_REPORT.md)** - Báo cáo QA/QC tuần 3 (final)
+- **[qa-qc-report-actual-status.md](./qa-qc-report-actual-status.md)** - Báo cáo QA/QC status (deprecated)
+- **[week-3-qa-qc-final-report.md](./week-3-qa-qc-final-report.md)** - Báo cáo QA/QC tuần 3 (final)
 
 ## 📦 **ARCHIVE CATEGORIES**
 

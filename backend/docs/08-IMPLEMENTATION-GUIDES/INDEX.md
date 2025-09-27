@@ -13,7 +13,8 @@ Hướng dẫn triển khai và implementation cho OHT-50 Backend System, bao g�
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 Implementation Guides**
-- **[Plant_Implementation_Map_Localization.md](./Plant_Implementation_Map_Localization.md)** - Hướng dẫn triển khai Map & Localization
+- **[plant-implementation-map-localization.md](./plant-implementation-map-localization.md)** - Hướng dẫn triển khai Map & Localization
+- **[websocket-alerts-implementation.md](./websocket-alerts-implementation.md)** - Hướng dẫn triển khai WebSocket Alerts
 
 ## 🗺️ **IMPLEMENTATION AREAS**
 

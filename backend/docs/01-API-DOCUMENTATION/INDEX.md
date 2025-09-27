@@ -13,9 +13,9 @@ Tài liệu API cho OHT-50 Backend System, bao gồm tài liệu API, kết qu�
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 API Documentation**
-- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - Tài liệu API chi tiết
-- **[api.md](./api.md)** - Tài liệu API ngắn gọn
-- **[API_TEST_RESULTS.md](./API_TEST_RESULTS.md)** - Kết quả test API
+- **[api-documentation.md](./api-documentation.md)** - Tài liệu API chi tiết
+- **[api-test-results.md](./api-test-results.md)** - Kết quả test API
+- **[rs485-telemetry-api.md](./rs485-telemetry-api.md)** - Tài liệu RS485 Telemetry API
 
 ## 🔗 **LIÊN KẾT NHANH**
 

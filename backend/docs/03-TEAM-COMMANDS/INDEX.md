@@ -13,10 +13,9 @@ Lệnh và hướng dẫn cho Backend Team, bao gồm commands, next actions và
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 Team Commands**
-- **[BACKEND_TEAM_MAP_LOCALIZATION_COMMAND.md](./BACKEND_TEAM_MAP_LOCALIZATION_COMMAND.md)** - Lệnh Map & Localization
-- **[BACKEND_TEAM_NEXT_ACTIONS_COMMAND.md](./BACKEND_TEAM_NEXT_ACTIONS_COMMAND.md)** - Hành động tiếp theo
-- **[BACKEND_TEAM_PROGRESS_REPORT.md](./BACKEND_TEAM_PROGRESS_REPORT.md)** - Báo cáo tiến độ
-- **[BACKEND_TEAM_ISSUE_API_GAPS.md](./BACKEND_TEAM_ISSUE_API_GAPS.md)** - Vấn đề API gaps
+- **[backend-team-map-localization-command.md](./backend-team-map-localization-command.md)** - Lệnh Map & Localization
+- **[backend-team-next-actions-command.md](./backend-team-next-actions-command.md)** - Hành động tiếp theo
+- **[backend-team-progress-report.md](./backend-team-progress-report.md)** - Báo cáo tiến độ
 
 ## 🎯 **TEAM FOCUS AREAS**
 

@@ -13,10 +13,12 @@ Kế hoạch phát triển và cấu trúc hệ thống backend OHT-50, bao gồ
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 Development Plans**
-- **[BACKEND_DEVELOPMENT_PLAN.md](./BACKEND_DEVELOPMENT_PLAN.md)** - Kế hoạch phát triển backend
-- **[BACKEND_STRUCTURE_GUIDE.md](./BACKEND_STRUCTURE_GUIDE.md)** - Hướng dẫn cấu trúc backend
-- **[DEVELOPMENT_PROGRESS.md](./DEVELOPMENT_PROGRESS.md)** - Tiến độ phát triển
-- **[CI_CD_UPDATE_SUMMARY.md](./CI_CD_UPDATE_SUMMARY.md)** - Tóm tắt cập nhật CI/CD pipeline
+- **[backend-development-plan.md](./backend-development-plan.md)** - Kế hoạch phát triển backend
+- **[backend-structure-guide.md](./backend-structure-guide.md)** - Hướng dẫn cấu trúc backend
+- **[development-progress.md](./development-progress.md)** - Tiến độ phát triển
+- **[ci-cd-update-summary.md](./ci-cd-update-summary.md)** - Tóm tắt cập nhật CI/CD pipeline
+- **[backend-frontend-integration-plan.md](./backend-frontend-integration-plan.md)** - Kế hoạch tích hợp frontend
+- **[backend-team-issue-api-gaps.md](./backend-team-issue-api-gaps.md)** - Vấn đề API gaps
 
 ## 🗺️ **ROADMAP**
 
