@@ -686,6 +686,15 @@ int main(int argc, char **argv) {
                 printf("[OHT-50] ✅ HTTP API Server ENABLED (WebSocket removed per CTO decision)\n");
                 (void)api_register_minimal_endpoints();
                 printf("[OHT-50] ✅ Minimal API v1 endpoints registered\n");
+                
+                // Initialize Network API (WiFi AP Mode - Issue #168)
+                extern int network_api_init(void);
+                int network_api_result = network_api_init();
+                if (network_api_result != 0) {
+                    fprintf(stderr, "[OHT-50] ❌ Network API init failed: %d (continuing)\n", network_api_result);
+                } else {
+                    printf("[OHT-50] ✅ Network API initialized successfully\n");
+                }
             }
         }
     } else {

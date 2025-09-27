@@ -59,12 +59,13 @@ int api_register_minimal_endpoints(void){
     api_register_lidar_endpoints();
     
     // Network Management APIs (CRITICAL - Issue #160)
-    api_manager_register_endpoint("/api/v1/network/status", API_MGR_HTTP_GET, api_handle_network_status);
-    api_manager_register_endpoint("/api/v1/network/wifi/scan", API_MGR_HTTP_GET, api_handle_network_wifi_scan);
-    api_manager_register_endpoint("/api/v1/network/wifi/connect", API_MGR_HTTP_POST, api_handle_network_wifi_connect);
-    api_manager_register_endpoint("/api/v1/network/wifi/disconnect", API_MGR_HTTP_POST, api_handle_network_wifi_disconnect);
-    api_manager_register_endpoint("/api/v1/network/performance", API_MGR_HTTP_GET, api_handle_network_performance);
-    api_manager_register_endpoint("/api/v1/network/health", API_MGR_HTTP_GET, api_handle_network_health);
+    // REMOVED: Network endpoints moved to Network API router
+    // api_manager_register_endpoint("/api/v1/network/status", API_MGR_HTTP_GET, api_handle_network_status);
+    // api_manager_register_endpoint("/api/v1/network/wifi/scan", API_MGR_HTTP_GET, api_handle_network_wifi_scan);
+    // api_manager_register_endpoint("/api/v1/network/wifi/connect", API_MGR_HTTP_POST, api_handle_network_wifi_connect);
+    // api_manager_register_endpoint("/api/v1/network/wifi/disconnect", API_MGR_HTTP_POST, api_handle_network_wifi_disconnect);
+    // api_manager_register_endpoint("/api/v1/network/performance", API_MGR_HTTP_GET, api_handle_network_performance);
+    // api_manager_register_endpoint("/api/v1/network/health", API_MGR_HTTP_GET, api_handle_network_health);
     
     // REMOVED: Backward compatibility routes - Không cần thiết
     
