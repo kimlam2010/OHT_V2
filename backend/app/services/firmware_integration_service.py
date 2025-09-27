@@ -388,6 +388,19 @@ class FirmwareIntegrationService:
             logger.error(f"❌ Failed to send command to module {module_id}: {e}")
             return False
     
+    async def get_module_telemetry(self, module_id: int) -> Dict[str, Any]:
+        """Get module telemetry data"""
+        try:
+            if not self.fw_client:
+                return {"success": False, "error": "FW client not initialized"}
+            
+            telemetry = await self.fw_client.get_module_telemetry(module_id)
+            return telemetry
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get module {module_id} telemetry: {e}")
+            return {"success": False, "error": str(e)}
+    
     # Safety API Methods
     
     async def get_safety_status(self) -> Dict[str, Any]:
@@ -753,6 +766,120 @@ class MockFirmwareService:
                 "unit": "degrees",
                 "quality": 0.85,
                 "timestamp": datetime.now(timezone.utc).isoformat()
+            },
+            "modules": {
+                "1": {
+                    "module_id": 1,
+                    "module_name": "Master Module",
+                    "module_type": "master",
+                    "status": "online",
+                    "address": "0x01",
+                    "version": "1.0.0",
+                    "capabilities": ["rs485", "ethernet", "wifi"],
+                    "last_seen": datetime.now(timezone.utc).isoformat()
+                },
+                "2": {
+                    "module_id": 2,
+                    "module_name": "Power Module",
+                    "module_type": "power",
+                    "status": "online",
+                    "address": "0x02",
+                    "version": "1.0.0",
+                    "capabilities": ["battery", "charging", "power_management"],
+                    "last_seen": datetime.now(timezone.utc).isoformat()
+                },
+                "3": {
+                    "module_id": 3,
+                    "module_name": "Safety Module",
+                    "module_type": "safety",
+                    "status": "online",
+                    "address": "0x03",
+                    "version": "1.0.0",
+                    "capabilities": ["e_stop", "safety_monitoring", "interlock"],
+                    "last_seen": datetime.now(timezone.utc).isoformat()
+                },
+                "4": {
+                    "module_id": 4,
+                    "module_name": "Travel Motor Module",
+                    "module_type": "travel_motor",
+                    "status": "online",
+                    "address": "0x04",
+                    "version": "1.0.0",
+                    "capabilities": ["motor_control", "position_feedback", "speed_control"],
+                    "last_seen": datetime.now(timezone.utc).isoformat()
+                },
+                "5": {
+                    "module_id": 5,
+                    "module_name": "Dock Module",
+                    "module_type": "dock",
+                    "status": "online",
+                    "address": "0x05",
+                    "version": "1.0.0",
+                    "capabilities": ["docking", "alignment", "charging"],
+                    "last_seen": datetime.now(timezone.utc).isoformat()
+                }
+            },
+            "module_telemetry": {
+                "1": {
+                    "module_id": 1,
+                    "module_name": "Master Module",
+                    "telemetry": {
+                        "cpu_usage": {"value": 45.2, "unit": "%", "min": 0, "max": 100},
+                        "memory_usage": {"value": 67.8, "unit": "%", "min": 0, "max": 100},
+                        "temperature": {"value": 42.5, "unit": "°C", "min": -20, "max": 85},
+                        "uptime": {"value": 3600, "unit": "seconds", "min": 0, "max": 86400},
+                        "network_status": {"value": "connected", "unit": "status", "options": ["connected", "disconnected"]}
+                    },
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                },
+                "2": {
+                    "module_id": 2,
+                    "module_name": "Power Module",
+                    "telemetry": {
+                        "battery_level": {"value": 87.5, "unit": "%", "min": 0, "max": 100},
+                        "battery_voltage": {"value": 24.2, "unit": "V", "min": 20, "max": 28},
+                        "charging_current": {"value": 2.5, "unit": "A", "min": 0, "max": 5},
+                        "temperature": {"value": 38.7, "unit": "°C", "min": -10, "max": 60},
+                        "power_consumption": {"value": 45.2, "unit": "W", "min": 0, "max": 100}
+                    },
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                },
+                "3": {
+                    "module_id": 3,
+                    "module_name": "Safety Module",
+                    "telemetry": {
+                        "e_stop_status": {"value": "normal", "unit": "status", "options": ["normal", "pressed", "fault"]},
+                        "safety_interlock": {"value": "closed", "unit": "status", "options": ["open", "closed"]},
+                        "safety_zones": {"value": "all_clear", "unit": "status", "options": ["all_clear", "obstacle_detected"]},
+                        "emergency_status": {"value": "normal", "unit": "status", "options": ["normal", "emergency"]},
+                        "fault_count": {"value": 0, "unit": "count", "min": 0, "max": 100}
+                    },
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                },
+                "4": {
+                    "module_id": 4,
+                    "module_name": "Travel Motor Module",
+                    "telemetry": {
+                        "motor_speed": {"value": 1500, "unit": "RPM", "min": -3000, "max": 3000},
+                        "motor_temperature": {"value": 45.2, "unit": "°C", "min": -20, "max": 85},
+                        "position": {"value": 1250.5, "unit": "mm", "min": 0, "max": 5000},
+                        "torque": {"value": 12.5, "unit": "Nm", "min": -50, "max": 50},
+                        "status": {"value": "running", "unit": "status", "options": ["stopped", "running", "fault"]}
+                    },
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                },
+                "5": {
+                    "module_id": 5,
+                    "module_name": "Dock Module",
+                    "telemetry": {
+                        "dock_status": {"value": "ready", "unit": "status", "options": ["ready", "occupied", "fault"]},
+                        "alignment_accuracy": {"value": 0.5, "unit": "mm", "min": 0, "max": 5},
+                        "charging_voltage": {"value": 24.0, "unit": "V", "min": 20, "max": 28},
+                        "connection_status": {"value": "connected", "unit": "status", "options": ["connected", "disconnected"]},
+                        "docking_force": {"value": 15.2, "unit": "N", "min": 0, "max": 50}
+                    },
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
             }
         }
     
@@ -849,6 +976,62 @@ class MockFirmwareService:
             },
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
+    
+    # Module API Methods for MockFirmwareService
+    
+    async def get_modules(self) -> List[Dict[str, Any]]:
+        """Mock get list of modules"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning("🧪 MOCK: Getting modules list")
+        modules_data = self.mock_data.get("modules", {})
+        modules_list = []
+        for module_id, module_info in modules_data.items():
+            modules_list.append(module_info)
+        return modules_list
+    
+    async def get_module_info(self, module_id: int) -> Dict[str, Any]:
+        """Mock get module information"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning(f"🧪 MOCK: Getting module {module_id} info")
+        modules_data = self.mock_data.get("modules", {})
+        module_info = modules_data.get(str(module_id))
+        if module_info:
+            return {
+                "success": True,
+                "data": module_info,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        else:
+            return {
+                "success": False,
+                "error": f"Module {module_id} not found",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+    
+    async def get_module_telemetry(self, module_id: int) -> Dict[str, Any]:
+        """Mock get module telemetry data"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning(f"🧪 MOCK: Getting module {module_id} telemetry")
+        telemetry_data = self.mock_data.get("module_telemetry", {})
+        module_telemetry = telemetry_data.get(str(module_id))
+        if module_telemetry:
+            return {
+                "success": True,
+                "data": module_telemetry,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        else:
+            return {
+                "success": False,
+                "error": f"Module {module_id} telemetry not found",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+    
+    async def send_module_command(self, module_id: int, command: str, parameters: Dict[str, Any]) -> bool:
+        """Mock send command to module"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning(f"🧪 MOCK: Sending command {command} to module {module_id}")
+        return True
 
 
 # Factory function to get firmware service
@@ -869,6 +1052,8 @@ def get_firmware_service(use_mock: bool = False) -> FirmwareIntegrationService:
     testing_mode = os.getenv("TESTING", "false").lower() == "true"
     use_mock_env = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
     is_production = os.getenv("ENVIRONMENT", "development").lower() == "production"
+    
+    logger.info(f"🔧 Service initialization: testing_mode={testing_mode}, use_mock_env={use_mock_env}, is_production={is_production}")
     
     # PRODUCTION: NEVER use mock
     if is_production:
@@ -911,6 +1096,9 @@ def get_firmware_service(use_mock: bool = False) -> FirmwareIntegrationService:
     # DEVELOPMENT: Check environment flags
     if use_mock and use_mock_env:
         logger.warning("🧪 DEVELOPMENT MODE: Using MOCK Firmware Service (use_mock=True and USE_MOCK_FIRMWARE=true)")
+        return MockFirmwareService()
+    elif use_mock_env:
+        logger.warning("🧪 DEVELOPMENT MODE: Using MOCK Firmware Service (USE_MOCK_FIRMWARE=true)")
         return MockFirmwareService()
     else:
         logger.info("🔌 DEVELOPMENT MODE: Using REAL Firmware Service - connecting to actual Firmware")
