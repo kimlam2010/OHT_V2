@@ -5,6 +5,8 @@ add_library(app_managers
     module_manager.c
     module_polling_manager.c
     telemetry_manager.c
+    network/network_manager.c
+    network/wifi_manager.c
 )
 
 target_include_directories(app_managers PUBLIC
@@ -12,6 +14,7 @@ target_include_directories(app_managers PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../core
     ${CMAKE_CURRENT_SOURCE_DIR}/../modules
     ${CMAKE_CURRENT_SOURCE_DIR}/../validation
+    ${CMAKE_CURRENT_SOURCE_DIR}/network
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety

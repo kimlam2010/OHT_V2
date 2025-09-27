@@ -12,6 +12,7 @@ else()
       state_control_apis.c
       config_stats_apis.c
       security_auth.c
+      network/network_api.c
   )
 endif()
 
@@ -33,6 +34,7 @@ target_include_directories(app_api PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../managers
     ${CMAKE_CURRENT_SOURCE_DIR}/../core
     ${CMAKE_CURRENT_SOURCE_DIR}/../storage
+    ${CMAKE_CURRENT_SOURCE_DIR}/network
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/communication
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/safety

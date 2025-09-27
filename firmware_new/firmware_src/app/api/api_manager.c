@@ -13,7 +13,7 @@
 #define BACKLOG 16
 
 typedef struct { const char *path; api_mgr_http_method_t method; int (*handler)(const api_mgr_http_request_t*, api_mgr_http_response_t*);} ep_t;
-static ep_t g_eps[32];
+static ep_t g_eps[64];
 static int g_ep_count=0;
 static int g_srv_fd=-1;
 static uint16_t g_port=8080;
