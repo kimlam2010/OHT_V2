@@ -20,6 +20,7 @@ volatile sig_atomic_t g_should_run = 1;
 #include "hal_estop.h"
 #include "hal_rs485.h"
 #include "hal_lidar.h"
+#include "hal_network.h"
 #include "system_state_machine.h"
 #include "system_controller.h"
 #include "safety_manager.h"
@@ -480,6 +481,33 @@ int main(int argc, char **argv) {
             printf("[MAIN] WARNING: module_polling_manager_init failed (status=%d), continuing...\n", polling_status);
         } else {
             printf("[MAIN] Module polling manager initialized successfully\n");
+        }
+
+        // Network HAL initialization
+        printf("[MAIN] Initializing Network HAL...\n");
+        network_config_t net_config = {
+            .type = NETWORK_TYPE_WIFI,
+            .dhcp_enabled = true,
+            .ip_address = "192.168.1.100",
+            .gateway = "192.168.1.1",
+            .netmask = "255.255.255.0",
+            .dns1 = "8.8.8.8",
+            .dns2 = "8.8.4.4"
+        };
+        
+        hal_status_t network_status = hal_network_init(&net_config);
+        if (network_status != HAL_STATUS_OK) {
+            printf("[MAIN] WARNING: hal_network_init failed (status=%d), continuing...\n", network_status);
+        } else {
+            printf("[MAIN] Network HAL initialized successfully\n");
+            
+            // Initialize WiFi specifically
+            hal_status_t wifi_status = hal_wifi_init();
+            if (wifi_status != HAL_STATUS_OK) {
+                printf("[MAIN] WARNING: hal_wifi_init failed (status=%d), continuing...\n", wifi_status);
+            } else {
+                printf("[MAIN] ✅ WiFi HAL initialized successfully\n");
+            }
         }
 
         // LiDAR subsystem initialization

@@ -621,49 +621,45 @@ hal_status_t hal_wifi_get_status(network_status_t *status) {
 }
 
 hal_status_t hal_wifi_scan(char (*networks)[32], uint32_t max_networks, uint32_t *count) {
-    // Real WiFi scanning implementation
+    printf("[HAL-NETWORK] Scanning for WiFi networks...\n");
+    
     if (networks == NULL || count == NULL) {
         return HAL_STATUS_INVALID_PARAMETER;
     }
-
-    printf("Scanning for WiFi networks...\n");
-
-    // Use iwlist command to scan networks
-    char command[256];
-    snprintf(command, sizeof(command), "iwlist %s scan | grep ESSID", NETWORK_WIFI_INTERFACE);
     
-    char output[1024];
-    hal_status_t status = execute_command(command, output, sizeof(output));
-    if (status != HAL_STATUS_OK) {
-        printf("Failed to scan WiFi networks\n");
-        *count = 0;
-        return status;
-    }
-
-    // Parse scan results
     *count = 0;
+    
+    // Use nmcli to scan for networks
+    char command[128] = "nmcli -t -f SSID dev wifi list";
+    char output[2048];
+    hal_status_t status = execute_command(command, output, sizeof(output));
+    
+    if (status != HAL_STATUS_OK) {
+        printf("[HAL-NETWORK] WiFi scan command failed\n");
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Parse SSIDs from output
     char *line = strtok(output, "\n");
-    while (line && *count < max_networks) {
-        char *essid_start = strstr(line, "ESSID:");
-        if (essid_start) {
-            essid_start += 6; // Skip "ESSID:"
-            if (*essid_start == '"') {
-                essid_start++; // Skip opening quote
-                char *essid_end = strchr(essid_start, '"');
-                if (essid_end) {
-                    size_t len = essid_end - essid_start;
-                    if (len < 32) {
-                        strncpy(networks[*count], essid_start, len);
-                        networks[*count][len] = '\0';
-                        (*count)++;
-                    }
-                }
-            }
+    while (line != NULL && *count < max_networks) {
+        // Remove any trailing whitespace
+        char *end = line + strlen(line) - 1;
+        while (end > line && (*end == '\r' || *end == '\n' || *end == ' ')) {
+            *end = '\0';
+            end--;
         }
+        
+        // Skip empty lines and hidden networks
+        if (strlen(line) > 0 && strcmp(line, "--") != 0) {
+            strncpy(networks[*count], line, 31);
+            networks[*count][31] = '\0';
+            (*count)++;
+        }
+        
         line = strtok(NULL, "\n");
     }
-
-    printf("Found %u WiFi networks\n", *count);
+    
+    printf("[HAL-NETWORK] ✅ Found %u WiFi networks\n", *count);
     return HAL_STATUS_OK;
 }
 
@@ -1048,3 +1044,4 @@ static hal_status_t ping_host(const char *host, uint32_t timeout_ms, uint32_t *l
     *latency_ms = 0;
     return HAL_STATUS_ERROR;
 }
+

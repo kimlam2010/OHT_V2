@@ -153,3 +153,11 @@ const char* get_module_name_by_id(int module_id);
 int get_module_telemetry_data(int module_id, api_module_telemetry_t *telemetry);
 int get_module_telemetry_data_with_ranges(int module_id, api_module_telemetry_with_range_t *telemetry);
 int get_module_config_data(int module_id, api_module_config_t *config);
+
+// Network Management API Handlers
+int api_handle_network_status(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_network_wifi_scan(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_network_wifi_connect(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_network_wifi_disconnect(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_network_performance(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+int api_handle_network_health(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
