@@ -7,6 +7,8 @@ add_library(app_managers
     telemetry_manager.c
     network/network_manager.c
     network/wifi_manager.c
+    network/wifi_ap_manager.c
+    network/fallback_manager.c
 )
 
 target_include_directories(app_managers PUBLIC

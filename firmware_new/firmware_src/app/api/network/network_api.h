@@ -15,6 +15,7 @@
 #include "hal_common.h"
 #include "network_manager.h"
 #include "wifi_manager.h"
+#include "api_manager.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -78,6 +79,14 @@ int network_api_handle_request(http_request_t *req, http_response_t *resp);
  * @return 0 on success, -1 on failure
  */
 int network_api_register_routes(void);
+
+/**
+ * @brief Wrapper handler for API Manager integration
+ * @param req API Manager request
+ * @param res API Manager response
+ * @return 0 on success, -1 on failure
+ */
+int network_api_wrapper_handler(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 
 /**
  * @brief Validate authentication token

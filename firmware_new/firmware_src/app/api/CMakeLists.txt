@@ -13,6 +13,7 @@ else()
       config_stats_apis.c
       security_auth.c
       network/network_api.c
+      network/wifi_ap_api.c
   )
 endif()
 

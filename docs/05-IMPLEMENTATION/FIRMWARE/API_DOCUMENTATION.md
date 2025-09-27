@@ -3110,12 +3110,435 @@ if __name__ == "__main__":
 
 ---
 
+---
+
+## 🔌 **WiFi AP Mode APIs - OHT-50 Robot Fallback Connectivity**
+
+### **📋 Overview**
+WiFi AP Mode APIs cung cấp quản lý WiFi Access Point cho OHT-50 robots như fallback connectivity khi WiFi connection fails. Bao gồm AP start/stop, client management, và auto-fallback functionality.
+
+### **🔧 Base URL**
+```
+http://localhost:8080/api/v1/network/ap
+```
+
+### **🔐 Authentication**
+- **Read Operations:** No authentication required
+- **Write Operations:** Bearer token required
+  - `oht50_operator_token_2025` - Operator level access
+  - `oht50_admin_token_2025` - Admin level access
+
+---
+
+### **📡 AP Management Endpoints**
+
+#### **1. Start WiFi Access Point**
+```http
+POST /api/v1/network/ap/start
+Authorization: Bearer oht50_admin_token_2025
+Content-Type: application/json
+
+{
+  "ssid": "OHT-50-Hotspot",
+  "password": "oht50_secure_2025",
+  "security_type": 2,
+  "ip_address": "192.168.4.1",
+  "netmask": "255.255.255.0",
+  "channel": 6,
+  "max_clients": 10
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "WiFi AP started successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+#### **2. Stop WiFi Access Point**
+```http
+POST /api/v1/network/ap/stop
+Authorization: Bearer oht50_admin_token_2025
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "WiFi AP stopped successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+#### **3. Get AP Status**
+```http
+GET /api/v1/network/ap/status
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": 2,
+    "ap_enabled": true,
+    "ap_ssid": "OHT-50-Hotspot",
+    "ap_ip": "192.168.4.1",
+    "ap_channel": 6,
+    "connected_clients": 2,
+    "max_clients": 10,
+    "uptime_seconds": 3600,
+    "total_bytes_sent": 1024000,
+    "total_bytes_received": 2048000,
+    "cpu_usage_percent": 15.0,
+    "memory_usage_percent": 25.0
+  },
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+---
+
+### **⚙️ Configuration Endpoints**
+
+#### **4. Get AP Configuration**
+```http
+GET /api/v1/network/ap/config
+Authorization: Bearer oht50_operator_token_2025
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ap_enabled": true,
+    "ap_ssid": "OHT-50-Hotspot",
+    "ap_security_type": 2,
+    "ap_ip": "192.168.4.1",
+    "ap_netmask": "255.255.255.0",
+    "ap_channel": 6,
+    "max_clients": 10,
+    "auto_fallback": true,
+    "fallback_timeout_ms": 30000
+  },
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+#### **5. Set AP Configuration**
+```http
+POST /api/v1/network/ap/config
+Authorization: Bearer oht50_admin_token_2025
+Content-Type: application/json
+
+{
+  "ap_enabled": true,
+  "ap_ssid": "OHT-50-Hotspot",
+  "ap_password": "oht50_secure_2025",
+  "ap_security_type": 2,
+  "ap_ip": "192.168.4.1",
+  "ap_netmask": "255.255.255.0",
+  "ap_channel": 6,
+  "max_clients": 10,
+  "auto_fallback": true,
+  "fallback_timeout_ms": 30000
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "AP configuration updated",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+---
+
+### **👥 Client Management Endpoints**
+
+#### **6. Get Connected Clients**
+```http
+GET /api/v1/network/ap/clients
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "clients": [
+      {
+        "mac_address": "aa:bb:cc:dd:ee:01",
+        "ip_address": "192.168.4.2",
+        "hostname": "mobile-device-1",
+        "signal_strength_dbm": -45,
+        "connected_time_seconds": 120,
+        "bytes_sent": 1024000,
+        "bytes_received": 2048000,
+        "authenticated": true
+      },
+      {
+        "mac_address": "aa:bb:cc:dd:ee:02",
+        "ip_address": "192.168.4.3",
+        "hostname": "tablet-device-1",
+        "signal_strength_dbm": -52,
+        "connected_time_seconds": 85,
+        "bytes_sent": 512000,
+        "bytes_received": 1536000,
+        "authenticated": true
+      }
+    ],
+    "count": 2
+  },
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+#### **7. Kick Client from AP**
+```http
+POST /api/v1/network/ap/clients/kick
+Authorization: Bearer oht50_admin_token_2025
+Content-Type: application/json
+
+{
+  "mac_address": "aa:bb:cc:dd:ee:01"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Client kicked successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+---
+
+### **📊 Statistics Endpoints**
+
+#### **8. Get AP Statistics**
+```http
+GET /api/v1/network/ap/statistics
+Authorization: Bearer oht50_operator_token_2025
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ap_start_count": 5,
+    "ap_stop_count": 2,
+    "client_connections": 15,
+    "client_disconnections": 13,
+    "fallback_triggers": 3,
+    "total_uptime_seconds": 7200,
+    "total_bytes_sent": 10240000,
+    "total_bytes_received": 20480000,
+    "average_cpu_usage": 15.0,
+    "average_memory_usage": 25.0
+  },
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+#### **9. Reset AP Statistics**
+```http
+POST /api/v1/network/ap/statistics/reset
+Authorization: Bearer oht50_admin_token_2025
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "AP statistics reset successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+---
+
+### **🔄 Fallback Management Endpoints**
+
+#### **10. Enable Auto-Fallback**
+```http
+POST /api/v1/network/fallback/enable
+Authorization: Bearer oht50_admin_token_2025
+Content-Type: application/json
+
+{
+  "enabled": true,
+  "timeout_ms": 30000
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Auto-fallback configuration updated",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+#### **11. Get Fallback Status**
+```http
+GET /api/v1/network/fallback/status
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "enabled": true,
+    "timeout_ms": 30000
+  },
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+#### **12. Trigger Fallback**
+```http
+POST /api/v1/network/fallback/trigger
+Authorization: Bearer oht50_admin_token_2025
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Fallback triggered successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+---
+
+### **🔒 Security Configuration**
+
+#### **Security Types**
+- `0` - Open (no security)
+- `2` - WPA2-PSK
+- `3` - WPA3-PSK
+
+#### **Validation Rules**
+- **SSID:** 1-32 characters
+- **Password:** 8-64 characters (for secured networks)
+- **Channel:** 1-13 (2.4GHz)
+- **IP Address:** Valid IPv4 format
+- **Max Clients:** 1-50
+
+---
+
+### **⚡ Performance Requirements**
+
+#### **Response Time Targets**
+- **AP Start:** < 10 seconds
+- **AP Stop:** < 5 seconds
+- **AP Status:** < 100ms
+- **Client List:** < 200ms
+- **Fallback Trigger:** < 2 seconds
+
+#### **AP Performance**
+- **Connection Time:** < 30 seconds
+- **Throughput:** > 20Mbps
+- **Concurrent Clients:** > 5 clients
+- **Range:** > 50 meters
+
+---
+
+### **🧪 Testing Examples**
+
+#### **Test AP Start**
+```bash
+curl -H "Authorization: Bearer oht50_admin_token_2025" \
+     -H "Content-Type: application/json" \
+     -X POST http://localhost:8080/api/v1/network/ap/start \
+     -d '{"ssid": "OHT-50-Hotspot", "password": "secure_ap_password", "channel": 6}'
+```
+
+#### **Test AP Status**
+```bash
+curl http://localhost:8080/api/v1/network/ap/status
+```
+
+#### **Test AP Clients**
+```bash
+curl http://localhost:8080/api/v1/network/ap/clients
+```
+
+#### **Test Fallback Enable**
+```bash
+curl -H "Authorization: Bearer oht50_admin_token_2025" \
+     -H "Content-Type: application/json" \
+     -X POST http://localhost:8080/api/v1/network/fallback/enable \
+     -d '{"enabled": true, "timeout_ms": 30000}'
+```
+
+#### **Test Fallback Status**
+```bash
+curl http://localhost:8080/api/v1/network/fallback/status
+```
+
+---
+
+### **📋 Error Codes**
+
+| Code | Description |
+|------|-------------|
+| `WIFI_AP_SUCCESS` | Success |
+| `WIFI_AP_ERROR_INVALID_PARAM` | Invalid parameter |
+| `WIFI_AP_ERROR_INIT_FAILED` | Initialization failed |
+| `WIFI_AP_ERROR_START_FAILED` | AP start failed |
+| `WIFI_AP_ERROR_STOP_FAILED` | AP stop failed |
+| `WIFI_AP_ERROR_NOT_INITIALIZED` | Manager not initialized |
+| `WIFI_AP_ERROR_ALREADY_RUNNING` | AP already running |
+| `WIFI_AP_ERROR_NOT_RUNNING` | AP not running |
+| `WIFI_AP_ERROR_INVALID_SSID` | Invalid SSID |
+| `WIFI_AP_ERROR_WEAK_PASSWORD` | Weak password |
+| `WIFI_AP_ERROR_HAL_FAILED` | HAL operation failed |
+
+---
+
+### **🔗 Integration Notes**
+
+#### **Frontend Integration**
+- Use WebSocket for real-time AP status updates
+- Implement fallback status monitoring
+- Display connected clients in real-time
+- Show AP performance metrics
+
+#### **Backend Integration**
+- Monitor AP status via periodic API calls
+- Implement fallback trigger logic
+- Log AP statistics for analysis
+- Handle client management operations
+
+#### **Mobile App Integration**
+- Connect to robot AP when WiFi fails
+- Display AP connection status
+- Show signal strength and quality
+- Implement reconnection logic
+
+---
+
 **📋 Generated by Firmware Team - OHT-50 Project**  
 **🕒 Date: 2025-01-28**  
-**✅ Status: v2.5.0 COMPLETE - Network Management APIs Ready & All Systems Operational**  
-**🏆 Achievement: 100% GitHub Issues Resolved (10/10 Issues) + Network Management Complete**  
+**✅ Status: v2.6.0 COMPLETE - WiFi AP Mode APIs Ready & All Systems Operational**  
+**🏆 Achievement: 100% GitHub Issues Resolved (11/11 Issues) + WiFi AP Mode Complete**  
 **✅ Backend Integration: Complete**  
 **✅ Module Data Access: Complete**  
 **✅ WebSocket Server: Fixed & Stable**  
 **✅ Network Management: Complete (Issue #160)**  
+**✅ WiFi AP Mode: Complete (Issue #168)**  
 **🚀 Frontend Integration: Ready for Development**
