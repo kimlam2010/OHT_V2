@@ -1,12 +1,13 @@
-# 🚨 WebSocket Alerts Implementation - Issue #79
+# 🚨 WebSocket Alerts Implementation Guide - Issue #79
 
 **Phiên bản:** 1.0  
-**Ngày:** 2025-01-28  
+**Ngày cập nhật:** 2025-01-28  
+**Loại tài liệu:** Implementation Guide  
 **Mục tiêu:** Implement WebSocket cho active alert notifications theo Issue #79
 
 ---
 
-## 📋 **Overview**
+## 📋 **TỔNG QUAN**
 
 Đã implement thành công **WebSocket Alert System** cho real-time alert notifications với đầy đủ tính năng:
 
@@ -20,7 +21,7 @@
 
 ---
 
-## 🏗️ **Architecture**
+## 🏗️ **KIẾN TRÚC**
 
 ### **Component Structure:**
 ```
@@ -190,7 +191,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 🏃‍♂️ **Usage Examples**
+## 🏃‍♂️ **VÍ DỤ SỬ DỤNG**
 
 ### **Frontend JavaScript:**
 ```javascript
@@ -318,7 +319,7 @@ export function useWebSocketAlerts() {
 
 ---
 
-## 🧪 **Testing**
+## 🧪 **TESTING**
 
 ### **Test Scripts:**
 1. **`scripts/test/test_websocket_alerts.py`** - Test WebSocket connection và message format
@@ -348,7 +349,7 @@ python scripts/test/test_alert_generation.py
 
 ---
 
-## 📊 **Performance**
+## 📊 **PERFORMANCE**
 
 ### **Targets:**
 - **Alert Response Time:** < 100ms
@@ -364,7 +365,7 @@ python scripts/test/test_alert_generation.py
 
 ---
 
-## 🔒 **Security**
+## 🔒 **SECURITY**
 
 ### **Features:**
 - **Authentication:** JWT token required for REST API
@@ -375,7 +376,7 @@ python scripts/test/test_alert_generation.py
 
 ---
 
-## 🚀 **Deployment**
+## 🚀 **DEPLOYMENT**
 
 ### **Service Integration:**
 - WebSocket Alert Service auto-starts với application
@@ -391,7 +392,7 @@ python scripts/test/test_alert_generation.py
 
 ---
 
-## 📚 **API Documentation**
+## 📚 **API DOCUMENTATION**
 
 ### **WebSocket Endpoints:**
 - **`/ws/alerts`** - Alert notifications WebSocket
@@ -455,3 +456,9 @@ python scripts/test/test_alert_generation.py
 ---
 
 **🎉 Issue #79 - WebSocket cho active alert: COMPLETED SUCCESSFULLY!**
+
+---
+
+**Changelog:**
+- **v1.0 (2025-01-28):** Di chuyển từ root docs/ và cập nhật theo chuẩn ISO
+

@@ -13,12 +13,12 @@ Báo cáo tiến độ các phase phát triển OHT-50 Backend System, bao gồm
 ## 📋 **DANH SÁCH TÀI LIỆU**
 
 ### **📖 Phase Reports**
-- **[PHASE_1_COMPLETION_REPORT_FINAL.md](./PHASE_1_COMPLETION_REPORT_FINAL.md)** - Báo cáo hoàn thành Phase 1
-- **[PHASE_1_FOUNDATION_COMPLETION_REPORT.md](./PHASE_1_FOUNDATION_COMPLETION_REPORT.md)** - Báo cáo foundation Phase 1
-- **[PHASE_2_IMPLEMENTATION_PLAN.md](./PHASE_2_IMPLEMENTATION_PLAN.md)** - Kế hoạch triển khai Phase 2
-- **[PHASE_2_PROCESSING_PLANT.md](./PHASE_2_PROCESSING_PLANT.md)** - Processing Plant Phase 2
-- **[PHASE_2_PROGRESS_REPORT.md](./PHASE_2_PROGRESS_REPORT.md)** - Báo cáo tiến độ Phase 2
-- **[PHASE_3_PROGRESS_REPORT_2025-01-28.md](./PHASE_3_PROGRESS_REPORT_2025-01-28.md)** - Báo cáo tiến độ Phase 3
+- **[phase-1-completion-report-final.md](./phase-1-completion-report-final.md)** - Báo cáo hoàn thành Phase 1
+- **[phase-1-foundation-completion-report.md](./phase-1-foundation-completion-report.md)** - Báo cáo foundation Phase 1
+- **[phase-2-implementation-plan.md](./phase-2-implementation-plan.md)** - Kế hoạch triển khai Phase 2
+- **[phase-2-processing-plant.md](./phase-2-processing-plant.md)** - Processing Plant Phase 2
+- **[phase-2-progress-report.md](./phase-2-progress-report.md)** - Báo cáo tiến độ Phase 2
+- **[phase-3-progress-report-2025-01-28.md](./phase-3-progress-report-2025-01-28.md)** - Báo cáo tiến độ Phase 3
 
 ## 🗺️ **PHASE OVERVIEW**
 
