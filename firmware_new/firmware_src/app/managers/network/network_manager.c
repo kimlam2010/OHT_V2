@@ -32,6 +32,8 @@ static int validate_signal_threshold(int threshold);
 static uint64_t get_timestamp_ms(void);
 static void record_performance_metric(const char *operation, uint32_t response_time_ms, bool success);
 static void update_network_status(void);
+static void get_real_network_info(void);
+static void get_real_network_stats(void);
 
 // Error Messages
 static const char* error_messages[] = {
@@ -155,14 +157,14 @@ int network_manager_connect_wifi(const char *ssid, const char *password) {
     // Connect via mock implementation
     printf("[NETWORK_MANAGER] Connecting to WiFi: %s\n", ssid);
     
-    // Mock connection success
+    // Get REAL network information from system
     if (strlen(ssid) > 0 && strlen(password) >= 8) {
         current_status.connected = true;
         strncpy(current_status.current_ssid, ssid, sizeof(current_status.current_ssid) - 1);
-        current_status.signal_strength = -45; // Mock value
-        strcpy(current_status.ip_address, "192.168.1.100");
-        strcpy(current_status.gateway, "192.168.1.1");
-        strcpy(current_status.dns, "8.8.8.8");
+        
+        // Get REAL network information from system interfaces
+        get_real_network_info();
+        
         success = true;
         printf("[NETWORK_MANAGER] Connected to WiFi: %s\n", ssid);
     } else {
@@ -582,12 +584,109 @@ static void record_performance_metric(const char *operation, uint32_t response_t
  * @brief Update network status
  */
 static void update_network_status(void) {
-    // Update timestamp
-    current_status.latency_ms = 5.2f; // Mock value
+    // Get REAL network information from system
+    get_real_network_info();
     
-    // Update bytes if connected
+    // Update bytes if connected - get REAL network statistics
     if (current_status.connected) {
-        current_status.bytes_sent += 1024;    // Mock increment
-        current_status.bytes_received += 2048; // Mock increment
+        get_real_network_stats();
+    }
+}
+
+/**
+ * @brief Get REAL network information from system interfaces
+ */
+static void get_real_network_info(void) {
+    FILE *fp;
+    char line[256];
+    char interface[16];
+    char ip_address[16];
+    char gateway[16];
+    char dns[16];
+    int signal_strength = -100;
+    
+    // Get IP address from system interfaces - PRIORITIZE wlan0 if connected to WiFi
+    if (strlen(current_status.current_ssid) > 0) {
+        // If connected to WiFi, get wlan0 IP first
+        fp = popen("ip addr show wlan0 | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1", "r");
+    } else {
+        // If not connected to WiFi, get eth0 IP
+        fp = popen("ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1", "r");
+    }
+    if (fp != NULL) {
+        if (fgets(ip_address, sizeof(ip_address), fp) != NULL) {
+            // Remove newline
+            ip_address[strcspn(ip_address, "\n")] = 0;
+            strcpy(current_status.ip_address, ip_address);
+            printf("[NETWORK_MANAGER] Real IP address: %s\n", ip_address);
+        }
+        pclose(fp);
+    }
+    
+    // Get gateway from system
+    fp = popen("ip route | grep default | awk '{print $3}' | head -1", "r");
+    if (fp != NULL) {
+        if (fgets(gateway, sizeof(gateway), fp) != NULL) {
+            gateway[strcspn(gateway, "\n")] = 0;
+            strcpy(current_status.gateway, gateway);
+            printf("[NETWORK_MANAGER] Real gateway: %s\n", gateway);
+        }
+        pclose(fp);
+    }
+    
+    // Get DNS from system
+    fp = popen("cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | head -1", "r");
+    if (fp != NULL) {
+        if (fgets(dns, sizeof(dns), fp) != NULL) {
+            dns[strcspn(dns, "\n")] = 0;
+            strcpy(current_status.dns, dns);
+            printf("[NETWORK_MANAGER] Real DNS: %s\n", dns);
+        }
+        pclose(fp);
+    }
+    
+    // Get WiFi signal strength (if connected to WiFi)
+    if (strlen(current_status.current_ssid) > 0) {
+        fp = popen("iwconfig wlan0 2>/dev/null | grep 'Signal level' | awk '{print $4}' | cut -d'=' -f2", "r");
+        if (fp != NULL) {
+            if (fgets(line, sizeof(line), fp) != NULL) {
+                signal_strength = atoi(line);
+                current_status.signal_strength = signal_strength;
+                printf("[NETWORK_MANAGER] Real signal strength: %d dBm\n", signal_strength);
+            }
+            pclose(fp);
+        }
+    }
+}
+
+/**
+ * @brief Get REAL network statistics from system
+ */
+static void get_real_network_stats(void) {
+    FILE *fp;
+    char line[256];
+    unsigned long long bytes_sent = 0, bytes_received = 0;
+    
+    // Get network statistics from /proc/net/dev
+    fp = popen("cat /proc/net/dev | grep -E 'eth0|wlan0' | awk '{print $2, $10}' | head -1", "r");
+    if (fp != NULL) {
+        if (fgets(line, sizeof(line), fp) != NULL) {
+            sscanf(line, "%llu %llu", &bytes_received, &bytes_sent);
+            current_status.bytes_received = bytes_received;
+            current_status.bytes_sent = bytes_sent;
+            printf("[NETWORK_MANAGER] Real network stats: RX=%llu, TX=%llu\n", bytes_received, bytes_sent);
+        }
+        pclose(fp);
+    }
+    
+    // Get real latency (ping to gateway)
+    fp = popen("ping -c 1 -W 1 $(ip route | grep default | awk '{print $3}' | head -1) 2>/dev/null | grep 'time=' | awk '{print $7}' | cut -d'=' -f2", "r");
+    if (fp != NULL) {
+        if (fgets(line, sizeof(line), fp) != NULL) {
+            float latency = atof(line);
+            current_status.latency_ms = latency;
+            printf("[NETWORK_MANAGER] Real latency: %.2f ms\n", latency);
+        }
+        pclose(fp);
     }
 }
