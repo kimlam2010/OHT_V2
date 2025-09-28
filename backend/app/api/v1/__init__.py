@@ -6,7 +6,7 @@ This module aggregates all v1 API routers into a single router.
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, fw_integration, module_telemetry, firmware_health
+from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, fw_integration, module_telemetry, firmware_health, network
 
 # Create main v1 router
 router = APIRouter(prefix="/api/v1")
@@ -21,6 +21,7 @@ router.include_router(monitoring.router, tags=["monitoring"])
 router.include_router(fw_integration.router, tags=["firmware-integration"])
 router.include_router(module_telemetry.router, tags=["module-telemetry"])
 router.include_router(firmware_health.router, tags=["firmware-health"])
+router.include_router(network.router, tags=["network"])
 
 @router.get("/")
 async def v1_root():

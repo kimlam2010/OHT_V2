@@ -18,7 +18,7 @@ from app.core.monitoring_service import monitoring_service
 from app.core.websocket_service import websocket_service
 
 # Import API routers
-from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, localization, health, dashboard, fw_integration, communication, module_telemetry
+from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, localization, health, dashboard, fw_integration, communication, module_telemetry, network
 from app.api import websocket
 from app.config import Settings
 
@@ -474,8 +474,15 @@ app.include_router(communication.router)
 # Include Module Telemetry Validation API router
 app.include_router(module_telemetry.router)
 
+# Include Network Management API router
+app.include_router(network.router, prefix="/api/v1")
+
 # Include WebSocket router
-app.include_router(websocket.router)
+try:
+    app.include_router(websocket.router)
+except AttributeError:
+    # WebSocket router not available, skip
+    pass
 
 
 if __name__ == "__main__":
