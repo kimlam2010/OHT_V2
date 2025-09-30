@@ -1,4 +1,6 @@
 export * from './error.type'
+export * from './http.type'
+export * from './module.type'
 export * from './monitoring.type'
 export * from './performance.type'
 export * from './robot.type'

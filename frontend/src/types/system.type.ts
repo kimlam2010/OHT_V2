@@ -8,3 +8,14 @@ export interface System {
   last_backup: string
   database_size: number
 }
+
+export interface SystemHealthData {
+  status: 'online' | 'warning' | 'error' | 'offline'
+  error_rate: number
+  response_time_p95: number
+  throughput: number
+  last_scan: string
+  total_modules: number
+  active_modules: number
+  failed_modules: number
+}
