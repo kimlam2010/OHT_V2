@@ -1,5 +1,4 @@
 import type { LogItem } from '@/types'
-import { AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -49,16 +48,6 @@ function Spinner() {
         ))}
       </TableBody>
     </Table>
-  )
-}
-
-function ErrorMessage({ error }: { error: Error }) {
-  return (
-    <div className="flex gap-2 items-center  text-destructive">
-      <AlertCircle className="size-6" />
-      <p>Error: </p>
-      {error.message}
-    </div>
   )
 }
 
@@ -132,7 +121,6 @@ export default function SystemLogCard() {
       <CardContent>
         {matchQuery(systemLogQuery, {
           loading: () => <Spinner />,
-          error: error => <ErrorMessage error={error} />,
           success: data => <SystemLogTable logs={data.logs} />,
         })}
       </CardContent>
