@@ -1,4 +1,4 @@
-import type { BusHealthResponse } from '@/api/module'
+import type { SystemHealthData } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -44,36 +44,36 @@ function BusHealthSkeleton() {
   )
 }
 
-function BusHealthBadge({ status }: { status: BusHealthResponse['data']['status'] }) {
+function BusHealthBadge({ status }: { status: SystemHealthData['status'] }) {
   return <Badge className="text-xs uppercase rounded-full" variant={status === 'online' ? 'success' : status === 'warning' ? 'warning' : status === 'error' ? 'destructive' : 'secondary'}>{status}</Badge>
 }
 
-function BusHealthBody({ data }: { data: BusHealthResponse }) {
+function BusHealthBody({ data }: { data: SystemHealthData }) {
   return (
     <div className="grid grid-cols-4 gap-2 w-full">
       <div className="flex flex-col gap-2 items-center p-2 rounded-md border bg-muted/10">
-        {(data.data.error_rate * 100).toFixed(2)}
+        {(data.error_rate * 100).toFixed(2)}
         %
         <span className="text-xs text-center text-muted-foreground">
           Error Rate
         </span>
       </div>
       <div className="flex flex-col gap-2 items-center p-1 rounded-md border bg-muted/10 md:p-2">
-        {data.data.response_time_p95}
+        {data.response_time_p95}
         {' ms'}
         <span className="text-xs text-center text-muted-foreground">
           Response P95
         </span>
       </div>
       <div className="flex flex-col gap-2 items-center p-1 rounded-md border bg-muted/10 md:p-2">
-        {data.data.throughput}
+        {data.throughput}
         {' fps'}
         <span className="text-xs text-center text-muted-foreground">
           Throughput
         </span>
       </div>
       <div className="flex flex-col gap-2 items-center p-1 rounded-md border bg-muted/10 md:p-2">
-        {data.data.last_scan}
+        {data.last_scan}
         <span className="text-xs text-center text-muted-foreground">
           Last Scan
         </span>
@@ -86,7 +86,7 @@ export default function BusHealthCard() {
   const busHealth = useBusHealthQuery()
 
   return (
-    <Card className="gap-3 h-full shadow">
+    <Card className="gap-3 h-full w-full shadow">
       <CardHeader>
         <CardTitle>
           RS485 Bus Health
@@ -103,7 +103,7 @@ export default function BusHealthCard() {
         {/* Bus Health Status */}
         {matchQuery(busHealth, {
           loading: () => <BusHealthSkeleton />,
-          success: data => <BusHealthBody data={data} />,
+          success: data => <BusHealthBody data={data.data} />,
         })}
         {/* Module Discovery */}
         <DiscoveryModulesCard />

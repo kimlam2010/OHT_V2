@@ -101,7 +101,7 @@ function RouteComponent() {
           },
         )}
       </div>
-      <div className="grid grid-cols-1 gap-4 w-full md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 w-full lg:grid-cols-2">
         <SystemLogCard />
         {matchQuery(
           dashboardSummaryQuery,
