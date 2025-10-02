@@ -1,7 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 import { Link, useLocation } from '@tanstack/react-router'
-import { useMemo } from 'react'
 import { SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 
 type Paths = FileRouteTypes['to']
