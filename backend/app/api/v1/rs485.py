@@ -12,6 +12,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path, Query, Requ
 from app.core.security import require_permission
 from app.models.user import User
 from app.services.rs485_service import rs485_service
+from app.core.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.register_service import register_service as reg_service
 from app.schemas.rs485 import (
     RS485ModulesResponse, RS485ModuleResponse, RS485BusHealthResponse,
     RS485DiscoveryResponse, RS485DiscoveryResultsResponse, 
@@ -409,12 +412,18 @@ async def get_module_telemetry(
 async def update_module_register(
     request: RS485RegisterUpdateRequest,
     address: int = Path(..., description="Module address (1-15)", ge=1, le=15),
-    current_user: User = Depends(require_permission("system", "configure"))
+    current_user: User = Depends(require_permission("system", "configure")),
+    db: AsyncSession = Depends(get_db),
 ):
     """Update module register (if writable) - Issue #91"""
     try:
         logger.info(f"✏️ Updating register {request.register_address} on module 0x{address:02X}")
         
+        # Permission validation using register metadata (if exists)
+        meta = await reg_service.get_by_address(db, request.register_address)
+        if meta is not None:
+            reg_service.validate_write_permission(current_user, meta, force=request.force)
+
         result = await rs485_service.update_module_register(
             address=address,
             register_address=request.register_address,

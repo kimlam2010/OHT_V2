@@ -6,6 +6,7 @@ from .robot import Robot, RobotCommand, RobotConfiguration
 from .telemetry import TelemetryCurrent, TelemetryHistory, TelemetryAlert, SensorData
 from .user import User, AuditLog
 from .safety import SafetyAlert, SafetyZone, SafetyStatus, SafetyLog
+from .register import Register, RegisterMode, RegisterAccessLevel
 
 __all__ = [
     # Robot models
@@ -28,4 +29,8 @@ __all__ = [
     "SafetyZone",
     "SafetyStatus",
     "SafetyLog",
+    # Register models
+    "Register",
+    "RegisterMode",
+    "RegisterAccessLevel",
 ]
