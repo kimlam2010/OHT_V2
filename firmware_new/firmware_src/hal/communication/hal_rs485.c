@@ -61,18 +61,16 @@ hal_status_t hal_rs485_init(const rs485_config_t *config)
         return status;
     }
     
-    pthread_mutex_lock(&rs485_state.mutex);
-    
     if (rs485_state.initialized) {
-        pthread_mutex_unlock(&rs485_state.mutex);
         return HAL_STATUS_ALREADY_INITIALIZED;
     }
     
-    // Initialize mutex
+    // Initialize mutex BEFORE locking
     if (pthread_mutex_init(&rs485_state.mutex, NULL) != 0) {
-        pthread_mutex_unlock(&rs485_state.mutex);
         return HAL_STATUS_ERROR;
     }
+    
+    pthread_mutex_lock(&rs485_state.mutex);
     
     // Copy configuration
     memcpy(&rs485_state.config, config, sizeof(rs485_config_t));
@@ -224,8 +222,14 @@ hal_status_t hal_rs485_transmit(const uint8_t *data, size_t length)
         // Update status for transmission
         rs485_state.device_info.rs485_status = RS485_STATUS_TRANSMITTING;
         
+        // Ensure RX queue is clear, then write
+        tcflush(rs485_state.device_fd, TCIFLUSH);
         // Write data directly to UART1
         ssize_t written = write(rs485_state.device_fd, data, length);
+        if (written == (ssize_t)length) {
+            // Ensure bytes are on-the-wire before switching to RX
+            tcdrain(rs485_state.device_fd);
+        }
         
         // Update status
         rs485_state.device_info.rs485_status = RS485_STATUS_IDLE;
@@ -304,8 +308,8 @@ hal_status_t hal_rs485_send_receive(const uint8_t *tx_data, size_t tx_length,
         return tx_result;
     }
     
-    // 2. FIXED: Add proper turnaround delay (2ms) before receiving
-    usleep(2000); // 2ms turnaround delay for RS485 transceiver
+    // 2. FIXED: Add proper turnaround delay (5ms) before receiving
+    usleep(5000); // 5ms turnaround delay for RS485 transceiver
     
     // 3. Receive response
     hal_status_t rx_result = hal_rs485_receive(rx_buffer, max_rx_length, actual_rx_length);
@@ -347,45 +351,63 @@ hal_status_t hal_rs485_receive(uint8_t *buffer, size_t max_length, size_t *actua
     // Update status for reception
     rs485_state.device_info.rs485_status = RS485_STATUS_RECEIVING;
     
-    // Read data with timeout
+    // Read data with timeout, accumulate until no more data or deadline
     fd_set read_fds;
-    struct timeval timeout;
+    struct timeval deadline;
+    struct timeval now;
+    gettimeofday(&deadline, NULL);
+    long add_usec = (long)rs485_state.config.timeout_ms * 1000L;
+    deadline.tv_sec += add_usec / 1000000L;
+    deadline.tv_usec += add_usec % 1000000L;
+    if (deadline.tv_usec >= 1000000L) { deadline.tv_sec += 1; deadline.tv_usec -= 1000000L; }
     
-    FD_ZERO(&read_fds);
-    FD_SET(rs485_state.device_fd, &read_fds);
-    
-    timeout.tv_sec = rs485_state.config.timeout_ms / 1000;
-    timeout.tv_usec = (rs485_state.config.timeout_ms % 1000) * 1000;
-    
+    size_t total_received = 0;
     printf("[HAL-RS485-RX] Waiting for data (timeout=%u ms)...\n", rs485_state.config.timeout_ms);
-    int select_result = select(rs485_state.device_fd + 1, &read_fds, NULL, NULL, &timeout);
-    
-    if (select_result > 0) {
-        ssize_t received = read(rs485_state.device_fd, buffer, max_length);
-        
-        if (received > 0) {
-            *actual_length = received;
-            
-            // Update statistics
-            rs485_state.statistics.bytes_received += received;
-            rs485_state.statistics.frames_received++;
-            rs485_state.statistics.timestamp_us = rs485_get_timestamp_us();
-            rs485_state.last_operation_time_us = rs485_state.statistics.timestamp_us;
-            
-            printf("[HAL-RS485-RX] Success: received %zd bytes\n", received);
-            
-            // Update status
-            rs485_state.device_info.rs485_status = RS485_STATUS_IDLE;
-            
-            pthread_mutex_unlock(&rs485_state.mutex);
-            return HAL_STATUS_OK;
-        } else {
-            printf("[HAL-RS485-RX] Read error: received=%zd\n", received);
+    while (total_received < max_length) {
+        gettimeofday(&now, NULL);
+        long rem_sec = (long)deadline.tv_sec - (long)now.tv_sec;
+        long rem_usec = (long)deadline.tv_usec - (long)now.tv_usec;
+        if (rem_usec < 0) { rem_sec -= 1; rem_usec += 1000000L; }
+        if (rem_sec < 0 || (rem_sec == 0 && rem_usec <= 0)) {
+            break;
         }
-    } else if (select_result == 0) {
-        printf("[HAL-RS485-RX] Timeout after %u ms\n", rs485_state.config.timeout_ms);
+        struct timeval timeout = { .tv_sec = rem_sec, .tv_usec = rem_usec };
+        FD_ZERO(&read_fds);
+        FD_SET(rs485_state.device_fd, &read_fds);
+        int select_result = select(rs485_state.device_fd + 1, &read_fds, NULL, NULL, &timeout);
+        if (select_result > 0) {
+            ssize_t received = read(rs485_state.device_fd, buffer + total_received, max_length - total_received);
+            if (received > 0) {
+                total_received += (size_t)received;
+                // small inter-byte delay to coalesce frame
+                usleep(2000);
+                continue;
+            } else if (received == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+                continue;
+            } else {
+                printf("[HAL-RS485-RX] Read error: %s\n", strerror(errno));
+                break;
+            }
+        } else if (select_result == 0) {
+            break;
+        } else {
+            printf("[HAL-RS485-RX] Select error: %s\n", strerror(errno));
+            break;
+        }
+    }
+    
+    if (total_received > 0) {
+        *actual_length = total_received;
+        rs485_state.statistics.bytes_received += total_received;
+        rs485_state.statistics.frames_received++;
+        rs485_state.statistics.timestamp_us = rs485_get_timestamp_us();
+        rs485_state.last_operation_time_us = rs485_state.statistics.timestamp_us;
+        printf("[HAL-RS485-RX] Success: received %zu bytes\n", total_received);
+        rs485_state.device_info.rs485_status = RS485_STATUS_IDLE;
+        pthread_mutex_unlock(&rs485_state.mutex);
+        return HAL_STATUS_OK;
     } else {
-        printf("[HAL-RS485-RX] Select error: %d\n", select_result);
+        printf("[HAL-RS485-RX] Timeout after %u ms\n", rs485_state.config.timeout_ms);
     }
     
     // Update status
@@ -657,7 +679,7 @@ bool modbus_verify_crc(const uint8_t *data, size_t length, uint16_t crc) { (void
 // Internal functions
 static hal_status_t rs485_open_device(void) {
     // Open RS485 device file
-    rs485_state.device_fd = open(rs485_state.config.device_path, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    rs485_state.device_fd = open(rs485_state.config.device_path, O_RDWR | O_NOCTTY);
     if (rs485_state.device_fd == -1) {
         printf("Failed to open RS485 device %s: %s\n", rs485_state.config.device_path, strerror(errno));
         return HAL_STATUS_IO_ERROR;
@@ -682,6 +704,9 @@ static hal_status_t rs485_configure_serial(void) {
         printf("Failed to get serial attributes: %s\n", strerror(errno));
         return HAL_STATUS_IO_ERROR;
     }
+    
+    // Make raw first for clean baseline
+    cfmakeraw(&tty);
     
     // Set baud rate
     speed_t baud_rate;
@@ -709,25 +734,21 @@ static hal_status_t rs485_configure_serial(void) {
     tty.c_cflag &= ~CRTSCTS;        // No hardware flow control
     #endif
     
-    // Set input flags
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);  // No software flow control
-    tty.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);  // Raw input
+    // Disable software flow control explicitly
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
     
-    // Set output flags
-    tty.c_oflag &= ~OPOST;  // Raw output
-    
-    // Set local flags
-    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);  // Raw mode
-    
-    // Set timeout
-    tty.c_cc[VTIME] = rs485_state.config.timeout_ms / 100;  // Timeout in deciseconds
-    tty.c_cc[VMIN] = 0;  // Non-blocking
+    // Use select() for timeout; keep reads non-blocking via VMIN/VTIME
+    tty.c_cc[VMIN] = 0;
+    tty.c_cc[VTIME] = 0;
     
     // Apply settings
     if (tcsetattr(rs485_state.device_fd, TCSANOW, &tty) != 0) {
         printf("Failed to set serial attributes: %s\n", strerror(errno));
         return HAL_STATUS_IO_ERROR;
     }
+    
+    // Flush any pending I/O
+    tcflush(rs485_state.device_fd, TCIOFLUSH);
     
     return HAL_STATUS_OK;
 }
