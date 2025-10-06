@@ -1496,3 +1496,163 @@ hal_status_t comm_manager_resume_scanning(void) {
 bool comm_manager_is_scanning(void) {
     return g_scan_active;
 }
+
+// ============================================================================
+// REGISTER VALIDATION FUNCTIONS IMPLEMENTATION (Issue #179 Support)
+// ============================================================================
+
+hal_status_t comm_manager_validate_modbus_request(const comm_mgr_modbus_request_t *request) {
+    if (request == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Basic parameter validation
+    if (request->slave_id < 1 || request->slave_id > 247) {
+        printf("[COMM_VALIDATE] Invalid slave ID: %d\n", request->slave_id);
+        return HAL_STATUS_ERROR;
+    }
+    
+    if (request->quantity == 0 || request->quantity > 125) {
+        printf("[COMM_VALIDATE] Invalid quantity: %d\n", request->quantity);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // If register validation is enabled, validate each register
+    if (request->validate_register_info) {
+        for (uint16_t i = 0; i < request->quantity; i++) {
+            uint16_t reg_addr = request->start_address + i;
+            
+            // Validate register access
+            hal_status_t status = comm_manager_validate_register_access(
+                request->slave_id, reg_addr, request->function_code, request->user_access_level);
+            
+            if (status != HAL_STATUS_OK) {
+                printf("[COMM_VALIDATE] Register access denied: module=0x%02X, reg=0x%04X\n", 
+                       request->slave_id, reg_addr);
+                return status;
+            }
+            
+            // For write operations, validate data values
+            if (request->function_code == MODBUS_FC_WRITE_SINGLE_REGISTER || 
+                request->function_code == MODBUS_FC_WRITE_MULTIPLE_REGISTERS) {
+                
+                if (request->data != NULL && request->data_length >= (i + 1) * 2) {
+                    uint16_t value = (request->data[i * 2] << 8) | request->data[i * 2 + 1];
+                    
+                    status = comm_manager_validate_register_value(request->slave_id, reg_addr, value);
+                    if (status != HAL_STATUS_OK) {
+                        printf("[COMM_VALIDATE] Invalid register value: module=0x%02X, reg=0x%04X, value=0x%04X\n", 
+                               request->slave_id, reg_addr, value);
+                        return status;
+                    }
+                }
+            }
+        }
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_validate_register_access(uint8_t module_addr, uint16_t register_addr, 
+                                                  modbus_function_code_t function_code, 
+                                                  uint8_t user_access_level) {
+    // Convert function code to access mode
+    uint8_t access_mode;
+    switch (function_code) {
+        case MODBUS_FC_READ_COILS:
+        case MODBUS_FC_READ_DISCRETE_INPUTS:
+        case MODBUS_FC_READ_HOLDING_REGISTERS:
+        case MODBUS_FC_READ_INPUT_REGISTERS:
+            access_mode = REG_MODE_READ_ONLY;
+            break;
+        case MODBUS_FC_WRITE_SINGLE_COIL:
+        case MODBUS_FC_WRITE_SINGLE_REGISTER:
+        case MODBUS_FC_WRITE_MULTIPLE_COILS:
+        case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
+            access_mode = REG_MODE_WRITE_ONLY;
+            break;
+        default:
+            printf("[COMM_VALIDATE] Invalid function code: 0x%02X\n", function_code);
+            return HAL_STATUS_ERROR;
+    }
+    
+    // Validate register access using register info
+    bool access_allowed = validate_register_access(module_addr, register_addr, access_mode, user_access_level);
+    if (!access_allowed) {
+        printf("[COMM_VALIDATE] Access denied: module=0x%02X, reg=0x%04X, mode=%d, level=%d\n", 
+               module_addr, register_addr, access_mode, user_access_level);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Log the access attempt
+    comm_manager_log_register_access(module_addr, register_addr, access_mode, user_access_level, true);
+    
+    return HAL_STATUS_OK;
+}
+
+hal_status_t comm_manager_validate_register_value(uint8_t module_addr, uint16_t register_addr, uint16_t value) {
+    // Check if value is within valid range
+    bool value_valid = is_register_value_valid(module_addr, register_addr, value);
+    if (!value_valid) {
+        uint16_t min_val = get_register_min_value(module_addr, register_addr);
+        uint16_t max_val = get_register_max_value(module_addr, register_addr);
+        printf("[COMM_VALIDATE] Value out of range: module=0x%02X, reg=0x%04X, value=0x%04X (min=0x%04X, max=0x%04X)\n", 
+               module_addr, register_addr, value, min_val, max_val);
+        return HAL_STATUS_ERROR;
+    }
+    
+    return HAL_STATUS_OK;
+}
+
+const register_info_t* comm_manager_get_register_info(uint8_t module_addr, uint16_t register_addr) {
+    return get_register_info(module_addr, register_addr);
+}
+
+bool comm_manager_is_register_safe_critical(uint8_t module_addr, uint16_t register_addr) {
+    return is_register_safe_critical(module_addr, register_addr);
+}
+
+void comm_manager_log_register_access(uint8_t module_addr, uint16_t register_addr, 
+                                      uint8_t access_mode, uint8_t user_access_level, bool success) {
+    const char* mode_str = "UNKNOWN";
+    const char* level_str = "UNKNOWN";
+    
+    // Convert access mode to string
+    switch (access_mode) {
+        case REG_MODE_READ_ONLY: mode_str = "READ"; break;
+        case REG_MODE_WRITE_ONLY: mode_str = "WRITE"; break;
+        case REG_MODE_READ_WRITE: mode_str = "READ_WRITE"; break;
+        case REG_MODE_WRITE_ONCE: mode_str = "WRITE_ONCE"; break;
+    }
+    
+    // Convert access level to string
+    switch (user_access_level) {
+        case REG_ACCESS_USER: level_str = "USER"; break;
+        case REG_ACCESS_ADMIN: level_str = "ADMIN"; break;
+        case REG_ACCESS_SYSTEM: level_str = "SYSTEM"; break;
+    }
+    
+    const char* status_str = success ? "SUCCESS" : "DENIED";
+    
+    printf("[COMM_AUDIT] Register access: module=0x%02X, reg=0x%04X, mode=%s, level=%s, status=%s\n", 
+           module_addr, register_addr, mode_str, level_str, status_str);
+    
+    // TODO: Add to audit log file for persistent logging
+}
+
+hal_status_t comm_manager_modbus_send_request_with_validation(const comm_mgr_modbus_request_t *request, 
+                                                              comm_mgr_modbus_response_t *response) {
+    if (request == NULL || response == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Validate the request first
+    hal_status_t validation_status = comm_manager_validate_modbus_request(request);
+    if (validation_status != HAL_STATUS_OK) {
+        printf("[COMM_MGR] Request validation failed\n");
+        return validation_status;
+    }
+    
+    // If validation passed, proceed with the normal request
+    return comm_manager_modbus_send_request(request, response);
+}

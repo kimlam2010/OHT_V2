@@ -22,22 +22,22 @@ def upgrade() -> None:
     inspector = sa.inspect(bind)
     tables = inspector.get_table_names()
     if 'registers' not in tables:
-        op.create_table('registers',
-            sa.Column('id', sa.Integer(), nullable=False),
-            sa.Column('name', sa.String(length=100), nullable=False),
-            sa.Column('address', sa.String(length=50), nullable=False),
-            sa.Column('mode', sa.Enum('READ', 'WRITE', 'READ_WRITE', name='registermode'), nullable=False),
-            sa.Column('access_level', sa.Enum('USER', 'ADMIN', 'SYSTEM', name='registeraccesslevel'), nullable=False),
-            sa.Column('is_safe_register', sa.Boolean(), nullable=False),
-            sa.Column('unit', sa.String(length=20), nullable=True),
-            sa.Column('description', sa.String(length=255), nullable=True),
-            sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
-            sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
-            sa.PrimaryKeyConstraint('id')
-        )
-        op.create_index(op.f('ix_registers_address'), 'registers', ['address'], unique=False)
-        op.create_index(op.f('ix_registers_id'), 'registers', ['id'], unique=False)
-        op.create_index(op.f('ix_registers_name'), 'registers', ['name'], unique=False)
+    op.create_table('registers',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('address', sa.String(length=50), nullable=False),
+    sa.Column('mode', sa.Enum('READ', 'WRITE', 'READ_WRITE', name='registermode'), nullable=False),
+    sa.Column('access_level', sa.Enum('USER', 'ADMIN', 'SYSTEM', name='registeraccesslevel'), nullable=False),
+    sa.Column('is_safe_register', sa.Boolean(), nullable=False),
+    sa.Column('unit', sa.String(length=20), nullable=True),
+    sa.Column('description', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_registers_address'), 'registers', ['address'], unique=False)
+    op.create_index(op.f('ix_registers_id'), 'registers', ['id'], unique=False)
+    op.create_index(op.f('ix_registers_name'), 'registers', ['name'], unique=False)
     # ### end registers table ###
 
 
