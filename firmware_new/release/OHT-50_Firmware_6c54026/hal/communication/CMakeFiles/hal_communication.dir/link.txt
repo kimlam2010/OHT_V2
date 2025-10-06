@@ -1,2 +1,0 @@
-/usr/bin/ar qc libhal_communication.a CMakeFiles/hal_communication.dir/hal_rs485.c.o CMakeFiles/hal_communication.dir/hal_network.c.o CMakeFiles/hal_communication.dir/hal_usb.c.o
-/usr/bin/ranlib libhal_communication.a
