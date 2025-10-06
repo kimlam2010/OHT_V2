@@ -535,7 +535,7 @@ static int validate_wifi_credentials(const char *ssid, const char *password) {
 /**
  * @brief Validate security type
  */
-static int validate_security_type(int security_type) {
+static int validate_security_type(int security_type __attribute__((unused))) {
     if (security_type < OHT_WIFI_SECURITY_OPEN || security_type > OHT_WIFI_SECURITY_WPA3) {
         return NETWORK_ERROR_INVALID_SECURITY;
     }
@@ -545,7 +545,7 @@ static int validate_security_type(int security_type) {
 /**
  * @brief Validate signal threshold
  */
-static int validate_signal_threshold(int threshold) {
+static int validate_signal_threshold(int threshold __attribute__((unused))) {
     if (threshold < -100 || threshold > 0) {
         return NETWORK_ERROR_INVALID_PARAM;
     }
@@ -600,6 +600,7 @@ static void get_real_network_info(void) {
     FILE *fp;
     char line[256];
     char interface[16];
+    (void)interface;  // Suppress unused variable warning
     char ip_address[16];
     char gateway[16];
     char dns[16];

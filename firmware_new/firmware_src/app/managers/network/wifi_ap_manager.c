@@ -737,7 +737,7 @@ static int validate_ap_config(const wifi_ap_config_t *config) {
     }
     
     // Validate SSID characters (alphanumeric, underscore, hyphen)
-    for (int i = 0; i < strlen(config->ap_ssid); i++) {
+    for (size_t i = 0; i < strlen(config->ap_ssid); i++) {
         char c = config->ap_ssid[i];
         if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || 
               (c >= '0' && c <= '9') || c == '_' || c == '-')) {
@@ -756,7 +756,7 @@ static int validate_ap_config(const wifi_ap_config_t *config) {
             config->ap_security_type == AP_SECURITY_WPA3) {
             bool has_upper = false, has_lower = false, has_digit = false, has_special = false;
             
-            for (int i = 0; i < strlen(config->ap_password); i++) {
+            for (size_t i = 0; i < strlen(config->ap_password); i++) {
                 char c = config->ap_password[i];
                 if (c >= 'A' && c <= 'Z') has_upper = true;
                 else if (c >= 'a' && c <= 'z') has_lower = true;

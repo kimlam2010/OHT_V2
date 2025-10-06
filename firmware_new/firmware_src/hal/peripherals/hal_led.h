@@ -5,12 +5,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// LED GPIO Pin Definitions (updated for available pins)
-#define LED_POWER_PIN          54  // GPIO1_D6 - Power LED (Green)
-#define LED_SYSTEM_PIN         35  // GPIO1_A3 - System LED (Blue)
-#define LED_COMM_PIN           28  // GPIO0_D4 - Communication LED (Yellow)
-#define LED_NETWORK_PIN        29  // GPIO0_D5 - Network LED (Green)
-#define LED_ERROR_PIN          58  // GPIO1_D2 - Error LED (Red)
+// LED GPIO Pin Definitions (updated for available pins) - REAL HARDWARE
+#define LED_POWER_PIN          54  // GPIO1_D6 - Power LED (Green) - REAL HARDWARE
+#define LED_SYSTEM_PIN         35  // GPIO1_A3 - System LED (Blue) - REAL HARDWARE
+#define LED_COMM_PIN           28  // GPIO0_D4 - Communication LED (Yellow) - REAL HARDWARE
+#define LED_NETWORK_PIN        29  // GPIO0_D5 - Network LED (Green) - REAL HARDWARE
+#define LED_ERROR_PIN          58  // GPIO1_D2 - Error LED (Red) - REAL HARDWARE
 
 // LED States
 typedef enum {

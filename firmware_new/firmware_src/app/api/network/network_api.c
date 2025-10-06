@@ -449,7 +449,7 @@ int network_api_parse_json_int(const char *body, const char *key, int *value) {
 /**
  * @brief Handle GET /api/v1/network/status
  */
-int handle_get_network_status(http_request_t *req, http_response_t *resp) {
+int handle_get_network_status(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     oht_network_status_t status;
     int result = network_manager_get_status(&status);
     
@@ -515,7 +515,7 @@ int handle_post_wifi_connect(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle POST /api/v1/network/wifi/disconnect
  */
-int handle_post_wifi_disconnect(http_request_t *req, http_response_t *resp) {
+int handle_post_wifi_disconnect(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     int result = network_manager_disconnect_wifi();
     
     if (result != NETWORK_SUCCESS) {
@@ -534,7 +534,7 @@ int handle_post_wifi_disconnect(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/wifi/scan
  */
-int handle_get_wifi_scan(http_request_t *req, http_response_t *resp) {
+int handle_get_wifi_scan(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     wifi_scan_result_t networks[10];
     int count = wifi_manager_scan_networks(networks, 10, 10000);
     
@@ -583,7 +583,7 @@ int handle_get_wifi_scan(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/performance
  */
-int handle_get_network_performance(http_request_t *req, http_response_t *resp) {
+int handle_get_network_performance(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     performance_metrics_t metrics;
     int result = network_manager_get_performance(&metrics);
     
@@ -611,7 +611,7 @@ int handle_get_network_performance(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/health
  */
-int handle_get_network_health(http_request_t *req, http_response_t *resp) {
+int handle_get_network_health(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     oht_network_status_t status;
     network_manager_get_status(&status);
     
@@ -702,7 +702,7 @@ int handle_post_mobile_enable(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/config
  */
-int handle_get_network_config(http_request_t *req, http_response_t *resp) {
+int handle_get_network_config(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     oht_network_config_t config;
     int result = network_manager_get_config(&config);
     
@@ -791,7 +791,7 @@ int handle_post_network_config(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/statistics
  */
-int handle_get_network_statistics(http_request_t *req, http_response_t *resp) {
+int handle_get_network_statistics(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     wifi_statistics_t stats;
     int result = wifi_manager_get_statistics(&stats);
     
@@ -828,7 +828,7 @@ int handle_get_network_statistics(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle POST /api/v1/network/statistics/reset
  */
-int handle_post_statistics_reset(http_request_t *req, http_response_t *resp) {
+int handle_post_statistics_reset(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     int result = wifi_manager_reset_statistics();
     
     if (result != WIFI_SUCCESS) {

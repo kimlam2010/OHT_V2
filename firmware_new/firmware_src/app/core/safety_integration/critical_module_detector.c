@@ -864,10 +864,10 @@ hal_status_t critical_module_get_diagnostics(char *info, size_t max_len) {
         "- Modules Failed: %u\n"
         "- Critical Modules Offline: %u\n"
         "- Overall Response Level: %s\n"
-        "- Total Health Checks: %llu\n"
-        "- Total Failures Detected: %llu\n"
-        "- Total Recoveries: %llu\n"
-        "- Total Safety Actions: %llu\n"
+        "- Total Health Checks: %lu\n"
+        "- Total Failures Detected: %lu\n"
+        "- Total Recoveries: %lu\n"
+        "- Total Safety Actions: %lu\n"
         "- Emergency Triggered: %s\n"
         "- Total Emergencies: %u\n"
         "- Avg System Check Time: %u ms\n",
@@ -968,7 +968,7 @@ hal_status_t critical_module_get_config(uint8_t module_addr, critical_module_con
     return HAL_STATUS_OK;
 }
 
-hal_status_t critical_module_set_config(uint8_t module_addr, const critical_module_config_t *config) {
+hal_status_t critical_module_set_config(uint8_t module_addr __attribute__((unused)), const critical_module_config_t *config __attribute__((unused))) {
     debug_log("critical_module_set_config() - Phase 3 implementation pending");
     return HAL_STATUS_OK;
 }
@@ -978,7 +978,7 @@ hal_status_t critical_module_load_default_config(void) {
     return HAL_STATUS_OK;
 }
 
-hal_status_t critical_module_simulate_failure(uint8_t module_addr, uint32_t failure_duration_ms) {
+hal_status_t critical_module_simulate_failure(uint8_t module_addr __attribute__((unused)), uint32_t failure_duration_ms __attribute__((unused))) {
     debug_log("critical_module_simulate_failure() - Testing function placeholder");
     return HAL_STATUS_OK;
 }

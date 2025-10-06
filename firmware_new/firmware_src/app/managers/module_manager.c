@@ -26,7 +26,7 @@ static struct {
     uint32_t current_module_count;
     bool hot_plug_detection_enabled;
     uint64_t last_discovery_time_ms;
-} g_scalability_config = {
+} g_scalability_config __attribute__((unused)) = {
     .auto_discovery_enabled = true,
     .discovery_interval_ms = 10000, // 10 seconds
     .max_modules_supported = 16,    // Support up to 16 modules

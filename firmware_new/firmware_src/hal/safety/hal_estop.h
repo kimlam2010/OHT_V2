@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 // E-Stop GPIO Pin Definitions (updated for available pins)
-#define ESTOP_PIN              59  // GPIO1_D3 - E-Stop (Single channel)
+#define ESTOP_PIN              59  // GPIO1_D3 - E-Stop (Single channel) - REAL HARDWARE
 
 // E-Stop Safety Parameters
 #define ESTOP_RESPONSE_TIME_MS 100 // Maximum response time
