@@ -693,6 +693,7 @@ static void update_statistics(void) {
 /**
  * @brief Check WiFi connection quality
  */
+static int check_wifi_connection_quality(void) __attribute__((unused));
 static int check_wifi_connection_quality(void) {
     if (!wifi_manager_is_connected()) {
         return 0;
@@ -795,7 +796,7 @@ static bool should_trigger_fallback(void) {
     }
     
     // Check if we've exceeded max retry attempts
-    if (connection_attempts >= current_config.max_retry_attempts) {
+    if (connection_attempts >= (uint32_t)current_config.max_retry_attempts) {
         return true;
     }
     
@@ -822,7 +823,7 @@ static bool should_attempt_recovery(void) {
     }
     
     // Check if we haven't exceeded max recovery attempts
-    if (recovery_attempts >= current_config.max_retry_attempts) {
+    if (recovery_attempts >= (uint32_t)current_config.max_retry_attempts) {
         return false;
     }
     

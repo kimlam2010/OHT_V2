@@ -96,6 +96,8 @@ def main():
     def _handle_signal(signum, frame):  # noqa: ARG001
         logger.info("Signal received, stopping...")
         stop_evt.set()
+        # Ensure the blocking server call terminates promptly
+        os._exit(0)
 
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)

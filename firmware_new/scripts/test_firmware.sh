@@ -30,43 +30,24 @@ echo "Starting firmware in dry-run mode for 5 seconds..."
 
 timeout 5s ./oht50_main --dry-run --debug 2>&1 | head -20
 
-# Test 4: Check if port 8081 is available
+# Test 4: Test HTTP server compilation (HTTP-only design)
 echo ""
-echo "🔍 Test 4: Port 8081 Availability"
-if netstat -tulpn | grep -q ":8081 "; then
-    echo "⚠️  Port 8081 is already in use:"
-    netstat -tulpn | grep ":8081 "
-else
-    echo "✅ Port 8081 is available"
-fi
-
-# Test 5: Test HTTP server compilation
-echo ""
-echo "🔍 Test 5: HTTP Server Source Check"
-if [ -f "../src/app/simple_http_8081.c" ]; then
-    echo "✅ HTTP server source exists"
-    grep -n "simple_http_8081_start" ../src/app/simple_http_8081.c | head -3
+echo "🔍 Test 4: HTTP Server Source Check (port 8080)"
+if [ -f "../firmware_src/app/http_server.c" ]; then
+    echo "✅ HTTP server source exists (http_server.c)"
+    grep -n "HTTP_SERVER_DEFAULT_PORT\|8080" ../firmware_src/app/http_server.h | head -3 || true
 else
     echo "❌ HTTP server source missing"
 fi
 
-# Test 6: Check WebSocket server
-echo ""
-echo "🔍 Test 6: WebSocket Server Check"
-if [ -f "../src/app/websocket_server.c" ]; then
-    echo "✅ WebSocket server source exists"
-    grep -n "8081" ../src/app/websocket_server.c | head -3
-else
-    echo "❌ WebSocket server source missing"
-fi
+# Removed WebSocket checks per CTO decision (Firmware is HTTP-only)
 
 echo ""
 echo "🎯 Test Summary:"
 echo "=================="
 echo "Binary: ✅ Exists and executable"
-echo "Port 8081: $(netstat -tulpn | grep -q ":8081 " && echo "⚠️ In use" || echo "✅ Available")"
-echo "HTTP Server: ✅ Source exists"
-echo "WebSocket Server: ✅ Source exists"
+echo "HTTP Server: ✅ Source check completed (port 8080)"
+echo "WebSocket Server: ❌ Removed (HTTP-only firmware)"
 
 echo ""
 echo "🚀 Next Steps:"

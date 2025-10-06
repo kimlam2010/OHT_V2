@@ -595,6 +595,7 @@ static bool should_roam(int current_signal, int threshold) {
 /**
  * @brief Get current timestamp in milliseconds
  */
+static uint64_t get_timestamp_ms(void) __attribute__((unused));
 static uint64_t get_timestamp_ms(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);

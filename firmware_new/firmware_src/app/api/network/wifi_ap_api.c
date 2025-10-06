@@ -428,7 +428,7 @@ int handle_post_ap_start(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle POST /api/v1/network/ap/stop
  */
-int handle_post_ap_stop(http_request_t *req, http_response_t *resp) {
+int handle_post_ap_stop(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     int result = wifi_ap_manager_stop();
     
     if (result != WIFI_AP_SUCCESS) {
@@ -447,7 +447,7 @@ int handle_post_ap_stop(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/ap/status
  */
-int handle_get_ap_status(http_request_t *req, http_response_t *resp) {
+int handle_get_ap_status(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     wifi_ap_status_t status;
     int result = wifi_ap_manager_get_status(&status);
     
@@ -492,7 +492,7 @@ int handle_get_ap_status(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/ap/config
  */
-int handle_get_ap_config(http_request_t *req, http_response_t *resp) {
+int handle_get_ap_config(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     wifi_ap_config_t config;
     int result = wifi_ap_manager_get_config(&config);
     
@@ -587,7 +587,7 @@ int handle_post_ap_config(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/ap/clients
  */
-int handle_get_ap_clients(http_request_t *req, http_response_t *resp) {
+int handle_get_ap_clients(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     wifi_ap_client_t clients[10];
     int count = wifi_ap_manager_get_clients(clients, 10);
     
@@ -660,7 +660,7 @@ int handle_post_ap_kick_client(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/ap/statistics
  */
-int handle_get_ap_statistics(http_request_t *req, http_response_t *resp) {
+int handle_get_ap_statistics(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     wifi_ap_statistics_t stats;
     int result = wifi_ap_manager_get_statistics(&stats);
     
@@ -701,7 +701,7 @@ int handle_get_ap_statistics(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle POST /api/v1/network/ap/statistics/reset
  */
-int handle_post_ap_statistics_reset(http_request_t *req, http_response_t *resp) {
+int handle_post_ap_statistics_reset(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     int result = wifi_ap_manager_reset_statistics();
     
     if (result != WIFI_AP_SUCCESS) {
@@ -748,7 +748,7 @@ int handle_post_fallback_enable(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle GET /api/v1/network/fallback/status
  */
-int handle_get_fallback_status(http_request_t *req, http_response_t *resp) {
+int handle_get_fallback_status(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     bool enabled;
     uint32_t timeout_ms;
     
@@ -775,7 +775,7 @@ int handle_get_fallback_status(http_request_t *req, http_response_t *resp) {
 /**
  * @brief Handle POST /api/v1/network/fallback/trigger
  */
-int handle_post_fallback_trigger(http_request_t *req, http_response_t *resp) {
+int handle_post_fallback_trigger(http_request_t *req __attribute__((unused)), http_response_t *resp) {
     int result = wifi_ap_manager_trigger_fallback();
     
     if (result != WIFI_AP_SUCCESS) {

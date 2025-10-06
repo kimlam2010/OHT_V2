@@ -691,7 +691,7 @@ static hal_status_t module_polling_smart_read(uint8_t address, uint16_t start_re
  * @param module_name Module name for logging
  * @return true if data is valid, false otherwise
  */
-static bool module_polling_validate_data(uint16_t *data, uint16_t count, const char *module_name)
+static bool module_polling_validate_data(uint16_t *data __attribute__((unused)), uint16_t count __attribute__((unused)), const char *module_name __attribute__((unused)))
 {
     if (data == NULL || count == 0) {
         return false;

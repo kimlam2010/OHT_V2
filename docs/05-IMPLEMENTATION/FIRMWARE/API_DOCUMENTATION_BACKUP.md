@@ -1,9 +1,10 @@
 # 📡 OHT-50 Firmware API Documentation
+> DEPRECATED WS NOTICE: Firmware KHÔNG còn cung cấp WebSocket. Kiến trúc chuẩn: Firmware chỉ HTTP/REST trên port 8080. Mọi hướng dẫn/section WebSocket trong tài liệu này không còn áp dụng cho Firmware và sẽ được gỡ bỏ dần; real-time do Backend WebSocket đảm nhiệm.
 
 **Version:** 2.6.0  
 **Date:** 2025-01-28  
 **Team:** Firmware & Backend Integration  
-**Base URL:** `http://localhost:8080` (HTTP) | `ws://localhost:8081` (WebSocket)  
+**Base URL:** `http://localhost:8080` (HTTP)
 **Security:** Bearer Token Authentication | Performance Optimized | Error Handling Enhanced  
 **Status:** ✅ Production Ready | ✅ Backend Integration Complete | ✅ Module Data Access APIs | ✅ WebSocket System Fixed (Issue #153) | ✅ Network Management APIs (Issue #160) | ✅ WiFi AP Mode APIs (Issue #168) | 🚀 Ready for Frontend Integration
 
@@ -11,7 +12,7 @@
 
 ## 🎯 **OVERVIEW**
 
-OHT-50 Firmware cung cấp **50+ REST API endpoints** và **WebSocket real-time streaming** với **Security Framework** hoàn chỉnh để Backend có thể:
+OHT-50 Firmware cung cấp **REST API endpoints (HTTP-only, port 8080)** với **Security Framework** để Backend có thể:
 - 🤖 Điều khiển robot và monitor status
 - 🛡️ Quản lý safety và emergency controls
 - 📊 Lấy telemetry data real-time
@@ -39,12 +40,11 @@ OHT-50 Firmware cung cấp **50+ REST API endpoints** và **WebSocket real-time 
 | **📊 Statistics** | 1 | `/api/v1/state/statistics` | ❌ |
 | **🚦 State** | 4 | `/api/v1/state/move`, `/api/v1/state/stop` | ✅ |
 | **🌐 Network** | 6 | `/api/v1/network/status`, `/api/v1/network/wifi/scan`, `/api/v1/network/wifi/connect` | 3/6 |
-| **🌊 WebSocket** | 3 | `/health`, `/api/v1/status`, `/api/v1/robot/status` | ❌ |
-| **TOTAL** | **49** | **37 REST + 3 WebSocket** | **18/37 (49%)** |
+| **TOTAL** | **37** | **37 REST (HTTP-only)** | **18/37 (49%)** |
 
 ### **✅ Backend Integration Status**
 - ✅ **HTTP API Integration:** Port 8080 - REST endpoints ready
-- ✅ **WebSocket Integration:** Port 8081 - Real-time streaming active
+- ❌ WebSocket Integration: Deprecated trên Firmware (real-time do Backend đảm nhiệm)
 - ✅ **Authentication System:** Bearer token validation implemented
 - ✅ **Error Handling:** Standardized error responses với context
 - ✅ **Backend Service Layer:** Integration complete
@@ -184,7 +184,7 @@ response = await fw_client.post("/api/v1/config/state-machine",
 | Method | Endpoint | Description | Auth Required | Port |
 |--------|----------|-------------|---------------|------|
 | GET | `/health` | Health check | ❌ | 8080 |
-| GET | `/api/v1/status` | Basic status | ❌ | 8080/8081 |
+| GET | `/api/v1/status` | Basic status | ❌ | 8080 |
 
 ### **🤖 Robot Control**
 | Method | Endpoint | Description | Auth Required | Port |

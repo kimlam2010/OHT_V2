@@ -148,7 +148,7 @@ int api_handle_module_command(const api_mgr_http_request_t *req, api_mgr_http_re
 int api_handle_module_history(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 int api_handle_module_health(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
 
-// Helper functions for WebSocket streaming
+// Deprecated: WebSocket helper functions removed (Firmware is HTTP-only on port 8080)
 const char* get_module_name_by_id(int module_id);
 int get_module_telemetry_data(int module_id, api_module_telemetry_t *telemetry);
 int get_module_telemetry_data_with_ranges(int module_id, api_module_telemetry_with_range_t *telemetry);

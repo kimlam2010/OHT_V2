@@ -12,7 +12,7 @@
 | **Component** | **Status** | **Details** |
 |---------------|------------|-------------|
 | **🐍 Backend API** | ✅ **Running** | Port 8000, Health Score 89% |
-| **⚙️ Firmware Service** | ❌ **Not Running** | No process, Port 8081 closed |
+| **⚙️ Firmware Service** | ❌ **Not Running** | No process, Port 8080 closed |
 | **🔗 Integration** | ❌ **Failed** | No communication possible |
 | **📡 RS485 System** | ⚠️ **Mock Data** | 7 modules all "lost" status |
 
@@ -31,7 +31,7 @@
 
 #### **📊 Backend-Firmware Integration Service:**
 - **Service:** `FirmwareIntegrationService` ✅ Available
-- **Configuration:** `FIRMWARE_URL=http://localhost:8081`
+- **Configuration:** `FIRMWARE_URL=http://localhost:8080`
 - **Expected Protocol:** HTTP/REST API (NOT RS485 direct)
 - **Status:** ⚠️ Configured but target unreachable
 
@@ -40,12 +40,12 @@
 #### **❌ Firmware Process:**
 - **Status:** 🔴 **NOT RUNNING**
 - **Expected Process:** `oht50_main`
-- **Expected Port:** 8081 (HTTP API)
+- **Expected Port:** 8080 (HTTP API)
 - **Last Seen:** Killed earlier (PID 28136)
 - **Build Status:** ✅ Executable exists at `/firmware_new/build/oht50_main`
 
 #### **🔌 Firmware API Endpoints:**
-- **Port 8081:** ❌ Not listening
+- **Port 8080:** ❌ Not listening
 - **Health Check:** ❌ Connection refused
 - **API Status:** ❌ Not accessible
 - **Expected Endpoints:** `/health`, `/api/v1/status`, `/api/v1/robot/*`
@@ -62,10 +62,10 @@
 #### **❌ Firmware Integration Test:**
 ```bash
 # Test Results:
-curl http://localhost:8081/health
+curl http://localhost:8080/health
 # Result: Connection refused
 
-curl http://localhost:8081/api/v1/status  
+curl http://localhost:8080/api/v1/status  
 # Result: Connection refused
 ```
 
@@ -98,7 +98,7 @@ curl http://localhost:8081/api/v1/status
 - **Severity:** CRITICAL
 - **Impact:** Complete integration failure
 - **Description:** Firmware HTTP API service not started
-- **Root Cause:** No firmware process running on port 8081
+- **Root Cause:** No firmware process running on port 8080
 - **Expected Architecture:** Backend → HTTP API → Firmware → RS485 Hardware
 
 ### **🔴 Issue #2: Backend Using Mock Data**
@@ -112,7 +112,7 @@ curl http://localhost:8081/api/v1/status
 - **Severity:** CRITICAL
 - **Impact:** Architecture compliance violation
 - **Description:** No HTTP API gateway between Backend and Firmware
-- **Expected Flow:** `Backend (8000) → Firmware API (8081) → RS485 Hardware`
+- **Expected Flow:** `Backend (8000) → Firmware API (8080) → RS485 Hardware`
 - **Current Flow:** `Backend (8000) → Mock Data (no real communication)`
 
 ### **🟡 Issue #4: Telemetry Service Errors**
@@ -156,7 +156,7 @@ curl http://localhost:8081/api/v1/status
             │ (Fake)     │
             └────────────┘
                   
-❌ Missing: Firmware API (8081)
+❌ Missing: Firmware API (8080)
 ❌ Missing: RS485 Communication  
 ❌ Missing: Hardware Integration
 ```
@@ -167,7 +167,7 @@ curl http://localhost:8081/api/v1/status
 
 ### **1. 🔧 Technical Root Causes:**
 - **Firmware Service Not Started:** No process running to provide HTTP API
-- **Port 8081 Not Listening:** Expected firmware API port not bound
+- **Port 8080 Not Listening:** Expected firmware API port not bound
 - **Mock Data Fallback:** Backend using development/test data instead of real integration
 - **Missing Protocol Gateway:** Firmware not acting as RS485 ↔ HTTP bridge
 

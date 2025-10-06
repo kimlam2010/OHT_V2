@@ -1453,6 +1453,7 @@ static float calculate_health_percentage(void) {
     return success_rate * 100.0f;
 }
 
+static bool detect_hardware_presence(void) __attribute__((unused));
 static bool detect_hardware_presence(void) {
     // Simple heuristic: if we have any successful responses, hardware is present
     // If we haven't had success in last 30 seconds, assume no hardware
