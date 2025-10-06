@@ -163,10 +163,10 @@ async def get_current_telemetry(
         
         transformed_data = {
             "timestamp": telemetry.get("timestamp", datetime.now(timezone.utc).isoformat()),
-            "motor_speed": robot_status.get("speed", 0.0),
-            "motor_temperature": robot_status.get("temperature", 0.0),
-            "dock_status": robot_status.get("dock_status", "ready"),
-            "safety_status": robot_status.get("safety_status", "normal")
+            "motor_speed": float(robot_status.get("speed", 0.0) or 0.0),
+            "motor_temperature": float(robot_status.get("temperature", 0.0) or 0.0),
+            "dock_status": str(robot_status.get("dock_status", "ready") or "ready"),
+            "safety_status": str(robot_status.get("safety_status", "normal") or "normal")
         }
         
         return TelemetryData(**transformed_data)
