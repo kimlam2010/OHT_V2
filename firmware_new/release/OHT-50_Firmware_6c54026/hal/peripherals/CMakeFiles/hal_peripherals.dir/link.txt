@@ -1,2 +1,0 @@
-/usr/bin/ar qc libhal_peripherals.a CMakeFiles/hal_peripherals.dir/hal_led.c.o CMakeFiles/hal_peripherals.dir/hal_relay.c.o CMakeFiles/hal_peripherals.dir/hal_lidar.c.o
-/usr/bin/ranlib libhal_peripherals.a

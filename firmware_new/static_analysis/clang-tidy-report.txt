@@ -1,2 +1,0 @@
-error: [CommonOptionsParser]: clang-tidy: Unknown command line argument '--config-file=../.clang-tidy'.  Try: 'clang-tidy --help'
-clang-tidy: Did you mean '--config=../.clang-tidy'?

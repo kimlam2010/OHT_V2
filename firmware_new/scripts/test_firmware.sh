@@ -33,9 +33,9 @@ timeout 5s ./oht50_main --dry-run --debug 2>&1 | head -20
 # Test 4: Test HTTP server compilation (HTTP-only design)
 echo ""
 echo "🔍 Test 4: HTTP Server Source Check (port 8080)"
-if [ -f "../firmware_src/app/http_server.c" ]; then
+if [ -f "../src/app/http_server.c" ]; then
     echo "✅ HTTP server source exists (http_server.c)"
-    grep -n "HTTP_SERVER_DEFAULT_PORT\|8080" ../firmware_src/app/http_server.h | head -3 || true
+    grep -n "HTTP_SERVER_DEFAULT_PORT\|8080" ../src/app/http_server.h | head -3 || true
 else
     echo "❌ HTTP server source missing"
 fi

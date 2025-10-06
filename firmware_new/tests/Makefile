@@ -3,14 +3,14 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99 -O2 -g
-INCLUDES = -I../firmware_src -I../include -I../firmware_src/hal/communication -I../firmware_src/hal/common -I../firmware_src/app/validation -I../firmware_src/app/core
+INCLUDES = -I../src -I../include -I../src/hal/communication -I../src/hal/common -I../src/app/validation -I../src/app/core
 LIBS = -lpthread -lrt
 
 # Source files
 TEST_SOURCES = issue_135_simple_test.c
-HAL_SOURCES = ../firmware_src/hal/communication/hal_rs485.c
-VALIDATION_SOURCES = ../firmware_src/app/validation/register_validation.c
-SYSTEM_SOURCES = ../firmware_src/app/core/system_state_machine.c
+HAL_SOURCES = ../src/hal/communication/hal_rs485.c
+VALIDATION_SOURCES = ../src/app/validation/register_validation.c
+SYSTEM_SOURCES = ../src/app/core/system_state_machine.c
 
 # Object files
 TEST_OBJECTS = $(TEST_SOURCES:.c=.o)

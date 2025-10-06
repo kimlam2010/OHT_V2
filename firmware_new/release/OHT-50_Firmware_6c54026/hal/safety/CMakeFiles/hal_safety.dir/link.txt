@@ -1,2 +1,0 @@
-/usr/bin/ar qc libhal_safety.a CMakeFiles/hal_safety.dir/hal_estop.c.o
-/usr/bin/ranlib libhal_safety.a

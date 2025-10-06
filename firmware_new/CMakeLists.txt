@@ -20,8 +20,8 @@ enable_testing()
 
 # Add subdirectories
 add_subdirectory(config)
-add_subdirectory(firmware_src)
-# add_subdirectory(include)  # Removed - websocket_server.h moved to firmware_src/app/
+add_subdirectory(src)
+# add_subdirectory(include)  # Removed - websocket_server.h moved to src/app/
 # Tests (skip when Minimal API rebuild is active)
 if(REBUILD_MIN_API)
   # Only build smoke tests when rebuilding Minimal API
@@ -33,7 +33,7 @@ endif()
 add_subdirectory(third_party)
 
 # Main executable
-add_executable(oht50_main firmware_src/main.c)
+add_executable(oht50_main src/main.c)
 
 # Link libraries
 target_link_libraries(oht50_main 

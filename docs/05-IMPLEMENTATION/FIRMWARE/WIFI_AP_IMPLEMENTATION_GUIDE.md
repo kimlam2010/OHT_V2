@@ -55,7 +55,7 @@ graph TD
 
 ### **Source Files**
 ```
-firmware_src/
+src/
 ├── app/
 │   ├── managers/network/
 │   │   ├── wifi_ap_manager.h

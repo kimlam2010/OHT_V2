@@ -1,2 +1,0 @@
-/usr/bin/ar qc libapp_api.a CMakeFiles/app_api.dir/api_manager.c.o CMakeFiles/app_api.dir/api_endpoints.c.o
-/usr/bin/ranlib libapp_api.a
