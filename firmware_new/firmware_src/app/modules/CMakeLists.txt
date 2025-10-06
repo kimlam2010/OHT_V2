@@ -18,6 +18,7 @@ target_include_directories(app_modules PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../core
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/register
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/peripherals
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/gpio
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/safety
@@ -28,6 +29,7 @@ target_include_directories(app_modules PUBLIC
 target_link_libraries(app_modules
     hal_common
     hal_communication
+    hal_register
     hal_peripherals
     hal_gpio
     hal_safety

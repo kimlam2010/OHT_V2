@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include "hal_common.h"
 #include "register_map.h"
+#include "register_info.h"
 
 // Power module capabilities
 #define POWER_CAP_VOLTAGE_MONITOR     (1 << 0)
@@ -487,5 +488,57 @@ hal_status_t power_module_handler_read_register_with_retry(uint16_t register_add
  * @return HAL status
  */
 hal_status_t power_module_read_battery_data_with_retry(void);
+
+// ============================================================================
+// REGISTER INFO FUNCTIONS (Issue #179 Support)
+// ============================================================================
+
+/**
+ * @brief Get register information for power module
+ * @param register_addr Register address
+ * @return Pointer to register_info_t structure, NULL if not found
+ */
+const register_info_t* power_module_get_register_info(uint16_t register_addr);
+
+/**
+ * @brief Validate register access for power module
+ * @param register_addr Register address
+ * @param access_mode Access mode (REG_MODE_*)
+ * @param user_access_level User access level (REG_ACCESS_*)
+ * @return true if access is allowed, false otherwise
+ */
+bool power_module_validate_register_access(uint16_t register_addr, uint8_t access_mode, uint8_t user_access_level);
+
+/**
+ * @brief Validate register value for power module
+ * @param register_addr Register address
+ * @param value Value to validate
+ * @return true if value is valid, false otherwise
+ */
+bool power_module_validate_register_value(uint16_t register_addr, uint16_t value);
+
+/**
+ * @brief Enhanced read register with validation
+ * @param register_addr Register address
+ * @param value Pointer to store register value
+ * @param user_access_level User access level
+ * @return HAL status
+ */
+hal_status_t power_module_read_register_with_validation(uint16_t register_addr, uint16_t *value, uint8_t user_access_level);
+
+/**
+ * @brief Enhanced write register with validation
+ * @param register_addr Register address
+ * @param value Value to write
+ * @param user_access_level User access level
+ * @return HAL status
+ */
+hal_status_t power_module_write_register_with_validation(uint16_t register_addr, uint16_t value, uint8_t user_access_level);
+
+/**
+ * @brief Print register information for debugging
+ * @param register_addr Register address
+ */
+void power_module_print_register_info(uint16_t register_addr);
 
 #endif // POWER_MODULE_HANDLER_H

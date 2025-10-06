@@ -16,6 +16,7 @@
 #include "hal_rs485.h"
 #include "system_state_machine.h"
 #include "module_manager.h"
+#include "register_info.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,7 +115,7 @@ typedef struct {
     comm_mgr_stats_t statistics;           // Communication statistics
 } comm_mgr_status_info_t;
 
-// Modbus Request Structure
+// Modbus Request Structure (Enhanced with register info support)
 typedef struct {
     uint8_t slave_id;                      // Slave ID
     modbus_function_code_t function_code;  // Function code
@@ -122,6 +123,9 @@ typedef struct {
     uint16_t quantity;                     // Quantity
     uint8_t *data;                         // Data buffer
     uint16_t data_length;                  // Data length
+    uint8_t access_mode;                   // Register access mode (REG_MODE_*)
+    uint8_t user_access_level;             // User access level (REG_ACCESS_*)
+    bool validate_register_info;           // Enable register info validation
 } comm_mgr_modbus_request_t;
 
 // Modbus Response Structure
@@ -418,6 +422,73 @@ hal_status_t comm_manager_send_status(const uint8_t *status, size_t length);
 hal_status_t comm_manager_handle_http_request(const uint8_t *request, size_t request_length,
                                              uint8_t *response, size_t *response_length);
 
+// ============================================================================
+// REGISTER VALIDATION FUNCTIONS (Issue #179 Support)
+// ============================================================================
+
+/**
+ * @brief Validate Modbus request against register info
+ * @param request Modbus request structure
+ * @return HAL status (HAL_STATUS_OK if valid, HAL_STATUS_ERROR if invalid)
+ */
+hal_status_t comm_manager_validate_modbus_request(const comm_mgr_modbus_request_t *request);
+
+/**
+ * @brief Validate register access permissions
+ * @param module_addr Module address
+ * @param register_addr Register address
+ * @param function_code Modbus function code
+ * @param user_access_level User access level
+ * @return HAL status (HAL_STATUS_OK if allowed, HAL_STATUS_ERROR if denied)
+ */
+hal_status_t comm_manager_validate_register_access(uint8_t module_addr, uint16_t register_addr, 
+                                                   modbus_function_code_t function_code, 
+                                                   uint8_t user_access_level);
+
+/**
+ * @brief Validate register value against min/max limits
+ * @param module_addr Module address
+ * @param register_addr Register address
+ * @param value Value to validate
+ * @return HAL status (HAL_STATUS_OK if valid, HAL_STATUS_ERROR if invalid)
+ */
+hal_status_t comm_manager_validate_register_value(uint8_t module_addr, uint16_t register_addr, uint16_t value);
+
+/**
+ * @brief Get register info for a specific register
+ * @param module_addr Module address
+ * @param register_addr Register address
+ * @return Pointer to register_info_t structure, NULL if not found
+ */
+const register_info_t* comm_manager_get_register_info(uint8_t module_addr, uint16_t register_addr);
+
+/**
+ * @brief Check if register is safety critical
+ * @param module_addr Module address
+ * @param register_addr Register address
+ * @return true if safety critical, false otherwise
+ */
+bool comm_manager_is_register_safe_critical(uint8_t module_addr, uint16_t register_addr);
+
+/**
+ * @brief Log register access attempt for audit trail
+ * @param module_addr Module address
+ * @param register_addr Register address
+ * @param access_mode Access mode (read/write)
+ * @param user_access_level User access level
+ * @param success Access success status
+ */
+void comm_manager_log_register_access(uint8_t module_addr, uint16_t register_addr, 
+                                      uint8_t access_mode, uint8_t user_access_level, bool success);
+
+/**
+ * @brief Enhanced Modbus request with register validation
+ * @param request Modbus request with register info validation
+ * @param response Modbus response
+ * @return HAL status
+ */
+hal_status_t comm_manager_modbus_send_request_with_validation(const comm_mgr_modbus_request_t *request, 
+                                                              comm_mgr_modbus_response_t *response);
 
 #ifdef __cplusplus
 }

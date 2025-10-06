@@ -8,7 +8,7 @@ import os
 import logging
 import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime
@@ -18,7 +18,9 @@ from app.core.monitoring_service import monitoring_service
 from app.core.websocket_service import websocket_service
 
 # Import API routers
-from app.api.v1 import auth, robot, telemetry, safety, config, monitoring, speed_control, map, localization, health, dashboard, fw_integration, communication, module_telemetry, network
+from app.api.v1 import auth, robot, telemetry, safety, monitoring, registers, health
+from app.core.monitoring import setup_monitoring
+from app.api.v1 import deprecated as deprecated_api
 from app.api import websocket
 from app.config import Settings
 
@@ -305,6 +307,12 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Expose Prometheus /metrics and additional health endpoints
+try:
+    setup_monitoring(app)
+except Exception as _e:
+    logger.warning(f"⚠️ Monitoring setup skipped: {_e}")
+
 settings = Settings()
 # Simple rate limiting middleware (per-process, per-IP)
 from collections import defaultdict
@@ -450,32 +458,20 @@ app.include_router(auth.router)
 app.include_router(robot.router)
 app.include_router(telemetry.router)
 app.include_router(safety.router)
-app.include_router(config.router)
 app.include_router(monitoring.router)
-app.include_router(speed_control.router)
-app.include_router(dashboard.router)
-
-# Include Map & Localization API routers
-app.include_router(map.router)
-# Sensor API removed - no real hardware implementation
-app.include_router(localization.router)
-app.include_router(health.router)
 
 # Include RS485 API router
 from app.api.v1 import rs485
 app.include_router(rs485.router)
 
-# Include Firmware Integration API router
-app.include_router(fw_integration.router)
+# Include Registers CRUD API router
+app.include_router(registers.router)
 
-# Include Communication API router
-app.include_router(communication.router)
+# Include Health API router (v1)
+app.include_router(health.router)
 
-# Include Module Telemetry Validation API router
-app.include_router(module_telemetry.router)
-
-# Include Network Management API router
-app.include_router(network.router, prefix="/api/v1")
+# Include Deprecated API router (410 Gone with hints)
+app.include_router(deprecated_api.router)
 
 # Include WebSocket router
 try:

@@ -1,3 +1,13 @@
+# 📡 OHT-50 Firmware API Documentation (Moved)
+
+This document has been consolidated and moved to the canonical location:
+
+- docs/05-IMPLEMENTATION/FIRMWARE/API_DOCUMENTATION.md
+
+Notes:
+- Firmware is HTTP-only on port 8080 (no WebSocket/8081 in firmware).
+- Please update bookmarks and open the canonical file for the latest content.
+
 # 📡 OHT-50 Firmware API Documentation
 > DEPRECATED WS NOTICE: Firmware KHÔNG còn cung cấp WebSocket. Kiến trúc chuẩn: Firmware chỉ HTTP/REST trên port 8080. Mọi hướng dẫn/section WebSocket trong tài liệu này không còn áp dụng cho Firmware và sẽ được gỡ bỏ dần; real-time do Backend WebSocket đảm nhiệm.
 

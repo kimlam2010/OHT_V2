@@ -19,6 +19,7 @@ target_include_directories(app_managers PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/network
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/common
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/register
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/peripherals
 )
@@ -29,6 +30,7 @@ target_link_libraries(app_managers
     app_validation
     hal_common
     hal_communication
+    hal_register
     hal_safety
     hal_peripherals
     http_server

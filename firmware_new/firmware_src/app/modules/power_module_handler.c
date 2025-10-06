@@ -1467,3 +1467,109 @@ hal_status_t power_module_handler_poll_data(void)
 {
     return power_module_poll_data();
 }
+
+// ============================================================================
+// REGISTER INFO FUNCTIONS IMPLEMENTATION (Issue #179 Support)
+// ============================================================================
+
+const register_info_t* power_module_get_register_info(uint16_t register_addr) {
+    return get_register_info(MODULE_ADDR_POWER, register_addr);
+}
+
+bool power_module_validate_register_access(uint16_t register_addr, uint8_t access_mode, uint8_t user_access_level) {
+    return validate_register_access(MODULE_ADDR_POWER, register_addr, access_mode, user_access_level);
+}
+
+bool power_module_validate_register_value(uint16_t register_addr, uint16_t value) {
+    return is_register_value_valid(MODULE_ADDR_POWER, register_addr, value);
+}
+
+hal_status_t power_module_read_register_with_validation(uint16_t register_addr, uint16_t *value, uint8_t user_access_level) {
+    if (value == NULL) {
+        return HAL_STATUS_INVALID_PARAMETER;
+    }
+    
+    // Validate register access
+    if (!power_module_validate_register_access(register_addr, REG_MODE_READ_ONLY, user_access_level)) {
+        printf("[POWER-VALIDATE] Read access denied for register 0x%04X (level=%d)\n", register_addr, user_access_level);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Perform the read operation
+    hal_status_t status = power_module_handler_read_register(register_addr, value);
+    if (status == HAL_STATUS_OK) {
+        printf("[POWER-VALIDATE] Read register 0x%04X = 0x%04X (level=%d)\n", register_addr, *value, user_access_level);
+    }
+    
+    return status;
+}
+
+hal_status_t power_module_write_register_with_validation(uint16_t register_addr, uint16_t value, uint8_t user_access_level) {
+    // Validate register access
+    if (!power_module_validate_register_access(register_addr, REG_MODE_WRITE_ONLY, user_access_level)) {
+        printf("[POWER-VALIDATE] Write access denied for register 0x%04X (level=%d)\n", register_addr, user_access_level);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Validate register value
+    if (!power_module_validate_register_value(register_addr, value)) {
+        printf("[POWER-VALIDATE] Invalid value 0x%04X for register 0x%04X (level=%d)\n", value, register_addr, user_access_level);
+        return HAL_STATUS_ERROR;
+    }
+    
+    // Perform the write operation
+    hal_status_t status = power_module_handler_write_register(register_addr, value);
+    if (status == HAL_STATUS_OK) {
+        printf("[POWER-VALIDATE] Write register 0x%04X = 0x%04X (level=%d)\n", register_addr, value, user_access_level);
+    }
+    
+    return status;
+}
+
+void power_module_print_register_info(uint16_t register_addr) {
+    const register_info_t* info = power_module_get_register_info(register_addr);
+    if (info == NULL) {
+        printf("[POWER-INFO] Register 0x%04X: NOT FOUND\n", register_addr);
+        return;
+    }
+    
+    const char* mode_str = "UNKNOWN";
+    const char* type_str = "UNKNOWN";
+    const char* level_str = "UNKNOWN";
+    
+    // Convert access mode to string
+    switch (info->mode) {
+        case REG_MODE_READ_ONLY: mode_str = "READ_ONLY"; break;
+        case REG_MODE_WRITE_ONLY: mode_str = "WRITE_ONLY"; break;
+        case REG_MODE_READ_WRITE: mode_str = "READ_WRITE"; break;
+        case REG_MODE_WRITE_ONCE: mode_str = "WRITE_ONCE"; break;
+    }
+    
+    // Convert data type to string
+    switch (info->data_type) {
+        case REG_DATA_TYPE_UINT8: type_str = "UINT8"; break;
+        case REG_DATA_TYPE_UINT16: type_str = "UINT16"; break;
+        case REG_DATA_TYPE_UINT32: type_str = "UINT32"; break;
+        case REG_DATA_TYPE_INT8: type_str = "INT8"; break;
+        case REG_DATA_TYPE_INT16: type_str = "INT16"; break;
+        case REG_DATA_TYPE_INT32: type_str = "INT32"; break;
+        case REG_DATA_TYPE_FLOAT: type_str = "FLOAT"; break;
+    }
+    
+    // Convert access level to string
+    switch (info->access_level) {
+        case REG_ACCESS_USER: level_str = "USER"; break;
+        case REG_ACCESS_ADMIN: level_str = "ADMIN"; break;
+        case REG_ACCESS_SYSTEM: level_str = "SYSTEM"; break;
+    }
+    
+    printf("[POWER-INFO] Register 0x%04X:\n", register_addr);
+    printf("  Description: %s\n", info->description ? info->description : "N/A");
+    printf("  Unit: %s\n", info->unit ? info->unit : "N/A");
+    printf("  Mode: %s\n", mode_str);
+    printf("  Data Type: %s\n", type_str);
+    printf("  Access Level: %s\n", level_str);
+    printf("  Safe Critical: %s\n", info->is_safe_register ? "YES" : "NO");
+    printf("  Range: 0x%04X - 0x%04X\n", info->min_value, info->max_value);
+    printf("  Default: 0x%04X\n", info->default_value);
+}

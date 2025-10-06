@@ -11,6 +11,53 @@
 #define REGISTER_MAP_H
 
 #include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+// ============================================================================
+// REGISTER INFO STRUCTURE (Issue #179 Support)
+// ============================================================================
+
+// Register access modes
+typedef enum {
+    REG_MODE_READ_ONLY = 0x01,        // Read-only register
+    REG_MODE_WRITE_ONLY = 0x02,       // Write-only register  
+    REG_MODE_READ_WRITE = 0x03,       // Read-write register
+    REG_MODE_WRITE_ONCE = 0x04        // Write-once register (config)
+} register_mode_t;
+
+// Register data types
+typedef enum {
+    REG_DATA_TYPE_STRING = 0,
+    REG_DATA_TYPE_UINT8 = 1,
+    REG_DATA_TYPE_UINT16 = 2,
+    REG_DATA_TYPE_UINT32 = 3,
+    REG_DATA_TYPE_INT8 = 4,
+    REG_DATA_TYPE_INT16 = 5,
+    REG_DATA_TYPE_INT32 = 6,
+    REG_DATA_TYPE_FLOAT = 7
+} register_data_type_t;
+
+// Access levels
+typedef enum {
+    REG_ACCESS_USER = 1,              // User level access
+    REG_ACCESS_ADMIN = 2,             // Admin level access
+    REG_ACCESS_SYSTEM = 3             // System level access
+} register_access_level_t;
+
+// Register information structure
+typedef struct {
+    uint16_t address;                 // Register address
+    uint8_t mode;                     // READ/WRITE/READ_WRITE mode
+    uint8_t data_type;                // UINT8, UINT16, UINT32, etc.
+    uint8_t access_level;             // User, Admin, System
+    bool is_safe_register;            // Safety critical register
+    const char* description;          // Register description
+    const char* unit;                 // Unit of measurement
+    uint16_t min_value;               // Minimum allowed value
+    uint16_t max_value;               // Maximum allowed value
+    uint16_t default_value;           // Default value
+} register_info_t;
 
 // ============================================================================
 // MODULE ADDRESSES
@@ -351,19 +398,18 @@ _Static_assert(MODULE_ADDR_MAX <= 0xFF, "Module address out of range");
 // REGISTER ACCESS TYPES
 // ============================================================================
 
-// Register access types
-#define REG_ACCESS_READ_ONLY              0x01    // Read only
-#define REG_ACCESS_WRITE_ONLY             0x02    // Write only
-#define REG_ACCESS_READ_WRITE             0x03    // Read/Write
+// Legacy compatibility macros (deprecated - use enums above)
+#define REG_ACCESS_READ_ONLY              REG_MODE_READ_ONLY
+#define REG_ACCESS_WRITE_ONLY             REG_MODE_WRITE_ONLY
+#define REG_ACCESS_READ_WRITE             REG_MODE_READ_WRITE
 
-// Register data types
-#define REG_TYPE_UINT8                    0x01    // 8-bit unsigned
-#define REG_TYPE_UINT16                   0x02    // 16-bit unsigned
-#define REG_TYPE_UINT32                   0x03    // 32-bit unsigned
-#define REG_TYPE_INT8                     0x04    // 8-bit signed
-#define REG_TYPE_INT16                    0x05    // 16-bit signed
-#define REG_TYPE_INT32                    0x06    // 32-bit signed
-#define REG_TYPE_FLOAT                    0x07    // 32-bit float
+#define REG_TYPE_UINT8                    REG_DATA_TYPE_UINT8
+#define REG_TYPE_UINT16                   REG_DATA_TYPE_UINT16
+#define REG_TYPE_UINT32                   REG_DATA_TYPE_UINT32
+#define REG_TYPE_INT8                     REG_DATA_TYPE_INT8
+#define REG_TYPE_INT16                    REG_DATA_TYPE_INT16
+#define REG_TYPE_INT32                    REG_DATA_TYPE_INT32
+#define REG_TYPE_FLOAT                    REG_DATA_TYPE_FLOAT
 
 // ============================================================================
 // VALIDATION FUNCTIONS
@@ -414,6 +460,66 @@ static inline const char* get_module_name_from_address(uint8_t address) {
         case MODULE_ADDR_DOCK: return "Dock & Location Module";
         default: return "Unknown Module";
     }
+}
+
+// ============================================================================
+// REGISTER INFO FUNCTIONS (Issue #179 Support)
+// ============================================================================
+
+// Forward declarations for register info functions
+const register_info_t* get_register_info(uint8_t module_addr, uint16_t register_addr);
+bool validate_register_access(uint8_t module_addr, uint16_t register_addr, uint8_t access_mode, uint8_t user_access_level);
+bool is_register_safe_critical(uint8_t module_addr, uint16_t register_addr);
+const char* get_register_description(uint8_t module_addr, uint16_t register_addr);
+const char* get_register_unit(uint8_t module_addr, uint16_t register_addr);
+uint16_t get_register_min_value(uint8_t module_addr, uint16_t register_addr);
+uint16_t get_register_max_value(uint8_t module_addr, uint16_t register_addr);
+uint16_t get_register_default_value(uint8_t module_addr, uint16_t register_addr);
+uint8_t get_register_data_type(uint8_t module_addr, uint16_t register_addr);
+
+// Register validation helper functions
+static inline bool is_valid_register_mode(uint8_t mode) {
+    return (mode == REG_MODE_READ_ONLY || 
+            mode == REG_MODE_WRITE_ONLY || 
+            mode == REG_MODE_READ_WRITE || 
+            mode == REG_MODE_WRITE_ONCE);
+}
+
+static inline bool is_valid_access_level(uint8_t access_level) {
+    return (access_level >= REG_ACCESS_USER && access_level <= REG_ACCESS_SYSTEM);
+}
+
+static inline bool is_valid_data_type(uint8_t data_type) {
+    return (data_type == REG_DATA_TYPE_UINT8 || 
+            data_type == REG_DATA_TYPE_UINT16 || 
+            data_type == REG_DATA_TYPE_UINT32 ||
+            data_type == REG_DATA_TYPE_INT8 || 
+            data_type == REG_DATA_TYPE_INT16 || 
+            data_type == REG_DATA_TYPE_INT32 ||
+            data_type == REG_DATA_TYPE_FLOAT);
+}
+
+// Check if register supports read operation
+static inline bool register_supports_read(uint8_t module_addr, uint16_t register_addr) {
+    const register_info_t* info = get_register_info(module_addr, register_addr);
+    if (info == NULL) return false;
+    return (info->mode == REG_MODE_READ_ONLY || info->mode == REG_MODE_READ_WRITE);
+}
+
+// Check if register supports write operation
+static inline bool register_supports_write(uint8_t module_addr, uint16_t register_addr) {
+    const register_info_t* info = get_register_info(module_addr, register_addr);
+    if (info == NULL) return false;
+    return (info->mode == REG_MODE_WRITE_ONLY || 
+            info->mode == REG_MODE_READ_WRITE || 
+            info->mode == REG_MODE_WRITE_ONCE);
+}
+
+// Validate register value range
+static inline bool is_register_value_valid(uint8_t module_addr, uint16_t register_addr, uint16_t value) {
+    const register_info_t* info = get_register_info(module_addr, register_addr);
+    if (info == NULL) return false;
+    return (value >= info->min_value && value <= info->max_value);
 }
 
 #endif // REGISTER_MAP_H
