@@ -96,7 +96,7 @@ hal_status_t hal_validate_range(int value, int min, int max, const char* param_n
 #define LIDAR_BAUD_RATE        460800
 
 // RS485 Interface
-#define RS485_DEVICE_PATH      "/dev/ttyOHT485"
+#define RS485_DEVICE_PATH      "/dev/ttyOHT485"  // REAL HARDWARE - UART1 RS485
 #define RS485_BAUD_RATE        115200
 
 // Common timeouts

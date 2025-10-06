@@ -150,7 +150,7 @@ static const uint32_t default_state_timeouts_ms[] = {
 
 // ✅ STATE STATISTICS TRACKING ADDED
 static system_state_statistics_t g_state_statistics = {0};
-static uint64_t g_state_entry_time = 0;
+// static uint64_t g_state_entry_time = 0;  // Commented out - unused variable
 
 // Transition condition functions
 static bool transition_condition_always(void) {
@@ -332,6 +332,7 @@ hal_status_t system_state_machine_update(void) {
     
     // Per-state timeout thresholds (ms)
     uint32_t timeout_ms = g_state_machine.config.state_timeout_ms;
+    (void)timeout_ms;  // Suppress unused variable warning
     switch (g_state_machine.current_state) {
         case SYSTEM_STATE_MOVE:
             timeout_ms = (g_state_machine.config.state_timeout_ms > 0) ? g_state_machine.config.state_timeout_ms : 5000;

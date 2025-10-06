@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE
 #include "hal_relay.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -598,6 +600,7 @@ static hal_status_t gpio_export(uint8_t pin) {
     
     FILE *fp = fopen("/sys/class/gpio/export", "w");
     if (!fp) {
+        printf("RELAY ERROR: Cannot export GPIO pin %d - /sys/class/gpio/export not accessible\n", pin);
         return HAL_STATUS_ERROR;
     }
     
@@ -606,6 +609,12 @@ static hal_status_t gpio_export(uint8_t pin) {
     
     // Wait for GPIO to be available
     usleep(100000); // 100ms
+    
+    // Verify GPIO was exported successfully
+    if (access(path, F_OK) != 0) {
+        printf("RELAY ERROR: Failed to export GPIO pin %d\n", pin);
+        return HAL_STATUS_ERROR;
+    }
     
     return HAL_STATUS_OK;
 }
@@ -616,6 +625,7 @@ static hal_status_t gpio_set_direction(uint8_t pin, bool output) {
     
     FILE *fp = fopen(path, "w");
     if (!fp) {
+        printf("RELAY ERROR: Cannot set GPIO pin %d direction - file not accessible\n", pin);
         return HAL_STATUS_ERROR;
     }
     
@@ -631,6 +641,7 @@ static hal_status_t gpio_set_value(uint8_t pin, bool value) {
     
     FILE *fp = fopen(path, "w");
     if (!fp) {
+        printf("RELAY ERROR: Cannot set GPIO pin %d value - file not accessible\n", pin);
         return HAL_STATUS_ERROR;
     }
     
@@ -646,12 +657,18 @@ static hal_status_t gpio_get_value(uint8_t pin, bool *value) {
     
     FILE *fp = fopen(path, "r");
     if (!fp) {
+        printf("RELAY ERROR: Cannot read GPIO pin %d value - file not accessible\n", pin);
         return HAL_STATUS_ERROR;
     }
     
     int val;
-    (void)fscanf(fp, "%d", &val);
+    int result = fscanf(fp, "%d", &val);
     fclose(fp);
+    
+    if (result != 1) {
+        printf("RELAY ERROR: Failed to read GPIO pin %d value\n", pin);
+        return HAL_STATUS_ERROR;
+    }
     
     *value = (val != 0);
     return HAL_STATUS_OK;

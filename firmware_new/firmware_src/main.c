@@ -2,6 +2,8 @@
 // Initialization order: HAL (E-Stop, LED, RS485) → Safety → State Machine → Communication (placeholder)
 // Supports --dry-run to simulate without touching hardware
 
+#define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -75,7 +77,7 @@ static int auto_cleanup_processes(void) {
              "fi; done", 
              current_pid);
     
-    int result = system(cleanup_cmd);
+    (void)system(cleanup_cmd);  // Suppress unused variable warning
     sleep(2); // Wait for processes to terminate
     
     // Verify cleanup

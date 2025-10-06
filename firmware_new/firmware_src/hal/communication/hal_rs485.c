@@ -7,6 +7,8 @@
  * @task EM-02, EM-03 (RS485 Transceiver & UART/CAN Init)
  */
 
+#define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE
 #include "hal_rs485.h"
 #include "hal_common.h"
 #include <stdio.h>
