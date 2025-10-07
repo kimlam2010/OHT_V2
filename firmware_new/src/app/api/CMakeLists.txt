@@ -34,6 +34,9 @@ target_include_directories(app_api PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${CMAKE_CURRENT_SOURCE_DIR}/../managers
     ${CMAKE_CURRENT_SOURCE_DIR}/../core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/state_management  # Domain-driven structure
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/safety           # Domain-driven structure
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/control          # Domain-driven structure
     ${CMAKE_CURRENT_SOURCE_DIR}/../storage
     ${CMAKE_CURRENT_SOURCE_DIR}/network
     ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/common
