@@ -710,6 +710,69 @@ GET /system/info
 
 **Liên quan:** Metrics network tại `GET /api/v1/monitoring/metrics/current` (trường `network_io`).
 
+---
+
+## 📶 **WIFI APIs**
+
+### **GET /api/v1/network/wifi/status**
+**Mục đích:** Xem trạng thái WiFi hiện tại (SSID, RSSI, link quality, interface).
+
+**Response (ví dụ):**
+```json
+{
+  "connected": true,
+  "ssid": "OHT50-DEV",
+  "rssi": -52,
+  "link_quality": 78,
+  "interface": "wlan0"
+}
+```
+
+### **GET /api/v1/network/wifi/scan**
+**Mục đích:** Quét danh sách SSID khả dụng (dev/testing).
+
+**Response (ví dụ):**
+```json
+{
+  "networks": [
+    {"ssid": "OHT50-DEV", "rssi": -48, "security": "WPA2"},
+    {"ssid": "Office-2G", "rssi": -60, "security": "WPA2"}
+  ]
+}
+```
+
+### **POST /api/v1/network/wifi/connect**
+**Mục đích:** Kết nối WiFi. Prod: proxy Firmware HTTP API; Dev: mock.
+
+**Request:**
+```json
+{
+  "ssid": "OHT50-DEV",
+  "password": "password123"
+}
+```
+
+**Response (dev ví dụ):**
+```json
+{
+  "success": true,
+  "message": "Connected to OHT50-DEV",
+  "ssid": "OHT50-DEV"
+}
+```
+
+### **POST /api/v1/network/wifi/disconnect**
+**Mục đích:** Ngắt kết nối WiFi. Prod: proxy Firmware HTTP API; Dev: mock.
+
+**Response (dev ví dụ):**
+```json
+{
+  "success": true,
+  "message": "Disconnected",
+  "ssid": null
+}
+```
+
 
 <!-- RS485 section removed in Core API mode -->
 

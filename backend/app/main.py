@@ -360,6 +360,13 @@ _ALLOWED_PATHS = {
     "/api/v1/monitoring/alerts",
     "/api/v1/monitoring/logs",
     "/api/v1/monitoring/performance",
+
+    # Network / WiFi (core read-only + control)
+    "/system/info",
+    "/api/v1/network/wifi/status",
+    "/api/v1/network/wifi/scan",
+    "/api/v1/network/wifi/connect",
+    "/api/v1/network/wifi/disconnect",
 }
 
 if _API_REDUCED:
@@ -567,6 +574,13 @@ app.include_router(registers.router)
 
 # Include Health API router (v1)
 app.include_router(health.router)
+
+# Include Network/WiFi API router
+try:
+    from app.api.v1 import network_wifi
+    app.include_router(network_wifi.router)
+except Exception as _e:
+    logger.warning(f"⚠️ WiFi router not loaded: {_e}")
 
 # Include Deprecated API router (410 Gone with hints)
 app.include_router(deprecated_api.router)
