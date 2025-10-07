@@ -20,6 +20,7 @@
 #include "module_manager.h"
 #include "safety_monitor.h"
 #include "control_loop.h"
+#include "estimator_1d.h"
 
 // Forward declarations for static functions
 static int serialize_power_module_registers(char *buffer, size_t buffer_size);
@@ -631,7 +632,6 @@ static void collect_control_data(telemetry_data_t *data) {
     control_status_t cs;
     if (control_loop_get_status(&cs) == HAL_STATUS_OK) {
         // Velocity-only architecture: position from estimator_1d, velocity from control loop
-        #include "../core/estimator_1d.h"
         est1d_state_t est = {0};
         (void)estimator_1d_get_state(&est);
         data->status.pos_mm = est.x_est_mm;

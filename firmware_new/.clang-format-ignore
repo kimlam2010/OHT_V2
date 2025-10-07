@@ -1,0 +1,7 @@
+# Ignore third-party code
+third_party/**
+build/**
+
+# Ignore generated files
+**/build_config.h
+
