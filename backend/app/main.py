@@ -307,6 +307,103 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# === API REDUCTION MODE ===
+# Feature flag to reduce exposed APIs and declutter docs
+_API_REDUCED = os.getenv("API_REDUCED", "true").lower() == "true"
+_API_REDUCED_STRICT = os.getenv("API_REDUCED_STRICT", "true").lower() == "true"
+
+# Whitelisted endpoints (paths) to keep visible/usable in reduced mode
+# NOTE: Methods on the same path remain available; the OpenAPI filter only hides paths from docs
+_ALLOWED_PATHS = {
+    # Health
+    "/health",
+    "/health/fast",
+    "/api/v1/health/detailed",
+
+    # Authentication
+    "/api/v1/auth/login",
+    "/api/v1/auth/me",
+    "/api/v1/auth/logout",
+    "/api/v1/auth/register",
+    "/api/v1/auth/users",
+    "/api/v1/auth/refresh",
+    "/api/v1/auth/change-password",
+
+    # Robot Control (core)
+    "/api/v1/robot/status",
+    "/api/v1/robot/control",
+    "/api/v1/robot/emergency-stop",
+    "/api/v1/robot/position",
+    "/api/v1/robot/battery",
+    "/api/v1/robot/move",
+    "/api/v1/robot/stop",
+    "/api/v1/robot/speed",
+
+    # Telemetry (core)
+    "/api/v1/telemetry/current",
+    "/api/v1/telemetry/history",
+    "/api/v1/telemetry/summary",
+    "/api/v1/telemetry/lidar/scan",
+    "/api/v1/telemetry/performance",
+
+    # Safety (core)
+    "/api/v1/safety/status",
+    "/api/v1/safety/emergency-stop",
+    "/api/v1/safety/emergency",
+    "/api/v1/safety/alerts",
+    "/api/v1/safety/alerts/{alert_id}/acknowledge",
+
+    # Monitoring (core)
+    "/api/v1/monitoring/health",
+    "/api/v1/monitoring/metrics/current",
+    "/api/v1/monitoring/alerts",
+    "/api/v1/monitoring/logs",
+    "/api/v1/monitoring/performance",
+}
+
+if _API_REDUCED:
+    # 1) Hide non-whitelisted endpoints from the generated OpenAPI/Swagger
+    from fastapi.openapi.utils import get_openapi
+
+    def custom_openapi():
+        if app.openapi_schema:
+            schema = app.openapi_schema
+        else:
+            schema = get_openapi(
+                title=app.title,
+                version=app.version,
+                description=app.description,
+                routes=app.routes,
+            )
+        # Filter paths not in whitelist
+        paths = schema.get("paths", {})
+        filtered = {}
+        for path, methods in paths.items():
+            if path in _ALLOWED_PATHS:
+                filtered[path] = methods
+        schema["paths"] = filtered
+        app.openapi_schema = schema
+        return app.openapi_schema
+
+    app.openapi = custom_openapi  # type: ignore
+
+    # 2) Strict mode: return 410 Gone for deprecated/hidden endpoints
+    if _API_REDUCED_STRICT:
+        @app.middleware("http")
+        async def deprecate_hidden_endpoints(request: Request, call_next):
+            req_path = request.url.path
+            # Allow non-API paths and whitelisted API paths
+            if (not req_path.startswith("/api/")) or (req_path in _ALLOWED_PATHS):
+                return await call_next(request)
+            return JSONResponse(
+                status_code=410,
+                content={
+                    "detail": "Endpoint deprecated and removed in reduced API mode",
+                    "path": req_path,
+                    "hint": "Please use the documented core APIs in /docs",
+                },
+            )
+
 # Expose Prometheus /metrics and additional health endpoints
 try:
     setup_monitoring(app)
