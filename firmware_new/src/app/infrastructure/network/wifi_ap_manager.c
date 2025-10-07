@@ -304,7 +304,7 @@ int wifi_ap_manager_get_clients(wifi_ap_client_t *clients, int max_count) {
     }
     
     if (current_status.status != AP_STATUS_RUNNING) {
-        return WIFI_AP_ERROR_NOT_RUNNING;
+        return 0;  // Return empty list (0 clients) when AP not running - NOT an error!
     }
     
     // Get clients from HAL
