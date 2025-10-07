@@ -20,6 +20,7 @@ OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **
 - **📈 Monitoring:** 5 endpoints
 - **🏥 Health/System:** 2 endpoints
 - **🌐 WebSocket:** 2 endpoints
+ - **🌐 Network:** 1 endpoint (system info)
 
 ---
 
@@ -682,6 +683,153 @@ curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
 
 ---
 
+## 🌐 **NETWORK / SYSTEM INFO**
+
+### **GET /system/info**
+**Mục đích:** Trả về thông tin hệ thống và network phục vụ chẩn đoán nhanh.
+
+**Request:**
+```http
+GET /system/info
+```
+
+**Response (ví dụ):**
+```json
+{
+  "hostname": "oht50-backend",
+  "ip": "127.0.0.1",
+  "interfaces": [
+    {"name": "Ethernet0", "ipv4": "192.168.1.10", "status": "up"}
+  ],
+  "env": {
+    "environment": "development",
+    "firmware_url": "http://localhost:8081"
+  }
+}
+```
+
+**Liên quan:** Metrics network tại `GET /api/v1/monitoring/metrics/current` (trường `network_io`).
+
+---
+
+## 📶 **WIFI APIs**
+
+### **GET /api/v1/network/wifi/status**
+**Mục đích:** Xem trạng thái WiFi hiện tại (SSID, RSSI, link quality, interface).
+
+**Response (ví dụ):**
+```json
+{
+  "connected": true,
+  "ssid": "OHT50-DEV",
+  "rssi": -52,
+  "link_quality": 78,
+  "interface": "wlan0"
+}
+```
+
+### **GET /api/v1/network/wifi/scan**
+**Mục đích:** Quét danh sách SSID khả dụng (dev/testing).
+
+**Response (ví dụ):**
+```json
+{
+  "networks": [
+    {"ssid": "OHT50-DEV", "rssi": -48, "security": "WPA2"},
+    {"ssid": "Office-2G", "rssi": -60, "security": "WPA2"}
+  ]
+}
+```
+
+### **POST /api/v1/network/wifi/connect**
+**Mục đích:** Kết nối WiFi. Prod: proxy Firmware HTTP API; Dev: mock.
+
+**Request:**
+```json
+{
+  "ssid": "OHT50-DEV",
+  "password": "password123"
+}
+```
+
+**Response (dev ví dụ):**
+```json
+{
+  "success": true,
+  "message": "Connected to OHT50-DEV",
+  "ssid": "OHT50-DEV"
+}
+```
+
+### **POST /api/v1/network/wifi/disconnect**
+**Mục đích:** Ngắt kết nối WiFi. Prod: proxy Firmware HTTP API; Dev: mock.
+
+**Response (dev ví dụ):**
+```json
+{
+  "success": true,
+  "message": "Disconnected",
+  "ssid": null
+}
+```
+
+---
+
+## 📡 **WIFI AP APIs**
+
+### **GET /api/v1/network/ap/status**
+**Mục đích:** Xem trạng thái AP (running, ssid, channel, clients).
+
+**Response (ví dụ):**
+```json
+{
+  "running": true,
+  "ssid": "OHT50-AP",
+  "channel": 6,
+  "interface": "wlan0",
+  "clients": [
+    {"mac": "AA:BB:CC:DD:EE:01", "ip": "192.168.50.10", "rssi": -50}
+  ]
+}
+```
+
+### **POST /api/v1/network/ap/start**
+**Mục đích:** Bật chế độ AP (dev mock | prod proxy Firmware).
+
+**Response (ví dụ):**
+```json
+{
+  "success": true,
+  "message": "AP started",
+  "ssid": "OHT50-AP",
+  "channel": 6
+}
+```
+
+### **POST /api/v1/network/ap/stop**
+**Mục đích:** Tắt chế độ AP.
+
+**Response (ví dụ):**
+```json
+{
+  "success": true,
+  "message": "AP stopped"
+}
+```
+
+### **GET /api/v1/network/ap/clients**
+**Mục đích:** Danh sách client đang kết nối AP.
+
+**Response (ví dụ):**
+```json
+{
+  "clients": [
+    {"mac": "AA:BB:CC:DD:EE:01", "ip": "192.168.50.10", "rssi": -50}
+  ]
+}
+```
+
+
 <!-- RS485 section removed in Core API mode -->
 
 ## 🌐 **WEBSOCKET ENDPOINTS**
@@ -876,17 +1024,17 @@ if __name__ == "__main__":
 
 ---
 
-## 📊 **API SUMMARY**
+## 📊 **API SUMMARY (Core Mode)**
 
-### **Total Endpoints: 100+**
+### **Total Endpoints: ~32**
 - **Authentication:** 7 endpoints
-- **Robot Control:** 25 endpoints
-- **Telemetry:** 15 endpoints
+- **Robot Control:** 8 endpoints
+- **Telemetry:** 5 endpoints
 - **Safety:** 5 endpoints
-- **Monitoring:** 15 endpoints
-- **RS485:** 20 endpoints
-- **System:** 10 endpoints
-- **WebSocket:** 3 endpoints
+- **Monitoring:** 5 endpoints
+- **Health/System:** 2 endpoints
+- **WebSocket:** 2 endpoints
+- **Network:** 1 endpoint
 
 ### **Performance Targets**
 - **API Response Time:** < 50ms
