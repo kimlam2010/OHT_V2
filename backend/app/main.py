@@ -367,6 +367,11 @@ _ALLOWED_PATHS = {
     "/api/v1/network/wifi/scan",
     "/api/v1/network/wifi/connect",
     "/api/v1/network/wifi/disconnect",
+    # WiFi AP
+    "/api/v1/network/ap/status",
+    "/api/v1/network/ap/start",
+    "/api/v1/network/ap/stop",
+    "/api/v1/network/ap/clients",
 }
 
 if _API_REDUCED:
@@ -581,6 +586,13 @@ try:
     app.include_router(network_wifi.router)
 except Exception as _e:
     logger.warning(f"⚠️ WiFi router not loaded: {_e}")
+
+# Include WiFi AP API router
+try:
+    from app.api.v1 import network_ap
+    app.include_router(network_ap.router)
+except Exception as _e:
+    logger.warning(f"⚠️ WiFi AP router not loaded: {_e}")
 
 # Include Deprecated API router (410 Gone with hints)
 app.include_router(deprecated_api.router)

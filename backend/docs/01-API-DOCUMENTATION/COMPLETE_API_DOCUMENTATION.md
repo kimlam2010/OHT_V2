@@ -773,6 +773,62 @@ GET /system/info
 }
 ```
 
+---
+
+## 📡 **WIFI AP APIs**
+
+### **GET /api/v1/network/ap/status**
+**Mục đích:** Xem trạng thái AP (running, ssid, channel, clients).
+
+**Response (ví dụ):**
+```json
+{
+  "running": true,
+  "ssid": "OHT50-AP",
+  "channel": 6,
+  "interface": "wlan0",
+  "clients": [
+    {"mac": "AA:BB:CC:DD:EE:01", "ip": "192.168.50.10", "rssi": -50}
+  ]
+}
+```
+
+### **POST /api/v1/network/ap/start**
+**Mục đích:** Bật chế độ AP (dev mock | prod proxy Firmware).
+
+**Response (ví dụ):**
+```json
+{
+  "success": true,
+  "message": "AP started",
+  "ssid": "OHT50-AP",
+  "channel": 6
+}
+```
+
+### **POST /api/v1/network/ap/stop**
+**Mục đích:** Tắt chế độ AP.
+
+**Response (ví dụ):**
+```json
+{
+  "success": true,
+  "message": "AP stopped"
+}
+```
+
+### **GET /api/v1/network/ap/clients**
+**Mục đích:** Danh sách client đang kết nối AP.
+
+**Response (ví dụ):**
+```json
+{
+  "clients": [
+    {"mac": "AA:BB:CC:DD:EE:01", "ip": "192.168.50.10", "rssi": -50}
+  ]
+}
+```
+
 
 <!-- RS485 section removed in Core API mode -->
 
