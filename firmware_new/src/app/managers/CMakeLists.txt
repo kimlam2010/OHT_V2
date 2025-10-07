@@ -1,36 +1,32 @@
-# App Managers Library
-add_library(app_managers
-    safety_manager.c
-    communication_manager.c
-    module_manager.c
-    module_polling_manager.c
-    telemetry_manager.c
-    network/network_manager.c
-    network/wifi_manager.c
-    network/wifi_ap_manager.c
-    network/fallback_manager.c
-)
+# ============================================================================
+# DEPRECATED: App Managers Library (Legacy Compatibility Shim)
+# ============================================================================
+# This library is DEPRECATED as of v1.0.1 (Domain-Driven Architecture Migration)
+# All functionality has been moved to:
+#   - infrastructure/ (communication, network, telemetry)
+#   - domain/ (module management)
+#   - application/ (safety orchestrator)
+#
+# This compatibility shim redirects to new libraries for backward compatibility.
+# Will be REMOVED in v1.1.0
+# ============================================================================
 
-target_include_directories(app_managers PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../core/state_management  # Domain-driven structure
-    ${CMAKE_CURRENT_SOURCE_DIR}/../core/safety           # Domain-driven structure
-    ${CMAKE_CURRENT_SOURCE_DIR}/../core/control          # Domain-driven structure
-    ${CMAKE_CURRENT_SOURCE_DIR}/../modules
-    ${CMAKE_CURRENT_SOURCE_DIR}/../validation
-    ${CMAKE_CURRENT_SOURCE_DIR}/network
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/communication
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/register
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/safety
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../src/hal/peripherals
-)
+# Create interface library that links to new architecture
+add_library(app_managers INTERFACE)
 
-target_link_libraries(app_managers
-    app_core
-    app_modules
-    app_validation
+target_link_libraries(app_managers INTERFACE
+    # Infrastructure Layer
+    app_infrastructure_communication
+    app_infrastructure_network
+    app_infrastructure_telemetry
+    
+    # Domain Layer
+    app_domain_module_management
+    
+    # Application Layer
+    app_application_safety_orchestrator
+    
+    # HAL dependencies
     hal_common
     hal_communication
     hal_register

@@ -538,3 +538,27 @@ Questions? Contact FW Team Lead.
 **Production Impact:** 🟢 NONE (Backward compatible)  
 **Rollback Required:** ❌ NO
 
+---
+
+## 📝 UPDATE (2025-10-07 Evening)
+
+### Follow-up Migration: Complete Domain-Driven Architecture
+
+**What:** Extended migration để cover `managers/` và `modules/` folders  
+**Status:** ✅ COMPLETED  
+**Files Migrated:** Additional 27 files across 3 new layers
+
+**New Layers Created:**
+- 🔌 **Infrastructure Layer** - Communication, Network, Telemetry
+- 🏭 **Domain Layer** - Module Management, Power, Motion, Safety Module, Dock
+- 🔐 **Application Layer** - Safety Orchestrator
+
+**Documentation:**
+- See [DOMAIN_DRIVEN_MIGRATION_SUMMARY.md](DOMAIN_DRIVEN_MIGRATION_SUMMARY.md) for complete details
+- See [src/app/ARCHITECTURE_v1.0.1.md](src/app/ARCHITECTURE_v1.0.1.md) for architecture guide
+
+**Result:** 
+- Complete 4-layer Domain-Driven Architecture (Core + Infrastructure + Domain + Application)
+- 100% backward compatible
+- Build successful (oht50_main: 473KB)
+

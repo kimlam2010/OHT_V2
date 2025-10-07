@@ -1,10 +1,11 @@
 # OHT-50 Firmware
 
-**Version:** 1.0.0  
+**Version:** 1.0.1 - Domain-Driven Architecture  
 **Platform:** Orange Pi 5B (RK3588)  
-**Standard:** ISO/IEC 12207 Compliant
+**Standard:** ISO/IEC 12207 Compliant  
+**Architecture:** Domain-Driven Design (DDD)
 
-Firmware for OHT-50 (Overhead Hoist and Transfer) Master Module - A professionally organized and production-ready codebase.
+Firmware for OHT-50 (Overhead Hoist and Transfer) Master Module - A professionally organized and production-ready codebase with Domain-Driven Architecture.
 
 ## Overview
 
@@ -34,33 +35,46 @@ For detailed build instructions, see [BUILD_GUIDE.md](BUILD_GUIDE.md).
 
 ```
 firmware_new/
-├── build/              # Thư mục build (trống, sẽ được tạo khi build)
-├── config/             # Cấu hình build và safety
-├── docs/               # Tài liệu kỹ thuật
-├── include/            # Header files
-├── scripts/            # Scripts được tổ chức theo chức năng
-│   ├── build/          # Scripts build
-│   ├── deploy/         # Scripts deploy
-│   ├── test/           # Scripts test
-│   ├── rs485/          # Scripts RS485
-│   ├── lidar/          # Scripts LiDAR
-│   └── safety/         # Scripts safety
-├── src/                # Source code chính
-│   ├── app/            # Application layer
-│   │   ├── core/       # ⭐ Domain-Driven Core Components
-│   │   │   ├── state_management/  # State machine & system controller
-│   │   │   ├── safety/            # Safety monitor & critical detection
-│   │   │   ├── control/           # Control loop & estimator
-│   │   │   └── _backup/           # Backup files (git history)
-│   │   ├── managers/   # System managers
-│   │   ├── modules/    # Module handlers
-│   │   ├── api/        # API endpoints
-│   │   ├── validation/ # Input validation
-│   │   └── storage/    # Data storage
+├── build/              # Build directory (created during build)
+├── config/             # Build and safety configuration
+├── docs/               # Technical documentation
+├── include/            # Public header files
+├── scripts/            # Organized by functionality
+│   ├── build/          # Build scripts
+│   ├── deploy/         # Deployment scripts
+│   ├── test/           # Test scripts
+│   ├── rs485/          # RS485 scripts
+│   ├── lidar/          # LiDAR scripts
+│   └── safety/         # Safety scripts
+├── src/                # Main source code
+│   ├── app/            # ⭐ Application Layer (Domain-Driven Architecture v1.0.1)
+│   │   ├── core/       # 🎛️ CORE LAYER (Independent, no external deps)
+│   │   │   ├── state_management/  # State machine & controller
+│   │   │   ├── safety/            # Safety monitoring (CRITICAL)
+│   │   │   ├── control/           # Motion control & estimation
+│   │   │   └── _backup/           # Historical backups
+│   │   ├── infrastructure/  # 🔌 INFRASTRUCTURE LAYER (Technical services)
+│   │   │   ├── communication/    # RS485/Modbus communication
+│   │   │   ├── network/          # WiFi/LAN management
+│   │   │   └── telemetry/        # Telemetry collection
+│   │   ├── domain/     # 🏭 DOMAIN LAYER (Business logic)
+│   │   │   ├── module_management/  # Module discovery & registry
+│   │   │   ├── power/              # Power module (0x02)
+│   │   │   ├── motion/             # Motor module (0x04)
+│   │   │   ├── safety_module/      # Safety module (0x03)
+│   │   │   └── dock/               # Dock module (0x05)
+│   │   ├── application/  # 🔐 APPLICATION LAYER (Orchestration)
+│   │   │   ├── safety_orchestrator/  # Multi-source safety coordination
+│   │   │   └── system_orchestrator/  # System coordination (future)
+│   │   ├── api/        # 🌐 API Layer (REST/WebSocket endpoints)
+│   │   ├── validation/ # ✅ Validation (cross-cutting)
+│   │   ├── storage/    # 💾 Storage (cross-cutting)
+│   │   ├── managers/   # ⚠️ DEPRECATED (compatibility shim → infrastructure/application)
+│   │   └── modules/    # ⚠️ DEPRECATED (compatibility shim → domain)
 │   ├── hal/            # Hardware Abstraction Layer
 │   │   ├── common/     # Common HAL definitions
-│   │   ├── communication/ # RS485, Network communication
-│   │   ├── peripherals/   # LED, Relay, LiDAR
+│   │   ├── communication/  # RS485, Network communication
+│   │   ├── peripherals/    # LED, Relay, LiDAR
 │   │   ├── safety/     # E-Stop, Safety hardware
 │   │   ├── gpio/       # GPIO operations
 │   │   └── register/   # Register operations
@@ -69,63 +83,84 @@ firmware_new/
 │   ├── unit/           # Unit tests
 │   └── integration/    # Integration tests
 ├── third_party/        # Third-party libraries
-├── CMakeLists.txt      # CMake configuration
-├── modules.yaml        # Module registry (clean state)
-└── README.md           # File này
+├── CMakeLists.txt      # Root CMake configuration
+├── modules.yaml        # Module registry (runtime state)
+├── MIGRATION_LOG_v1.0.1.md  # Architecture migration log
+└── README.md           # This file
 ```
 
-## Core Architecture (Domain-Driven Design)
+## Architecture (Domain-Driven Design v1.0.1)
 
-Firmware core đã được tổ chức lại theo **Domain-Driven Architecture** để dễ maintain và scale:
+Firmware đã được tổ chức lại theo **Domain-Driven Architecture** với 4 layers chính:
 
-### 🎛️ **State Management** (`src/app/core/state_management/`)
-Quản lý trạng thái và lifecycle của hệ thống.
+### 🎛️ **CORE LAYER** (`src/app/core/`)
+Independent business logic layer - không depend on external systems.
 
-**Components:**
-- `system_state_machine.c/h` - State machine chính (INIT → READY → RUNNING → FAULT → E-STOP)
-- `system_controller.c/h` - System coordination và event handling
+**Domains:**
+- **State Management** - System lifecycle (INIT → READY → RUNNING → FAULT → E-STOP)
+- **Safety System** - Real-time safety monitoring (< 50ms response)
+- **Control System** - Motion control & estimation
 
-**Responsibilities:**
-- State transitions và validation
-- System lifecycle management
-- Event coordination giữa các modules
+**Libraries:** `app_core` (includes: state_management, safety, control)
 
-### 🛡️ **Safety System** (`src/app/core/safety/`)
-Hệ thống an toàn real-time với multi-level response.
+### 🔌 **INFRASTRUCTURE LAYER** (`src/app/infrastructure/`)
+Technical services layer - handles I/O, networking, persistence.
 
-**Components:**
-- `safety_monitor.c/h` - Main safety monitoring (1,763 lines)
-- `critical_module_detector.c/h` - Critical module detection (985 lines)
-- `graduated_response_system.c/h` - Graduated safety response (936 lines)
-- `safety_rs485_integration.c/h` - RS485 safety integration (239 lines)
+**Services:**
+- **Communication** - RS485/Modbus RTU communication
+- **Network** - WiFi/LAN management with fallback
+- **Telemetry** - Data collection & serialization
 
-**Responsibilities:**
-- E-Stop monitoring và response (< 50ms)
-- Critical module failure detection
-- Graduated safety response (NORMAL → WARNING → CRITICAL → EMERGENCY)
-- Safety-critical RS485 communication
+**Libraries:** `app_infrastructure` (includes: communication, network, telemetry)
 
-### ⚙️ **Control System** (`src/app/core/control/`)
-Motion control và position estimation.
+### 🏭 **DOMAIN LAYER** (`src/app/domain/`)
+Business domain layer - module-specific logic.
 
-**Components:**
-- `control_loop.c/h` - PID control loop (664 lines)
-- `estimator_1d.c/h` - 1D position estimator (36 lines)
+**Domains:**
+- **Module Management** - Discovery, polling, registry
+- **Power Domain** - Power module (0x02) handler
+- **Motion Domain** - Travel motor (0x04) handler
+- **Safety Module Domain** - Safety module (0x03) handler
+- **Dock Domain** - Dock module (0x05) handler
 
-**Responsibilities:**
-- Velocity control (velocity-only architecture)
-- Position estimation
-- Motion profile execution
-- Safety-aware control
+**Libraries:** `app_domain` (includes: module_management, power, motion, safety_module, dock)
 
-### 📦 **Dependencies**
+### 🔐 **APPLICATION LAYER** (`src/app/application/`)
+Orchestration layer - coordinates multiple domains.
+
+**Services:**
+- **Safety Orchestrator** - Multi-source safety coordination
+- **System Orchestrator** - System-wide coordination (future)
+
+**Libraries:** `app_application` (includes: safety_orchestrator)
+
+### 📊 **Dependency Flow**
 
 ```
-State Management  (no dependencies)
-       ↑
-Safety System  (depends on State Management)
-       ↑
-Control System  (depends on Safety & State Management)
+┌─────────────────────────────────────────────┐
+│           APPLICATION LAYER                 │
+│  (Safety Orchestrator, System Orchestrator) │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│             DOMAIN LAYER                     │
+│   (Modules, Power, Motion, Safety, Dock)    │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│         INFRASTRUCTURE LAYER                 │
+│  (Communication, Network, Telemetry)         │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│             CORE LAYER                       │
+│    (State, Safety, Control)                  │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│             HAL LAYER                        │
+│    (Hardware Abstraction Layer)              │
+└──────────────────────────────────────────────┘
 ```
 
 **Design Principles:**
@@ -304,13 +339,29 @@ For detailed testing guide, see [tests/README.md](tests/README.md).
 ## Changelog
 
 ### v1.0.1 (2025-10-07)
-**🏗️ Core Architecture Migration - Domain-Driven Design**
+**🏗️ Major Architecture Migration - Domain-Driven Design**
+
+**Breaking Changes:** NONE (Backward compatible)
 
 **Major Changes:**
-- ✅ **Restructured `src/app/core/`** với Domain-Driven Architecture
-- ✅ **Organized 3 domains:** State Management, Safety System, Control System
-- ✅ **Modular build system** - Mỗi domain có CMakeLists.txt riêng
-- ✅ **Backward compatible** - Không phá vỡ existing code
+- ✅ **Complete 4-layer architecture** - Core, Infrastructure, Domain, Application
+- ✅ **Migrated 27 files** across 4 layers với git history preservation
+- ✅ **Infrastructure layer** (12 files) - Communication, Network, Telemetry
+- ✅ **Domain layer** (13 files) - Module Management, Power, Motion, Safety Module, Dock
+- ✅ **Application layer** (2 files) - Safety Orchestrator
+- ✅ **17 new CMakeLists.txt** - Modular build system
+- ✅ **Legacy compatibility** - Old paths vẫn work via shims
+- ✅ **Build successful** - oht50_main (473KB)
+
+**Architecture Benefits:**
+- 📦 Better organization & separation of concerns
+- 🔧 Easier to maintain & extend
+- 👥 Better team collaboration
+- 🧪 Easier to test individual domains
+- 📈 Improved scalability
+
+**Migration Details:** See [MIGRATION_LOG_v1.0.1.md](MIGRATION_LOG_v1.0.1.md)  
+**Architecture Guide:** See [src/app/ARCHITECTURE_v1.0.1.md](src/app/ARCHITECTURE_v1.0.1.md)
 
 **Technical Details:**
 - Migrated 18 files vào domain-specific folders
