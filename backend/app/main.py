@@ -319,6 +319,7 @@ _ALLOWED_PATHS = {
     "/health",
     "/health/fast",
     "/api/v1/health/detailed",
+    "/system/info",
 
     # Authentication
     "/api/v1/auth/login",

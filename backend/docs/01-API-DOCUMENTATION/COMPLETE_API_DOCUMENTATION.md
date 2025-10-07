@@ -20,6 +20,7 @@ OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **
 - **📈 Monitoring:** 5 endpoints
 - **🏥 Health/System:** 2 endpoints
 - **🌐 WebSocket:** 2 endpoints
+ - **🌐 Network:** 1 endpoint (system info)
 
 ---
 
@@ -682,6 +683,34 @@ curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
 
 ---
 
+## 🌐 **NETWORK / SYSTEM INFO**
+
+### **GET /system/info**
+**Mục đích:** Trả về thông tin hệ thống và network phục vụ chẩn đoán nhanh.
+
+**Request:**
+```http
+GET /system/info
+```
+
+**Response (ví dụ):**
+```json
+{
+  "hostname": "oht50-backend",
+  "ip": "127.0.0.1",
+  "interfaces": [
+    {"name": "Ethernet0", "ipv4": "192.168.1.10", "status": "up"}
+  ],
+  "env": {
+    "environment": "development",
+    "firmware_url": "http://localhost:8081"
+  }
+}
+```
+
+**Liên quan:** Metrics network tại `GET /api/v1/monitoring/metrics/current` (trường `network_io`).
+
+
 <!-- RS485 section removed in Core API mode -->
 
 ## 🌐 **WEBSOCKET ENDPOINTS**
@@ -876,17 +905,17 @@ if __name__ == "__main__":
 
 ---
 
-## 📊 **API SUMMARY**
+## 📊 **API SUMMARY (Core Mode)**
 
-### **Total Endpoints: 100+**
+### **Total Endpoints: ~32**
 - **Authentication:** 7 endpoints
-- **Robot Control:** 25 endpoints
-- **Telemetry:** 15 endpoints
+- **Robot Control:** 8 endpoints
+- **Telemetry:** 5 endpoints
 - **Safety:** 5 endpoints
-- **Monitoring:** 15 endpoints
-- **RS485:** 20 endpoints
-- **System:** 10 endpoints
-- **WebSocket:** 3 endpoints
+- **Monitoring:** 5 endpoints
+- **Health/System:** 2 endpoints
+- **WebSocket:** 2 endpoints
+- **Network:** 1 endpoint
 
 ### **Performance Targets**
 - **API Response Time:** < 50ms
