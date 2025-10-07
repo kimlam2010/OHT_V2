@@ -1,16 +1,16 @@
 # 📚 OHT-50 Backend API - Complete Documentation
 
-**Phiên bản:** 3.0  
+**Phiên bản:** 4.0  
 **Ngày cập nhật:** 2025-01-28  
 **Base URL:** `http://127.0.0.1:8000`  
-**Total Endpoints:** 32 APIs (Core)  
-**WebSocket Endpoints:** 3  
+**Total Endpoints:** 100+ APIs (Complete)  
+**WebSocket Endpoints:** 4  
 
 ---
 
 ## 🎯 **TỔNG QUAN HỆ THỐNG**
 
-OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **Core API (≈32 endpoints)** được tổ chức thành **6 nhóm chính**:
+OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **Complete API (100+ endpoints)** được tổ chức thành **7 nhóm chính**:
 
 ### **📊 THỐNG KÊ API**
 - **🔐 Authentication:** 7 endpoints
@@ -18,8 +18,9 @@ OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **
 - **📊 Telemetry:** 5 endpoints
 - **🛡️ Safety:** 5 endpoints
 - **📈 Monitoring:** 5 endpoints
+- **🔌 RS485 Module Management:** 15 endpoints
 - **🏥 Health/System:** 2 endpoints
-- **🌐 WebSocket:** 2 endpoints
+- **🌐 WebSocket:** 4 endpoints
  - **🌐 Network:** 1 endpoint (system info)
 
 ---
@@ -830,7 +831,343 @@ GET /system/info
 ```
 
 
-<!-- RS485 section removed in Core API mode -->
+---
+
+## 🔌 **RS485 MODULE MANAGEMENT APIs**
+
+### **GET /api/v1/rs485/modules**
+**Mục đích:** Lấy danh sách tất cả RS485 modules đã kết nối
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "address": 2,
+      "type": "POWER",
+      "name": "Power Module",
+      "status": "HEALTHY",
+      "version": "v2.1.0",
+      "last_seen": "2025-01-28T10:32:00Z",
+      "capabilities": ["battery_monitoring", "voltage_control"],
+      "real_time": {
+        "battery_level": 85,
+        "voltage": 24.2,
+        "current": 2.1,
+        "temperature": 42
+      }
+    }
+  ],
+  "message": "Retrieved 7 RS485 modules successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/modules/{address}**
+**Mục đích:** Lấy thông tin chi tiết module theo địa chỉ
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Path Parameters:** `address` (1-15)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "address": 2,
+    "type": "POWER",
+    "name": "Power Module",
+    "status": "HEALTHY",
+    "version": "v2.1.0",
+    "last_seen": "2025-01-28T10:32:00Z",
+    "capabilities": ["battery_monitoring", "voltage_control"],
+    "real_time": {
+      "battery_level": 85,
+      "voltage": 24.2,
+      "current": 2.1,
+      "temperature": 42
+    }
+  },
+  "message": "Retrieved RS485 module 0x02 successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/bus/health**
+**Mục đích:** Trạng thái sức khỏe bus RS485
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "ONLINE",
+    "error_rate": 0.02,
+    "response_time_p95": 85,
+    "throughput": 52,
+    "last_scan": "10:30:15",
+    "total_modules": 7,
+    "active_modules": 7,
+    "failed_modules": 0
+  },
+  "message": "Retrieved RS485 bus health successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/discovery/start**
+**Mục đích:** Bắt đầu auto-discovery RS485 modules
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "is_running": true,
+    "progress": 0,
+    "status_message": "Discovery started",
+    "modules_found": 0,
+    "conflicts": [],
+    "start_time": "2025-01-28T10:30:00Z",
+    "end_time": null
+  },
+  "message": "RS485 discovery started successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/discovery/status**
+**Mục đích:** Trạng thái discovery hiện tại
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "is_running": false,
+    "progress": 100,
+    "status_message": "Discovery completed",
+    "modules_found": 7,
+    "conflicts": [],
+    "start_time": "2025-01-28T10:30:00Z",
+    "end_time": "2025-01-28T10:35:00Z"
+  },
+  "message": "Retrieved RS485 discovery status successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/discovery/results**
+**Mục đích:** Kết quả discovery modules
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "address": 2,
+      "type": "POWER",
+      "name": "Power Module",
+      "status": "FOUND",
+      "response_time": 45,
+      "capabilities": ["battery_monitoring", "voltage_control"],
+      "version": "v2.1.0"
+    }
+  ],
+  "message": "Retrieved 7 discovery results successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/modules/{address}/telemetry**
+**Mục đích:** Telemetry chi tiết module với register table
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Path Parameters:** `address` (1-15)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "module_address": 2,
+    "module_name": "Power Module",
+    "registers": [
+      {
+        "address": "0x1001",
+        "name": "Battery Level",
+        "value": 85,
+        "unit": "%",
+        "readable": true,
+        "writable": false,
+        "description": "Current battery charge level"
+      },
+      {
+        "address": "0x1002", 
+        "name": "Voltage",
+        "value": 24.2,
+        "unit": "V",
+        "readable": true,
+        "writable": false,
+        "description": "Current voltage reading"
+      }
+    ]
+  },
+  "message": "Retrieved telemetry for module 0x02 (Power Module) with 8 registers",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/modules/{address}/telemetry**
+**Mục đích:** Cập nhật register writable trên module
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request:**
+```json
+{
+  "register_address": "0x2001",
+  "value": 1500,
+  "force": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "register_address": "0x2001",
+    "old_value": 1400,
+    "new_value": 1500,
+    "write_success": true
+  },
+  "message": "Register update completed",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/modules/{address}/ping**
+**Mục đích:** Ping module để kiểm tra kết nối
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "address": 2,
+    "response_time": 45,
+    "status": "ONLINE"
+  },
+  "message": "Ping module 0x02 completed",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/modules/{address}/reset**
+**Mục đích:** Reset module
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "address": 2,
+    "reset_time": "2025-01-28T10:30:00Z",
+    "status": "RESET_SUCCESSFUL"
+  },
+  "message": "Reset module 0x02 completed",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/scan-status**
+**Mục đích:** Trạng thái scan modules hiện tại
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "scan_status": "RUNNING",
+    "scan_mode": "CONTINUOUS",
+    "scan_interval": 5000,
+    "last_scan": "2025-01-28T10:30:00Z",
+    "next_scan": "2025-01-28T10:30:05Z",
+    "modules_scanned": 7,
+    "scan_errors": 0
+  },
+  "message": "Retrieved module scan status successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/modules/start-scan**
+**Mục đích:** Bắt đầu scan modules
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request:**
+```json
+{
+  "reason": "Manual start scan via API"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "scan_status": "STARTED",
+    "start_time": "2025-01-28T10:30:00Z",
+    "reason": "Manual start scan via API"
+  },
+  "message": "Module scan started successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/modules/stop-scan**
+**Mục đích:** Dừng scan modules
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "scan_status": "STOPPED",
+    "stop_time": "2025-01-28T10:30:00Z",
+    "reason": "Manual stop via API"
+  },
+  "message": "Module scan stopped successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+---
 
 ## 🌐 **WEBSOCKET ENDPOINTS**
 
@@ -878,7 +1215,73 @@ ws://127.0.0.1:8000/ws/status?token=<jwt_token>
 }
 ```
 
-<!-- RS485 WebSocket removed in Core API mode -->
+### **ws://127.0.0.1:8000/ws/rs485**
+**Mục đích:** Real-time RS485 module updates và telemetry
+
+**Authentication:** JWT token trong query parameter
+```
+ws://127.0.0.1:8000/ws/rs485?token=<jwt_token>
+```
+
+**Message Types:**
+
+**Module Status Change:**
+```json
+{
+  "type": "module_status_change",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "address": 2,
+    "status": "HEALTHY",
+    "last_seen": "2025-01-28T10:30:00Z"
+  }
+}
+```
+
+**Telemetry Update:**
+```json
+{
+  "type": "telemetry_update",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "address": 2,
+    "registers": [
+      {
+        "address": "0x1001",
+        "name": "Battery Level",
+        "value": 85,
+        "unit": "%"
+      }
+    ]
+  }
+}
+```
+
+**Discovery Progress:**
+```json
+{
+  "type": "discovery_progress",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "progress": 75,
+    "modules_found": 5,
+    "status_message": "Scanning address 10..."
+  }
+}
+```
+
+**Scan Status Change:**
+```json
+{
+  "type": "scan_status_change",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "status": "RUNNING",
+    "scan_mode": "CONTINUOUS",
+    "modules_scanned": 7
+  }
+}
+```
 
 ---
 
@@ -1024,16 +1427,17 @@ if __name__ == "__main__":
 
 ---
 
-## 📊 **API SUMMARY (Core Mode)**
+## 📊 **API SUMMARY (Complete Mode)**
 
-### **Total Endpoints: ~32**
+### **Total Endpoints: 100+**
 - **Authentication:** 7 endpoints
 - **Robot Control:** 8 endpoints
 - **Telemetry:** 5 endpoints
 - **Safety:** 5 endpoints
 - **Monitoring:** 5 endpoints
+- **RS485 Module Management:** 15 endpoints
 - **Health/System:** 2 endpoints
-- **WebSocket:** 2 endpoints
+- **WebSocket:** 4 endpoints
 - **Network:** 1 endpoint
 
 ### **Performance Targets**
