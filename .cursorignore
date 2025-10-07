@@ -1,0 +1,119 @@
+# Cursor IDE Ignore File - MINIMAL CONFIGURATION
+# Cho phép Cursor IDE xem tất cả file trong project
+
+# Chỉ ignore những file thực sự không cần thiết:
+
+# Python cache (có thể gây chậm)
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments (có thể rất lớn)
+venv/
+.venv/
+env/
+
+# Node modules (có thể rất lớn)
+node_modules/
+
+# Build outputs (có thể rất lớn)
+build/
+dist/
+.next/
+.nuxt/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Log files (có thể rất lớn)
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files (có thể rất lớn)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Database files (có thể rất lớn)
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE files
+.vscode/
+.idea/
+
+# Coverage reports (có thể rất lớn)
+coverage/
+.nyc_output/
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# CMake build files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# Compiled files
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# PID files
+*.pid
+*.pid.lock
+
+# Environment files (có thể chứa secrets) - COMMENTED OUT để cho phép xem
+# .env
+# .env.local
+# .env.production.local
+# .env.development.local
+# .env.test.local
+
+# Yarn files
+.yarn-integrity
+
+# NPM files
+.npm/
+
+# ESLint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# REPL history
+.node_repl_history
+
+# Storybook outputs
+.out
+.storybook-out
+
+# Test results
+test-results/
+
+# Documentation build outputs
+docs/_build/
+docs/build/
+
+# Project specific - chỉ ignore những file thực sự không cần thiết
+# backup_api/  # Uncomment nếu muốn ignore backup files
+# *.tgz        # Uncomment nếu muốn ignore archive files
