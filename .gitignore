@@ -1,0 +1,118 @@
+# Python Virtual Environments
+**/.venv/
+**/venv/
+**/env/
+**/ENV/
+**/env.bak/
+**/venv.bak/
+**/.venv.bak/
+
+# Python Cache
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
+
+# Build artifacts
+**/build/
+**/*.o
+**/*.a
+**/*.so
+**/*.dylib
+**/dist/
+**/dist-ssr/
+
+# Executables
+**/oht50_main
+**/*.exe
+
+# Core dumps
+**/core
+**/core.*
+**/*.core
+
+# Debug files
+**/gmon.out
+**/*.gcov
+**/*.gcda
+**/*.gcno
+
+# Temporary files
+**/*.tmp
+**/*.temp
+**/*~
+**/*.orig
+**/*.bak
+
+# OS generated files
+**/.DS_Store
+**/.DS_Store?
+**/._*
+**/.Spotlight-V100
+**/.Trashes
+**/ehthumbs.db
+**/Thumbs.db
+
+# IDE files
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+
+# Log files
+**/*.log
+**/logs/
+
+# Database files
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/oht50.db
+**/test.db
+
+# Environment variables
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# Node modules
+**/node_modules/
+
+# Test artifacts
+**/test_results/
+**/coverage/
+**/htmlcov/
+**/.coverage
+**/.coverage.*
+**/coverage.xml
+**/*.cover
+**/.hypothesis/
+**/.pytest_cache/
+
+# Documentation build
+**/docs/_build/
+**/docs/.doctrees/
+**/site/
+
+# Generated files
+**/STRUCTURE.txt
+**/compile_commands.json
+**/openapi.json
+
+# Jupyter Notebook
+**/.ipynb_checkpoints
+
+# Runtime data
+**/modules.yaml
+**/*.pid
+**/*.sock
+
+# Backup files
+**/backup_*/
+
+# Development tools
+**/count.txt
+**/.nitro
+**/.tanstack
