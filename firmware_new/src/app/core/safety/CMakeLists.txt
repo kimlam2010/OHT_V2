@@ -20,7 +20,9 @@ target_include_directories(app_core_safety PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../hal/communication
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../hal/gpio
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../hal/register
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../managers      # For module_manager.h
+    # Domain-Driven Architecture v1.0.1 - Updated paths
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../infrastructure/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../domain/module_management
 )
 
 # Link dependencies

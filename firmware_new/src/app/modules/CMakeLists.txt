@@ -1,39 +1,34 @@
-# Application Modules Library
-# Module handlers
+# ============================================================================
+# DEPRECATED: App Modules Library (Legacy Compatibility Shim)
+# ============================================================================
+# This library is DEPRECATED as of v1.0.1 (Domain-Driven Architecture Migration)
+# All functionality has been moved to domain/:
+#   - domain/power/ (power_module_handler)
+#   - domain/motion/ (travel_motor_module_handler)
+#   - domain/safety_module/ (safety_module_handler)
+#   - domain/dock/ (dock_module_handler)
+#   - domain/module_management/ (module_registry)
+#
+# This compatibility shim redirects to new libraries for backward compatibility.
+# Will be REMOVED in v1.1.0
+# ============================================================================
 
-# Create library
-add_library(app_modules STATIC
-    power_module_handler.c
-    travel_motor_module_handler.c
-    safety_module_handler.c
-    dock_module_handler.c
-    module_registry.c
-)
+# Create interface library that links to new domain architecture
+add_library(app_modules INTERFACE)
 
-# Include directories
-target_include_directories(app_modules PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../managers
-    ${CMAKE_CURRENT_SOURCE_DIR}/../core
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/communication
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/register
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/peripherals
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/gpio
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/safety
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/storage
-)
-
-# Link dependencies
-target_link_libraries(app_modules
+target_link_libraries(app_modules INTERFACE
+    # Domain Layer
+    app_domain_power
+    app_domain_motion
+    app_domain_safety_module
+    app_domain_dock
+    app_domain_module_management
+    
+    # HAL dependencies
     hal_common
     hal_communication
     hal_register
     hal_peripherals
     hal_gpio
     hal_safety
-    # hal_storage - REMOVED (config persistence simplified)
-    app_core
-    app_managers
 )

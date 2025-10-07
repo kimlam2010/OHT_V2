@@ -13,7 +13,8 @@
 
 #include "critical_module_detector.h"
 #include "safety_rs485_integration.h"
-#include "../../managers/module_manager.h"
+// Updated path for Domain-Driven Architecture v1.0.1
+#include "../../domain/module_management/module_manager.h"
 #include "../../../hal/common/hal_common.h"
 
 #include <stdio.h>
