@@ -21,7 +21,25 @@ logger = logging.getLogger("rs485-sim")
 # Reduce pymodbus verbosity (DEBUG -> WARNING)
 logging.getLogger("pymodbus").setLevel(logging.WARNING)
 
-DEFAULT_TTY = os.environ.get("RS485_PORT", "/dev/ttyUSB1")
+# 🔍 AUTO-DETECT CH340 PORT
+try:
+    from port_detector import get_best_ch340_port
+    
+    DEFAULT_TTY = os.environ.get("RS485_PORT")
+    if not DEFAULT_TTY:
+        DEFAULT_TTY = get_best_ch340_port()
+        if DEFAULT_TTY:
+            logger.info(f"✅ Tự động detect CH340: {DEFAULT_TTY}")
+        else:
+            logger.error("❌ Không tìm thấy CH340!")
+            logger.error("💡 Set thủ công: export RS485_PORT=/dev/ttyUSB0")
+            import sys
+            sys.exit(1)
+    else:
+        logger.info(f"📌 Dùng port đã set: {DEFAULT_TTY}")
+except ImportError:
+    DEFAULT_TTY = os.environ.get("RS485_PORT", "/dev/ttyUSB1")
+    logger.warning(f"⚠️  port_detector.py not found, using: {DEFAULT_TTY}")
 BAUD = int(os.environ.get("RS485_BAUD", "115200"))
 PARITY = os.environ.get("RS485_PARITY", "N")
 STOPBITS = int(os.environ.get("RS485_STOPBITS", "1"))
