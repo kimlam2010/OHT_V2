@@ -2,111 +2,137 @@
 
 **Phiên bản:** 2.0  
 **Ngày cập nhật:** 2025-01-28  
-**Tác giả:** Project Manager  
-**Trạng thái:** Active  
+**Mục tiêu:** Tài liệu tổng thể cho dự án OHT-50
 
 ---
 
-## 🎯 **TỔNG QUAN**
+## 📋 **TỔNG QUAN**
 
-Tài liệu tổng hợp cho hệ thống OHT-50, được tổ chức theo chuẩn ISO với cấu trúc thư mục rõ ràng và naming convention nhất quán.
+Dự án OHT-50 là hệ thống robot tự động hóa với kiến trúc phân tầng:
+- **Hardware Layer:** Orange Pi 5B, RS485, GPIO, Safety systems
+- **Firmware Layer:** HAL drivers, Communication protocols, Safety monitoring
+- **Backend Layer:** REST API, WebSocket, Database, Security
+- **Frontend Layer:** React UI, Real-time monitoring, Control interface
 
-## 📋 **CẤU TRÚC THƯ MỤC CHUẨN ISO**
+---
 
-### **📖 Core Documentation**
-- **[01-OVERVIEW/](./01-OVERVIEW/)** - Tổng quan hệ thống và mục tiêu
-- **[02-REQUIREMENTS/](./02-REQUIREMENTS/)** - Yêu cầu hệ thống và chức năng
-- **[03-ARCHITECTURE/](./03-ARCHITECTURE/)** - Kiến trúc hệ thống và thiết kế
-- **[03-SLC/](./03-SLC/)** - Software Life Cycle và quy trình phát triển
-- **[04-DESIGN/](./04-DESIGN/)** - Thiết kế chi tiết và specifications
-- **[04-SAFETY/](./04-SAFETY/)** - An toàn hệ thống và compliance
+## 📁 **CẤU TRÚC TÀI LIỆU**
 
-### **📖 Implementation & Testing**
-- **[05-IMPLEMENTATION/](./05-IMPLEMENTATION/)** - Triển khai và implementation guides
-- **[06-TESTING/](./06-TESTING/)** - Testing, QA/QC và validation reports
-- **[07-ANALYSIS/](./07-ANALYSIS/)** - Phân tích hệ thống và performance
-- **[08-DESIGN-DETAILS/](./08-DESIGN-DETAILS/)** - Chi tiết thiết kế và specifications
+### **01-OVERVIEW** - Tổng quan dự án
+- **Mục đích:** Hiểu tổng thể về dự án OHT-50
+- **Nội dung:** Hardware integration, Master module, Project progress
+- **Đối tượng:** Stakeholders, Project managers, New team members
 
-### **📖 Support & Management**
-- **[09-FIXES/](./09-FIXES/)** - Bug fixes và issue resolutions
-- **[10-REFERENCES/](./10-REFERENCES/)** - Tài liệu tham khảo và guidelines
-- **[11-GUIDES/](./11-GUIDES/)** - Hướng dẫn sử dụng và best practices
-- **[12-ISSUES/](./12-ISSUES/)** - Issue tracking và problem management
-- **[13-ORDERS/](./13-ORDERS/)** - Team orders và implementation tasks
-- **[14-PLANS/](./14-PLANS/)** - Kế hoạch phát triển và roadmaps
-- **[15-PROJECT/](./15-PROJECT/)** - Project management và tracking
-- **[16-REPORTS/](./16-REPORTS/)** - Báo cáo tiến độ và status updates
-- **[17-SPECS/](./17-SPECS/)** - Technical specifications và requirements
-- **[18-TECHNICAL/](./18-TECHNICAL/)** - Technical documentation và guides
-- **[19-PROJECT/](./19-PROJECT/)** - Project documentation và management
+### **02-REQUIREMENTS** - Yêu cầu hệ thống
+- **Mục đích:** Định nghĩa yêu cầu chi tiết cho từng component
+- **Nội dung:** System, Hardware, Firmware, Backend, Frontend, Integration, UI/UX
+- **Đối tượng:** Developers, Architects, QA team
 
-## 🗺️ **NAVIGATION GUIDE**
+### **03-ARCHITECTURE** - Kiến trúc hệ thống
+- **Mục đích:** Thiết kế kiến trúc tổng thể và chi tiết
+- **Nội dung:** CTO decisions, Architecture patterns, Integration design
+- **Đối tượng:** Architects, Senior developers, CTO
 
-### **🔍 Tìm kiếm nhanh:**
-- **System Overview:** [01-OVERVIEW/](./01-OVERVIEW/)
-- **Requirements:** [02-REQUIREMENTS/](./02-REQUIREMENTS/)
-- **Architecture:** [03-ARCHITECTURE/](./03-ARCHITECTURE/)
-- **Implementation:** [05-IMPLEMENTATION/](./05-IMPLEMENTATION/)
-- **Testing:** [06-TESTING/](./06-TESTING/)
-- **Issues & Fixes:** [09-FIXES/](./09-FIXES/) + [12-ISSUES/](./12-ISSUES/)
+### **04-DESIGN** - Thiết kế chi tiết
+- **Mục đích:** Thiết kế implementation và error handling
+- **Nội dung:** Design patterns, Error handling guidelines
+- **Đối tượng:** Developers, Designers
 
-### **📊 Project Status:**
-- **Progress Reports:** [16-REPORTS/](./16-REPORTS/)
-- **Project Tracking:** [15-PROJECT/](./15-PROJECT/)
-- **Team Orders:** [13-ORDERS/](./13-ORDERS/)
+### **05-IMPLEMENTATION** - Triển khai
+- **Mục đích:** Hướng dẫn implementation cho từng team
+- **Nội dung:** Backend, Frontend, Firmware, EMBED implementation guides
+- **Đối tượng:** Development teams
 
-### **🔧 Technical Resources:**
-- **Technical Specs:** [17-SPECS/](./17-SPECS/)
-- **Technical Guides:** [18-TECHNICAL/](./18-TECHNICAL/)
-- **Implementation Guides:** [11-GUIDES/](./11-GUIDES/)
+### **06-TESTING** - Kiểm thử
+- **Mục đích:** Test plans và reports
+- **Nội dung:** Integration tests, Test reports
+- **Đối tượng:** QA team, Developers
 
-## 📊 **DOCUMENTATION STATISTICS**
+### **07-DESIGN-AND-ANALYSIS** - Phân tích và thiết kế
+- **Mục đích:** Phân tích hệ thống và thiết kế chi tiết
+- **Nội dung:** System state machine analysis, Design details
+- **Đối tượng:** Architects, Senior developers
 
-### **Thống kê tổng quan:**
-- **Total Directories:** 19
-- **Documentation Categories:** 6
-- **Naming Convention:** 100% kebab-case
-- **ISO Compliance:** ✅ Complete
-- **Last Cleanup:** 2025-01-28
+### **08-SAFETY** - An toàn hệ thống
+- **Mục đích:** Yêu cầu và implementation an toàn
+- **Nội dung:** Safety architecture, Safety requirements
+- **Đối tượng:** Safety engineers, Developers
 
-### **Documentation Coverage:**
-- **System Overview:** ✅ Complete
-- **Requirements:** ✅ Complete
-- **Architecture:** ✅ Complete
-- **Implementation:** ✅ Complete
-- **Testing:** ✅ Complete
-- **Project Management:** ✅ Complete
+### **10-GUIDES-AND-REFERENCES** - Hướng dẫn và tham khảo
+- **Mục đích:** Guides và references cho development
+- **Nội dung:** Implementation guides, References, Standards
+- **Đối tượng:** All team members
+
+---
+
+## 🎯 **NAVIGATION GUIDE**
+
+### **Cho Project Managers:**
+1. **01-OVERVIEW** - Hiểu tổng thể dự án
+2. **02-REQUIREMENTS** - Yêu cầu business
+3. **06-TESTING** - Test progress và reports
+
+### **Cho Architects:**
+1. **03-ARCHITECTURE** - Kiến trúc tổng thể
+2. **02-REQUIREMENTS** - Yêu cầu kỹ thuật
+3. **07-DESIGN-AND-ANALYSIS** - Phân tích chi tiết
+
+### **Cho Developers:**
+1. **05-IMPLEMENTATION** - Implementation guides
+2. **02-REQUIREMENTS** - Yêu cầu chi tiết
+3. **10-GUIDES-AND-REFERENCES** - Development guides
+
+### **Cho QA Team:**
+1. **06-TESTING** - Test plans và reports
+2. **02-REQUIREMENTS** - Test requirements
+3. **08-SAFETY** - Safety testing
+
+### **Cho New Team Members:**
+1. **01-OVERVIEW** - Hiểu tổng thể
+2. **03-ARCHITECTURE** - Kiến trúc hệ thống
+3. **10-GUIDES-AND-REFERENCES** - Getting started guides
+
+---
+
+## 📊 **DOCUMENTATION STATUS**
+
+| Folder | Status | Last Updated | Maintainer |
+|--------|--------|--------------|------------|
+| 01-OVERVIEW | ✅ Complete | 2025-01-28 | PM Team |
+| 02-REQUIREMENTS | ✅ Complete | 2025-01-28 | Architecture Team |
+| 03-ARCHITECTURE | ✅ Complete | 2025-01-28 | CTO |
+| 04-DESIGN | ✅ Complete | 2025-01-28 | Design Team |
+| 05-IMPLEMENTATION | 🔄 In Progress | 2025-01-28 | Development Teams |
+| 06-TESTING | ✅ Complete | 2025-01-28 | QA Team |
+| 07-DESIGN-AND-ANALYSIS | ✅ Complete | 2025-01-28 | Architecture Team |
+| 08-SAFETY | ✅ Complete | 2025-01-28 | Safety Team |
+| 10-GUIDES-AND-REFERENCES | ✅ Complete | 2025-01-28 | All Teams |
+
+---
 
 ## 🔄 **MAINTENANCE**
 
-### **Cleanup Status:**
-- ✅ **Phase 1:** Backend docs cleanup (43 files)
-- ✅ **Phase 2:** Root docs reorganization (318 files)
-- ✅ **Phase 3:** ISO compliance achieved
+### **Update Schedule:**
+- **Weekly:** Implementation progress
+- **Bi-weekly:** Architecture updates
+- **Monthly:** Requirements review
+- **Quarterly:** Complete documentation review
 
-### **Naming Standards:**
-- ✅ **File Naming:** kebab-case (lowercase-with-dashes)
-- ✅ **Directory Naming:** XX-CATEGORY format
-- ✅ **Cross-references:** Updated and validated
-- ✅ **Index Files:** Complete for all directories
-
-## 🔄 **CHANGELOG**
-
-### **v2.0 (2025-01-28):**
-- ✅ **Major Reorganization:** Complete docs structure overhaul
-- ✅ **ISO Compliance:** Achieved 100% compliance
-- ✅ **Naming Convention:** Standardized to kebab-case
-- ✅ **Directory Structure:** 19 numbered directories
-- ✅ **Cross-references:** Updated and validated
-- ✅ **Index Files:** Created for all directories
-
-### **v1.0 (Previous):**
-- ✅ Initial documentation structure
-- ✅ Basic organization
+### **Review Process:**
+1. **Content Review:** Technical accuracy
+2. **Structure Review:** Organization và navigation
+3. **Update Review:** Timeliness và completeness
+4. **Approval:** Team lead approval
 
 ---
 
-**📅 Last Updated:** 2025-01-28  
-**📁 Location:** `docs/`  
-**🔗 Related:** [Backend Docs](../backend/docs/)  
-**📋 Standards:** ISO Documentation Standards v2.0
+## 📞 **SUPPORT**
+
+- **Documentation Issues:** Create GitHub issue
+- **Content Questions:** Contact respective team leads
+- **Structure Questions:** Contact Architecture team
+- **Update Requests:** Contact PM team
+
+---
+
+**📚 OHT-50 Documentation - Your Complete Guide to Success!**
