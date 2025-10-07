@@ -297,14 +297,12 @@ int main(int argc, char **argv) {
             if (discovery_status == HAL_STATUS_OK) {
                 printf("[OHT-50] Initial module discovery completed\n");
                 
-                // Add discovered modules to polling manager
+                // Add discovered modules to polling manager (only mandatory modules)
                 printf("[OHT-50] Adding discovered modules to polling manager...\n");
                 module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
                 module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
                 module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
                 module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
-                module_polling_manager_add_module(0x06, MODULE_TYPE_UNKNOWN);      // Unknown Module
-                module_polling_manager_add_module(0x07, MODULE_TYPE_UNKNOWN);      // Unknown Module
                 printf("[OHT-50] All discovered modules added to polling manager\n");
             } else {
                 printf("[OHT-50] WARNING: Initial module discovery failed: %d\n", discovery_status);
@@ -623,14 +621,12 @@ int main(int argc, char **argv) {
         if (discovery_status == HAL_STATUS_OK) {
             printf("[OHT-50] Initial module discovery completed\n");
             
-            // Add discovered modules to polling manager
+            // Add discovered modules to polling manager (only mandatory modules)
             printf("[OHT-50] Adding discovered modules to polling manager...\n");
             module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
             module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
             module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
             module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
-            module_polling_manager_add_module(0x06, MODULE_TYPE_UNKNOWN);      // Unknown Module
-            module_polling_manager_add_module(0x07, MODULE_TYPE_UNKNOWN);      // Unknown Module
             printf("[OHT-50] All discovered modules added to polling manager\n");
         } else {
             printf("[OHT-50] WARNING: Initial module discovery failed: %d\n", discovery_status);
@@ -751,13 +747,13 @@ int main(int argc, char **argv) {
     uint64_t startup_deadline_ms = now_ms() + STARTUP_DEADLINE_MS;
     bool startup_deadline_active = g_dry_run; // Only enforce deadline in dry-run
 
-    // Run initial scan once (Phase 1)
+    // Run initial scan once (Phase 1) - Only scan mandatory modules (0x02-0x05)
     if (!g_dry_run) {
-        printf("[OHT-50] Starting initial module scan...\n");
+        printf("[OHT-50] Starting initial module scan (0x02-0x05)...\n");
         registry_set_scanning(true);
         hal_led_comm_set(LED_STATE_BLINK_SLOW); // Blink during scan
         
-        (void)comm_manager_scan_range(MODULE_ADDR_POWER, MODULE_ADDR_MAX);
+        (void)comm_manager_scan_range(0x02, 0x05);  // Only scan mandatory modules
         
         size_t online = registry_count_online();
         bool has_offline = registry_has_offline_saved();

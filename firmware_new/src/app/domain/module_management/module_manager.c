@@ -554,32 +554,43 @@ static hal_status_t perform_module_discovery(void) {
     hal_status_t overall_status = HAL_STATUS_OK;
     int discovered_count = 0;
     
-    // Scan Modbus addresses per configured range
-    uint8_t start_addr = 0x01, end_addr = 0x08;
+    // Scan Modbus addresses per configured range (only mandatory modules 0x02-0x05)
+    uint8_t start_addr = 0x02;  // MANDATORY_MODULE_ADDR_START (Power Module)
+    uint8_t end_addr = 0x05;    // MANDATORY_MODULE_ADDR_END (Dock Module)
     get_configured_scan_range(&start_addr, &end_addr);
     uint64_t start_scan = hal_get_timestamp_us();
     uint32_t addresses_scanned = 0;
     uint32_t per_addr_ms[0x20] = {0};
     for (uint8_t address = start_addr; address <= end_addr; address++) {
         if (is_address_open_circuit_breaker(address, hal_get_timestamp_us())) {
+            printf("[MODULE] Skipping 0x%02X (circuit breaker cooldown)\n", address);
             continue; // skip during cooldown
         }
+        
+        // Progress logging
+        printf("[MODULE] Scanning address 0x%02X... ", address);
+        fflush(stdout);
+        
         uint64_t t0 = hal_get_timestamp_us();
         hal_status_t status = discover_module_at_address(address);
+        uint64_t t1 = hal_get_timestamp_us();
+        uint32_t duration_ms = (uint32_t)((t1 - t0) / 1000ULL);
+        
         if (status == HAL_STATUS_OK) {
             discovered_count++;
             g_module_manager.statistics.discovery_success++;
             record_address_success(address);
+            printf("FOUND ✅ (took %ums)\n", duration_ms);
             // Enqueue WS discovered event
             char ev[64]; snprintf(ev,sizeof(ev),"{\"address\":%u}", address);
             enqueue_ws_event("discovered", ev);
         } else {
             g_module_manager.statistics.discovery_fail++;
             record_address_failure(address, hal_get_timestamp_us());
+            printf("TIMEOUT ❌ (took %ums)\n", duration_ms);
         }
         addresses_scanned++;
-        uint64_t t1 = hal_get_timestamp_us();
-        per_addr_ms[address] = (uint32_t)((t1 - t0) / 1000ULL);
+        per_addr_ms[address] = duration_ms;
     }
     
     // Check for offline modules
@@ -708,28 +719,28 @@ static void handle_module_event(module_event_t event, uint8_t module_id, const v
 
 __attribute__((unused))
 static uint8_t calculate_health_percentage(const module_status_info_t *status) {
-    uint8_t percentage = 100;
+    int32_t percentage = 100;  // Use signed int for calculations
     
     // Reduce health based on error count
     if (status->error_count > 0) {
-        percentage -= (status->error_count * 10);
+        percentage -= (int32_t)(status->error_count * 10);
     }
     
     // Reduce health based on warning count
     if (status->warning_count > 0) {
-        percentage -= (status->warning_count * 5);
+        percentage -= (int32_t)(status->warning_count * 5);
     }
     
     // Reduce health based on response time
     if (status->response_time_ms > 100) {
-        percentage -= ((status->response_time_ms - 100) / 10);
+        percentage -= (int32_t)((status->response_time_ms - 100) / 10);
     }
     
-    // Ensure percentage is within valid range
+    // Ensure percentage is within valid range [0-100]
+    if (percentage < 0) percentage = 0;
     if (percentage > 100) percentage = 100;
-    // percentage is unsigned, so it cannot be < 0
     
-    return percentage;
+    return (uint8_t)percentage;  // Safe cast to uint8_t
 }
 
 static module_health_t get_health_level(uint8_t percentage) {
@@ -792,8 +803,8 @@ static hal_status_t discover_module_at_address(uint8_t address) {
         int version_index = 0;
         for (int i = 0; i < 8 && version_index < 15; i++) {
             // Each register contains 2 ASCII characters
-            char high_byte = (version_regs[i] >> 8) & 0xFF;
-            char low_byte = version_regs[i] & 0xFF;
+            char high_byte = (char)((version_regs[i] >> 8) & 0xFF);
+            char low_byte = (char)(version_regs[i] & 0xFF);
             
             if (high_byte != 0) {
                 version[version_index++] = high_byte;
@@ -938,9 +949,9 @@ static void check_offline_modules(void) {
 // Config helpers
 static void get_configured_scan_range(uint8_t *start_addr, uint8_t *end_addr){
     if (!start_addr || !end_addr) return;
-    // Defaults; can be updated by YAML loader
-    static uint8_t s_start = 0x01;
-    static uint8_t s_end = 0x08;
+    // Defaults: Only scan mandatory modules (0x02-0x05)
+    static uint8_t s_start = 0x02;  // MANDATORY_MODULE_ADDR_START
+    static uint8_t s_end = 0x05;    // MANDATORY_MODULE_ADDR_END
     *start_addr = s_start;
     *end_addr = s_end;
 }

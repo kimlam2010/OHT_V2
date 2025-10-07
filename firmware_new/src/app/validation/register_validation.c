@@ -158,9 +158,14 @@ bool register_validation_get_recommended_params(uint8_t module_addr, uint16_t *s
 // Internal validation functions
 static bool validate_power_module_registers(uint16_t start_addr, uint16_t quantity)
 {
-    // Power module valid ranges: 0x0000-0x00FF
     uint16_t end_addr = start_addr + quantity - 1;
     
+    // Allow system registers (0x0100-0x0107) - DeviceID, Type, Version, Capabilities
+    if (start_addr >= 0x0100 && start_addr <= 0x0107) {
+        return true;  // System registers always valid
+    }
+    
+    // Power module application registers: 0x0000-0x00FF
     if (end_addr > 0x00FF) {
         printf("[REG-VALID] Power module address out of range: start=0x%04X, end=0x%04X\n", 
                start_addr, end_addr);
@@ -178,9 +183,14 @@ static bool validate_power_module_registers(uint16_t start_addr, uint16_t quanti
 
 static bool validate_motor_module_registers(uint16_t start_addr, uint16_t quantity)
 {
-    // Motor module valid ranges: 0x0000-0x0106
     uint16_t end_addr = start_addr + quantity - 1;
     
+    // Allow system registers (0x0100-0x0107)
+    if (start_addr >= 0x0100 && start_addr <= 0x0107) {
+        return true;  // System registers always valid
+    }
+    
+    // Motor module application registers: 0x0000-0x0106
     if (end_addr > 0x0106) {
         printf("[REG-VALID] Motor module address out of range: start=0x%04X, end=0x%04X\n", 
                start_addr, end_addr);

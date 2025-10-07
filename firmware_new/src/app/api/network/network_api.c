@@ -36,7 +36,7 @@ static api_route_t network_routes[] = {
     {"/api/v1/network/wifi/disconnect", "POST", handle_post_wifi_disconnect, AUTH_OPERATOR},
     {"/api/v1/network/wifi/scan", "GET", handle_get_wifi_scan, AUTH_NONE},
     {"/api/v1/network/wifi/signal", "GET", handle_get_network_status, AUTH_NONE},
-    {"/api/v1/network/wifi/statistics", "GET", handle_get_network_statistics, AUTH_OPERATOR},
+    {"/api/v1/network/wifi/statistics", "GET", handle_get_network_statistics, AUTH_NONE},  // Public for monitoring
     {"/api/v1/network/wifi/performance", "GET", handle_get_network_performance, AUTH_NONE},
     {"/api/v1/network/wifi/health", "GET", handle_get_network_health, AUTH_NONE},
     {"/api/v1/network/wifi/config", "GET", handle_get_network_config, AUTH_OPERATOR},
