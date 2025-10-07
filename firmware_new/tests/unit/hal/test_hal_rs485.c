@@ -19,6 +19,25 @@
 static rs485_config_t test_config;
 static modbus_config_t test_modbus_config;
 
+// Function prototypes
+void setUp(void);
+void tearDown(void);
+void test_setup_is_called(void);
+void test_rs485_constants(void);
+void test_modbus_function_codes(void);
+void test_rs485_status_enum(void);
+void test_rs485_data_structures(void);
+void test_modbus_data_structures(void);
+void test_modbus_frame_structure(void);
+void test_rs485_statistics_structure(void);
+void test_rs485_config_initialization(void);
+void test_modbus_config_initialization(void);
+void test_rs485_config_validation(void);
+void test_modbus_config_validation(void);
+void test_rs485_buffer_size_validation(void);
+void test_modbus_address_validation(void);
+void test_modbus_quantity_validation(void);
+
 void setUp(void)
 {
     // Initialize test environment (no mock reset needed)

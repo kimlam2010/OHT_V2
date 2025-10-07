@@ -14,6 +14,9 @@ add_library(app_managers
 target_include_directories(app_managers PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/state_management  # Domain-driven structure
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/safety           # Domain-driven structure
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/control          # Domain-driven structure
     ${CMAKE_CURRENT_SOURCE_DIR}/../modules
     ${CMAKE_CURRENT_SOURCE_DIR}/../validation
     ${CMAKE_CURRENT_SOURCE_DIR}/network

@@ -386,7 +386,7 @@ hal_status_t dock_module_start_docking(dock_module_handler_t *handler, uint16_t 
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT
     request.start_address = DOCK_POSITION_TARGET_REG;
     request.quantity = 1;  // NOLINT
-    request.data[0] = target_position;
+    request.data[0] = (uint8_t)(target_position & 0xFFU);
     
     if (comm_manager_modbus_send_request(&request, NULL) != HAL_STATUS_OK) {
         printf("[DOCK] Failed to write target position register\n");
@@ -537,7 +537,7 @@ hal_status_t dock_module_set_position(dock_module_handler_t *handler, uint16_t p
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT
     request.start_address = DOCK_POSITION_TARGET_REG;
     request.quantity = 1;  // NOLINT
-    request.data[0] = position;
+    request.data[0] = (uint8_t)(position & 0xFFU);
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;
@@ -597,7 +597,7 @@ hal_status_t dock_module_set_approach_distance(dock_module_handler_t *handler, u
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT
     request.start_address = DOCK_CONFIG_;  // NOLINTAPPROACH_DISTANCE_REG;
     request.quantity = 1;  // NOLINT
-    request.data[0] = distance;
+    request.data[0] = (uint8_t)(distance & 0xFFU);
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;
@@ -626,7 +626,7 @@ hal_status_t dock_module_set_final_speed(dock_module_handler_t *handler, uint16_
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT
     request.start_address = DOCK_CONFIG_;  // NOLINTFINAL_SPEED_REG;
     request.quantity = 1;  // NOLINT
-    request.data[0] = speed;
+    request.data[0] = (uint8_t)(speed & 0xFFU);
     */
     
     // return comm_manager_modbus_send_request(&request, NULL);
@@ -651,7 +651,7 @@ hal_status_t dock_module_set_accuracy_threshold(dock_module_handler_t *handler, 
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_ACCURACY_REG;  // NOLINT
     request.quantity = 1;  // NOLINT  // NOLINT
-    request.data[0] = threshold;  // NOLINT
+    request.data[0] = (uint8_t)(threshold & 0xFFU);  // NOLINT
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;
@@ -674,7 +674,7 @@ hal_status_t dock_module_set_timeout(dock_module_handler_t *handler, uint16_t ti
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_TIMEOUT_REG;  // NOLINT
     request.quantity = 1;  // NOLINT  // NOLINT
-    request.data[0] = timeout;  // NOLINT
+    request.data[0] = (uint8_t)(timeout & 0xFFU);  // NOLINT
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;
@@ -697,7 +697,7 @@ hal_status_t dock_module_set_retry_count(dock_module_handler_t *handler, uint8_t
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_RETRY_COUNT_REG;  // NOLINT
     request.quantity = 1;  // NOLINT  // NOLINT
-    request.data[0] = retry_count;  // NOLINT
+    request.data[0] = (uint8_t)(retry_count & 0xFFU);  // NOLINT
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;
@@ -720,7 +720,7 @@ hal_status_t dock_module_set_debounce_time(dock_module_handler_t *handler, uint1
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_DEBOUNCE_TIME_REG;  // NOLINT
     request.quantity = 1;  // NOLINT  // NOLINT
-    request.data[0] = debounce_time;  // NOLINT
+    request.data[0] = (uint8_t)(debounce_time & 0xFFU);  // NOLINT
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;
@@ -743,7 +743,7 @@ hal_status_t dock_module_set_alignment_tolerance(dock_module_handler_t *handler,
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT  // NOLINT
     request.start_address = DOCK_CONFIG_ALIGNMENT_TOLERANCE_REG;  // NOLINT
     request.quantity = 1;  // NOLINT  // NOLINT
-    request.data[0] = tolerance;  // NOLINT
+    request.data[0] = (uint8_t)(tolerance & 0xFFU);  // NOLINT
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;
@@ -825,7 +825,7 @@ hal_status_t dock_module_set_reference_position(dock_module_handler_t *handler, 
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT
     request.start_address = DOCK_SET_DOCK_POSITION_REG;
     request.quantity = 1;  // NOLINT
-    request.data[0] = position;
+    request.data[0] = (uint8_t)(position & 0xFFU);
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;
@@ -1041,7 +1041,7 @@ hal_status_t dock_module_write_register(dock_module_handler_t *handler, uint16_t
     request.function_code = MODBUS_FC_WRITE_SINGLE_REGISTER;  // NOLINT
     request.start_address = reg;
     request.quantity = 1;  // NOLINT
-    request.data[0] = value;
+    request.data[0] = (uint8_t)(value & 0xFFU);
     
     // return comm_manager_modbus_send_request(&request, NULL);
     return HAL_STATUS_OK;

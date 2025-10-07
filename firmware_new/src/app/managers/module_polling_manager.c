@@ -10,8 +10,8 @@
 
 #include "module_polling_manager.h"
 #include "communication_manager.h"
-#include "power_module_handler.h"
-#include "travel_motor_module_handler.h"
+// #include "power_module_handler.h"  // Not implemented yet
+// #include "travel_motor_module_handler.h"  // Not implemented yet
 #include "system_state_machine.h"
 #include "register_validation.h"
 #include <stdio.h>

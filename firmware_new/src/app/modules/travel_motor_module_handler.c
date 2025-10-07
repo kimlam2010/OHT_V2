@@ -668,7 +668,7 @@ hal_status_t motor_module_read_register(motor_module_handler_t *handler, uint16_
     }
     
     if (response.data_length >= 2) {
-        *value = (response.data[0] << 8) | response.data[1];
+        *value = (uint16_t)((uint16_t)(response.data[0] << 8) | (uint16_t)response.data[1]);
     } else {
         printf("[MOTOR] Invalid response data length for register 0x%04X\n", register_addr);
         return HAL_STATUS_ERROR;
@@ -683,7 +683,7 @@ hal_status_t motor_module_write_register(motor_module_handler_t *handler, uint16
     }
     
     // Create Modbus request
-    uint8_t data[2] = {(value >> 8) & 0xFF, value & 0xFF};
+    uint8_t data[2] = {(uint8_t)((value >> 8) & 0xFFU), (uint8_t)(value & 0xFFU)};
     comm_mgr_modbus_request_t request = {
         .slave_id = handler->address,
         .function_code = MODBUS_FC_WRITE_SINGLE_REGISTER,
@@ -726,7 +726,7 @@ hal_status_t motor_module_read_registers(motor_module_handler_t *handler, uint16
     
     if (response.data_length >= count * 2) {
         for (uint16_t i = 0; i < count; i++) {
-            data[i] = (response.data[i * 2] << 8) | response.data[i * 2 + 1];
+            data[i] = (uint16_t)((uint16_t)(response.data[i * 2] << 8) | (uint16_t)response.data[i * 2 + 1]);
         }
     } else {
         printf("[MOTOR] Invalid response data length for registers\n");
@@ -749,8 +749,8 @@ hal_status_t motor_module_write_registers(motor_module_handler_t *handler, uint1
     }
     
     for (uint16_t i = 0; i < count; i++) {
-        modbus_data[i * 2] = (data[i] >> 8) & 0xFF;
-        modbus_data[i * 2 + 1] = data[i] & 0xFF;
+        modbus_data[i * 2] = (uint8_t)((data[i] >> 8) & 0xFFU);
+        modbus_data[i * 2 + 1] = (uint8_t)(data[i] & 0xFFU);
     }
     
     comm_mgr_modbus_request_t request = {

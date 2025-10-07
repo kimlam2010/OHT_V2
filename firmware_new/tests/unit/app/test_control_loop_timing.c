@@ -11,6 +11,12 @@
 
 static control_config_t cfg;
 
+// Function prototypes
+void setUp(void);
+void tearDown(void);
+void test_control_loop_update_under_100ms(void);
+void test_control_loop_respects_position_limits(void);
+
 void setUp(void)
 {
     // Initialize config with proper values (no memset)
