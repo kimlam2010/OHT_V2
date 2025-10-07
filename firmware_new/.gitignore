@@ -1,7 +1,46 @@
 # Build artifacts
 build/
-install/
-package/
+*.o
+*.a
+*.so
+*.dylib
+
+# Executables
+oht50_main
+*.exe
+
+# Core dumps
+core
+core.*
+*.core
+
+# Debug files
+gmon.out
+*.gcov
+*.gcda
+*.gcno
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Temporary files
+*.tmp
+*.temp
+*~
+*.orig
+*.bak
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # IDE files
 .vscode/
@@ -9,44 +48,26 @@ package/
 *.swp
 *.swo
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Backup files
-*.backup
-*.bak
-*~
-
-# Test artifacts
-*.gcov
-*.gcda
-*.gcno
-coverage/
-
-# Documentation
-docs/html/
-docs/latex/
-
-# Test artifacts
-*.o
-*.a
-*.so
-*.dylib
-
 # Log files
 *.log
 logs/
 
-# Temporary files
-*.tmp
-*.temp
+# Runtime data
+modules.yaml
+*.pid
+*.sock
 
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# Test results
+# Test artifacts
 test_results/
 coverage/
+*.gcov
+*.gcda
+*.gcno
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+
+# Generated files
+STRUCTURE.txt
+compile_commands.json

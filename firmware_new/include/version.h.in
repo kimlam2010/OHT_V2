@@ -1,0 +1,18 @@
+/**
+ * @file version.h
+ * @brief OHT-50 Firmware Version Information
+ * 
+ * Auto-generated from version.h.in by CMake
+ */
+
+#ifndef VERSION_H
+#define VERSION_H
+
+#define FIRMWARE_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define FIRMWARE_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define FIRMWARE_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
+#define FIRMWARE_VERSION_STRING "@PROJECT_VERSION@"
+
+#endif // VERSION_H
+
