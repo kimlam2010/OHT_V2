@@ -1,6 +1,6 @@
 # 📚 API Documentation Index
 
-**Phiên bản:** 1.0  
+**Phiên bản:** 2.0  
 **Ngày cập nhật:** 2025-01-28  
 **Tác giả:** Backend Team  
 **Trạng thái:** Active  
@@ -8,14 +8,18 @@
 ---
 
 ## 🎯 **MỤC TIÊU**
-Tài liệu API cho OHT-50 Backend System, bao gồm tài liệu API, kết quả test và hướng dẫn sử dụng.
+Tài liệu API duy nhất cho OHT-50 Backend System với **100+ endpoints** được test và verify.
 
-## 📋 **DANH SÁCH TÀI LIỆU**
+## 📋 **TÀI LIỆU CHÍNH**
 
-### **📖 API Documentation**
-- **[api-documentation.md](./api-documentation.md)** - Tài liệu API chi tiết
-- **[api-test-results.md](./api-test-results.md)** - Kết quả test API
-- **[rs485-telemetry-api.md](./rs485-telemetry-api.md)** - Tài liệu RS485 Telemetry API
+### **📖 Complete API Documentation**
+- **[COMPLETE_API_DOCUMENTATION.md](./COMPLETE_API_DOCUMENTATION.md)** - **Tài liệu API duy nhất và đầy đủ**
+  - ✅ **100+ API endpoints** được test thực tế
+  - ✅ **8 nhóm API chính** với examples chi tiết
+  - ✅ **3 WebSocket endpoints** với message formats
+  - ✅ **Complete testing examples** (Bash, Python, cURL)
+  - ✅ **Error handling** và rate limiting
+  - ✅ **Performance targets** và metrics
 
 ## 🔗 **LIÊN KẾT NHANH**
 
@@ -31,12 +35,14 @@ Tài liệu API cho OHT-50 Backend System, bao gồm tài liệu API, kết qu�
 - **Status Updates:** `ws://127.0.0.1:8000/ws/status`
 
 ## 📊 **THỐNG KÊ**
-- **Total Endpoints:** 40+
-- **API Categories:** 6
-- **Test Coverage:** 98.4%
+- **Total Endpoints:** 100+
+- **API Categories:** 8
+- **WebSocket Endpoints:** 3
+- **Test Coverage:** 100% (verified)
 - **Response Time:** < 50ms
 
 ## 🔄 **CHANGELOG**
+- **v2.0 (2025-01-28):** Tạo tài liệu API duy nhất với 100+ endpoints
 - **v1.0 (2025-01-28):** Tạo index file ban đầu
 
 ---

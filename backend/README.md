@@ -48,17 +48,105 @@ pip install -r requirements.txt
 
 ### **2. Cấu hình Environment**
 ```bash
+# Copy file environment mẫu
 cp env.example .env
-# Chỉnh sửa .env với các giá trị phù hợp
+
+# Hoặc tạo file .env mới với cấu hình cơ bản
+echo "DATABASE_URL=sqlite+aiosqlite:///./oht50.db" > .env
+echo "JWT_SECRET=your-secret-key-here" >> .env
+echo "USE_MOCK_FIRMWARE=true" >> .env
 ```
 
 ### **3. Khởi tạo Database**
 ```bash
-alembic upgrade head
+# Nếu gặp lỗi psycopg2, thử uninstall psycopg2
+pip uninstall psycopg2 psycopg2-binary -y
+
+# Kiểm tra file .env có đúng cấu hình SQLite không
+Remove-Item .env -Force -ErrorAction SilentlyContinue
+New-Item -Path .env -ItemType File -Force
+Add-Content -Path .env -Value "DATABASE_URL=sqlite+aiosqlite:///./oht50.db"
+Add-Content -Path .env -Value "JWT_SECRET=your-secret-key-here"
+Add-Content -Path .env -Value "USE_MOCK_FIRMWARE=true"
+
+# Chạy migration để tạo database
+python -m alembic upgrade head
+
+# Nếu vẫn lỗi, thử tạo database trực tiếp
+python -c "from app.core.database import init_db; import asyncio; asyncio.run(init_db())"
+
+# Nếu vẫn lỗi, thử chạy backend trực tiếp (sẽ tự tạo database)
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### **⚠️ TROUBLESHOOTING**
+
+#### **Lỗi psycopg2 (PostgreSQL driver conflict)**
+```bash
+# Nếu gặp lỗi "No module named 'psycopg2'", thử:
+pip uninstall psycopg2 psycopg2-binary -y
+pip install aiosqlite
+
+# Hoặc sử dụng script fix tự động:
+python fix_database.py
+
+# Nếu vẫn lỗi, thử cài đặt psycopg2-binary:
+pip install psycopg2-binary
+
+# Hoặc thử chạy backend với environment variable:
+$env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+#### **Lỗi database connection**
+```bash
+# Nếu database không kết nối được, thử:
+# 1. Xóa file .env cũ và tạo mới
+Remove-Item .env -Force -ErrorAction SilentlyContinue
+New-Item -Path .env -ItemType File -Force
+Add-Content -Path .env -Value "DATABASE_URL=sqlite+aiosqlite:///./oht50.db"
+Add-Content -Path .env -Value "JWT_SECRET=your-secret-key-here"
+Add-Content -Path .env -Value "USE_MOCK_FIRMWARE=true"
+
+# 2. Thử chạy backend trực tiếp
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+#### **Lỗi "No module named 'app'"**
+```bash
+# Nếu gặp lỗi module không tìm thấy, thử:
+# 1. Chạy không dùng --reload flag
+$env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# 2. Hoặc chạy từ thư mục backend
+cd backend
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+#### **Lỗi "Port already in use" (Port đã được sử dụng)**
+```bash
+# Nếu gặp lỗi port 8000 đã được sử dụng:
+# 1. Tìm và kill process đang sử dụng port 8000
+netstat -ano | findstr :8000
+taskkill /PID <PID_NUMBER> /F
+
+# 2. Hoặc sử dụng port khác
+$env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8001
+
+# 3. Hoặc kiểm tra process Python đang chạy
+Get-Process | Where-Object {$_.ProcessName -like "*python*"}
+Stop-Process -Name "python" -Force
 ```
 
 ### **4. Chạy Backend**
 ```bash
+# Chạy backend với environment variable (khuyến nghị)
+$env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Hoặc chạy với reload mode (nếu gặp lỗi module, thử không dùng --reload)
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
