@@ -5,8 +5,27 @@ python3 -m venv .venv || true
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Free the serial port if locked
-PORT="${RS485_PORT:-/dev/ttyUSB1}"
+# 🔍 AUTO-DETECT CH340 PORT
+echo "[INFO] 🔍 Đang tìm CH340 USB-to-Serial converter..."
+
+if [ -z "${RS485_PORT:-}" ]; then
+  # Tự động detect CH340
+  DETECTED_PORT=$(python3 port_detector.py 2>/dev/null | grep "Recommended port:" | awk '{print $3}')
+  
+  if [ -n "$DETECTED_PORT" ]; then
+    PORT="$DETECTED_PORT"
+    echo "[INFO] ✅ Tự động detect: $PORT"
+  else
+    echo "[ERROR] ❌ Không tìm thấy CH340!"
+    echo "[ERROR] 💡 Kiểm tra: lsusb | grep CH340"
+    echo "[ERROR] 💡 Hoặc set thủ công: export RS485_PORT=/dev/ttyUSB0"
+    exit 1
+  fi
+else
+  PORT="$RS485_PORT"
+  echo "[INFO] 📌 Dùng port đã set: $PORT"
+fi
+
 echo "[INFO] Preparing serial port $PORT"
 
 # Kill previous simulator instances

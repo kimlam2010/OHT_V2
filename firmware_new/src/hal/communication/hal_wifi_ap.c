@@ -181,14 +181,18 @@ hal_status_t hal_wifi_ap_start(const hal_wifi_ap_config_t *config) {
     // Create configuration files
     int hostapd_config_result = create_hostapd_config(config);
     if (hostapd_config_result != 0) {
-        printf("[HAL_WIFI_AP] hostapd config creation returned: %d (continuing with mock)\n", hostapd_config_result);
-        // Continue with mock for development
+        printf("[HAL_WIFI_AP] ERROR: Failed to create hostapd config: %d\n", hostapd_config_result);
+        current_status.status = HAL_AP_STATUS_DISABLED;
+        update_status();
+        return HAL_WIFI_AP_ERROR_CONFIG_FAILED;
     }
     
     int dnsmasq_config_result = create_dnsmasq_config(config);
     if (dnsmasq_config_result != 0) {
-        printf("[HAL_WIFI_AP] dnsmasq config creation returned: %d (continuing with mock)\n", dnsmasq_config_result);
-        // Continue with mock for development
+        printf("[HAL_WIFI_AP] ERROR: Failed to create dnsmasq config: %d\n", dnsmasq_config_result);
+        current_status.status = HAL_AP_STATUS_DISABLED;
+        update_status();
+        return HAL_WIFI_AP_ERROR_CONFIG_FAILED;
     }
     
     // Start dnsmasq (mock-friendly)
@@ -955,16 +959,44 @@ static int start_dnsmasq(void) {
  * @brief Stop hostapd daemon
  */
 static int stop_hostapd(void) {
-    if (hostapd_pid > 0) {
-        if (kill_process(hostapd_pid) != 0) {
-            printf("[HAL_WIFI_AP] Failed to stop hostapd\n");
-            return -1;
+    pid_t pid = hostapd_pid;
+    
+    // If no PID in memory, try to read from file
+    if (pid <= 0) {
+        FILE *pid_file = fopen(HOSTAPD_PID_FILE, "r");
+        if (pid_file) {
+            fscanf(pid_file, "%d", &pid);
+            fclose(pid_file);
+            printf("[HAL_WIFI_AP] Read hostapd PID from file: %d\n", pid);
         }
-        hostapd_pid = 0;
     }
     
+    // Try to kill by PID first
+    if (pid > 0) {
+        printf("[HAL_WIFI_AP] Killing hostapd PID: %d\n", pid);
+        if (kill_process(pid) == 0) {
+            printf("[HAL_WIFI_AP] hostapd killed successfully\n");
+        } else {
+            printf("[HAL_WIFI_AP] Warning: Failed to kill hostapd by PID\n");
+        }
+    }
+    
+    // Fallback: Use pkill to ensure all hostapd processes are killed
+    printf("[HAL_WIFI_AP] Using pkill to ensure hostapd is stopped\n");
+    system("sudo pkill -9 -f hostapd 2>/dev/null");
+    usleep(500000); // Wait 500ms for cleanup
+    
+    // Verify hostapd is not running
+    int check_result = system("pgrep -f hostapd > /dev/null 2>&1");
+    if (check_result == 0) {
+        printf("[HAL_WIFI_AP] ERROR: hostapd still running after kill attempts!\n");
+        return -1;
+    }
+    
+    // Reset PID and cleanup
+    hostapd_pid = 0;
     unlink(HOSTAPD_PID_FILE);
-    printf("[HAL_WIFI_AP] hostapd stopped\n");
+    printf("[HAL_WIFI_AP] hostapd stopped and verified\n");
     return 0;
 }
 
@@ -972,16 +1004,44 @@ static int stop_hostapd(void) {
  * @brief Stop dnsmasq daemon
  */
 static int stop_dnsmasq(void) {
-    if (dnsmasq_pid > 0) {
-        if (kill_process(dnsmasq_pid) != 0) {
-            printf("[HAL_WIFI_AP] Failed to stop dnsmasq\n");
-            return -1;
+    pid_t pid = dnsmasq_pid;
+    
+    // If no PID in memory, try to read from file
+    if (pid <= 0) {
+        FILE *pid_file = fopen(DNSMASQ_PID_FILE, "r");
+        if (pid_file) {
+            fscanf(pid_file, "%d", &pid);
+            fclose(pid_file);
+            printf("[HAL_WIFI_AP] Read dnsmasq PID from file: %d\n", pid);
         }
-        dnsmasq_pid = 0;
     }
     
+    // Try to kill by PID first
+    if (pid > 0) {
+        printf("[HAL_WIFI_AP] Killing dnsmasq PID: %d\n", pid);
+        if (kill_process(pid) == 0) {
+            printf("[HAL_WIFI_AP] dnsmasq killed successfully\n");
+        } else {
+            printf("[HAL_WIFI_AP] Warning: Failed to kill dnsmasq by PID\n");
+        }
+    }
+    
+    // Fallback: Use pkill to ensure all dnsmasq processes for wlan0 are killed
+    printf("[HAL_WIFI_AP] Using pkill to ensure dnsmasq is stopped\n");
+    system("sudo pkill -9 -f 'dnsmasq.*wlan0' 2>/dev/null");
+    usleep(500000); // Wait 500ms for cleanup
+    
+    // Verify dnsmasq is not running
+    int check_result = system("pgrep -f 'dnsmasq.*wlan0' > /dev/null 2>&1");
+    if (check_result == 0) {
+        printf("[HAL_WIFI_AP] ERROR: dnsmasq still running after kill attempts!\n");
+        return -1;
+    }
+    
+    // Reset PID and cleanup
+    dnsmasq_pid = 0;
     unlink(DNSMASQ_PID_FILE);
-    printf("[HAL_WIFI_AP] dnsmasq stopped\n");
+    printf("[HAL_WIFI_AP] dnsmasq stopped and verified\n");
     return 0;
 }
 
