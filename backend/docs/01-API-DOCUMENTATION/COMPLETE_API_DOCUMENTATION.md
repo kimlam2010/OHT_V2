@@ -1,16 +1,16 @@
 # 📚 OHT-50 Backend API - Complete Documentation
 
-**Phiên bản:** 3.1  
-**Ngày cập nhật:** 2025-10-08  
+**Phiên bản:** 4.0  
+**Ngày cập nhật:** 2025-01-28  
 **Base URL:** `http://127.0.0.1:8000`  
-**Total Endpoints:** 44 APIs (Core + Network)  
-**WebSocket Endpoints:** 3  
+**Total Endpoints:** 100+ APIs (Complete)  
+**WebSocket Endpoints:** 4  
 
 ---
 
 ## 🎯 **TỔNG QUAN HỆ THỐNG**
 
-OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **Core API + Network API (44 endpoints)** được tổ chức thành **7 nhóm chính**:
+OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **Complete API (100+ endpoints)** được tổ chức thành **7 nhóm chính**:
 
 ### **📊 THỐNG KÊ API**
 - **🔐 Authentication:** 7 endpoints
@@ -18,9 +18,10 @@ OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **
 - **📊 Telemetry:** 5 endpoints
 - **🛡️ Safety:** 5 endpoints
 - **📈 Monitoring:** 5 endpoints
-- **🌐 Network & WiFi:** 12 endpoints ⭐ NEW
+- **🔌 RS485 Module Management:** 15 endpoints
 - **🏥 Health/System:** 2 endpoints
-- **🌐 WebSocket:** 3 endpoints
+- **🌐 WebSocket:** 4 endpoints
+ - **🌐 Network:** 1 endpoint (system info)
 
 ---
 
@@ -683,644 +684,490 @@ curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
 
 ---
 
-## 🌐 **NETWORK & WIFI APIs (12 Endpoints)** ⭐ NEW
+## 🌐 **NETWORK / SYSTEM INFO**
 
-Backend Network APIs tích hợp với Firmware (port 8080) để quản lý WiFi và network connectivity.
-
-### **📊 Network Monitoring (3 endpoints - Public)**
-
-#### **GET /api/v1/network/status**
-**Mô tả:** Lấy trạng thái mạng hiện tại  
-**Auth:** ❌ Public  
-**Integration:** ✅ Kết nối với Firmware `http://localhost:8080/api/v1/network/status`
+### **GET /system/info**
+**Mục đích:** Trả về thông tin hệ thống và network phục vụ chẩn đoán nhanh.
 
 **Request:**
-```bash
-curl http://localhost:8000/api/v1/network/status | jq
+```http
+GET /system/info
 ```
 
-**Response (200 OK):**
+**Response (ví dụ):**
 ```json
 {
-  "success": true,
-  "data": {
-    "connected": false,
-    "current_ssid": "",
-    "signal_strength": 0,
-    "ip_address": "192.168.1.35",
-    "gateway": "192.168.1.1",
-    "dns": "8.8.8.8",
-    "bytes_sent": 0,
-    "bytes_received": 0,
-    "latency_ms": 0,
-    "roaming_active": false,
-    "status": "connected",
-    "ap_status": "stopped",
-    "fallback_enabled": false,
-    "config": {},
-    "last_heartbeat": "2025-10-08T06:57:52Z",
-    "connection_errors": 0
-  },
-  "timestamp": "2025-10-08T06:57:52Z"
+  "hostname": "oht50-backend",
+  "ip": "127.0.0.1",
+  "interfaces": [
+    {"name": "Ethernet0", "ipv4": "192.168.1.10", "status": "up"}
+  ],
+  "env": {
+    "environment": "development",
+    "firmware_url": "http://localhost:8081"
+  }
 }
 ```
 
-**Data Fields:**
-- `connected` - WiFi connection status (boolean)
-- `current_ssid` - SSID đang kết nối (string)
-- `signal_strength` - Cường độ tín hiệu dBm (int)
-- `ip_address` - IP address hiện tại (string)
-- `gateway` - Gateway address (string)
-- `dns` - DNS server (string)
-- `bytes_sent/received` - Network traffic (int)
-- `latency_ms` - Network latency (float)
-- `status` - Backend-Firmware connection status (string)
-- `ap_status` - WiFi AP mode status (string)
-- `fallback_enabled` - Chế độ dự phòng (boolean)
+**Liên quan:** Metrics network tại `GET /api/v1/monitoring/metrics/current` (trường `network_io`).
 
 ---
 
-#### **GET /api/v1/network/health**
-**Mô tả:** Kiểm tra sức khỏe network service  
-**Auth:** ❌ Public  
-**Integration:** ✅ Backend → Firmware health check
+## 📶 **WIFI APIs**
 
-**Request:**
-```bash
-curl http://localhost:8000/api/v1/network/health | jq
-```
+### **GET /api/v1/network/wifi/status**
+**Mục đích:** Xem trạng thái WiFi hiện tại (SSID, RSSI, link quality, interface).
 
-**Response (200 OK):**
+**Response (ví dụ):**
 ```json
 {
-  "success": true,
-  "data": {
-    "status": "healthy",
-    "service": "network",
-    "firmware_connected": true,
-    "connection_errors": 0,
-    "last_heartbeat": "2025-10-08T06:57:52Z",
-    "uptime_seconds": 0,
-    "memory_usage_percent": 0,
-    "cpu_usage_percent": 0
-  },
-  "error": null,
-  "timestamp": "2025-10-08T06:57:53Z"
+  "connected": true,
+  "ssid": "OHT50-DEV",
+  "rssi": -52,
+  "link_quality": 78,
+  "interface": "wlan0"
 }
 ```
 
-**Health Status:**
-- `healthy` - Service hoạt động bình thường
-- `unhealthy` - Service có vấn đề
-- `firmware_connected: true` - Kết nối với Firmware OK
-- `connection_errors: 0` - Không có lỗi kết nối
+### **GET /api/v1/network/wifi/scan**
+**Mục đích:** Quét danh sách SSID khả dụng (dev/testing).
 
----
-
-#### **GET /api/v1/network/performance**
-**Mô tả:** Lấy metrics hiệu suất mạng  
-**Auth:** ❌ Public  
-**Integration:** ✅ Firmware performance metrics
-
-**Request:**
-```bash
-curl http://localhost:8000/api/v1/network/performance | jq
-```
-
-**Response (200 OK):**
+**Response (ví dụ):**
 ```json
 {
-  "success": true,
-  "data": {
-    "bandwidth_mbps": 100.5,
-    "latency_ms": 5.2,
-    "packet_loss_percent": 0.1,
-    "signal_strength_dbm": -45,
-    "connection_quality": "excellent",
-    "throughput_mbps": 95.3,
-    "jitter_ms": 2.1,
-    "uptime_seconds": 86400
-  },
-  "timestamp": "2025-10-08T06:57:54Z"
+  "networks": [
+    {"ssid": "OHT50-DEV", "rssi": -48, "security": "WPA2"},
+    {"ssid": "Office-2G", "rssi": -60, "security": "WPA2"}
+  ]
 }
 ```
 
-**Performance Metrics:**
-- `bandwidth_mbps` - Băng thông (Mbps)
-- `latency_ms` - Độ trễ (milliseconds)
-- `packet_loss_percent` - Tỷ lệ mất gói (%)
-- `signal_strength_dbm` - Cường độ tín hiệu (dBm)
-- `connection_quality` - Chất lượng kết nối (excellent/good/fair/poor)
-- `throughput_mbps` - Throughput thực tế (Mbps)
-- `jitter_ms` - Jitter (milliseconds)
-- `uptime_seconds` - Thời gian hoạt động (seconds)
+### **POST /api/v1/network/wifi/connect**
+**Mục đích:** Kết nối WiFi. Prod: proxy Firmware HTTP API; Dev: mock.
+
+**Request:**
+```json
+{
+  "ssid": "OHT50-DEV",
+  "password": "password123"
+}
+```
+
+**Response (dev ví dụ):**
+```json
+{
+  "success": true,
+  "message": "Connected to OHT50-DEV",
+  "ssid": "OHT50-DEV"
+}
+```
+
+### **POST /api/v1/network/wifi/disconnect**
+**Mục đích:** Ngắt kết nối WiFi. Prod: proxy Firmware HTTP API; Dev: mock.
+
+**Response (dev ví dụ):**
+```json
+{
+  "success": true,
+  "message": "Disconnected",
+  "ssid": null
+}
+```
 
 ---
 
-### **📡 WiFi Client Management (3 endpoints)**
+## 📡 **WIFI AP APIs**
 
-#### **GET /api/v1/network/wifi/scan**
-**Mô tả:** Quét các WiFi networks khả dụng  
-**Auth:** ❌ Public  
-**Integration:** ✅ Firmware `GET /api/v1/network/wifi/scan`
+### **GET /api/v1/network/ap/status**
+**Mục đích:** Xem trạng thái AP (running, ssid, channel, clients).
 
-**Request:**
-```bash
-curl http://localhost:8000/api/v1/network/wifi/scan | jq
+**Response (ví dụ):**
+```json
+{
+  "running": true,
+  "ssid": "OHT50-AP",
+  "channel": 6,
+  "interface": "wlan0",
+  "clients": [
+    {"mac": "AA:BB:CC:DD:EE:01", "ip": "192.168.50.10", "rssi": -50}
+  ]
+}
 ```
 
-**Response (200 OK):**
+### **POST /api/v1/network/ap/start**
+**Mục đích:** Bật chế độ AP (dev mock | prod proxy Firmware).
+
+**Response (ví dụ):**
+```json
+{
+  "success": true,
+  "message": "AP started",
+  "ssid": "OHT50-AP",
+  "channel": 6
+}
+```
+
+### **POST /api/v1/network/ap/stop**
+**Mục đích:** Tắt chế độ AP.
+
+**Response (ví dụ):**
+```json
+{
+  "success": true,
+  "message": "AP stopped"
+}
+```
+
+### **GET /api/v1/network/ap/clients**
+**Mục đích:** Danh sách client đang kết nối AP.
+
+**Response (ví dụ):**
+```json
+{
+  "clients": [
+    {"mac": "AA:BB:CC:DD:EE:01", "ip": "192.168.50.10", "rssi": -50}
+  ]
+}
+```
+
+
+---
+
+## 🔌 **RS485 MODULE MANAGEMENT APIs**
+
+### **GET /api/v1/rs485/modules**
+**Mục đích:** Lấy danh sách tất cả RS485 modules đã kết nối
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "address": 2,
+      "type": "POWER",
+      "name": "Power Module",
+      "status": "HEALTHY",
+      "version": "v2.1.0",
+      "last_seen": "2025-01-28T10:32:00Z",
+      "capabilities": ["battery_monitoring", "voltage_control"],
+      "real_time": {
+        "battery_level": 85,
+        "voltage": 24.2,
+        "current": 2.1,
+        "temperature": 42
+      }
+    }
+  ],
+  "message": "Retrieved 7 RS485 modules successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/modules/{address}**
+**Mục đích:** Lấy thông tin chi tiết module theo địa chỉ
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Path Parameters:** `address` (1-15)
+
+**Response:**
 ```json
 {
   "success": true,
   "data": {
-    "networks": [
+    "address": 2,
+    "type": "POWER",
+    "name": "Power Module",
+    "status": "HEALTHY",
+    "version": "v2.1.0",
+    "last_seen": "2025-01-28T10:32:00Z",
+    "capabilities": ["battery_monitoring", "voltage_control"],
+    "real_time": {
+      "battery_level": 85,
+      "voltage": 24.2,
+      "current": 2.1,
+      "temperature": 42
+    }
+  },
+  "message": "Retrieved RS485 module 0x02 successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/bus/health**
+**Mục đích:** Trạng thái sức khỏe bus RS485
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "ONLINE",
+    "error_rate": 0.02,
+    "response_time_p95": 85,
+    "throughput": 52,
+    "last_scan": "10:30:15",
+    "total_modules": 7,
+    "active_modules": 7,
+    "failed_modules": 0
+  },
+  "message": "Retrieved RS485 bus health successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/discovery/start**
+**Mục đích:** Bắt đầu auto-discovery RS485 modules
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "is_running": true,
+    "progress": 0,
+    "status_message": "Discovery started",
+    "modules_found": 0,
+    "conflicts": [],
+    "start_time": "2025-01-28T10:30:00Z",
+    "end_time": null
+  },
+  "message": "RS485 discovery started successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/discovery/status**
+**Mục đích:** Trạng thái discovery hiện tại
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "is_running": false,
+    "progress": 100,
+    "status_message": "Discovery completed",
+    "modules_found": 7,
+    "conflicts": [],
+    "start_time": "2025-01-28T10:30:00Z",
+    "end_time": "2025-01-28T10:35:00Z"
+  },
+  "message": "Retrieved RS485 discovery status successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/discovery/results**
+**Mục đích:** Kết quả discovery modules
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "address": 2,
+      "type": "POWER",
+      "name": "Power Module",
+      "status": "FOUND",
+      "response_time": 45,
+      "capabilities": ["battery_monitoring", "voltage_control"],
+      "version": "v2.1.0"
+    }
+  ],
+  "message": "Retrieved 7 discovery results successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **GET /api/v1/rs485/modules/{address}/telemetry**
+**Mục đích:** Telemetry chi tiết module với register table
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Path Parameters:** `address` (1-15)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "module_address": 2,
+    "module_name": "Power Module",
+    "registers": [
       {
-        "ssid": "OHT-50-Network",
-        "bssid": "00:11:22:33:44:55",
-        "signal_strength": -45,
-        "frequency": 5000,
-        "security": "WPA2",
-        "is_connected": false,
-        "is_saved": false
+        "address": "0x1001",
+        "name": "Battery Level",
+        "value": 85,
+        "unit": "%",
+        "readable": true,
+        "writable": false,
+        "description": "Current battery charge level"
       },
       {
-        "ssid": "OHT-50-Backup",
-        "bssid": "00:11:22:33:44:66",
-        "signal_strength": -55,
-        "frequency": 2400,
-        "security": "WPA3",
-        "is_connected": false,
-        "is_saved": false
+        "address": "0x1002", 
+        "name": "Voltage",
+        "value": 24.2,
+        "unit": "V",
+        "readable": true,
+        "writable": false,
+        "description": "Current voltage reading"
       }
-    ],
-    "network_count": 5
+    ]
   },
-  "timestamp": "2025-10-08T06:57:55Z"
+  "message": "Retrieved telemetry for module 0x02 (Power Module) with 8 registers",
+  "timestamp": "2025-01-28T10:30:00Z"
 }
 ```
 
-**WiFi Network Fields:**
-- `ssid` - Tên WiFi network (string)
-- `bssid` - MAC address của Access Point (string)
-- `signal_strength` - Cường độ tín hiệu dBm (int, -100 to 0)
-- `frequency` - Tần số MHz (2400=2.4GHz, 5000=5GHz)
-- `security` - Loại bảo mật (WPA2/WPA3/Open)
-- `is_connected` - Đang kết nối với network này (boolean)
-- `is_saved` - Network đã được lưu (boolean)
+### **POST /api/v1/rs485/modules/{address}/telemetry**
+**Mục đích:** Cập nhật register writable trên module
 
----
-
-#### **POST /api/v1/network/wifi/connect**
-**Mô tả:** Kết nối đến WiFi network  
-**Auth:** ✅ ADMIN Token Required  
-**Integration:** ✅ Firmware `POST /api/v1/network/wifi/connect`
+**Headers:** `Authorization: Bearer <token>`
 
 **Request:**
-```bash
-curl -X POST http://localhost:8000/api/v1/network/wifi/connect \
-  -H "Authorization: Bearer oht50_admin_token_2025" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ssid": "Factory-WiFi",
-    "password": "SecurePassword123",
-    "security": "WPA2"
-  }' | jq
-```
-
-**Request Body:**
 ```json
 {
-  "ssid": "Factory-WiFi",
-  "password": "SecurePassword123",
-  "security": "WPA2"
+  "register_address": "0x2001",
+  "value": 1500,
+  "force": false
 }
 ```
 
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Connected to Factory-WiFi",
-  "data": {
-    "ssid": "Factory-WiFi",
-    "ip_address": "192.168.1.50",
-    "signal_strength": -45,
-    "connected_at": "2025-10-08T07:00:00Z"
-  },
-  "timestamp": "2025-10-08T07:00:00Z"
-}
-```
-
-**Error Response (500):**
-```json
-{
-  "success": false,
-  "message": "Failed to connect to WiFi",
-  "error": "Connection timeout"
-}
-```
-
----
-
-#### **POST /api/v1/network/wifi/disconnect**
-**Mô tả:** Ngắt kết nối WiFi hiện tại  
-**Auth:** ✅ ADMIN Token Required  
-**Integration:** ✅ Firmware `POST /api/v1/network/wifi/disconnect`
-
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/v1/network/wifi/disconnect \
-  -H "Authorization: Bearer oht50_admin_token_2025" | jq
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Disconnected from WiFi",
-  "timestamp": "2025-10-08T07:05:00Z"
-}
-```
-
----
-
-### **📱 WiFi Access Point Management (4 endpoints)**
-
-#### **POST /api/v1/network/ap/start**
-**Mô tả:** Khởi động WiFi AP mode  
-**Auth:** ✅ ADMIN Token Required  
-**Integration:** ✅ Firmware `POST /api/v1/network/ap/start`
-
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/v1/network/ap/start \
-  -H "Authorization: Bearer oht50_admin_token_2025" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ssid": "OHT-50-AP",
-    "password": "OhtPass123!",
-    "channel": 6,
-    "security": "WPA2",
-    "hidden": false,
-    "max_clients": 10
-  }' | jq
-```
-
-**Request Body:**
-```json
-{
-  "ssid": "OHT-50-AP",
-  "password": "OhtPass123!",
-  "channel": 6,
-  "security": "WPA2",
-  "hidden": false,
-  "max_clients": 10
-}
-```
-
-**Password Requirements:**
-- Minimum 8 characters
-- Recommended: 12+ characters với uppercase, lowercase, numbers, special chars
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "WiFi AP started successfully",
-  "data": {
-    "ssid": "OHT-50-AP",
-    "ip_address": "192.168.4.1",
-    "channel": 6,
-    "security": "WPA2",
-    "max_clients": 10,
-    "started_at": "2025-10-08T07:10:00Z"
-  },
-  "timestamp": "2025-10-08T07:10:00Z"
-}
-```
-
-**Use Cases:**
-- Kết nối Mobile App khi không có WiFi
-- Remote access trong emergency
-- Commissioning và maintenance
-- Backup connectivity
-
----
-
-#### **POST /api/v1/network/ap/stop**
-**Mô tả:** Dừng WiFi AP mode  
-**Auth:** ✅ ADMIN Token Required  
-**Integration:** ✅ Firmware `POST /api/v1/network/ap/stop`
-
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/v1/network/ap/stop \
-  -H "Authorization: Bearer oht50_admin_token_2025" | jq
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "WiFi AP stopped successfully",
-  "timestamp": "2025-10-08T07:15:00Z"
-}
-```
-
----
-
-#### **POST /api/v1/network/ap/config**
-**Mô tả:** Cấu hình WiFi AP settings  
-**Auth:** ✅ ADMIN Token Required  
-**Integration:** ✅ Firmware `POST /api/v1/network/ap/config`
-
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/v1/network/ap/config \
-  -H "Authorization: Bearer oht50_admin_token_2025" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ssid": "OHT-50-AP-Updated",
-    "channel": 11,
-    "max_clients": 20
-  }' | jq
-```
-
-**Request Body (all fields optional):**
-```json
-{
-  "ssid": "OHT-50-AP-Updated",
-  "password": "NewPassword123!",
-  "channel": 11,
-  "security": "WPA2",
-  "hidden": false,
-  "max_clients": 20,
-  "bandwidth_limit": 100
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "AP configuration updated",
-  "data": {
-    "ssid": "OHT-50-AP-Updated",
-    "channel": 11,
-    "max_clients": 20
-  },
-  "timestamp": "2025-10-08T07:20:00Z"
-}
-```
-
----
-
-#### **GET /api/v1/network/ap/clients**
-**Mô tả:** Lấy danh sách devices kết nối vào AP  
-**Auth:** ❌ Public  
-**Integration:** ✅ Firmware `GET /api/v1/network/ap/clients`
-
-**Request:**
-```bash
-curl http://localhost:8000/api/v1/network/ap/clients | jq
-```
-
-**Response (200 OK - No clients):**
+**Response:**
 ```json
 {
   "success": true,
   "data": {
-    "clients": [],
-    "client_count": 0
+    "register_address": "0x2001",
+    "old_value": 1400,
+    "new_value": 1500,
+    "write_success": true
   },
-  "timestamp": "2025-10-08T07:25:00Z"
+  "message": "Register update completed",
+  "timestamp": "2025-01-28T10:30:00Z"
 }
 ```
 
-**Response (200 OK - With clients):**
+### **POST /api/v1/rs485/modules/{address}/ping**
+**Mục đích:** Ping module để kiểm tra kết nối
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
 ```json
 {
   "success": true,
   "data": {
-    "clients": [
-      {
-        "mac_address": "AA:BB:CC:DD:EE:22",
-        "ip_address": "192.168.4.2",
-        "hostname": "mobile-phone",
-        "device_type": "mobile",
-        "signal_strength": -40,
-        "connected_at": "2025-10-08T07:20:00Z",
-        "last_seen": "2025-10-08T07:25:00Z",
-        "bytes_sent": 1024000,
-        "bytes_received": 512000,
-        "session_duration": 300,
-        "is_connected": true,
-        "is_blocked": false
-      }
-    ],
-    "client_count": 1
+    "address": 2,
+    "response_time": 45,
+    "status": "ONLINE"
   },
-  "timestamp": "2025-10-08T07:25:00Z"
+  "message": "Ping module 0x02 completed",
+  "timestamp": "2025-01-28T10:30:00Z"
 }
 ```
 
-**AP Client Fields:**
-- `mac_address` - MAC address của client (string)
-- `ip_address` - IP được cấp cho client (string)
-- `hostname` - Hostname của device (string)
-- `device_type` - Loại thiết bị: mobile/laptop/tablet (string)
-- `signal_strength` - Cường độ tín hiệu dBm (int)
-- `connected_at` - Thời điểm kết nối (ISO timestamp)
-- `last_seen` - Lần cuối thấy device (ISO timestamp)
-- `bytes_sent/received` - Data usage (bytes)
-- `session_duration` - Thời gian kết nối (seconds)
-- `is_connected` - Vẫn đang kết nối (boolean)
-- `is_blocked` - Device bị block (boolean)
+### **POST /api/v1/rs485/modules/{address}/reset**
+**Mục đích:** Reset module
 
----
+**Headers:** `Authorization: Bearer <token>`
 
-### **🔄 Fallback Connectivity (2 endpoints)**
-
-#### **POST /api/v1/network/fallback/enable**
-**Mô tả:** Bật chế độ dự phòng (Ethernet → WiFi auto-failover)  
-**Auth:** ✅ ADMIN Token Required  
-**Integration:** ✅ Firmware `POST /api/v1/network/fallback/enable`
-
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/v1/network/fallback/enable \
-  -H "Authorization: Bearer oht50_admin_token_2025" | jq
-```
-
-**Response (200 OK):**
+**Response:**
 ```json
 {
   "success": true,
-  "message": "Fallback connectivity enabled",
   "data": {
-    "fallback_enabled": true,
-    "primary_interface": "ethernet",
-    "backup_interface": "wifi",
-    "auto_failover": true,
-    "failover_timeout_ms": 5000
+    "address": 2,
+    "reset_time": "2025-01-28T10:30:00Z",
+    "status": "RESET_SUCCESSFUL"
   },
-  "timestamp": "2025-10-08T07:30:00Z"
+  "message": "Reset module 0x02 completed",
+  "timestamp": "2025-01-28T10:30:00Z"
 }
 ```
 
-**Fallback Features:**
-- Auto-failover khi Ethernet mất kết nối
-- Tự động switch sang WiFi backup
-- Tự động switch lại Ethernet khi available
-- Configurable failover timeout
+### **GET /api/v1/rs485/scan-status**
+**Mục đích:** Trạng thái scan modules hiện tại
 
----
+**Headers:** `Authorization: Bearer <token>`
 
-#### **POST /api/v1/network/fallback/disable**
-**Mô tả:** Tắt chế độ dự phòng  
-**Auth:** ✅ ADMIN Token Required  
-**Integration:** ✅ Firmware `POST /api/v1/network/fallback/disable`
-
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/v1/network/fallback/disable \
-  -H "Authorization: Bearer oht50_admin_token_2025" | jq
-```
-
-**Response (200 OK):**
+**Response:**
 ```json
 {
   "success": true,
-  "message": "Fallback connectivity disabled",
-  "timestamp": "2025-10-08T07:35:00Z"
+  "data": {
+    "scan_status": "RUNNING",
+    "scan_mode": "CONTINUOUS",
+    "scan_interval": 5000,
+    "last_scan": "2025-01-28T10:30:00Z",
+    "next_scan": "2025-01-28T10:30:05Z",
+    "modules_scanned": 7,
+    "scan_errors": 0
+  },
+  "message": "Retrieved module scan status successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/modules/start-scan**
+**Mục đích:** Bắt đầu scan modules
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request:**
+```json
+{
+  "reason": "Manual start scan via API"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "scan_status": "STARTED",
+    "start_time": "2025-01-28T10:30:00Z",
+    "reason": "Manual start scan via API"
+  },
+  "message": "Module scan started successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
+}
+```
+
+### **POST /api/v1/rs485/modules/stop-scan**
+**Mục đích:** Dừng scan modules
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "scan_status": "STOPPED",
+    "stop_time": "2025-01-28T10:30:00Z",
+    "reason": "Manual stop via API"
+  },
+  "message": "Module scan stopped successfully",
+  "timestamp": "2025-01-28T10:30:00Z"
 }
 ```
 
 ---
-
-## 🔑 **NETWORK AUTHENTICATION**
-
-### **Admin Token (cho các operations như AP start/stop, WiFi connect):**
-```bash
-ADMIN_TOKEN="oht50_admin_token_2025"
-
-# Usage:
-curl -H "Authorization: Bearer oht50_admin_token_2025" \
-     http://localhost:8000/api/v1/network/ap/start
-```
-
-### **Protected Network Endpoints:**
-- 🔴 `POST /network/wifi/connect` - ADMIN
-- 🔴 `POST /network/wifi/disconnect` - ADMIN
-- 🔴 `POST /network/ap/start` - ADMIN
-- 🔴 `POST /network/ap/stop` - ADMIN
-- 🔴 `POST /network/ap/config` - ADMIN
-- 🔴 `POST /network/fallback/enable` - ADMIN
-- 🔴 `POST /network/fallback/disable` - ADMIN
-
-### **Public Network Endpoints:**
-- 🔵 `GET /network/status` - Public
-- 🔵 `GET /network/health` - Public
-- 🔵 `GET /network/performance` - Public
-- 🔵 `GET /network/wifi/scan` - Public
-- 🔵 `GET /network/ap/clients` - Public
-
----
-
-## 📊 **NETWORK API INTEGRATION FLOW**
-
-```
-┌────────────────────────────────────────┐
-│     FRONTEND (Dashboard/Mobile)        │
-│     WiFi Settings, AP Mode Control     │
-└───────────────┬────────────────────────┘
-                │ HTTP/REST
-                ▼
-┌────────────────────────────────────────┐
-│   BACKEND (Python FastAPI) - Port 8000│
-│   ✅ 12 Network API Endpoints          │
-│   ✅ Network Integration Service       │
-│   ✅ FW Client (HTTP)                  │
-└───────────────┬────────────────────────┘
-                │ HTTP API
-                ▼
-┌────────────────────────────────────────┐
-│   FIRMWARE (C Service) - Port 8080    │
-│   ✅ 27 Network API Endpoints          │
-│   ✅ WiFi Management                   │
-│   ✅ AP Mode Control                   │
-│   ✅ Hardware Interface                │
-└────────────────────────────────────────┘
-```
-
----
-
-## 🧪 **NETWORK API TESTING EXAMPLES**
-
-### **Test Script: Full Network API Testing**
-
-```bash
-#!/bin/bash
-BASE_URL="http://localhost:8000/api/v1"
-ADMIN_TOKEN="oht50_admin_token_2025"
-
-echo "=== 🔵 TEST 1: Network Status ==="
-curl -s $BASE_URL/network/status | jq .
-
-echo -e "\n=== 🔵 TEST 2: Network Health ==="
-curl -s $BASE_URL/network/health | jq .
-
-echo -e "\n=== 🔵 TEST 3: Network Performance ==="
-curl -s $BASE_URL/network/performance | jq .
-
-echo -e "\n=== 🟢 TEST 4: WiFi Scan ==="
-curl -s $BASE_URL/network/wifi/scan | jq '.data.networks[0:2]'
-
-echo -e "\n=== 🟢 TEST 5: WiFi Connect ==="
-curl -s -X POST $BASE_URL/network/wifi/connect \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ssid": "TestNetwork",
-    "password": "SecurePass@2025",
-    "security": "WPA2"
-  }' | jq .
-
-echo -e "\n=== 🟡 TEST 6: Start AP Mode ==="
-curl -s -X POST $BASE_URL/network/ap/start \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ssid": "OHT-50-TEST",
-    "password": "TestPass123!",
-    "channel": 6,
-    "security": "WPA2",
-    "hidden": false,
-    "max_clients": 10
-  }' | jq .
-
-sleep 5
-
-echo -e "\n=== 🟡 TEST 7: Get AP Clients ==="
-curl -s $BASE_URL/network/ap/clients | jq .
-
-echo -e "\n=== 🟡 TEST 8: Stop AP Mode ==="
-curl -s -X POST $BASE_URL/network/ap/stop \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq .
-
-echo -e "\n=== 🟣 TEST 9: Enable Fallback ==="
-curl -s -X POST $BASE_URL/network/fallback/enable \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq .
-
-echo -e "\n=== 🟣 TEST 10: Disable Fallback ==="
-curl -s -X POST $BASE_URL/network/fallback/disable \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq .
-```
-
----
-
-<!-- RS485 section removed in Core API mode -->
 
 ## 🌐 **WEBSOCKET ENDPOINTS**
 
@@ -1368,7 +1215,73 @@ ws://127.0.0.1:8000/ws/status?token=<jwt_token>
 }
 ```
 
-<!-- RS485 WebSocket removed in Core API mode -->
+### **ws://127.0.0.1:8000/ws/rs485**
+**Mục đích:** Real-time RS485 module updates và telemetry
+
+**Authentication:** JWT token trong query parameter
+```
+ws://127.0.0.1:8000/ws/rs485?token=<jwt_token>
+```
+
+**Message Types:**
+
+**Module Status Change:**
+```json
+{
+  "type": "module_status_change",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "address": 2,
+    "status": "HEALTHY",
+    "last_seen": "2025-01-28T10:30:00Z"
+  }
+}
+```
+
+**Telemetry Update:**
+```json
+{
+  "type": "telemetry_update",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "address": 2,
+    "registers": [
+      {
+        "address": "0x1001",
+        "name": "Battery Level",
+        "value": 85,
+        "unit": "%"
+      }
+    ]
+  }
+}
+```
+
+**Discovery Progress:**
+```json
+{
+  "type": "discovery_progress",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "progress": 75,
+    "modules_found": 5,
+    "status_message": "Scanning address 10..."
+  }
+}
+```
+
+**Scan Status Change:**
+```json
+{
+  "type": "scan_status_change",
+  "timestamp": "2025-01-28T10:30:00Z",
+  "data": {
+    "status": "RUNNING",
+    "scan_mode": "CONTINUOUS",
+    "modules_scanned": 7
+  }
+}
+```
 
 ---
 
@@ -1514,17 +1427,18 @@ if __name__ == "__main__":
 
 ---
 
-## 📊 **API SUMMARY**
+## 📊 **API SUMMARY (Complete Mode)**
 
 ### **Total Endpoints: 100+**
 - **Authentication:** 7 endpoints
-- **Robot Control:** 25 endpoints
-- **Telemetry:** 15 endpoints
+- **Robot Control:** 8 endpoints
+- **Telemetry:** 5 endpoints
 - **Safety:** 5 endpoints
-- **Monitoring:** 15 endpoints
-- **RS485:** 20 endpoints
-- **System:** 10 endpoints
-- **WebSocket:** 3 endpoints
+- **Monitoring:** 5 endpoints
+- **RS485 Module Management:** 15 endpoints
+- **Health/System:** 2 endpoints
+- **WebSocket:** 4 endpoints
+- **Network:** 1 endpoint
 
 ### **Performance Targets**
 - **API Response Time:** < 50ms

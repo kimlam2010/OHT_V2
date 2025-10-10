@@ -319,6 +319,7 @@ _ALLOWED_PATHS = {
     "/health",
     "/health/fast",
     "/api/v1/health/detailed",
+    "/system/info",
 
     # Authentication
     "/api/v1/auth/login",
@@ -361,6 +362,7 @@ _ALLOWED_PATHS = {
     "/api/v1/monitoring/performance",
     
     # Network & WiFi Management
+    "/system/info",
     "/api/v1/network/status",
     "/api/v1/network/health", 
     "/api/v1/network/performance",
@@ -590,6 +592,20 @@ app.include_router(admin_registers.router)
 
 # Include Health API router (v1)
 app.include_router(health.router)
+
+# Include Network/WiFi API router
+try:
+    from app.api.v1 import network_wifi
+    app.include_router(network_wifi.router)
+except Exception as _e:
+    logger.warning(f"⚠️ WiFi router not loaded: {_e}")
+
+# Include WiFi AP API router
+try:
+    from app.api.v1 import network_ap
+    app.include_router(network_ap.router)
+except Exception as _e:
+    logger.warning(f"⚠️ WiFi AP router not loaded: {_e}")
 
 # Include Deprecated API router (410 Gone with hints)
 app.include_router(deprecated_api.router)
