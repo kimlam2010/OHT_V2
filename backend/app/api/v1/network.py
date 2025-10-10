@@ -30,7 +30,7 @@ from app.core.security import verify_token
 logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter(prefix="/network", tags=["network"])
+router = APIRouter(prefix="/api/v1/network", tags=["network"])
 
 # Security
 security = HTTPBearer()

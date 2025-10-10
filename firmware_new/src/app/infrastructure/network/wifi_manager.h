@@ -134,6 +134,12 @@ int wifi_manager_disconnect(void);
 wifi_connection_status_t wifi_manager_get_connection_status(void);
 
 /**
+ * @brief Update WiFi status from system (realtime)
+ * @return WIFI_SUCCESS on success, error code on failure
+ */
+int wifi_manager_update_status_from_system(void);
+
+/**
  * @brief Get current signal strength
  * @return Signal strength in dBm, or 0 if not connected
  */

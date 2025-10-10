@@ -110,7 +110,52 @@ int wifi_manager_deinit(void) {
 }
 
 /**
- * @brief Scan for available WiFi networks
+ * @brief Parse security type from nmcli output
+ */
+static oht_wifi_security_type_t parse_security_type(const char *security_str) {
+    if (!security_str || strlen(security_str) == 0) {
+        return OHT_WIFI_SECURITY_OPEN;
+    }
+    
+    if (strstr(security_str, "WPA3")) {
+        return OHT_WIFI_SECURITY_WPA3;
+    } else if (strstr(security_str, "WPA2")) {
+        return OHT_WIFI_SECURITY_WPA2;
+    } else if (strstr(security_str, "WPA")) {
+        return OHT_WIFI_SECURITY_WPA;
+    } else if (strstr(security_str, "WEP")) {
+        return OHT_WIFI_SECURITY_WEP;
+    }
+    
+    return OHT_WIFI_SECURITY_OPEN;
+}
+
+/**
+ * @brief Parse WiFi band from frequency
+ */
+static wifi_band_t get_band_from_frequency(int frequency) {
+    if (frequency >= 2400 && frequency <= 2500) {
+        return WIFI_BAND_2_4G;
+    } else if (frequency >= 5000 && frequency <= 6000) {
+        return WIFI_BAND_5G;
+    }
+    return WIFI_BAND_2_4G;
+}
+
+/**
+ * @brief Get WiFi channel from frequency
+ */
+static int get_channel_from_frequency(int frequency) {
+    if (frequency >= 2412 && frequency <= 2484) {
+        return (frequency - 2412) / 5 + 1;
+    } else if (frequency >= 5000 && frequency <= 6000) {
+        return (frequency - 5000) / 5;
+    }
+    return 0;
+}
+
+/**
+ * @brief Scan for available WiFi networks using REAL nmcli command
  */
 int wifi_manager_scan_networks(wifi_scan_result_t *results, int max_count, uint32_t timeout_ms) {
     pthread_mutex_lock(&wifi_mutex);
@@ -125,82 +170,107 @@ int wifi_manager_scan_networks(wifi_scan_result_t *results, int max_count, uint3
         return WIFI_ERROR_INVALID_PARAM;
     }
     
-    printf("[WIFI_MANAGER] Scanning for WiFi networks (timeout: %u ms)\n", timeout_ms);
+    printf("[WIFI_MANAGER] 📡 Scanning for REAL WiFi networks (timeout: %u ms)...\n", timeout_ms);
+    log_wifi_event("SCAN_START", "Starting REAL WiFi scan with nmcli");
     
-    // Mock scan results for development
+    // Use nmcli to scan WiFi networks - REAL DATA
+    FILE *fp = popen("nmcli --escape no -t -f SSID,BSSID,SIGNAL,FREQ,SECURITY device wifi list 2>/dev/null", "r");
+    
+    if (fp == NULL) {
+        printf("[WIFI_MANAGER] ❌ ERROR: Failed to execute nmcli command\n");
+        log_wifi_event("SCAN_ERROR", "nmcli command execution failed");
+        pthread_mutex_unlock(&wifi_mutex);
+        return WIFI_ERROR_SCAN_FAILED;
+    }
+    
     int networks_found = 0;
+    char line[512];
+    char current_connected_ssid[33] = {0};
     
-    if (max_count >= 5) {
-        // Network 1: OHT-50-Network (Primary)
-        strcpy(results[0].ssid, "OHT-50-Network");
-        strcpy(results[0].bssid, "00:11:22:33:44:55");
-        results[0].signal_strength_dbm = -45;
-        results[0].signal_quality = get_signal_quality(-45);
-        results[0].frequency_mhz = 5000;
-        results[0].channel = 36;
-        results[0].security_type = OHT_WIFI_SECURITY_WPA2;
-        results[0].band = WIFI_BAND_5G;
-        results[0].hidden = false;
-        results[0].connected = (strcmp(current_ssid, "OHT-50-Network") == 0);
-        networks_found++;
+    // Get currently connected SSID
+    FILE *fp_current = popen("nmcli -t -f ACTIVE,SSID device wifi list | grep '^yes' | cut -d':' -f2 2>/dev/null", "r");
+    if (fp_current != NULL) {
+        if (fgets(current_connected_ssid, sizeof(current_connected_ssid), fp_current) != NULL) {
+            current_connected_ssid[strcspn(current_connected_ssid, "\n")] = 0;
+        }
+        pclose(fp_current);
+    }
+    
+    // Parse nmcli output
+    while (fgets(line, sizeof(line), fp) != NULL && networks_found < max_count) {
+        line[strcspn(line, "\n")] = 0;
         
-        // Network 2: OHT-50-Backup
-        strcpy(results[1].ssid, "OHT-50-Backup");
-        strcpy(results[1].bssid, "00:11:22:33:44:66");
-        results[1].signal_strength_dbm = -55;
-        results[1].signal_quality = get_signal_quality(-55);
-        results[1].frequency_mhz = 2400;
-        results[1].channel = 6;
-        results[1].security_type = OHT_WIFI_SECURITY_WPA3;
-        results[1].band = WIFI_BAND_2_4G;
-        results[1].hidden = false;
-        results[1].connected = (strcmp(current_ssid, "OHT-50-Backup") == 0);
-        networks_found++;
+        if (strlen(line) == 0) {
+            continue;
+        }
         
-        // Network 3: OHT-50-Emergency
-        strcpy(results[2].ssid, "OHT-50-Emergency");
-        strcpy(results[2].bssid, "00:11:22:33:44:77");
-        results[2].signal_strength_dbm = -65;
-        results[2].signal_quality = get_signal_quality(-65);
-        results[2].frequency_mhz = 5000;
-        results[2].channel = 149;
-        results[2].security_type = OHT_WIFI_SECURITY_WPA2;
-        results[2].band = WIFI_BAND_5G;
-        results[2].hidden = false;
-        results[2].connected = (strcmp(current_ssid, "OHT-50-Emergency") == 0);
-        networks_found++;
+        // Parse: SSID:BSSID:SIGNAL:FREQ:SECURITY
+        char *saveptr = NULL;
+        char *ssid = strtok_r(line, ":", &saveptr);
         
-        // Network 4: OHT-50-Mobile
-        strcpy(results[3].ssid, "OHT-50-Mobile");
-        strcpy(results[3].bssid, "00:11:22:33:44:88");
-        results[3].signal_strength_dbm = -60;
-        results[3].signal_quality = get_signal_quality(-60);
-        results[3].frequency_mhz = 2400;
-        results[3].channel = 11;
-        results[3].security_type = OHT_WIFI_SECURITY_WPA2;
-        results[3].band = WIFI_BAND_2_4G;
-        results[3].hidden = false;
-        results[3].connected = (strcmp(current_ssid, "OHT-50-Mobile") == 0);
-        networks_found++;
+        if (!ssid || strlen(ssid) == 0) {
+            continue;
+        }
         
-        // Network 5: OHT-50-Test
-        strcpy(results[4].ssid, "OHT-50-Test");
-        strcpy(results[4].bssid, "00:11:22:33:44:99");
-        results[4].signal_strength_dbm = -75;
-        results[4].signal_quality = get_signal_quality(-75);
-        results[4].frequency_mhz = 5000;
-        results[4].channel = 165;
-        results[4].security_type = OHT_WIFI_SECURITY_WPA3;
-        results[4].band = WIFI_BAND_5G;
-        results[4].hidden = false;
-        results[4].connected = (strcmp(current_ssid, "OHT-50-Test") == 0);
+        // BSSID is 17 chars (AA:BB:CC:DD:EE:FF)
+        char *bssid_start = saveptr;
+        if (!bssid_start || strlen(bssid_start) < 17) {
+            continue;
+        }
+        
+        char bssid[18];
+        strncpy(bssid, bssid_start, 17);
+        bssid[17] = '\0';
+        
+        if (strlen(bssid_start) > 18) {
+            saveptr = bssid_start + 18;
+        } else {
+            continue;
+        }
+        
+        char *signal = strtok_r(NULL, ":", &saveptr);
+        char *freq = strtok_r(NULL, ":", &saveptr);
+        char *security = saveptr;
+        
+        // Fill result structure
+        memset(&results[networks_found], 0, sizeof(wifi_scan_result_t));
+        
+        strncpy(results[networks_found].ssid, ssid, sizeof(results[networks_found].ssid) - 1);
+        strncpy(results[networks_found].bssid, bssid, sizeof(results[networks_found].bssid) - 1);
+        
+        if (signal && strlen(signal) > 0) {
+            int signal_val = atoi(signal);
+            results[networks_found].signal_strength_dbm = -100 + signal_val;
+            results[networks_found].signal_quality = signal_val;
+        } else {
+            results[networks_found].signal_strength_dbm = -100;
+            results[networks_found].signal_quality = 0;
+        }
+        
+        if (freq && strlen(freq) > 0) {
+            int freq_val = atoi(freq);
+            results[networks_found].frequency_mhz = freq_val;
+            results[networks_found].band = get_band_from_frequency(freq_val);
+            results[networks_found].channel = get_channel_from_frequency(freq_val);
+        } else {
+            results[networks_found].frequency_mhz = 0;
+            results[networks_found].band = WIFI_BAND_2_4G;
+            results[networks_found].channel = 0;
+        }
+        
+        results[networks_found].security_type = parse_security_type(security);
+        results[networks_found].connected = (strlen(current_connected_ssid) > 0 && 
+                                            strcmp(ssid, current_connected_ssid) == 0);
+        results[networks_found].hidden = false;
+        
         networks_found++;
     }
     
+    pclose(fp);
     pthread_mutex_unlock(&wifi_mutex);
     
-    printf("[WIFI_MANAGER] Found %d WiFi networks\n", networks_found);
-    log_wifi_event("SCAN", "WiFi scan completed");
+    printf("[WIFI_MANAGER] ✅ Found %d REAL WiFi networks\n", networks_found);
+    log_wifi_event("SCAN_SUCCESS", "REAL WiFi scan completed successfully");
     
     return networks_found;
 }
@@ -232,25 +302,75 @@ int wifi_manager_connect(const wifi_connection_params_t *params) {
         return WIFI_ERROR_INVALID_PARAM;
     }
     
-    printf("[WIFI_MANAGER] Connecting to WiFi: %s\n", params->ssid);
+    printf("[WIFI_MANAGER] 🔗 Connecting to REAL WiFi: %s\n", params->ssid);
     log_wifi_event("CONNECT_ATTEMPT", params->ssid);
     
     current_status = WIFI_STATUS_CONNECTING;
     
-    // Mock connection process
-    usleep(2000000); // 2 second delay
+    pthread_mutex_unlock(&wifi_mutex);
     
-    // Simulate connection success/failure
-    bool connection_success = true;
+    // Use nmcli to connect to WiFi network - REAL CONNECTION
+    char command[512];
+    snprintf(command, sizeof(command), 
+             "nmcli device wifi connect '%s' password '%s' 2>&1",
+             params->ssid, params->password);
+    
+    FILE *fp = popen(command, "r");
+    if (fp == NULL) {
+        printf("[WIFI_MANAGER] ❌ ERROR: Failed to execute nmcli connect command\n");
+        log_wifi_event("CONNECT_ERROR", "nmcli command execution failed");
+        
+        pthread_mutex_lock(&wifi_mutex);
+        current_status = WIFI_STATUS_FAILED;
+        update_statistics(false);
+        pthread_mutex_unlock(&wifi_mutex);
+        
+        return WIFI_ERROR_CONNECTION_FAILED;
+    }
+    
+    // Read command output
+    char output[256];
+    bool connection_success = false;
+    while (fgets(output, sizeof(output), fp) != NULL) {
+        // Check for success indicators
+        if (strstr(output, "successfully activated") || 
+            strstr(output, "Connection successfully activated")) {
+            connection_success = true;
+            break;
+        }
+        // Check for errors
+        if (strstr(output, "Error:") || strstr(output, "error:")) {
+            printf("[WIFI_MANAGER] ⚠️ nmcli error: %s", output);
+        }
+    }
+    
+    int status = pclose(fp);
+    if (status == 0) {
+        connection_success = true;
+    }
+    
+    pthread_mutex_lock(&wifi_mutex);
     
     if (connection_success) {
         current_status = WIFI_STATUS_CONNECTED;
         strncpy(current_ssid, params->ssid, sizeof(current_ssid) - 1);
-        current_signal_strength = -45; // Mock signal strength
+        
+        // Get real signal strength
+        FILE *fp_signal = popen("nmcli -t -f ACTIVE,SIGNAL device wifi list | grep '^yes' | cut -d':' -f2", "r");
+        if (fp_signal != NULL) {
+            char signal_str[16];
+            if (fgets(signal_str, sizeof(signal_str), fp_signal) != NULL) {
+                int signal_percent = atoi(signal_str);
+                current_signal_strength = -100 + signal_percent;
+            }
+            pclose(fp_signal);
+        } else {
+            current_signal_strength = -50; // Default if can't read
+        }
         
         update_statistics(true);
         
-        printf("[WIFI_MANAGER] Connected to WiFi: %s (Signal: %d dBm)\n", 
+        printf("[WIFI_MANAGER] ✅ Connected to WiFi: %s (Signal: %d dBm)\n", 
                params->ssid, current_signal_strength);
         log_wifi_event("CONNECT_SUCCESS", params->ssid);
     } else {
@@ -260,7 +380,7 @@ int wifi_manager_connect(const wifi_connection_params_t *params) {
         
         update_statistics(false);
         
-        printf("[WIFI_MANAGER] Failed to connect to WiFi: %s\n", params->ssid);
+        printf("[WIFI_MANAGER] ❌ Failed to connect to WiFi: %s\n", params->ssid);
         log_wifi_event("CONNECT_FAILED", params->ssid);
     }
     
@@ -285,8 +405,33 @@ int wifi_manager_disconnect(void) {
         return WIFI_SUCCESS; // Already disconnected
     }
     
-    printf("[WIFI_MANAGER] Disconnecting from WiFi: %s\n", current_ssid);
+    printf("[WIFI_MANAGER] 🔌 Disconnecting from REAL WiFi: %s\n", current_ssid);
     log_wifi_event("DISCONNECT", current_ssid);
+    
+    char ssid_backup[33];
+    strncpy(ssid_backup, current_ssid, sizeof(ssid_backup) - 1);
+    
+    pthread_mutex_unlock(&wifi_mutex);
+    
+    // Use nmcli to disconnect - REAL DISCONNECTION
+    char command[256];
+    snprintf(command, sizeof(command), "nmcli device disconnect wlan0 2>&1");
+    
+    FILE *fp = popen(command, "r");
+    if (fp == NULL) {
+        printf("[WIFI_MANAGER] ⚠️ WARNING: Failed to execute nmcli disconnect command\n");
+        // Continue anyway, mark as disconnected
+    } else {
+        char output[256];
+        while (fgets(output, sizeof(output), fp) != NULL) {
+            if (strstr(output, "Error:") || strstr(output, "error:")) {
+                printf("[WIFI_MANAGER] ⚠️ nmcli disconnect warning: %s", output);
+            }
+        }
+        pclose(fp);
+    }
+    
+    pthread_mutex_lock(&wifi_mutex);
     
     current_status = WIFI_STATUS_DISCONNECTED;
     wifi_stats.disconnection_events++;
@@ -294,9 +439,70 @@ int wifi_manager_disconnect(void) {
     memset(current_ssid, 0, sizeof(current_ssid));
     current_signal_strength = 0;
     
-    printf("[WIFI_MANAGER] Disconnected from WiFi\n");
+    printf("[WIFI_MANAGER] ✅ Disconnected from WiFi: %s\n", ssid_backup);
     
     pthread_mutex_unlock(&wifi_mutex);
+    return WIFI_SUCCESS;
+}
+
+/**
+ * @brief Update WiFi status from system (REALTIME)
+ */
+int wifi_manager_update_status_from_system(void) {
+    pthread_mutex_lock(&wifi_mutex);
+    
+    if (!wifi_manager_initialized) {
+        pthread_mutex_unlock(&wifi_mutex);
+        return WIFI_ERROR_NOT_INITIALIZED;
+    }
+    
+    // Get current active WiFi connection from system
+    FILE *fp = popen("nmcli -t -f ACTIVE,SSID,SIGNAL device wifi list 2>/dev/null", "r");
+    if (fp == NULL) {
+        pthread_mutex_unlock(&wifi_mutex);
+        return WIFI_ERROR_NOT_INITIALIZED;  // Fix: Use proper error code
+    }
+    
+    char line[256];
+    bool found_connection = false;
+    
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        line[strcspn(line, "\n")] = 0;
+        
+        // Check if this is active connection
+        if (strncmp(line, "yes:", 4) == 0) {
+            // Parse: yes:SSID:SIGNAL
+            strtok(line, ":");  // Skip "yes"
+            char *ssid = strtok(NULL, ":");
+            char *signal = strtok(NULL, ":");
+            
+            if (ssid && strlen(ssid) > 0) {
+                strncpy(current_ssid, ssid, sizeof(current_ssid) - 1);
+                current_ssid[sizeof(current_ssid) - 1] = '\0';
+                current_status = WIFI_STATUS_CONNECTED;
+                
+                if (signal) {
+                    int signal_percent = atoi(signal);
+                    current_signal_strength = -100 + signal_percent;
+                }
+                
+                found_connection = true;
+                break;
+            }
+        }
+    }
+    
+    pclose(fp);
+    
+    if (!found_connection) {
+        // Not connected
+        current_status = WIFI_STATUS_DISCONNECTED;
+        memset(current_ssid, 0, sizeof(current_ssid));
+        current_signal_strength = 0;
+    }
+    
+    pthread_mutex_unlock(&wifi_mutex);
+    
     return WIFI_SUCCESS;
 }
 
@@ -304,6 +510,9 @@ int wifi_manager_disconnect(void) {
  * @brief Get current WiFi connection status
  */
 wifi_connection_status_t wifi_manager_get_connection_status(void) {
+    // UPDATE STATUS FROM SYSTEM FIRST (REALTIME)
+    wifi_manager_update_status_from_system();
+    
     pthread_mutex_lock(&wifi_mutex);
     wifi_connection_status_t status = current_status;
     pthread_mutex_unlock(&wifi_mutex);

@@ -291,21 +291,22 @@ int main(int argc, char **argv) {
             printf("[OHT-50] INIT -> IDLE transition\n");
             printf("[OHT-50] Boot sequence completed, system ready in < 20ms\n");
             
-            // FIXED: Start module discovery AFTER state transition to avoid blocking boot
-            printf("[OHT-50] Starting module discovery in background...\n");
+            // FIXED: Add mandatory modules to polling manager FIRST (before discovery)
+            // This ensures modules are online immediately even if discovery takes time
+            printf("[OHT-50] Adding mandatory modules to polling manager...\n");
+            module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
+            module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
+            module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
+            module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
+            printf("[OHT-50] All mandatory modules added to polling manager\n");
+            
+            // Start module discovery in background for validation (non-blocking)
+            printf("[OHT-50] Starting module discovery for validation...\n");
             hal_status_t discovery_status = module_manager_discover_modules();
             if (discovery_status == HAL_STATUS_OK) {
-                printf("[OHT-50] Initial module discovery completed\n");
-                
-                // Add discovered modules to polling manager (only mandatory modules)
-                printf("[OHT-50] Adding discovered modules to polling manager...\n");
-                module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
-                module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
-                module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
-                module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
-                printf("[OHT-50] All discovered modules added to polling manager\n");
+                printf("[OHT-50] Module discovery validation completed successfully\n");
             } else {
-                printf("[OHT-50] WARNING: Initial module discovery failed: %d\n", discovery_status);
+                printf("[OHT-50] WARNING: Module discovery validation returned status: %d\n", discovery_status);
             }
         }
     }
@@ -512,8 +513,9 @@ int main(int argc, char **argv) {
 
         // LiDAR subsystem initialization
         printf("[MAIN] Initializing LiDAR subsystem...\n");
+        
+        // Auto-detect CP210x UART Bridge for LiDAR
         lidar_config_t lidar_cfg = {
-            .device_path = "/dev/ttyUSB0",
             .baud_rate = 460800,
             .scan_rate_hz = 10,
             .emergency_stop_mm = 500,
@@ -522,6 +524,21 @@ int main(int argc, char **argv) {
             .sample_rate_hz = 5000,
             .angular_resolution = 0.72f
         };
+        
+        // Detect and copy device path
+        if (access("/dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_*", F_OK) == 0) {
+            strncpy(lidar_cfg.device_path, "/dev/ttyUSB1", sizeof(lidar_cfg.device_path) - 1);
+            printf("[LIDAR] ✅ Detected CP210x on /dev/ttyUSB1\n");
+        } else if (access("/dev/ttyUSB1", F_OK) == 0) {
+            strncpy(lidar_cfg.device_path, "/dev/ttyUSB1", sizeof(lidar_cfg.device_path) - 1);
+            printf("[LIDAR] ⚠️  Using /dev/ttyUSB1 (CP210x not confirmed by symlink)\n");
+        } else if (access("/dev/ttyUSB0", F_OK) == 0) {
+            strncpy(lidar_cfg.device_path, "/dev/ttyUSB0", sizeof(lidar_cfg.device_path) - 1);
+            printf("[LIDAR] ⚠️  Fallback to /dev/ttyUSB0 (may conflict with RS485)\n");
+        } else {
+            fprintf(stderr, "[LIDAR] ❌ No USB serial device found, skipping LiDAR init\n");
+            goto skip_lidar;
+        }
         
         hal_status_t lidar_status = hal_lidar_init(&lidar_cfg);
         if (lidar_status != HAL_STATUS_OK) {
@@ -537,6 +554,9 @@ int main(int argc, char **argv) {
                 printf("[OHT-50] LiDAR scanning started\n");
             }
         }
+        
+        skip_lidar:
+        printf("[MAIN] LiDAR subsystem initialization completed\n");
 
 
     } else {
@@ -615,21 +635,22 @@ int main(int argc, char **argv) {
         printf("[OHT-50] INIT -> IDLE transition\n"); // NEW: Added for clarity
         printf("[OHT-50] Boot sequence completed, system ready in < 20ms\n");
         
-        // FIXED: Start module discovery AFTER state transition to avoid blocking boot
-        printf("[OHT-50] Starting module discovery in background...\n");
+        // FIXED: Add mandatory modules to polling manager FIRST (before discovery)
+        // This ensures modules are online immediately even if discovery takes time
+        printf("[OHT-50] Adding mandatory modules to polling manager...\n");
+        module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
+        module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
+        module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
+        module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
+        printf("[OHT-50] All mandatory modules added to polling manager\n");
+        
+        // Start module discovery in background for validation (non-blocking)
+        printf("[OHT-50] Starting module discovery for validation...\n");
         hal_status_t discovery_status = module_manager_discover_modules();
         if (discovery_status == HAL_STATUS_OK) {
-            printf("[OHT-50] Initial module discovery completed\n");
-            
-            // Add discovered modules to polling manager (only mandatory modules)
-            printf("[OHT-50] Adding discovered modules to polling manager...\n");
-            module_polling_manager_add_module(0x02, MODULE_TYPE_POWER);        // Power Module
-            module_polling_manager_add_module(0x03, MODULE_TYPE_SAFETY);       // Safety Module
-            module_polling_manager_add_module(0x04, MODULE_TYPE_TRAVEL_MOTOR); // Travel Motor Module
-            module_polling_manager_add_module(0x05, MODULE_TYPE_DOCK);         // Dock Module
-            printf("[OHT-50] All discovered modules added to polling manager\n");
+            printf("[OHT-50] Module discovery validation completed successfully\n");
         } else {
-            printf("[OHT-50] WARNING: Initial module discovery failed: %d\n", discovery_status);
+            printf("[OHT-50] WARNING: Module discovery validation returned status: %d\n", discovery_status);
         }
     } else {
         // DRY-RUN: Initialize state machine but skip hardware

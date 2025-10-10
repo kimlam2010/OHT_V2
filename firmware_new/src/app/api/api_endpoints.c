@@ -17,6 +17,24 @@ int api_register_minimal_endpoints(void){
     api_manager_register_endpoint("/health", API_MGR_HTTP_GET, api_handle_health_check);
     api_manager_register_endpoint("/api/v1/rs485/modules", API_MGR_HTTP_GET, api_handle_rs485_modules);
     
+    // Register Metadata API - Issue #203
+    extern int register_metadata_api_init(void);
+    int reg_status = register_metadata_api_init();
+    if (reg_status == 0) {
+        printf("[API] ✅ Register Metadata API initialized\n");
+    } else {
+        printf("[API] ⚠️  Register Metadata API init failed: %d\n", reg_status);
+    }
+    
+    // Register Data API - Complete Implementation
+    extern int register_data_api_init(void);
+    int data_status = register_data_api_init();
+    if (data_status == 0) {
+        printf("[API] ✅ Register Data API initialized\n");
+    } else {
+        printf("[API] ⚠️  Register Data API init failed: %d\n", data_status);
+    }
+    
     api_manager_register_endpoint("/api/v1/system/status", API_MGR_HTTP_GET, api_handle_system_status);
     api_manager_register_endpoint("/api/v1/safety/status", API_MGR_HTTP_GET, api_handle_safety_status);
     api_manager_register_endpoint("/api/v1/safety/estop", API_MGR_HTTP_POST, api_handle_safety_estop);
