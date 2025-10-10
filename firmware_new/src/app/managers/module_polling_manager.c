@@ -14,6 +14,7 @@
 #include "travel_motor_module_handler.h"
 #include "system_state_machine.h"
 #include "register_validation.h"
+#include "storage/register_value_cache.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -37,6 +38,9 @@ static bool module_polling_validate_data(uint16_t *data, uint16_t count, const c
 hal_status_t module_polling_manager_init(void)
 {
     printf("[POLLING-MGR] Initializing module polling manager...\n");
+    
+    // Initialize register cache
+    register_cache_init();
     
     // Clear manager state
     memset(&g_polling_manager, 0, sizeof(g_polling_manager));
@@ -238,6 +242,9 @@ hal_status_t module_polling_power_module(uint8_t address)
                battery_data[2]/10, battery_data[2]%10,
                battery_data[3], battery_data[4], (int16_t)battery_data[8],
                battery_data[9], battery_data[10]);
+        
+        // Store to cache
+        register_cache_store_batch(address, 0x0000, battery_data, 11);
     }
     
     // 2. Cell Voltages (6 registers: 0x0014-0x0019)
@@ -248,6 +255,9 @@ hal_status_t module_polling_power_module(uint8_t address)
         success_count++;
         printf("[POLLING-POWER] 0x%02X: Cell Voltages: [%d, %d, %d, %d, %d, %d] mV\n",
                address, cell_data[0], cell_data[1], cell_data[2], cell_data[3], cell_data[4], cell_data[5]);
+        
+        // Store to cache
+        register_cache_store_batch(address, 0x0014, cell_data, 6);
     }
     
     // 3. Power Distribution Voltages (3 registers: 0x0040, 0x0043, 0x0046)
@@ -478,6 +488,9 @@ hal_status_t module_polling_dock_module(uint8_t address)
         printf("[POLLING-DOCK] 0x%02X: DeviceID=0x%04X, Type=0x%04X, Status=0x%04X, Version=0x%04X\n",
                address, system_data[0], system_data[7], system_data[2], system_data[1]);
         
+        // Store system registers to cache
+        register_cache_store_batch(address, 0x0100, system_data, 8);
+        
         // Strategy 2: Poll RFID data every 100ms (registers 0x0108-0x010C) - REAL HARDWARE ADDRESSES
         uint16_t rfid_data[5];
         hal_status_t rfid_status = comm_manager_modbus_read_holding_registers(address, 0x0108, 5, rfid_data);
@@ -486,6 +499,9 @@ hal_status_t module_polling_dock_module(uint8_t address)
             uint32_t tag_id = ((uint32_t)rfid_data[1] << 16) | rfid_data[0];
             printf("[POLLING-DOCK] 0x%02X: RFID TagID=0x%08X, Signal=%d%%, Status=%d, Time=%d\n",
                    address, tag_id, rfid_data[2], rfid_data[3], rfid_data[4]);
+            
+            // Store RFID data to cache
+            register_cache_store_batch(address, 0x0108, rfid_data, 5);
         } else {
             printf("[POLLING-DOCK] 0x%02X: RFID data read failed (status: %d)\n", address, rfid_status);
         }

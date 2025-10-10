@@ -1,6 +1,4 @@
 # OHT-50 Module Registry Configuration
-# Clean state - no modules registered
+# Generated on: Oct 10 2025 22:27:02
 schema_version: 1
 
-# Module registry will be populated during runtime
-# when modules are discovered and registered

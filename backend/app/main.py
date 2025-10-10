@@ -360,18 +360,23 @@ _ALLOWED_PATHS = {
     "/api/v1/monitoring/alerts",
     "/api/v1/monitoring/logs",
     "/api/v1/monitoring/performance",
-
-    # Network / WiFi (core read-only + control)
+    
+    # Network & WiFi Management
     "/system/info",
-    "/api/v1/network/wifi/status",
+    "/api/v1/network/status",
+    "/api/v1/network/health", 
+    "/api/v1/network/performance",
     "/api/v1/network/wifi/scan",
+    "/api/v1/network/wifi/status",
     "/api/v1/network/wifi/connect",
     "/api/v1/network/wifi/disconnect",
-    # WiFi AP
     "/api/v1/network/ap/status",
     "/api/v1/network/ap/start",
     "/api/v1/network/ap/stop",
+    "/api/v1/network/ap/config",
     "/api/v1/network/ap/clients",
+    "/api/v1/network/fallback/enable",
+    "/api/v1/network/fallback/disable",
 }
 
 if _API_REDUCED:
@@ -570,12 +575,20 @@ app.include_router(telemetry.router)
 app.include_router(safety.router)
 app.include_router(monitoring.router)
 
+# Include Network API router  
+from app.api.v1 import network
+app.include_router(network.router)
+
 # Include RS485 API router
 from app.api.v1 import rs485
 app.include_router(rs485.router)
 
 # Include Registers CRUD API router
 app.include_router(registers.router)
+
+# Include Admin Registers API router
+from app.api.v1 import admin_registers
+app.include_router(admin_registers.router)
 
 # Include Health API router (v1)
 app.include_router(health.router)

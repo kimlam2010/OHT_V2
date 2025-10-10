@@ -55,8 +55,9 @@ async def deprecated_communication(path: str):
     return _gone("(parked) consolidated into internal services")
 
 
-@router.api_route("/api/v1/network/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-async def deprecated_network(path: str):
-    return _gone("(parked) consolidated into ops endpoints later")
+# REMOVED: Network APIs are now active (not deprecated)
+# @router.api_route("/api/v1/network/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+# async def deprecated_network(path: str):
+#     return _gone("(parked) consolidated into ops endpoints later")
 
 
