@@ -76,6 +76,8 @@ bool register_validation_validate_data(uint8_t module_addr, uint16_t start_addr,
     }
     
     // Check for all-zero payload (common issue #135 symptom)
+    // FIXED: Changed to WARNING only - some registers legitimately have zero values
+    // (e.g. cell voltages when not calibrated, sensors inactive, control flags off)
     bool all_zeros = true;
     for (uint16_t i = 0; i < quantity; i++) {
         if (data[i] != 0x0000) {
@@ -85,9 +87,10 @@ bool register_validation_validate_data(uint8_t module_addr, uint16_t start_addr,
     }
     
     if (all_zeros) {
-        printf("[REG-VALID] All-zero payload detected for module 0x%02X, addr=0x%04X, qty=%u\n", 
+        printf("[REG-VALID] ⚠️  All-zero payload for module 0x%02X, addr=0x%04X, qty=%u (accepting anyway)\n", 
                module_addr, start_addr, quantity);
-        return false;
+        // ACCEPT zero data - let cache store it và let higher-level logic decide if it's valid
+        // return false; // OLD: reject all-zero
     }
     
     // Additional validation based on module type and register ranges
