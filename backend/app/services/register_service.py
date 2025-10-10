@@ -15,6 +15,50 @@ class RegisterService:
     async def list(self, db: AsyncSession) -> List[RegisterModel]:
         result = await db.execute(select(RegisterModel))
         return list(result.scalars().all())
+    
+    async def list_with_filters(
+        self,
+        db: AsyncSession,
+        mode: Optional[str] = None,
+        access_level: Optional[str] = None,
+        module_addr: Optional[int] = None
+    ) -> List[RegisterModel]:
+        """
+        List registers with optional filters
+        
+        Args:
+            db: Database session
+            mode: Filter by mode (READ/WRITE/READ_WRITE)
+            access_level: Filter by access level (USER/ADMIN/SYSTEM)
+            module_addr: Filter by module address (2=Power, 3=Safety, 4=Motor, 5=Dock)
+        
+        Returns:
+            List of Register objects matching filters
+        """
+        query = select(RegisterModel)
+        
+        # Apply mode filter
+        if mode:
+            try:
+                mode_enum = RegisterMode(mode.upper())
+                query = query.where(RegisterModel.mode == mode_enum)
+            except ValueError:
+                pass  # Invalid mode, ignore filter
+        
+        # Apply access_level filter
+        if access_level:
+            try:
+                access_enum = RegisterAccessLevel(access_level.upper())
+                query = query.where(RegisterModel.access_level == access_enum)
+            except ValueError:
+                pass  # Invalid access_level, ignore filter
+        
+        # Apply module_addr filter (NOW IMPLEMENTED)
+        if module_addr is not None:
+            query = query.where(RegisterModel.module_addr == module_addr)
+        
+        result = await db.execute(query)
+        return list(result.scalars().all())
 
     async def get(self, db: AsyncSession, register_id: int) -> Optional[RegisterModel]:
         result = await db.execute(select(RegisterModel).where(RegisterModel.id == register_id))

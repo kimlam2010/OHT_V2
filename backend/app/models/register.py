@@ -32,6 +32,11 @@ class Register(Base):
     is_safe_register = Column(Boolean, nullable=False, default=False)
     unit = Column(String(20), nullable=True)
     description = Column(String(255), nullable=True)
+    
+    # Module information (added for Issue #204 enhancement)
+    module_addr = Column(Integer, nullable=True, index=True)  # Module address (2=Power, 3=Safety, 4=Motor, 5=Dock)
+    module_name = Column(String(50), nullable=True)  # Module name from firmware
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

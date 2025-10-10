@@ -584,6 +584,10 @@ app.include_router(rs485.router)
 # Include Registers CRUD API router
 app.include_router(registers.router)
 
+# Include Admin Registers API router
+from app.api.v1 import admin_registers
+app.include_router(admin_registers.router)
+
 # Include Health API router (v1)
 app.include_router(health.router)
 
