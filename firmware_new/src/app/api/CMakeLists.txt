@@ -14,6 +14,9 @@ else()
       security_auth.c
       network/network_api.c
       network/wifi_ap_api.c
+      register_metadata_api.c
+      register_data_api.c
+      ../utils/register_json_serializer.c
   )
 endif()
 

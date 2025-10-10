@@ -144,7 +144,7 @@ static int route_request(const api_mgr_http_request_t *req, api_mgr_http_respons
   size_t plen = strlen(prefix);
   if(strncmp(req->path, prefix, plen)==0){
    printf("[API_DEBUG] Found modules prefix, path: %s\n", req->path);
-   const char *rest = req->path + plen; // e.g. "2/telemetry"
+   const char *rest = req->path + plen; // e.g. "2/telemetry" or "2/data" or "2/registers/0x0000"
    // parse digits for {id}
    const char *p = rest;
    if(*p){
@@ -156,6 +156,18 @@ static int route_request(const api_mgr_http_request_t *req, api_mgr_http_respons
      } else if(strcmp(p, "/telemetry")==0){
       printf("[API_DEBUG] Routing to module telemetry handler\n");
       return api_handle_module_telemetry(req,res);
+     } else if(strcmp(p, "/data")==0){
+      // NEW: Route to data endpoint (metadata + values)
+      extern int api_get_module_data(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+      printf("[API_DEBUG] Routing to module data handler\n");
+      return api_get_module_data(req,res);
+     } else if(strncmp(p, "/registers/", 11)==0){
+      // NEW: Route to register write endpoint
+      if(req->method==API_MGR_HTTP_POST){
+       extern int api_write_register(const api_mgr_http_request_t *req, api_mgr_http_response_t *res);
+       printf("[API_DEBUG] Routing to register write handler\n");
+       return api_write_register(req,res);
+      }
      } else if(strcmp(p, "/config")==0){
       if(req->method==API_MGR_HTTP_GET){
        return api_handle_module_config_get(req,res);

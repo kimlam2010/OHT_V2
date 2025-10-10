@@ -121,6 +121,37 @@ bool validate_register_value(uint8_t module_addr, uint16_t register_addr, uint16
  */
 bool get_register_info_summary(uint8_t module_addr, uint16_t register_addr, char* buffer, size_t buffer_size);
 
+// ============================================================================
+// ISSUE #203 - REGISTER METADATA API SUPPORT
+// ============================================================================
+
+/**
+ * @brief Register list response structure for API
+ */
+typedef struct {
+    const register_info_t* registers;  // Pointer to register array (static data)
+    uint16_t count;                    // Number of registers
+    uint8_t module_addr;               // Module address
+    const char* module_name;           // Module name
+    bool valid;                        // Response validity flag
+} register_list_response_t;
+
+/**
+ * @brief Get all registers for a specific module (Issue #203)
+ * @param module_addr Module address (MODULE_ADDR_*)
+ * @param count_out Pointer to store register count
+ * @return Pointer to register array (static data - do not free), NULL if module not found
+ */
+const register_info_t* get_module_registers_array(uint8_t module_addr, uint16_t* count_out);
+
+/**
+ * @brief Get register list response for HTTP API (Issue #203)
+ * @param module_addr Module address
+ * @return Pointer to register_list_response_t (static data - do not free), NULL if module not found
+ */
+const register_list_response_t* get_module_register_list_api(uint8_t module_addr);
+bool get_register_info_summary(uint8_t module_addr, uint16_t register_addr, char* buffer, size_t buffer_size);
+
 /**
  * @brief Print register information for debugging
  * @param module_addr Module address
