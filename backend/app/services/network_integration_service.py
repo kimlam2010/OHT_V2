@@ -433,6 +433,55 @@ class NetworkIntegrationService:
                 "error": str(e)
             }
     
+    async def get_ap_config(self) -> Dict[str, Any]:
+        """
+        Get WiFi AP configuration - Issue #209
+        
+        Returns AP configuration including:
+        - is_enabled: AP status
+        - ssid: AP name
+        - password: AP password
+        - channel: WiFi channel
+        - security_type: Security type (WPA2/WPA3)
+        """
+        try:
+            # Auto-initialize if not already done
+            if not self.fw_client:
+                logger.info("🔄 Auto-initializing FW client for AP config...")
+                await self.initialize()
+                if not self.fw_client:
+                    return {"success": False, "error": "Failed to initialize FW client"}
+            
+            logger.info("📡 Getting AP configuration...")
+            
+            # Call Firmware API
+            response = await self.fw_client.get("/api/v1/network/ap/config")
+            
+            if response and response.get("success"):
+                logger.info("✅ AP configuration retrieved successfully")
+                return {
+                    "success": True,
+                    "data": response.get("data"),
+                    "message": "Access Point configuration retrieved successfully",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            else:
+                error_msg = response.get("error", "Unknown error") if response else "No response from firmware"
+                logger.error(f"❌ Failed to get AP config: {error_msg}")
+                return {
+                    "success": False,
+                    "message": "Failed to get AP configuration",
+                    "error": error_msg
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to get AP config: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to get AP configuration: {str(e)}",
+                "error": str(e)
+            }
+    
     async def configure_ap(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Configure WiFi AP settings"""
         try:
@@ -880,6 +929,30 @@ class MockNetworkService:
                 "clients": self.mock_data["ap_clients"],
                 "client_count": len(self.mock_data["ap_clients"])
             },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    
+    async def get_ap_config(self) -> Dict[str, Any]:
+        """
+        Mock get AP configuration - Issue #209
+        
+        MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        Returns simulated AP configuration
+        """
+        logger.warning("🧪 MOCK: Getting AP configuration")
+        
+        return {
+            "success": True,
+            "data": {
+                "is_enabled": True,
+                "ssid": "OHT-50-Hotspot",
+                "password": "SecurePass@2025",
+                "channel": 6,
+                "security_type": "WPA2",
+                "max_clients": 10,
+                "ip_address": "192.168.4.1"
+            },
+            "message": "Access Point configuration retrieved successfully (MOCK)",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
     

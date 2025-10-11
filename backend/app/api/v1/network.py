@@ -266,6 +266,60 @@ async def get_ap_clients():
         )
 
 
+@router.get("/ap/config", response_model=APConfigResponse)
+async def get_ap_config(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Get WiFi Access Point configuration - Issue #209
+    
+    Returns current AP configuration including:
+    - is_enabled: AP status (true/false)
+    - ssid: Access Point name
+    - password: AP password
+    - channel: WiFi channel (1-13)
+    - security_type: Security type (WPA2/WPA3/Open)
+    - max_clients: Maximum allowed clients
+    - ip_address: AP IP address
+    
+    Returns:
+        APConfigResponse: AP configuration data
+        
+    Note:
+    - Currently uses MOCK data for development
+    - Will integrate with Firmware after testing
+    - Firmware URL: GET /api/v1/network/ap/config
+    """
+    try:
+        username = current_user.username if hasattr(current_user, 'username') else 'user'
+        logger.info(f"📡 User {username} requesting AP config...")
+        
+        # Get AP config via service (Mock or Real)
+        result = await network_service.get_ap_config()
+        
+        if result.get("success"):
+            return APConfigResponse(
+                success=True,
+                message=result.get("message", "AP configuration retrieved successfully"),
+                data=result.get("data"),
+                timestamp=datetime.now(timezone.utc)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.get("error", "Failed to get AP configuration")
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error getting AP config: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
 @router.post("/ap/config", response_model=APConfigResponse)
 async def configure_ap(
     request: APConfigRequest,
