@@ -390,3 +390,72 @@ class NetworkHealthResponse(BaseModel):
     data: Optional[NetworkHealthData] = Field(None, description="Health data")
     error: Optional[str] = Field(None, description="Error message if failed")
     timestamp: datetime = Field(..., description="Response timestamp")
+
+
+# WiFi IP Configuration Schemas - Issue #216
+
+class WiFiIPMode(str, Enum):
+    """WiFi IP mode enumeration"""
+    STATIC = "Static"
+    DHCP = "DHCP"
+
+
+class WiFiIPConfigRequest(BaseModel):
+    """
+    WiFi IP Configuration Request - Issue #206/#216
+    
+    Request schema for updating WiFi IP configuration (Static or DHCP)
+    """
+    ip_mode: WiFiIPMode = Field(..., description="IP mode: Static or DHCP")
+    ip_address: Optional[str] = Field(
+        None, 
+        pattern=r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",
+        description="IP address (required for Static mode)"
+    )
+    netmask: Optional[str] = Field(
+        None,
+        pattern=r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",
+        description="Subnet mask (required for Static mode)"
+    )
+    gateway: Optional[str] = Field(
+        None,
+        pattern=r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",
+        description="Gateway address (required for Static mode)"
+    )
+    dns: Optional[str] = Field(
+        None,
+        pattern=r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",
+        description="DNS server (optional, default: 8.8.8.8)"
+    )
+    
+    @field_validator('ip_address', 'netmask', 'gateway')
+    @classmethod
+    def validate_static_required_fields(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
+        """Validate that IP fields are required for Static mode"""
+        if info.data.get('ip_mode') == WiFiIPMode.STATIC:
+            if not v:
+                raise ValueError(f"{info.field_name} is required for Static mode")
+        return v
+
+
+class WiFiIPConfigData(BaseModel):
+    """WiFi IP configuration data"""
+    ssid: str = Field(..., description="Connected WiFi SSID")
+    ip_mode: str = Field(..., description="IP mode: Static or DHCP")
+    signal_strength: int = Field(..., description="Signal strength in dBm")
+    ip_address: str = Field(..., description="Current IP address")
+    gateway: str = Field(..., description="Gateway address")
+    dns: str = Field(..., description="DNS server")
+    netmask: str = Field(..., description="Subnet mask")
+    mac_address: str = Field(..., description="MAC address")
+    security_type: str = Field(..., description="Security type")
+    link_speed: int = Field(..., description="Link speed in Mbps")
+    uptime_seconds: int = Field(..., description="Connection uptime in seconds")
+
+
+class WiFiIPConfigResponse(BaseModel):
+    """WiFi IP Configuration Response - Issue #206/#216"""
+    success: bool = Field(..., description="Operation success status")
+    data: Optional[WiFiIPConfigData] = Field(None, description="Updated network info")
+    message: str = Field(..., description="Response message")
+    timestamp: datetime = Field(..., description="Response timestamp")

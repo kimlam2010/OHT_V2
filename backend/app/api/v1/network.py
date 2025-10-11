@@ -20,6 +20,7 @@ from app.schemas.network import (
     WiFiScanResponse, WiFiNetwork,
     WiFiConnectRequest, WiFiConnectResponse,
     WiFiDisconnectResponse,
+    WiFiIPConfigRequest, WiFiIPConfigResponse, WiFiIPConfigData,  # Issue #216
     NetworkPerformanceResponse, NetworkPerformanceData,
     NetworkHealthResponse, NetworkHealthData
 )
@@ -549,6 +550,124 @@ async def disconnect_wifi(
         raise
     except Exception as e:
         logger.error(f"❌ Error disconnecting from WiFi: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
+@router.put("/wifi/ip-config", response_model=WiFiIPConfigResponse)
+async def update_wifi_ip_config(
+    request: WiFiIPConfigRequest,
+    admin_user: Dict[str, Any] = Depends(verify_admin_token)
+):
+    """
+    🆕 Update WiFi IP Configuration (Static or DHCP) - Issue #206/#216
+    
+    **STATUS:** 🧪 MOCK MODE (Firmware Issue #215 in progress)
+    
+    Configure WiFi IP address mode and settings.
+    
+    **Args:**
+        request: IP configuration
+            - ip_mode: "Static" or "DHCP"
+            - ip_address: IP address (required for Static mode)
+            - netmask: Subnet mask (required for Static mode)
+            - gateway: Gateway address (required for Static mode)
+            - dns: DNS server (optional, default: 8.8.8.8)
+        admin_user: Admin user token
+        
+    **Returns:**
+        WiFiIPConfigResponse: Updated network configuration with current IP info
+        
+    **Example Request (Static IP):**
+    ```json
+    {
+      "ip_mode": "Static",
+      "ip_address": "192.168.1.120",
+      "netmask": "255.255.255.0",
+      "gateway": "192.168.1.1",
+      "dns": "8.8.8.8"
+    }
+    ```
+    
+    **Example Request (DHCP):**
+    ```json
+    {
+      "ip_mode": "DHCP"
+    }
+    ```
+    
+    **Example Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "ssid": "OHT-50-Network",
+        "ip_mode": "Static",
+        "signal_strength": -52,
+        "ip_address": "192.168.1.120",
+        "gateway": "192.168.1.1",
+        "dns": "8.8.8.8",
+        "netmask": "255.255.255.0",
+        "mac_address": "AA:BB:CC:DD:EE:FF",
+        "security_type": "WPA2",
+        "link_speed": 150,
+        "uptime_seconds": 300
+      },
+      "message": "IP configuration updated successfully",
+      "timestamp": "2025-01-11T10:30:00Z"
+    }
+    ```
+    
+    **Validation:**
+    - Static mode requires: ip_address, netmask, gateway
+    - DHCP mode ignores IP fields
+    - IPv4 format validation
+    
+    **Notes:**
+    - Currently uses MOCK data for development
+    - Will integrate with Firmware after Issue #215 completion
+    - Firmware URL: PUT /api/v1/network/wifi/ip-config
+    """
+    try:
+        logger.info(f"⚙️ User {admin_user.get('username', 'admin')} updating WiFi IP config: {request.ip_mode.value}")
+        
+        # Call service (Mock or Real)
+        result = await network_service.configure_wifi_ip(
+            ip_mode=request.ip_mode.value,
+            ip_address=request.ip_address,
+            netmask=request.netmask,
+            gateway=request.gateway,
+            dns=request.dns
+        )
+        
+        if result.get("success"):
+            logger.info("✅ WiFi IP configuration updated successfully")
+            
+            # Build response data
+            data_dict = result.get("data")
+            if data_dict:
+                response_data = WiFiIPConfigData(**data_dict)
+            else:
+                response_data = None
+            
+            return WiFiIPConfigResponse(
+                success=True,
+                data=response_data,
+                message=result.get("message", "IP configuration updated successfully"),
+                timestamp=datetime.now(timezone.utc)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.get("error", "Failed to update WiFi IP configuration")
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error updating WiFi IP configuration: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
