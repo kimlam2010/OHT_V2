@@ -951,20 +951,28 @@ def get_network_service(use_mock: bool = False) -> NetworkIntegrationService:
     Returns:
         Network service instance
     """
-    network_service = NetworkIntegrationService()
-    
     # Check environment variables
     import os
+    from app.config import settings
+    
     testing_mode = os.getenv("TESTING", "false").lower() == "true"
     use_mock_env = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
+    settings_mock = getattr(settings, 'use_mock_firmware', False)
     is_production = os.getenv("ENVIRONMENT", "development").lower() == "production"
     
-    logger.info(f"🔧 Network Service initialization: testing_mode={testing_mode}, use_mock_env={use_mock_env}, is_production={is_production}")
+    logger.info(f"🔧 Network Service initialization: testing_mode={testing_mode}, use_mock_env={use_mock_env}, settings_mock={settings_mock}, is_production={is_production}")
     
-    # USE REAL FIRMWARE - FIRMWARE IS RUNNING
-    logger.info("🔌 USING REAL FIRMWARE: Firmware is running on port 8080 - using Real Network Service")
-    logger.warning("⚠️  WARNING: Using REAL firmware - NO mock data!")
-    return network_service
+    # Determine if should use mock
+    should_use_mock = (testing_mode or use_mock_env or settings_mock or use_mock) and not is_production
+    
+    if should_use_mock:
+        logger.warning("🧪 MOCK MODE: Using MockNetworkService for development/testing")
+        logger.warning("⚠️  WARNING: This is MOCK data - NOT for production use!")
+        return MockNetworkService()
+    else:
+        logger.info("🔌 REAL FIRMWARE MODE: Using NetworkIntegrationService with real firmware")
+        logger.info("🔌 Connecting to Firmware at: %s", settings.firmware_url)
+        return NetworkIntegrationService()
 
 
 # Global network service instance - Use factory function

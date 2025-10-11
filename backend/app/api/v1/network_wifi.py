@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 import os
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
@@ -9,7 +10,7 @@ except Exception:  # pragma: no cover
     httpx = None  # lazy import guard
 
 
-router = APIRouter(prefix="/api/v1/network/wifi", tags=["network", "wifi"]) 
+router = APIRouter(prefix="/api/v1/wifi", tags=["wifi"]) 
 
 
 class WifiConnectRequest(BaseModel):
@@ -119,5 +120,43 @@ async def wifi_disconnect() -> Dict[str, Any]:
                 raise HTTPException(status_code=502, detail=f"Firmware proxy failed: {e}")
 
     raise HTTPException(status_code=501, detail="WiFi disconnect not available. Configure FIRMWARE_URL.")
+
+
+@router.get("/ip-config")
+async def wifi_ip_config() -> Dict[str, Any]:
+    """Get WiFi IP configuration (IP, gateway, DNS, etc.).
+    - Dev/testing: mock configuration
+    - Production: proxy to Firmware HTTP API if available
+    """
+    if _is_dev_mode():
+        return {
+            "success": True,
+            "data": {
+                "interface": "wlan0",
+                "ip_address": "192.168.1.100",
+                "subnet_mask": "255.255.255.0",
+                "gateway": "192.168.1.1",
+                "dns_servers": ["8.8.8.8", "8.8.4.4"],
+                "dhcp_enabled": True,
+                "mac_address": "aa:bb:cc:dd:ee:ff",
+                "mtu": 1500,
+                "connection_type": "dhcp"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+    firmware_url = os.getenv("FIRMWARE_URL", os.getenv("FIRMWARE_BASE_URL", "")).rstrip("/")
+    if firmware_url and httpx is not None:
+        async with httpx.AsyncClient(base_url=firmware_url, timeout=5) as client:
+            try:
+                resp = await client.get("/api/v1/network/wifi/ip-config")
+                resp.raise_for_status()
+                return resp.json()
+            except httpx.HTTPStatusError as e:
+                raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+            except Exception as e:
+                raise HTTPException(status_code=502, detail=f"Firmware proxy failed: {e}")
+
+    raise HTTPException(status_code=501, detail="WiFi IP config not available. Configure FIRMWARE_URL.")
 
 

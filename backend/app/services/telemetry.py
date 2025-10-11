@@ -31,6 +31,35 @@ class TelemetryService:
     async def get_current_telemetry(self) -> Dict[str, Any]:
         """Get current telemetry data"""
         try:
+            # Check if we should use mock data
+            import os
+            testing_mode = os.getenv("TESTING", "false").lower() == "true"
+            use_mock_env = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
+            is_production = os.getenv("ENVIRONMENT", "development").lower() == "production"
+            
+            if (testing_mode or use_mock_env) and not is_production:
+                # Use mock telemetry data directly
+                logger.warning("🧪 MOCK MODE: Using mock telemetry data")
+                mock_telemetry = {
+                    "data": {
+                        "robot_status": {
+                            "speed": 1500,
+                            "temperature": 45.5,
+                            "dock_status": "ready",
+                            "safety_status": "normal"
+                        },
+                        "motor_speed": 1500,
+                        "motor_temperature": 45.5,
+                        "dock_status": "ready",
+                        "safety_status": "normal"
+                    },
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+                self._store_telemetry(mock_telemetry)
+                metrics_collector.record_telemetry_point("current")
+                return mock_telemetry
+            
+            # Real firmware mode
             await self.validate_firmware_connection()
             service = await get_firmware_service()
             response = await service.get_telemetry_data()
