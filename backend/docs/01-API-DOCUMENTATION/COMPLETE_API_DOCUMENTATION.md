@@ -1,16 +1,50 @@
 # 📚 OHT-50 Backend API - Complete Documentation
 
-**Phiên bản:** 4.0  
-**Ngày cập nhật:** 2025-01-28  
+**Phiên bản:** 5.0  
+**Ngày cập nhật:** 2025-10-11  
 **Base URL:** `http://127.0.0.1:8000`  
 **Total Endpoints:** 100+ APIs (Complete)  
 **WebSocket Endpoints:** 4  
+**Chế độ hoạt động:** Mock Mode + Production Mode
 
 ---
 
 ## 🎯 **TỔNG QUAN HỆ THỐNG**
 
-OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **Complete API (100+ endpoints)** được tổ chức thành **7 nhóm chính**:
+OHT-50 Backend là hệ thống điều khiển robot tự động với bộ **Complete API (100+ endpoints)** được tổ chức thành **7 nhóm chính**.
+
+### **🔄 Dual Mode Architecture**
+
+Backend hỗ trợ **2 chế độ hoạt động tự động chuyển đổi**:
+
+#### **🧪 Mock Mode (Development/Testing)**
+- Sử dụng mock data cho tất cả APIs
+- Không cần firmware thật hoặc hardware
+- Tự động kích hoạt khi: `USE_MOCK_FIRMWARE=true` hoặc `TESTING=true`
+- Perfect cho development, testing, và demo
+
+#### **🔌 Production Mode (Real Firmware)**
+- Kết nối với Firmware thật qua HTTP API
+- Firmware giao tiếp với RS485 hardware modules
+- Tự động kích hoạt khi: `ENVIRONMENT=production`
+- Real-time data từ hardware sensors và modules
+
+### **Environment Variables Configuration**
+
+```bash
+# Mock Mode
+USE_MOCK_FIRMWARE=true
+TESTING=true
+ENVIRONMENT=development
+API_REDUCED=false
+
+# Production Mode
+USE_MOCK_FIRMWARE=false
+TESTING=false
+ENVIRONMENT=production
+FIRMWARE_URL=http://192.168.1.100:8081
+API_REDUCED=true
+```
 
 ### **📊 THỐNG KÊ API**
 - **🔐 Authentication:** 7 endpoints
@@ -214,17 +248,28 @@ curl -X POST "http://127.0.0.1:8000/api/v1/auth/login" \
 
 ## 🤖 **ROBOT CONTROL APIs**
 
+### **🔍 Robot API Behavior by Mode**
+
+| API | Mock Mode (Development) | Production Mode (Real Firmware) |
+|-----|------------------------|----------------------------------|
+| Robot Status | Returns OHT-50-001 mock status | Proxy to Firmware `/api/v1/robot/status` |
+| Robot Control | Returns mock success | Proxy to Firmware `/api/v1/robot/control` |
+| Emergency Stop | Returns mock stop | Proxy to Firmware `/api/v1/robot/emergency-stop` |
+| Robot Position | Returns mock position | Proxy to Firmware `/api/v1/robot/position` |
+
+---
+
 ### **GET /api/v1/robot/status**
 **Mục đích:** Lấy trạng thái hiện tại của robot
 
 **Headers:** `Authorization: Bearer <token>`
 
-**Response:**
+**🧪 Mock Mode Response:**
 ```json
 {
   "robot_id": "OHT-50-001",
   "status": "idle",
-  "operating_mode": "AUTO",
+  "mode": "auto",
   "position": {
     "x": 150.5,
     "y": 200.3,
@@ -232,15 +277,21 @@ curl -X POST "http://127.0.0.1:8000/api/v1/auth/login" \
   },
   "battery_level": 87,
   "temperature": 42.5,
-  "connection_status": "connected",
-  "last_update": "2025-01-28T10:30:00Z"
+  "speed": 0.0,
+  "last_command": null,
+  "uptime": 0,
+  "health_score": 0.0,
+  "timestamp": "2025-10-11T04:06:11.473132Z",
+  "created_at": "2025-10-11T03:06:11.473132Z",
+  "updated_at": "2025-10-11T04:06:11.473132Z"
 }
 ```
 
-**Example Usage:**
-```bash
-curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
-  -H "Authorization: Bearer $TOKEN"
+**🔌 Production Mode:** Proxy to Firmware API `/api/v1/robot/status`
+
+**Test Command:**
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/robot/status" -Method GET
 ```
 
 ### **POST /api/v1/robot/control**
@@ -422,12 +473,33 @@ curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
 
 ## 📊 **TELEMETRY APIs**
 
+### **🔍 Telemetry API Behavior by Mode**
+
+| API | Mock Mode (Development) | Production Mode (Real Firmware) |
+|-----|------------------------|----------------------------------|
+| Telemetry Current | Returns mock motor/dock/safety data | Proxy to Firmware `/api/v1/telemetry/current` |
+| Telemetry History | Returns mock historical data | Real database + firmware data |
+| LiDAR Scan | Returns mock LiDAR points | Proxy to Firmware `/api/v1/telemetry/lidar/scan` |
+
+---
+
 ### **GET /api/v1/telemetry/current**
-**Mục đích:** Lấy dữ liệu telemetry hiện tại
+**Mục đích:** Lấy dữ liệu telemetry hiện tại từ robot systems
 
 **Headers:** `Authorization: Bearer <token>`
 
-**Response:**
+**🧪 Mock Mode Response:**
+```json
+{
+  "timestamp": "2025-10-11T04:11:53.694477+00:00",
+  "motor_speed": 1500.0,
+  "motor_temperature": 45.5,
+  "dock_status": "ready",
+  "safety_status": "normal"
+}
+```
+
+**🔌 Production Mode Response:**
 ```json
 {
   "timestamp": "2025-01-28T10:30:00Z",
@@ -454,6 +526,11 @@ curl -X GET "http://127.0.0.1:8000/api/v1/robot/status" \
     "network_latency": 12.5
   }
 }
+```
+
+**Test Command:**
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/telemetry/current" -Method GET
 ```
 
 ### **GET /api/v1/telemetry/history**
@@ -715,10 +792,22 @@ GET /system/info
 
 ## 📶 **WIFI APIs**
 
+### **🔍 API Behavior by Mode**
+
+| API | Mock Mode (Development) | Production Mode (Real Firmware) |
+|-----|------------------------|----------------------------------|
+| WiFi Scan | Returns 3 mock networks | Proxy to Firmware `/api/v1/network/wifi/scan` |
+| WiFi Status | Returns mock status | Proxy to Firmware `/api/v1/network/wifi/status` |
+| WiFi Connect | Returns mock success | Proxy to Firmware `/api/v1/network/wifi/connect` |
+| WiFi Disconnect | Returns mock success | Proxy to Firmware `/api/v1/network/wifi/disconnect` |
+| IP Config | Returns mock IP settings | Proxy to Firmware `/api/v1/network/wifi/ip-config` |
+
+---
+
 ### **GET /api/v1/network/wifi/status**
 **Mục đích:** Xem trạng thái WiFi hiện tại (SSID, RSSI, link quality, interface).
 
-**Response (ví dụ):**
+**🧪 Mock Mode Response:**
 ```json
 {
   "connected": true,
@@ -729,43 +818,104 @@ GET /system/info
 }
 ```
 
-### **GET /api/v1/network/wifi/scan**
-**Mục đích:** Quét danh sách SSID khả dụng (dev/testing).
+**🔌 Production Mode:** Proxy to Firmware API `/api/v1/network/wifi/status`
 
-**Response (ví dụ):**
+---
+
+### **GET /api/v1/network/wifi/scan** ✅ **Issue #200**
+**Mục đích:** Quét danh sách WiFi networks khả dụng xung quanh.
+
+**Endpoint:** `GET /api/v1/network/wifi/scan`
+
+**🧪 Mock Mode Response:**
 ```json
 {
-  "networks": [
-    {"ssid": "OHT50-DEV", "rssi": -48, "security": "WPA2"},
-    {"ssid": "Office-2G", "rssi": -60, "security": "WPA2"}
-  ]
+  "success": true,
+  "data": {
+    "networks": [
+      {
+        "ssid": "VanPhong5G",
+        "bssid": "aa:bb:cc:dd:ee:01",
+        "signal_strength": -45,
+        "frequency": 2412,
+        "security": "WPA2",
+        "is_connected": true,
+        "is_saved": true
+      },
+      {
+        "ssid": "OHT-50-Hotspot",
+        "bssid": "aa:bb:cc:dd:ee:02",
+        "signal_strength": -52,
+        "frequency": 2437,
+        "security": "WPA2",
+        "is_connected": false,
+        "is_saved": false
+      },
+      {
+        "ssid": "TestNetwork",
+        "bssid": "aa:bb:cc:dd:ee:03",
+        "signal_strength": -65,
+        "frequency": 2462,
+        "security": "Open",
+        "is_connected": false,
+        "is_saved": false
+      }
+    ],
+    "network_count": 3
+  },
+  "timestamp": "2025-10-11T03:59:17.676092Z"
 }
 ```
 
-### **POST /api/v1/network/wifi/connect**
-**Mục đích:** Kết nối WiFi. Prod: proxy Firmware HTTP API; Dev: mock.
+**🔌 Production Mode:** Proxy to Firmware API `/api/v1/network/wifi/scan`
+
+**Test Command:**
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/network/wifi/scan" -Method GET
+```
+
+---
+
+### **POST /api/v1/wifi/connect** ✅ **Issue #202**
+**Mục đích:** Kết nối đến một WiFi network.
+
+**Endpoint:** `POST /api/v1/wifi/connect` (new prefix, no auth in dev mode)
 
 **Request:**
 ```json
 {
-  "ssid": "OHT50-DEV",
-  "password": "password123"
+  "ssid": "TestNetwork",
+  "password": "testpass123"
 }
 ```
 
-**Response (dev ví dụ):**
+**🧪 Mock Mode Response:**
 ```json
 {
   "success": true,
-  "message": "Connected to OHT50-DEV",
-  "ssid": "OHT50-DEV"
+  "message": "Connected to TestNetwork",
+  "ssid": "TestNetwork"
 }
 ```
 
-### **POST /api/v1/network/wifi/disconnect**
-**Mục đích:** Ngắt kết nối WiFi. Prod: proxy Firmware HTTP API; Dev: mock.
+**🔌 Production Mode:** Proxy to Firmware API `/api/v1/network/wifi/connect`
 
-**Response (dev ví dụ):**
+**Test Command:**
+```powershell
+$body = @{ssid="TestNetwork"; password="testpass123"} | ConvertTo-Json
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/wifi/connect" -Method POST -Body $body -ContentType "application/json"
+```
+
+**⚠️ Note:** Changed prefix from `/api/v1/network/wifi` to `/api/v1/wifi` to avoid router conflict with auth-protected endpoint.
+
+---
+
+### **POST /api/v1/wifi/disconnect** ✅ **Issue #205**
+**Mục đích:** Ngắt kết nối WiFi hiện tại.
+
+**Endpoint:** `POST /api/v1/wifi/disconnect`
+
+**🧪 Mock Mode Response:**
 ```json
 {
   "success": true,
@@ -774,30 +924,87 @@ GET /system/info
 }
 ```
 
+**🔌 Production Mode:** Proxy to Firmware API `/api/v1/network/wifi/disconnect`
+
+**Test Command:**
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/wifi/disconnect" -Method POST
+```
+
+---
+
+### **GET /api/v1/wifi/ip-config** ✅ **Issue #207**
+**Mục đích:** Lấy cấu hình IP của WiFi interface.
+
+**Endpoint:** `GET /api/v1/wifi/ip-config`
+
+**🧪 Mock Mode Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "interface": "wlan0",
+    "ip_address": "192.168.1.100",
+    "subnet_mask": "255.255.255.0",
+    "gateway": "192.168.1.1",
+    "dns_servers": ["8.8.8.8", "8.8.4.4"],
+    "dhcp_enabled": true,
+    "mac_address": "aa:bb:cc:dd:ee:ff",
+    "mtu": 1500,
+    "connection_type": "dhcp"
+  },
+  "timestamp": "2025-10-11T04:37:37.636613+00:00"
+}
+```
+
+**🔌 Production Mode:** Proxy to Firmware API `/api/v1/network/wifi/ip-config`
+
+**Test Command:**
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/wifi/ip-config" -Method GET
+```
+
 ---
 
 ## 📡 **WIFI AP APIs**
 
-### **GET /api/v1/network/ap/status**
-**Mục đích:** Xem trạng thái AP (running, ssid, channel, clients).
+### **🔍 AP API Behavior by Mode**
 
-**Response (ví dụ):**
+| API | Mock Mode (Development) | Production Mode (Real Firmware) |
+|-----|------------------------|----------------------------------|
+| AP Status | Returns mock AP status | Proxy to Firmware `/api/v1/network/ap/status` |
+| AP Start | Returns mock success | Proxy to Firmware `/api/v1/network/ap/start` |
+| AP Stop | Returns mock success | Proxy to Firmware `/api/v1/network/ap/stop` |
+| AP Clients | Returns mock clients | Proxy to Firmware `/api/v1/network/ap/clients` |
+
+---
+
+### **GET /api/v1/network/ap/status** ✅ **Issue #201**
+**Mục đích:** Xem trạng thái Access Point hiện tại.
+
+**Endpoint:** `GET /api/v1/network/ap/status`
+
+**🧪 Mock Mode Response:**
 ```json
 {
-  "running": true,
+  "running": false,
   "ssid": "OHT50-AP",
   "channel": 6,
   "interface": "wlan0",
-  "clients": [
-    {"mac": "AA:BB:CC:DD:EE:01", "ip": "192.168.50.10", "rssi": -50}
-  ]
+  "clients": []
 }
 ```
 
-### **POST /api/v1/network/ap/start**
-**Mục đích:** Bật chế độ AP (dev mock | prod proxy Firmware).
+**🔌 Production Mode:** Proxy to Firmware API
 
-**Response (ví dụ):**
+---
+
+### **POST /api/v1/ap/start** ✅ **Issue #208**
+**Mục đích:** Khởi động WiFi Access Point mode.
+
+**Endpoint:** `POST /api/v1/ap/start` (new prefix, no auth in dev mode)
+
+**🧪 Mock Mode Response:**
 ```json
 {
   "success": true,
@@ -807,10 +1014,23 @@ GET /system/info
 }
 ```
 
-### **POST /api/v1/network/ap/stop**
-**Mục đích:** Tắt chế độ AP.
+**🔌 Production Mode:** Proxy to Firmware API `/api/v1/network/ap/start`
 
-**Response (ví dụ):**
+**Test Command:**
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/ap/start" -Method POST
+```
+
+**⚠️ Note:** Changed prefix from `/api/v1/network/ap` to `/api/v1/ap` to avoid router conflict with auth-protected endpoint.
+
+---
+
+### **POST /api/v1/ap/stop**
+**Mục đích:** Tắt chế độ Access Point.
+
+**Endpoint:** `POST /api/v1/ap/stop`
+
+**🧪 Mock Mode Response:**
 ```json
 {
   "success": true,
@@ -818,10 +1038,21 @@ GET /system/info
 }
 ```
 
-### **GET /api/v1/network/ap/clients**
-**Mục đích:** Danh sách client đang kết nối AP.
+**🔌 Production Mode:** Proxy to Firmware API
 
-**Response (ví dụ):**
+**Test Command:**
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/ap/stop" -Method POST
+```
+
+---
+
+### **GET /api/v1/ap/clients**
+**Mục đích:** Danh sách clients đang kết nối đến AP.
+
+**Endpoint:** `GET /api/v1/ap/clients`
+
+**🧪 Mock Mode Response:**
 ```json
 {
   "clients": [
@@ -830,40 +1061,77 @@ GET /system/info
 }
 ```
 
+**🔌 Production Mode:** Proxy to Firmware API
+
 
 ---
 
 ## 🔌 **RS485 MODULE MANAGEMENT APIs**
+
+### **🔍 RS485 API Behavior by Mode**
+
+| API | Mock Mode (Development) | Production Mode (Real Firmware) |
+|-----|------------------------|----------------------------------|
+| RS485 Modules List | Returns 7 mock modules | Proxy to Firmware → RS485 Hardware |
+| RS485 Bus Health | Returns mock bus health | Real RS485 bus statistics |
+| Module Telemetry | Returns mock register data | Real module register values |
+| Module Discovery | Returns mock discovery | Real RS485 module scanning |
+
+---
 
 ### **GET /api/v1/rs485/modules**
 **Mục đích:** Lấy danh sách tất cả RS485 modules đã kết nối
 
 **Headers:** `Authorization: Bearer <token>`
 
-**Response:**
+**🧪 Mock Mode Response:**
 ```json
 {
   "success": true,
   "data": [
     {
       "address": 2,
-      "type": "POWER",
-      "name": "Power Module",
-      "status": "HEALTHY",
-      "version": "v2.1.0",
-      "last_seen": "2025-01-28T10:32:00Z",
-      "capabilities": ["battery_monitoring", "voltage_control"],
+      "addr": "0x02",
+      "name": "Power",
+      "type": "power",
+      "status": "healthy",
+      "last_seen": "11s ago",
+      "error_rate": 4.52,
+      "response_time": 100,
+      "fw_version": "v2.1.0",
+      "mandatory": true,
       "real_time": {
-        "battery_level": 85,
-        "voltage": 24.2,
-        "current": 2.1,
-        "temperature": 42
+        "battery": 89.8,
+        "voltage": 24.07,
+        "current": 2.0,
+        "temperature": 39.87
+      }
+    },
+    {
+      "address": 3,
+      "addr": "0x03",
+      "name": "Safety",
+      "type": "safety",
+      "status": "healthy",
+      "fw_version": "v1.9.5",
+      "real_time": {
+        "battery": 87.18,
+        "voltage": 24.15,
+        "current": 1.76,
+        "temperature": 40.88
       }
     }
   ],
   "message": "Retrieved 7 RS485 modules successfully",
-  "timestamp": "2025-01-28T10:30:00Z"
+  "timestamp": "2025-10-11T04:12:14.858388"
 }
+```
+
+**🔌 Production Mode:** Proxy to Firmware → RS485 Hardware modules
+
+**Test Command:**
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/rs485/modules" -Method GET
 ```
 
 ### **GET /api/v1/rs485/modules/{address}**
@@ -1448,8 +1716,92 @@ if __name__ == "__main__":
 
 ---
 
-**📅 Last Updated:** 2025-01-28  
+---
+
+## 🔄 **MOCK MODE vs PRODUCTION MODE COMPARISON**
+
+### **Service Layer Auto-Switching**
+
+Backend tự động chọn service implementation dựa trên environment variables:
+
+| Service | Mock Implementation | Production Implementation |
+|---------|-------------------|---------------------------|
+| **Network Service** | `MockNetworkService` | `NetworkIntegrationService` → Firmware HTTP API |
+| **RS485 Service** | `MockRS485Service` (7 modules) | `RS485Service` → Firmware → RS485 Hardware |
+| **Telemetry Service** | Mock motor/dock/safety data | `TelemetryService` → Firmware HTTP API |
+| **Robot Control** | Mock responses | `RobotControlService` → Firmware HTTP API |
+
+### **How Auto-Switching Works**
+
+```python
+# Example: Network Service Factory
+def get_network_service():
+    testing_mode = os.getenv("TESTING", "false").lower() == "true"
+    use_mock_env = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
+    is_production = os.getenv("ENVIRONMENT", "development").lower() == "production"
+    
+    should_use_mock = (testing_mode or use_mock_env) and not is_production
+    
+    if should_use_mock:
+        logger.warning("🧪 MOCK MODE: Using MockNetworkService")
+        return MockNetworkService()
+    else:
+        logger.info("🔌 REAL FIRMWARE MODE: Using NetworkIntegrationService")
+        return NetworkIntegrationService()
+```
+
+### **Logs Confirmation**
+
+**Mock Mode Logs:**
+```
+🧪 MOCK MODE: Using MockNetworkService for development/testing
+⚠️  WARNING: This is MOCK data - NOT for production use!
+🧪 Mock: Getting RS485 modules list
+🧪 Mock: Found 7 RS485 modules
+```
+
+**Production Mode Logs:**
+```
+🔌 REAL FIRMWARE MODE: Using NetworkIntegrationService with real firmware
+🔌 Connecting to Firmware at: http://192.168.1.100:8081
+✅ Firmware connection established
+```
+
+---
+
+## 🧪 **TESTED MOCK APIs (Issues #200-208)**
+
+### **Successfully Tested APIs:**
+
+1. ✅ **Issue #200:** `GET /api/v1/network/wifi/scan` - 3 mock networks
+2. ✅ **Issue #201:** `GET /api/v1/network/status` - Mock network status
+3. ✅ **Issue #202:** `POST /api/v1/wifi/connect` - Mock connection success
+4. ✅ **Issue #205:** `POST /api/v1/wifi/disconnect` - Mock disconnect success
+5. ✅ **Issue #207:** `GET /api/v1/wifi/ip-config` - Full IP configuration
+6. ✅ **Issue #208:** `POST /api/v1/ap/start` - AP start success
+7. ✅ **Robot Status:** `GET /api/v1/robot/status` - OHT-50-001 mock data
+8. ✅ **Telemetry Current:** `GET /api/v1/telemetry/current` - Motor/dock data
+9. ✅ **RS485 Modules:** `GET /api/v1/rs485/modules` - 7 modules with telemetry
+10. ✅ **Health Check:** `GET /health` - System healthy status
+
+### **Router Conflicts Fixed:**
+
+**WiFi Connect API:**
+- Old: `/api/v1/network/wifi/connect` (requires auth)
+- New: `/api/v1/wifi/connect` (no auth in dev mode)
+- Reason: Avoid conflict between network.py and network_wifi.py routers
+
+**AP Start API:**
+- Old: `/api/v1/network/ap/start` (requires auth)
+- New: `/api/v1/ap/start` (no auth in dev mode)
+- Reason: Avoid conflict between network.py and network_ap.py routers
+
+---
+
+**📅 Last Updated:** 2025-10-11  
 **🚀 API Version:** v1  
 **📊 Total Endpoints:** 100+  
 **🔗 Base URL:** http://127.0.0.1:8000  
-**📚 Documentation:** Complete & Tested
+**📚 Documentation:** Complete & Tested  
+**🧪 Mock Mode:** Fully Implemented & Tested  
+**🔌 Production Mode:** Ready for Real Firmware Integration

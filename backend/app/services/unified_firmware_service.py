@@ -225,6 +225,61 @@ class UnifiedFirmwareService:
             lambda: self._http_post(f"/api/v1/modules/{module_id}/telemetry/update", telemetry_data)
         )
     
+    # Register data APIs - Issue #176
+    async def get_module_registers(self, module_id: int) -> FirmwareResponse:
+        """
+        Get module register data with metadata + cached values
+        Calls Firmware API v3.1.0: GET /api/v1/modules/{id}/data
+        
+        Returns complete register information including:
+        - address: Register hex address (e.g., "0x0000")
+        - name: Register name
+        - mode: Access mode (READ/WRITE/READ_WRITE)
+        - data_type: Data type (UINT8/UINT16/INT16/etc)
+        - description: Register description
+        - value: Cached runtime value
+        - timestamp: Last update timestamp
+        """
+        return await self._execute_with_protection(
+            "module_registers",
+            lambda: self._http_get(f"/api/v1/modules/{module_id}/data")
+        )
+    
+    async def get_online_modules(self) -> FirmwareResponse:
+        """
+        Get list of online modules
+        Calls Firmware API v3.1.0: GET /api/v1/modules
+        
+        Returns simplified module list:
+        - address: Module address
+        - type: Module type (POWER/SAFETY/TRAVEL_MOTOR/DOCK)
+        - online: Online status
+        """
+        return await self._execute_with_protection(
+            "online_modules",
+            lambda: self._http_get("/api/v1/modules")
+        )
+    
+    async def write_module_register(self, module_id: int, reg_addr: str, value: Any) -> FirmwareResponse:
+        """
+        Write value to module register
+        Calls Firmware API v3.1.0: POST /api/v1/modules/{id}/registers/{addr}
+        
+        Requires ADMIN authentication on Firmware side
+        Validates:
+        - Register existence
+        - Register mode (must be WRITE or READ_WRITE)
+        - Value range (min/max bounds)
+        """
+        return await self._execute_with_protection(
+            "register_write",
+            lambda: self._http_post(
+                f"/api/v1/modules/{module_id}/registers/{reg_addr}",
+                {"value": value}
+            ),
+            priority="normal"
+        )
+    
     async def _wrap_success(self, endpoint: str, data: Dict[str, Any]) -> FirmwareResponse:
         start_time = time.time()
         response_time = (time.time() - start_time) * 1000

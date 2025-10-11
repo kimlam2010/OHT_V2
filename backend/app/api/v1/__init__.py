@@ -6,7 +6,7 @@ This module aggregates all v1 API routers into a single router.
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, robot, telemetry, safety, monitoring
+from app.api.v1 import auth, robot, telemetry, safety, monitoring, fw_integration
 from app.api.v1 import deprecated
 
 # Create main v1 router
@@ -18,6 +18,7 @@ router.include_router(robot.router, tags=["robot"])
 router.include_router(telemetry.router, tags=["telemetry"])
 router.include_router(safety.router, tags=["safety"])
 router.include_router(monitoring.router, tags=["monitoring"])
+router.include_router(fw_integration.router, tags=["firmware"])  # NEW: Issue #176
 
 # Deprecated groups → 410 Gone with hints
 router.include_router(deprecated.router)

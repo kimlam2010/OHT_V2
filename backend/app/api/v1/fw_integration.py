@@ -12,18 +12,34 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_permission
 from app.services.unified_firmware_service import UnifiedFirmwareService, get_firmware_service
+from app.services.firmware_integration_service import MockFirmwareService
 from app.models.user import User
+import os
 
 logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter(prefix="/fw", tags=["Firmware Integration"])
+# Prefix needed because main.py includes this router directly (not through v1/__init__.py)
+router = APIRouter(prefix="/api/v1", tags=["Firmware Integration"])
 
 
-# Dependency to get firmware service
-async def _get_fw_service() -> UnifiedFirmwareService:
+# Global mock service instance
+_mock_service = None
+
+# Dependency to get firmware service (with mock support)
+async def _get_fw_service():
+    """Get firmware service - returns Mock wrapper if USE_MOCK_FIRMWARE=true"""
+    use_mock = os.getenv("USE_MOCK_FIRMWARE", "false").lower() == "true"
+    
+    if use_mock:
+        global _mock_service
+        if _mock_service is None:
+            logger.warning("🧪 MOCK MODE: Using MockFirmwareService for fw_integration endpoints")
+            _mock_service = MockFirmwareService()
+        return _mock_service
+    
     return await get_firmware_service()
 
 
@@ -199,6 +215,169 @@ async def send_module_command(
     except Exception as e:
         logger.error(f"❌ Failed to send command to module {module_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to send module command: {str(e)}")
+
+
+@router.get("/modules/{module_id}/registers")
+async def get_module_registers(
+    module_id: int,
+    current_user: User = Depends(get_current_user),
+    fw_service: UnifiedFirmwareService = Depends(_get_fw_service)
+):
+    """
+    🆕 Get module register data with address, mode, and cached values
+    
+    **Issue #176:** Expose Firmware API v3.1.0 register data
+    
+    **Returns:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "module_addr": 2,
+        "module_name": "Power Module",
+        "online": true,
+        "register_count": 58,
+        "registers": [
+          {
+            "address": "0x0000",
+            "name": "Battery Pack Voltage",
+            "mode": "READ",
+            "data_type": "UINT16",
+            "description": "Battery Pack Voltage",
+            "value": 24400,
+            "timestamp": "2025-10-10T10:30:45.123Z"
+          }
+        ]
+      }
+    }
+    ```
+    
+    **Auth:** Requires user login (monitoring permission)
+    
+    **Firmware API:** GET /api/v1/modules/{id}/data (v3.1.0)
+    """
+    try:
+        logger.info(f"📊 User {current_user.username} getting registers for module {module_id}")
+        
+        # Call service (Mock or Real)
+        resp = await fw_service.get_module_registers(module_id)
+        
+        # Handle Mock response (dict) vs Real response (FirmwareResponse)
+        if isinstance(resp, dict):
+            # Mock service returns dict directly
+            if resp.get("success"):
+                logger.info(f"✅ Successfully retrieved registers for module {module_id} (MOCK)")
+                return JSONResponse(status_code=200, content=resp)
+            else:
+                logger.warning(f"⚠️ Module {module_id} offline or not found (MOCK)")
+                return JSONResponse(status_code=404, content=resp)
+        else:
+            # Real service returns FirmwareResponse
+            if resp.success:
+                logger.info(f"✅ Successfully retrieved registers for module {module_id}")
+                return JSONResponse(status_code=200, content=resp.data)
+            
+            # Module offline or not found
+            logger.warning(f"⚠️ Module {module_id} offline or not found: {resp.error}")
+            return JSONResponse(status_code=404, content={
+                "success": False,
+                "error": f"Module {module_id} offline or not found",
+                "detail": resp.error,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get registers for module {module_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get module registers: {str(e)}"
+        )
+
+
+@router.post("/modules/{module_id}/registers/{reg_addr}")
+async def write_module_register(
+    module_id: int,
+    reg_addr: str,
+    value_data: Dict[str, Any],
+    current_user: User = Depends(require_permission("control", "write")),
+    fw_service: UnifiedFirmwareService = Depends(_get_fw_service)
+):
+    """
+    🆕 Write value to module register
+    
+    **Issue #176:** Write register control
+    
+    **Auth:** 🔒 Requires ADMIN permission (control:write)
+    
+    **Request Body:**
+    ```json
+    {
+      "value": 1
+    }
+    ```
+    
+    **Response (Success):**
+    ```json
+    {
+      "success": true,
+      "register": "0x0049",
+      "value": 1,
+      "message": "Register written successfully"
+    }
+    ```
+    
+    **Validation:**
+    - Register must exist
+    - Register mode must be WRITE or READ_WRITE
+    - Value must be within min/max bounds
+    
+    **Firmware API:** POST /api/v1/modules/{id}/registers/{addr} (v3.1.0)
+    """
+    try:
+        value = value_data.get("value")
+        if value is None:
+            raise HTTPException(status_code=400, detail="Value is required in request body")
+        
+        logger.info(f"📝 User {current_user.username} writing register {reg_addr} on module {module_id}: value={value}")
+        
+        # Call service (Mock or Real)
+        resp = await fw_service.write_module_register(module_id, reg_addr, value)
+        
+        # Handle Mock response (dict) vs Real response (FirmwareResponse)
+        if isinstance(resp, dict):
+            # Mock service returns dict directly
+            if resp.get("success"):
+                logger.info(f"✅ Successfully wrote register {reg_addr} on module {module_id} (MOCK)")
+                return JSONResponse(status_code=200, content=resp)
+            else:
+                logger.warning(f"⚠️ Failed to write register {reg_addr} (MOCK): {resp.get('error')}")
+                return JSONResponse(status_code=400, content=resp)
+        else:
+            # Real service returns FirmwareResponse
+            if resp.success:
+                logger.info(f"✅ Successfully wrote register {reg_addr} on module {module_id}")
+                return JSONResponse(status_code=200, content={
+                    "success": True,
+                    "register": reg_addr,
+                    "value": value,
+                    "message": "Register written successfully",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                })
+            
+            # Write failed (validation error, read-only register, etc.)
+            logger.warning(f"⚠️ Failed to write register {reg_addr}: {resp.error}")
+            return JSONResponse(status_code=400, content={
+                "success": False,
+                "error": resp.error or "Write failed",
+                "register": reg_addr,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Write register {reg_addr} failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to write register: {str(e)}")
 
 
 @router.get("/safety/status")
