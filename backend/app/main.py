@@ -18,7 +18,7 @@ from app.core.monitoring_service import monitoring_service
 from app.core.websocket_service import websocket_service
 
 # Import API routers
-from app.api.v1 import auth, robot, telemetry, safety, monitoring, registers, health
+from app.api.v1 import auth, robot, telemetry, safety, monitoring, registers, health, fw_integration
 from app.core.monitoring import setup_monitoring
 from app.api.v1 import deprecated as deprecated_api
 from app.api import websocket
@@ -407,12 +407,23 @@ if _API_REDUCED:
 
     # 2) Strict mode: return 410 Gone for deprecated/hidden endpoints
     if _API_REDUCED_STRICT:
+        import re
+        
         @app.middleware("http")
         async def deprecate_hidden_endpoints(request: Request, call_next):
             req_path = request.url.path
+            
             # Allow non-API paths and whitelisted API paths
-            if (not req_path.startswith("/api/")) or (req_path in _ALLOWED_PATHS):
+            if not req_path.startswith("/api/"):
                 return await call_next(request)
+            
+            if req_path in _ALLOWED_PATHS:
+                return await call_next(request)
+            
+            # Allow new Issue #176 endpoints: /api/v1/modules/{id}/registers or /api/v1/fw/modules/{id}/registers
+            if re.match(r'^/api/v1/(fw/)?modules/\d+/registers(/.*)?$', req_path):
+                return await call_next(request)
+            
             return JSONResponse(
                 status_code=410,
                 content={
@@ -585,6 +596,9 @@ app.include_router(rs485.router)
 
 # Include Registers CRUD API router
 app.include_router(registers.router)
+
+# Include Firmware Integration router (Issue #176)
+app.include_router(fw_integration.router)
 
 # Include Admin Registers API router
 from app.api.v1 import admin_registers
