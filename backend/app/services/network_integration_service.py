@@ -635,6 +635,77 @@ class NetworkIntegrationService:
                 "error": str(e)
             }
     
+    async def configure_wifi_ip(
+        self,
+        ip_mode: str,
+        ip_address: str = None,
+        netmask: str = None,
+        gateway: str = None,
+        dns: str = None
+    ) -> Dict[str, Any]:
+        """
+        Configure WiFi IP settings (Static or DHCP) - Issue #206/#216
+        
+        Args:
+            ip_mode: "Static" or "DHCP"
+            ip_address: IP address (required for Static)
+            netmask: Subnet mask (required for Static)
+            gateway: Gateway address (required for Static)
+            dns: DNS server (optional)
+            
+        Returns:
+            {
+              "success": True,
+              "data": {...},
+              "message": "IP configuration updated successfully"
+            }
+        """
+        try:
+            # Auto-initialize if not already done
+            if not self.fw_client:
+                logger.info("🔄 Auto-initializing FW client for WiFi IP config...")
+                await self.initialize()
+                if not self.fw_client:
+                    return {"success": False, "error": "Failed to initialize FW client"}
+            
+            logger.info(f"⚙️ Configuring WiFi IP: mode={ip_mode}")
+            
+            # Call Firmware API
+            response = await self.fw_client.put(
+                "/api/v1/network/wifi/ip-config",
+                json={
+                    "ip_mode": ip_mode,
+                    "ip_address": ip_address,
+                    "netmask": netmask,
+                    "gateway": gateway,
+                    "dns": dns
+                }
+            )
+            
+            if response and response.get("success"):
+                logger.info("✅ WiFi IP configuration updated successfully")
+                return {
+                    "success": True,
+                    "data": response.get("data"),
+                    "message": response.get("message", "IP configuration updated successfully")
+                }
+            else:
+                error_msg = response.get("error", "Unknown error") if response else "No response from firmware"
+                logger.error(f"❌ Failed to configure WiFi IP: {error_msg}")
+                return {
+                    "success": False,
+                    "message": "Failed to configure WiFi IP",
+                    "error": error_msg
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to configure WiFi IP: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to configure WiFi IP: {str(e)}",
+                "error": str(e)
+            }
+    
     async def disconnect_wifi(self) -> Dict[str, Any]:
         """Disconnect from current WiFi network"""
         try:
@@ -907,6 +978,53 @@ class MockNetworkService:
                 "signal_strength": -45,
                 "connection_time": datetime.now(timezone.utc).isoformat()
             },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    
+    async def configure_wifi_ip(
+        self,
+        ip_mode: str,
+        ip_address: str = None,
+        netmask: str = None,
+        gateway: str = None,
+        dns: str = None
+    ) -> Dict[str, Any]:
+        """
+        Mock configure WiFi IP settings - Issue #206/#216
+        
+        MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        Returns simulated IP configuration result
+        """
+        logger.warning(f"🧪 MOCK: Configuring WiFi IP - mode={ip_mode}")
+        
+        # Simulate IP configuration
+        if ip_mode == "DHCP":
+            mock_ip = "192.168.1.100"  # Simulated DHCP-assigned IP
+            mock_gateway = "192.168.1.1"
+            mock_netmask = "255.255.255.0"
+            mock_dns = "8.8.8.8"
+        else:  # Static
+            mock_ip = ip_address or "192.168.1.120"
+            mock_gateway = gateway or "192.168.1.1"
+            mock_netmask = netmask or "255.255.255.0"
+            mock_dns = dns or "8.8.8.8"
+        
+        return {
+            "success": True,
+            "data": {
+                "ssid": "OHT-50-Network",
+                "ip_mode": ip_mode,
+                "signal_strength": -52,
+                "ip_address": mock_ip,
+                "gateway": mock_gateway,
+                "dns": mock_dns,
+                "netmask": mock_netmask,
+                "mac_address": "AA:BB:CC:DD:EE:FF",
+                "security_type": "WPA2",
+                "link_speed": 150,
+                "uptime_seconds": 300
+            },
+            "message": f"IP configuration updated successfully (MOCK - {ip_mode} mode)",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
