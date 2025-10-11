@@ -47,14 +47,34 @@ pip install -r requirements.txt
 ```
 
 ### **2. Cấu hình Environment**
+
+Backend hỗ trợ **2 chế độ hoạt động**:
+
+#### **🧪 MOCK MODE (Development/Testing)**
+Sử dụng mock data, không cần firmware thật:
 ```bash
 # Copy file environment mẫu
 cp env.example .env
 
-# Hoặc tạo file .env mới với cấu hình cơ bản
+# Hoặc tạo file .env mới với cấu hình mock mode
 echo "DATABASE_URL=sqlite+aiosqlite:///./oht50.db" > .env
 echo "JWT_SECRET=your-secret-key-here" >> .env
 echo "USE_MOCK_FIRMWARE=true" >> .env
+echo "TESTING=true" >> .env
+echo "ENVIRONMENT=development" >> .env
+echo "API_REDUCED=false" >> .env
+```
+
+#### **🔌 PRODUCTION MODE (Real Firmware)**
+Kết nối với firmware thật:
+```bash
+echo "DATABASE_URL=sqlite+aiosqlite:///./oht50.db" > .env
+echo "JWT_SECRET=your-secret-key-here" >> .env
+echo "USE_MOCK_FIRMWARE=false" >> .env
+echo "TESTING=false" >> .env
+echo "ENVIRONMENT=production" >> .env
+echo "FIRMWARE_URL=http://192.168.1.100:8081" >> .env
+echo "API_REDUCED=true" >> .env
 ```
 
 ### **3. Khởi tạo Database**
@@ -131,7 +151,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 netstat -ano | findstr :8000
 taskkill /PID <PID_NUMBER> /F
 
-# 2. Hoặc sử dụng port khác
+# 2. Hoặc sử dụng port khác (KHÔNG KHUYẾN NGHỊ - backend phải chạy port 8000)
 $env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8001
 
@@ -140,14 +160,132 @@ Get-Process | Where-Object {$_.ProcessName -like "*python*"}
 Stop-Process -Name "python" -Force
 ```
 
-### **4. Chạy Backend**
+#### **Lỗi Mock Mode không hoạt động**
 ```bash
-# Chạy backend với environment variable (khuyến nghị)
-$env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Nếu mock mode không hoạt động, kiểm tra:
+# 1. Environment variables đã được set đúng chưa
+echo $env:USE_MOCK_FIRMWARE  # Should be "true"
+echo $env:TESTING            # Should be "true"
+echo $env:ENVIRONMENT        # Should be "development"
 
-# Hoặc chạy với reload mode (nếu gặp lỗi module, thử không dùng --reload)
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# 2. Kiểm tra logs khi khởi động
+# Phải thấy: 🧪 MOCK MODE: Using MockNetworkService
+# Nếu thấy: 🔌 REAL FIRMWARE MODE → Đang ở production mode
+
+# 3. Set lại environment variables
+$env:USE_MOCK_FIRMWARE="true"
+$env:TESTING="true"
+$env:ENVIRONMENT="development"
+$env:API_REDUCED="false"
+
+# 4. Restart backend server
+```
+
+#### **Lỗi "All connection attempts failed" trong Mock Mode**
+```bash
+# Nếu gặp lỗi connection failed trong mock mode:
+# 1. Kiểm tra service có check environment variables không
+# 2. Restart backend với đầy đủ environment variables
+cd backend
+$env:USE_MOCK_FIRMWARE="true"
+$env:TESTING="true"
+$env:ENVIRONMENT="development"
+$env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+# 3. Kiểm tra logs phải thấy:
+# - 🧪 MOCK MODE: Using mock telemetry data
+# - 🧪 Mock: Getting RS485 modules list
+# - 🧪 Mock: Found 7 RS485 modules
+```
+
+#### **Lỗi WiFi Connect conflict (403 Forbidden)**
+```bash
+# Nếu WiFi Connect API trả về 403 Forbidden:
+# 1. Kiểm tra đang dùng đúng endpoint chưa
+# OLD: POST /api/v1/network/wifi/connect (requires auth)
+# NEW: POST /api/v1/wifi/connect (no auth required in mock mode)
+
+# 2. Test với endpoint mới
+$body = @{ssid="TestNetwork"; password="testpass123"} | ConvertTo-Json
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/wifi/connect" -Method POST -Body $body -ContentType "application/json"
+```
+
+#### **Lỗi Redis config**
+```bash
+# Nếu gặp lỗi "'Settings' object has no attribute 'redis_host'":
+# 1. Kiểm tra file config.py đã có redis_host, redis_port, redis_db chưa
+# 2. Nếu chưa có, thêm vào app/config.py:
+# redis_host: str = "localhost"
+# redis_port: int = 6379
+# redis_db: int = 0
+
+# 3. Restart backend server
+```
+
+### **4. Chạy Backend**
+
+#### **🧪 Chạy ở Mock Mode (Development)**
+```powershell
+# Windows PowerShell
+cd backend
+$env:USE_MOCK_FIRMWARE="true"
+$env:TESTING="true"
+$env:ENVIRONMENT="development"
+$env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+$env:API_REDUCED="false"
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --log-level info
+
+# Hoặc với reload mode (auto-restart khi code thay đổi)
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+```bash
+# Linux/Mac
+cd backend
+export USE_MOCK_FIRMWARE=true
+export TESTING=true
+export ENVIRONMENT=development
+export DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+export API_REDUCED=false
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level info
+```
+
+#### **🔌 Chạy ở Production Mode (Real Firmware)**
+```powershell
+# Windows PowerShell
+cd backend
+$env:USE_MOCK_FIRMWARE="false"
+$env:TESTING="false"
+$env:ENVIRONMENT="production"
+$env:DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+$env:FIRMWARE_URL="http://192.168.1.100:8081"
+$env:API_REDUCED="true"
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level info
+```
+
+```bash
+# Linux/Mac
+cd backend
+export USE_MOCK_FIRMWARE=false
+export TESTING=false
+export ENVIRONMENT=production
+export DATABASE_URL="sqlite+aiosqlite:///./oht50.db"
+export FIRMWARE_URL="http://192.168.1.100:8081"
+export API_REDUCED=true
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level info
+```
+
+#### **📊 Kiểm tra Backend đang chạy**
+```powershell
+# Kiểm tra process
+Get-Process | Where-Object {$_.ProcessName -like "*python*"}
+
+# Kiểm tra port
+netstat -ano | findstr :8000
+
+# Kill process nếu cần
+Stop-Process -Name "python" -Force
 ```
 
 ### **5. Truy cập API**
@@ -165,15 +303,20 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - `GET /api/v1/auth/me` - Thông tin user
 
 ### **🤖 Robot Control**
-- `GET /api/v1/robot/status` - Trạng thái robot
+- `GET /api/v1/robot/status` - Trạng thái robot ✅ Mock tested
 - `POST /api/v1/robot/control` - Điều khiển robot
 - `POST /api/v1/robot/emergency-stop` - Dừng khẩn cấp
 - `GET /api/v1/robot/position` - Vị trí robot
 
 ### **📊 Telemetry**
-- `GET /api/v1/telemetry/current` - Dữ liệu hiện tại
+- `GET /api/v1/telemetry/current` - Dữ liệu hiện tại ✅ Mock tested
 - `GET /api/v1/telemetry/history` - Lịch sử dữ liệu
 - `POST /api/v1/telemetry/collection/start` - Bắt đầu thu thập
+
+### **🔌 RS485 Modules**
+- `GET /api/v1/rs485/modules` - Danh sách modules ✅ Mock tested (7 modules)
+- `GET /api/v1/rs485/health` - Sức khỏe bus RS485
+- `GET /api/v1/rs485/modules/{address}/telemetry` - Telemetry module
 
 ### **🗺️ Mapping & Localization**
 - `POST /api/v1/map/start-mapping` - Bắt đầu mapping
@@ -181,20 +324,58 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - `GET /api/v1/localization/position` - Vị trí hiện tại
 
 ### **🌐 Network Management**
-- `GET /api/v1/network/status` - Trạng thái mạng
+- `GET /api/v1/network/status` - Trạng thái mạng ✅ Mock tested
 - `POST /api/v1/network/ap/start` - Khởi động WiFi AP
-- `GET /api/v1/network/wifi/scan` - Quét WiFi
+- `GET /api/v1/network/wifi/scan` - Quét WiFi ✅ Mock tested (3 networks)
+- `POST /api/v1/wifi/connect` - Kết nối WiFi ✅ Mock tested (new prefix)
+- `POST /api/v1/wifi/disconnect` - Ngắt kết nối WiFi
 
 ### **🔒 Safety & Security**
 - `GET /api/v1/safety/status` - Trạng thái an toàn
 - `POST /api/v1/safety/emergency-stop` - Dừng khẩn cấp
 - `GET /api/v1/monitoring/health` - Sức khỏe hệ thống
 
+### **🏥 Health Checks**
+- `GET /health` - Health check cơ bản ✅ Mock tested
+- `GET /health/detailed` - Health check chi tiết
+- `GET /health/fast` - Fast health check
+
+### **🧪 Mock APIs Tested Successfully**
+
+Các APIs sau đã được test thành công với mock data:
+
+1. ✅ **WiFi Scan:** 3 networks (VanPhong5G, OHT-50-Hotspot, TestNetwork)
+2. ✅ **Network Status:** Connected status, AP config
+3. ✅ **Robot Status:** OHT-50-001, idle mode, battery 87%
+4. ✅ **Telemetry Current:** Motor speed 1500, temp 45.5°C
+5. ✅ **RS485 Modules:** 7 modules với real-time telemetry data
+6. ✅ **WiFi Connect:** Mock connection success
+7. ✅ **Health Check:** System healthy status
+
 ---
 
 ## 🧪 **TESTING**
 
-### **Chạy Tests**
+### **Test Mock APIs**
+```powershell
+# Test WiFi Scan
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/network/wifi/scan" -Method GET
+
+# Test Robot Status
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/robot/status" -Method GET
+
+# Test Telemetry Current
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/telemetry/current" -Method GET
+
+# Test RS485 Modules
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/rs485/modules" -Method GET
+
+# Test WiFi Connect (new prefix)
+$body = @{ssid="TestNetwork"; password="testpass123"} | ConvertTo-Json
+Invoke-WebRequest -Uri "http://localhost:8000/api/v1/wifi/connect" -Method POST -Body $body -ContentType "application/json"
+```
+
+### **Chạy Unit Tests**
 ```bash
 # Tất cả tests
 pytest
@@ -249,6 +430,8 @@ docker-compose up -d
 ## 🔧 **CONFIGURATION**
 
 ### **Environment Variables**
+
+#### **🧪 Mock Mode Configuration**
 ```bash
 # Database
 DATABASE_URL=sqlite+aiosqlite:///./oht50.db
@@ -257,14 +440,64 @@ DATABASE_URL=sqlite+aiosqlite:///./oht50.db
 JWT_SECRET=your-secret-key
 JWT_EXPIRY_MINUTES=30
 
-# Firmware Integration
-FIRMWARE_URL=http://localhost:8080
-USE_MOCK_FIRMWARE=false
+# Mock Mode Settings (Development/Testing)
+USE_MOCK_FIRMWARE=true
+TESTING=true
+ENVIRONMENT=development
+API_REDUCED=false
+
+# Redis (optional for mock mode)
+redis_host=localhost
+redis_port=6379
+redis_db=0
 
 # Performance
 MAX_CONNECTIONS=100
 REQUEST_TIMEOUT=30
 ```
+
+#### **🔌 Production Mode Configuration**
+```bash
+# Database
+DATABASE_URL=sqlite+aiosqlite:///./oht50.db
+
+# Security
+JWT_SECRET=your-secret-key-production
+JWT_EXPIRY_MINUTES=30
+
+# Production Mode Settings
+USE_MOCK_FIRMWARE=false
+TESTING=false
+ENVIRONMENT=production
+API_REDUCED=true
+
+# Firmware Integration (REQUIRED for production)
+FIRMWARE_URL=http://192.168.1.100:8081
+
+# Redis (recommended for production)
+redis_host=localhost
+redis_port=6379
+redis_db=0
+
+# Performance
+MAX_CONNECTIONS=100
+REQUEST_TIMEOUT=30
+```
+
+### **🔄 Tự động chuyển đổi giữa Mock và Production**
+
+Backend sẽ **tự động** chọn service phù hợp dựa trên environment variables:
+
+| Service | Mock Mode | Production Mode |
+|---------|-----------|-----------------|
+| **Network** | `MockNetworkService` | `NetworkIntegrationService` → Firmware HTTP API |
+| **RS485** | `MockRS485Service` (7 modules) | `RS485Service` → Firmware → RS485 Hardware |
+| **Telemetry** | Mock data (motor speed, temp, etc.) | `TelemetryService` → Firmware HTTP API |
+| **Robot Control** | Mock responses | `RobotControlService` → Firmware HTTP API |
+
+**Logs xác nhận:**
+- Mock mode: `🧪 MOCK MODE: Using MockNetworkService`
+- Production: `🔌 REAL FIRMWARE MODE: Using NetworkIntegrationService`
 
 ---
 

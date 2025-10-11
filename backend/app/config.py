@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     
     # Redis
     redis_url: str = "redis://localhost:6379"
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
     
     # JWT Settings (consistent with jwt_expiry_minutes)
     jwt_expiry: int = 1800  # 30 minutes in seconds

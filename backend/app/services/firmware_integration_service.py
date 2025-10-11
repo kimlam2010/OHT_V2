@@ -819,6 +819,70 @@ class MockFirmwareService:
                     "last_seen": datetime.now(timezone.utc).isoformat()
                 }
             },
+            # Mock register data for Issue #176 - Sync with Firmware API v3.1.0
+            "module_registers": {
+                "2": {  # Power Module
+                    "module_addr": 2,
+                    "module_name": "Power Module",
+                    "online": True,
+                    "register_count": 58,
+                    "registers": [
+                        {"address": "0x0000", "name": "Battery Pack Voltage", "mode": "READ", "data_type": "UINT16", "description": "Battery Pack Voltage", "value": 24400, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0001", "name": "Battery Pack Current", "mode": "READ", "data_type": "INT16", "description": "Battery Pack Current", "value": 5400, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0002", "name": "State of Charge", "mode": "READ", "data_type": "UINT16", "description": "State of Charge", "value": 6700, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0003", "name": "Max Cell Voltage", "mode": "READ", "data_type": "UINT16", "description": "Max Cell Voltage", "value": 4005, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0004", "name": "Min Cell Voltage", "mode": "READ", "data_type": "UINT16", "description": "Min Cell Voltage", "value": 3389, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0005", "name": "Max Cell Number", "mode": "READ", "data_type": "UINT8", "description": "Max Cell Number", "value": 1, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0006", "name": "Min Cell Number", "mode": "READ", "data_type": "UINT8", "description": "Min Cell Number", "value": 1, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0007", "name": "Battery Temperature", "mode": "READ", "data_type": "INT16", "description": "Battery Temperature", "value": 249, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0008", "name": "Charge Cycles", "mode": "READ", "data_type": "UINT16", "description": "Charge Cycles", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0009", "name": "Designed Capacity", "mode": "READ", "data_type": "UINT16", "description": "Designed Capacity", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x000A", "name": "Real Capacity", "mode": "READ", "data_type": "UINT16", "description": "Real Capacity", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0049", "name": "12V Relay State", "mode": "READ_WRITE", "data_type": "UINT8", "description": "12V Relay State", "value": 1, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x004A", "name": "5V Relay State", "mode": "READ_WRITE", "data_type": "UINT8", "description": "5V Relay State", "value": 1, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x004B", "name": "3.3V Relay State", "mode": "READ_WRITE", "data_type": "UINT8", "description": "3.3V Relay State", "value": 1, "timestamp": datetime.now(timezone.utc).isoformat()},
+                    ]
+                },
+                "3": {  # Safety Module
+                    "module_addr": 3,
+                    "module_name": "Safety Module",
+                    "online": True,
+                    "register_count": 30,
+                    "registers": [
+                        {"address": "0x0000", "name": "E-Stop Status", "mode": "READ", "data_type": "UINT8", "description": "E-Stop Status", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0001", "name": "Safety Interlock", "mode": "READ", "data_type": "UINT8", "description": "Safety Interlock", "value": 1, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0002", "name": "Safety Zone 1", "mode": "READ", "data_type": "UINT8", "description": "Safety Zone 1", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0003", "name": "Safety Zone 2", "mode": "READ", "data_type": "UINT8", "description": "Safety Zone 2", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0010", "name": "E-Stop Reset", "mode": "WRITE", "data_type": "UINT8", "description": "E-Stop Reset Command", "value": None, "timestamp": None},
+                    ]
+                },
+                "4": {  # Travel Motor Module
+                    "module_addr": 4,
+                    "module_name": "Travel Motor Module",
+                    "online": True,
+                    "register_count": 40,
+                    "registers": [
+                        {"address": "0x0000", "name": "Motor Speed", "mode": "READ", "data_type": "INT16", "description": "Motor Speed", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0001", "name": "Motor Current", "mode": "READ", "data_type": "INT16", "description": "Motor Current", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0002", "name": "Motor Temperature", "mode": "READ", "data_type": "INT16", "description": "Motor Temperature", "value": 45, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0003", "name": "Position", "mode": "READ", "data_type": "INT32", "description": "Current Position", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0010", "name": "Target Speed", "mode": "READ_WRITE", "data_type": "INT16", "description": "Target Speed", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0011", "name": "Speed Control Mode", "mode": "READ_WRITE", "data_type": "UINT8", "description": "Speed Control Mode", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                    ]
+                },
+                "5": {  # Dock Module
+                    "module_addr": 5,
+                    "module_name": "Dock Module",
+                    "online": True,
+                    "register_count": 20,
+                    "registers": [
+                        {"address": "0x0000", "name": "Dock Status", "mode": "READ", "data_type": "UINT8", "description": "Dock Status", "value": 0, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0001", "name": "Alignment Sensor 1", "mode": "READ", "data_type": "UINT16", "description": "Alignment Sensor 1", "value": 512, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0002", "name": "Alignment Sensor 2", "mode": "READ", "data_type": "UINT16", "description": "Alignment Sensor 2", "value": 512, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"address": "0x0010", "name": "Docking Command", "mode": "WRITE", "data_type": "UINT8", "description": "Docking Command", "value": None, "timestamp": None},
+                    ]
+                }
+            },
             "module_telemetry": {
                 "1": {
                     "module_id": 1,
@@ -1027,11 +1091,153 @@ class MockFirmwareService:
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
     
+    async def get_telemetry_data(self) -> Dict[str, Any]:
+        """Mock get telemetry data"""
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning("🧪 MOCK: Getting telemetry data")
+        
+        # Return mock telemetry data
+        mock_telemetry = {
+            "success": True,
+            "data": {
+                "robot_status": {
+                    "speed": 1500,
+                    "temperature": 45.5,
+                    "dock_status": "ready",
+                    "safety_status": "normal"
+                },
+                "motor_speed": 1500,
+                "motor_temperature": 45.5,
+                "dock_status": "ready",
+                "safety_status": "normal"
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+        return mock_telemetry
+    
     async def send_module_command(self, module_id: int, command: str, parameters: Dict[str, Any]) -> bool:
         """Mock send command to module"""
         # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
         logger.warning(f"🧪 MOCK: Sending command {command} to module {module_id}")
         return True
+    
+    # NEW: Mock methods for Issue #176 - Register APIs
+    
+    async def get_module_registers(self, module_id: int) -> Dict[str, Any]:
+        """
+        Mock get module register data with address, mode, and cached values
+        Issue #176: Sync with Firmware API v3.1.0
+        """
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning(f"🧪 MOCK: Getting registers for module {module_id} (Issue #176)")
+        
+        register_data = self.mock_data.get("module_registers", {})
+        module_registers = register_data.get(str(module_id))
+        
+        if module_registers:
+            # Return data matching Firmware API v3.1.0 structure
+            return {
+                "success": True,
+                "data": module_registers,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        else:
+            return {
+                "success": False,
+                "error": f"Module {module_id} offline or not found",
+                "online": False,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+    
+    async def get_online_modules(self) -> Dict[str, Any]:
+        """
+        Mock get list of online modules (simplified format)
+        Issue #176: Sync with Firmware API v3.1.0
+        """
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning("🧪 MOCK: Getting online modules list (Issue #176)")
+        
+        modules_data = self.mock_data.get("modules", {})
+        modules_list = []
+        
+        for module_id, module_info in modules_data.items():
+            if module_id != "1":  # Skip Master module
+                modules_list.append({
+                    "address": int(module_id),
+                    "type": module_info.get("module_type", "").upper(),
+                    "online": True
+                })
+        
+        return {
+            "success": True,
+            "data": {
+                "modules": modules_list,
+                "count": len(modules_list)
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    
+    async def write_module_register(self, module_id: int, reg_addr: str, value: Any) -> Dict[str, Any]:
+        """
+        Mock write value to module register
+        Issue #176: Sync with Firmware API v3.1.0
+        
+        Simulates validation:
+        - Register existence
+        - Register mode (WRITE/READ_WRITE only)
+        - Value range (basic validation)
+        """
+        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        logger.warning(f"🧪 MOCK: Writing register {reg_addr} on module {module_id} with value={value} (Issue #176)")
+        
+        # Get register data
+        register_data = self.mock_data.get("module_registers", {})
+        module_registers = register_data.get(str(module_id))
+        
+        if not module_registers:
+            return {
+                "success": False,
+                "error": f"Module {module_id} offline or not found",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        
+        # Find register by address
+        register = None
+        for reg in module_registers.get("registers", []):
+            if reg["address"] == reg_addr:
+                register = reg
+                break
+        
+        if not register:
+            return {
+                "success": False,
+                "error": f"Register {reg_addr} not found",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        
+        # Check if register is writable
+        if register["mode"] not in ["WRITE", "READ_WRITE"]:
+            return {
+                "success": False,
+                "error": f"Register {reg_addr} is read-only (mode: {register['mode']})",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        
+        # Mock successful write
+        logger.info(f"✅ MOCK: Successfully wrote {value} to register {reg_addr} on module {module_id}")
+        
+        # Update mock data value (simulate cache update)
+        register["value"] = value
+        register["timestamp"] = datetime.now(timezone.utc).isoformat()
+        
+        return {
+            "success": True,
+            "register": reg_addr,
+            "value": value,
+            "message": "Register written successfully (MOCK)",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
 
 
 # Factory function to get firmware service

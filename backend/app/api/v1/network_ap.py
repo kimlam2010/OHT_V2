@@ -8,7 +8,7 @@ except Exception:
     httpx = None
 
 
-router = APIRouter(prefix="/api/v1/network/ap", tags=["network", "wifi-ap"]) 
+router = APIRouter(prefix="/api/v1/ap", tags=["wifi-ap"]) 
 
 
 def _is_dev_mode() -> bool:
