@@ -381,6 +381,33 @@ async def configure_ap(
         )
 
 
+@router.put("/ap/config", response_model=APConfigResponse)
+async def update_ap_config(
+    request: APConfigRequest,
+    admin_user: Dict[str, Any] = Depends(verify_admin_token)
+):
+    """
+    Update WiFi AP configuration - Issue #210 (PUT method)
+    
+    This is an alias for POST /ap/config to support REST convention.
+    Both methods perform the same operation.
+    
+    Args:
+        request: AP configuration
+        admin_user: Admin user token
+        
+    Returns:
+        APConfigResponse: Configuration result
+        
+    Note:
+    - Currently uses MOCK data for development
+    - Will integrate with Firmware after testing
+    - Firmware URL: POST /api/v1/network/ap/config
+    """
+    # Delegate to POST endpoint for consistency
+    return await configure_ap(request, admin_user)
+
+
 # Fallback Connectivity Endpoints
 
 @router.post("/fallback/enable", response_model=FallbackEnableResponse)

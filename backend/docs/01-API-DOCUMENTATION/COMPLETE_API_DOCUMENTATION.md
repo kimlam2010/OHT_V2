@@ -1063,6 +1063,160 @@ Invoke-WebRequest -Uri "http://localhost:8000/api/v1/ap/stop" -Method POST
 
 **🔌 Production Mode:** Proxy to Firmware API
 
+---
+
+### **GET /api/v1/network/ap/config** ✅ **Issue #209**
+**Mục đích:** Lấy cấu hình Access Point hiện tại (SSID, password, channel, security).
+
+**Endpoint:** `GET /api/v1/network/ap/config`
+
+**Headers:** `Authorization: Bearer <token>` (Any authenticated user)
+
+**🧪 Mock Mode Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "is_enabled": true,
+    "ssid": "OHT-50-Hotspot",
+    "password": "SecurePass@2025",
+    "channel": 6,
+    "security_type": "WPA2",
+    "max_clients": 10,
+    "ip_address": "192.168.4.1"
+  },
+  "message": "Access Point configuration retrieved successfully",
+  "timestamp": "2025-10-11T07:00:00Z"
+}
+```
+
+**🔌 Production Mode:** Proxy to Firmware API `GET /api/v1/network/ap/config`
+
+**Response Fields:**
+- `is_enabled`: AP đang hoạt động hay không (true/false)
+- `ssid`: Tên WiFi Access Point
+- `password`: Mật khẩu AP
+- `channel`: Kênh WiFi (1-13)
+- `security_type`: Loại mã hóa (Open/WPA2/WPA3)
+- `max_clients`: Số client tối đa cho phép
+- `ip_address`: Địa chỉ IP của AP
+
+**Test Command:**
+```powershell
+# Login first
+$token = (Invoke-RestMethod -Uri 'http://localhost:8001/api/v1/auth/login' -Method Post -Body (@{username='admin'; password='admin123'} | ConvertTo-Json) -ContentType 'application/json').access_token
+$headers = @{Authorization="Bearer $token"}
+
+# Get AP config
+Invoke-RestMethod -Uri 'http://localhost:8001/api/v1/network/ap/config' -Method Get -Headers $headers
+```
+
+---
+
+### **POST /api/v1/network/ap/config** ✅ **Issue #210**
+**Mục đích:** Cập nhật cấu hình Access Point (SSID, password, channel, security).
+
+**Endpoint:** `POST /api/v1/network/ap/config`
+
+**Headers:** `Authorization: Bearer admin` (ADMIN token required)
+
+**Request Body:**
+```json
+{
+  "ssid": "OHT-50-Updated",
+  "password": "NewSecurePass@2025",
+  "channel": 11,
+  "security": "WPA2",
+  "max_clients": 15
+}
+```
+
+**Request Fields:**
+- `ssid` (required): Tên WiFi Access Point mới
+- `password` (optional): Mật khẩu AP (có thể bỏ trống cho Open)
+- `channel` (required): Kênh WiFi (1-13)
+- `security` (required): Loại mã hóa (Open/WPA2/WPA3)
+- `max_clients` (optional): Số client tối đa cho phép
+
+**🧪 Mock Mode Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "is_enabled": true,
+    "ssid": "OHT-50-Updated",
+    "password": "NewSecurePass@2025",
+    "channel": 11,
+    "security_type": "WPA2",
+    "max_clients": 15,
+    "ip_address": "192.168.4.1"
+  },
+  "message": "Access Point configuration updated successfully (MOCK)",
+  "timestamp": "2025-10-11T07:30:00Z"
+}
+```
+
+**🔌 Production Mode:** Proxy to Firmware API `POST /api/v1/network/ap/config`
+
+**Test Command:**
+```powershell
+# Login with admin token
+$headers = @{Authorization="Bearer admin"; "Content-Type"="application/json"}
+
+# Update AP config
+$config = @{
+  ssid = "OHT-50-Updated"
+  password = "NewPass999"
+  channel = 11
+  security = "WPA2"
+  max_clients = 15
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri 'http://localhost:8001/api/v1/network/ap/config' -Method Post -Headers $headers -Body $config
+```
+
+---
+
+### **PUT /api/v1/network/ap/config** ✅ **Issue #210 (REST Alias)**
+**Mục đích:** Cập nhật cấu hình Access Point (REST convention - alias cho POST).
+
+**Endpoint:** `PUT /api/v1/network/ap/config`
+
+**Headers:** `Authorization: Bearer admin` (ADMIN token required)
+
+**Request Body:** Same as POST method
+
+**Response:** Same as POST method
+
+**Note:** 
+- PUT method là alias cho POST method để tuân thủ REST convention
+- Cả POST và PUT đều thực hiện cùng một operation
+- Firmware API sử dụng POST method
+- Backend hỗ trợ cả 2 methods cho flexibility
+
+**Test Command:**
+```powershell
+# Login with admin token
+$headers = @{Authorization="Bearer admin"; "Content-Type"="application/json"}
+
+# Update AP config with PUT
+$config = @{
+  ssid = "OHT-50-PUT"
+  password = "PutPass456"
+  channel = 6
+  security = "WPA3"
+  max_clients = 20
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri 'http://localhost:8001/api/v1/network/ap/config' -Method Put -Headers $headers -Body $config
+```
+
+**Comparison POST vs PUT:**
+- Both methods: Update AP configuration
+- POST: Traditional method (matches Firmware API)
+- PUT: RESTful convention for updates
+- Implementation: PUT delegates to POST internally
+- Use case: Choose based on your REST API preferences
 
 ---
 
