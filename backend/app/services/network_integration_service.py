@@ -957,12 +957,33 @@ class MockNetworkService:
         }
     
     async def configure_ap(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Mock configure AP"""
-        # MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        """
+        Mock configure AP - Issue #210
+        
+        MOCK DATA - ONLY FOR DEVELOPMENT/TESTING
+        Returns simulated AP configuration response matching Firmware API
+        """
         logger.warning("🧪 MOCK: Configuring AP with: %s", config)
+        
+        # Update mock data with provided config
+        ssid = config.get("ssid", "OHT-50-Hotspot")
+        password = config.get("password", "SecurePass@2025")
+        channel = config.get("channel", 6)
+        security = config.get("security", "WPA2")
+        max_clients = config.get("max_clients", 10)
+        
         return {
             "success": True,
-            "message": "Mock: WiFi AP configured successfully",
+            "data": {
+                "is_enabled": True,
+                "ssid": ssid,
+                "password": password,
+                "channel": channel,
+                "security_type": security,
+                "max_clients": max_clients,
+                "ip_address": "192.168.4.1"
+            },
+            "message": "Access Point configuration updated successfully (MOCK)",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
